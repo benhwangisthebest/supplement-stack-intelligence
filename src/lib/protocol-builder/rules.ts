@@ -1,6 +1,6 @@
 // Domain layer — PURE. Protocol generation rules (Design §11.4).
-// Imports only lib/evidence, lib/safety, stack-evaluator constants, and types.
-import { MED_CAUTION_IDS } from "@/lib/stack-evaluator/rules";
+// Imports only lib/evidence, lib/safety, lib/interactions, and types.
+import { hasMedicationInteraction } from "@/lib/interactions";
 import type {
   EvidenceGrade,
   ItemTiming,
@@ -9,8 +9,6 @@ import type {
   ProtocolTier,
   Supplement,
 } from "@/types";
-
-export { MED_CAUTION_IDS };
 
 // Default timing suggestion per goal (heuristic; null when no clear default).
 const TIMING_BY_GOAL: Partial<Record<OutcomeCategory, ItemTiming>> = {
@@ -59,11 +57,15 @@ export function hasAllergenConflict(supp: Supplement, allergies: string[]): bool
   return supp.allergenTags.some((t) => set.has(norm(t)));
 }
 
+/**
+ * Real medication-interaction check (medication-interactions v2).
+ * Delegates to the pure engine — replaces the v1 hardcoded MED_CAUTION_IDS set.
+ */
 export function hasMedicationCaution(
   supplementId: string,
   medications: string[],
 ): boolean {
-  return medications.length > 0 && MED_CAUTION_IDS.has(supplementId);
+  return hasMedicationInteraction(supplementId, medications);
 }
 
 // Grade rank for ordering (A strongest).

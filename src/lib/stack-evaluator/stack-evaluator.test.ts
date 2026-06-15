@@ -15,7 +15,7 @@ import {
   ruleEvidenceFit,
   ruleGoalAlignment,
   ruleLabRelevance,
-  ruleMedicationCaution,
+  ruleInteractions,
   ruleRedundancy,
   type EvalContext,
 } from "./index";
@@ -236,18 +236,38 @@ describe("ruleLabRelevance", () => {
   });
 });
 
-describe("ruleMedicationCaution", () => {
-  it("warns for caution-listed supplements when the user takes medications", () => {
+describe("ruleInteractions", () => {
+  it("flags a real supplement↔drug interaction as critical (engine-backed)", () => {
     const items = [makeItem({ supplementId: "berberine", dose: 1000 })];
-    const profile = makeProfile({ medications: ["metformin"] });
-    const flags = ruleMedicationCaution(ctx({ items, profile }));
+    const profile = makeProfile({ medications: ["metformin"] }); // antidiabetic
+    const flags = ruleInteractions(ctx({ items, profile }));
     expect(flags).toHaveLength(1);
-    expect(flags[0].severity).toBe("warning");
+    expect(flags[0].category).toBe("medication-caution");
+    expect(flags[0].severity).toBe("critical"); // drug-interaction warning escalates
+    expect(flags[0].stackItemId).toBe(items[0].id);
   });
 
-  it("does not warn when there are no medications", () => {
+  it("flags a supplement↔supplement interaction within the stack", () => {
+    const items = [
+      makeItem({ supplementId: "magnesium", dose: 300 }),
+      makeItem({ supplementId: "zinc", dose: 30 }),
+    ];
+    const flags = ruleInteractions(ctx({ items, profile: makeProfile() }));
+    expect(flags.some((f) => f.category === "interaction-risk")).toBe(true);
+  });
+
+  it("does not flag when there are no medications and no risky pairs", () => {
     const items = [makeItem({ supplementId: "berberine", dose: 1000 })];
-    expect(ruleMedicationCaution(ctx({ items, profile: makeProfile() }))).toHaveLength(0);
+    expect(ruleInteractions(ctx({ items, profile: makeProfile() }))).toHaveLength(0);
+  });
+
+  it("surfaces an unrecognized medication as an info flag (curation honesty)", () => {
+    const items = [makeItem({ supplementId: "creatine", dose: 5 })];
+    const profile = makeProfile({ medications: ["dragon tonic"] });
+    const flags = ruleInteractions(ctx({ items, profile }));
+    const note = flags.find((f) => /not recognized/i.test(f.title));
+    expect(note).toBeDefined();
+    expect(note!.severity).toBe("info");
   });
 });
 

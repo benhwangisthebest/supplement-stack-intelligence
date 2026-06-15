@@ -8,7 +8,8 @@ export type FlagCategory =
   | "timing-fit"
   | "redundancy"
   | "allergy-conflict"
-  | "medication-caution"
+  | "medication-caution" // supplement↔drug interaction (medication-interactions, v2)
+  | "interaction-risk" // supplement↔supplement interaction (medication-interactions, v2)
   | "lab-relevance"
   | "goal-alignment"
   | "cost-efficiency"

@@ -3,6 +3,33 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "medication-interactions": {
+      "phase": "archived",
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete"
+      },
+      "matchRate": 99,
+      "matchRateMode": "runtime-verified",
+      "qaStatus": "PASS",
+      "successCriteria": "6/6 met",
+      "iterationCount": 1,
+      "milestone": "v2",
+      "method": "plan-plus",
+      "approach": "option-a-curated-seed-engine",
+      "architecture": "option-c-pragmatic",
+      "engine": "pure-function-interactions",
+      "anchor": "deeper-intelligence / medication-interaction-layer",
+      "scope": [
+        "drug-class-matching+normalization",
+        "supplement-supplement",
+        "protocol-builder-integration",
+        "library-display"
+      ],
+      "archivedTo": "docs/archive/2026-06/medication-interactions/",
+      "startedAt": "2026-06-15",
+      "archivedAt": "2026-06-15"
+    },
     "product-match": {
       "phase": "archived",
       "matchRate": 99,
@@ -44,26 +71,218 @@
     }
   },
   "tasks": [
-    { "title": "[Plan] mvp-core-loop", "status": "completed", "createdAt": "2026-06-11" },
-    { "title": "[Design] mvp-core-loop", "status": "completed", "blockedBy": "[Plan] mvp-core-loop", "createdAt": "2026-06-11" },
-    { "title": "[Do] mvp-core-loop", "status": "completed", "blockedBy": "[Design] mvp-core-loop", "scope": ["module-1", "module-2", "module-3", "module-4", "module-5", "module-6", "module-7"], "createdAt": "2026-06-11" },
-    { "title": "[Check] mvp-core-loop", "status": "completed", "blockedBy": "[Do] mvp-core-loop", "matchRate": 96, "createdAt": "2026-06-11" },
-    { "title": "[Act-1] mvp-core-loop", "status": "completed", "blockedBy": "[Check] mvp-core-loop", "fix": "IMP-2 edit-item UI (StackItemRow)", "matchRate": 98, "createdAt": "2026-06-11" },
-    { "title": "[Report] mvp-core-loop", "status": "completed", "blockedBy": "[Act-1] mvp-core-loop", "createdAt": "2026-06-11" },
-    { "title": "[QA] mvp-core-loop", "status": "completed", "qaStatus": "PASS", "result": "59 checks green (47 unit + 12 e2e), runtime match 99%", "createdAt": "2026-06-11" },
-    { "title": "[Archive] mvp-core-loop", "status": "completed", "blockedBy": "[Report] mvp-core-loop", "archivedTo": "docs/archive/2026-06/mvp-core-loop/", "createdAt": "2026-06-11" },
-    { "title": "[Plan] protocol-builder", "status": "completed", "method": "plan-plus", "createdAt": "2026-06-11" },
-    { "title": "[Design] protocol-builder", "status": "completed", "blockedBy": "[Plan] protocol-builder", "createdAt": "2026-06-11" },
-    { "title": "[Do] protocol-builder", "status": "completed", "blockedBy": "[Design] protocol-builder", "scope": ["module-1", "module-2"], "createdAt": "2026-06-11" },
-    { "title": "[Check] protocol-builder", "status": "completed", "blockedBy": "[Do] protocol-builder", "matchRate": 99, "mode": "runtime-verified", "createdAt": "2026-06-11" },
-    { "title": "[Report] protocol-builder", "status": "completed", "blockedBy": "[Check] protocol-builder", "createdAt": "2026-06-11" },
-    { "title": "[Archive] protocol-builder", "status": "completed", "blockedBy": "[Report] protocol-builder", "archivedTo": "docs/archive/2026-06/protocol-builder/", "createdAt": "2026-06-11" },
-    { "title": "[Plan] product-match", "status": "completed", "method": "plan-plus", "createdAt": "2026-06-11" },
-    { "title": "[Design] product-match", "status": "completed", "blockedBy": "[Plan] product-match", "createdAt": "2026-06-11" },
-    { "title": "[Do] product-match", "status": "completed", "blockedBy": "[Design] product-match", "scope": ["module-1", "module-2"], "createdAt": "2026-06-11" },
-    { "title": "[Check] product-match", "status": "completed", "blockedBy": "[Do] product-match", "matchRate": 99, "mode": "runtime-verified", "createdAt": "2026-06-11" },
-    { "title": "[Report] product-match", "status": "completed", "blockedBy": "[Check] product-match", "createdAt": "2026-06-11" },
-    { "title": "[Archive] product-match", "status": "completed", "blockedBy": "[Report] product-match", "archivedTo": "docs/archive/2026-06/product-match/", "createdAt": "2026-06-11" }
+    {
+      "title": "[Plan] medication-interactions",
+      "status": "completed",
+      "method": "plan-plus",
+      "milestone": "v2",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Design] medication-interactions",
+      "status": "completed",
+      "blockedBy": "[Plan] medication-interactions",
+      "architecture": "option-c-pragmatic",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Do] medication-interactions",
+      "status": "completed",
+      "blockedBy": "[Design] medication-interactions",
+      "scope": [
+        "module-1",
+        "module-2"
+      ],
+      "result": "engine core + surface integration: 11 created, 9 modified; 86/86 unit green, tsc clean, next build green (15 library pages prerendered)",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Check] medication-interactions",
+      "status": "completed",
+      "blockedBy": "[Do] medication-interactions",
+      "matchRate": 97,
+      "mode": "static-only",
+      "gaps": "1 Important (IMP-1 unrecognized-med note), 0 Critical; SC 6/6",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Act-1] medication-interactions",
+      "status": "completed",
+      "blockedBy": "[Check] medication-interactions",
+      "fix": "IMP-1 unrecognized-medication info flags in ruleInteractions",
+      "matchRate": 99,
+      "result": "87/87 unit green, tsc clean",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[QA] medication-interactions",
+      "status": "completed",
+      "blockedBy": "[Act-1] medication-interactions",
+      "qaStatus": "PASS",
+      "result": "87 unit + 3 L1 + 2 L2 green (live server); L3 gated by E2E_LIVE",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Report] medication-interactions",
+      "status": "completed",
+      "blockedBy": "[QA] medication-interactions",
+      "result": "completion report; 99% runtime-verified, SC 6/6",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Archive] medication-interactions",
+      "status": "completed",
+      "blockedBy": "[Report] medication-interactions",
+      "archivedTo": "docs/archive/2026-06/medication-interactions/",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Plan] mvp-core-loop",
+      "status": "completed",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Design] mvp-core-loop",
+      "status": "completed",
+      "blockedBy": "[Plan] mvp-core-loop",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Do] mvp-core-loop",
+      "status": "completed",
+      "blockedBy": "[Design] mvp-core-loop",
+      "scope": [
+        "module-1",
+        "module-2",
+        "module-3",
+        "module-4",
+        "module-5",
+        "module-6",
+        "module-7"
+      ],
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Check] mvp-core-loop",
+      "status": "completed",
+      "blockedBy": "[Do] mvp-core-loop",
+      "matchRate": 96,
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Act-1] mvp-core-loop",
+      "status": "completed",
+      "blockedBy": "[Check] mvp-core-loop",
+      "fix": "IMP-2 edit-item UI (StackItemRow)",
+      "matchRate": 98,
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Report] mvp-core-loop",
+      "status": "completed",
+      "blockedBy": "[Act-1] mvp-core-loop",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[QA] mvp-core-loop",
+      "status": "completed",
+      "qaStatus": "PASS",
+      "result": "59 checks green (47 unit + 12 e2e), runtime match 99%",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Archive] mvp-core-loop",
+      "status": "completed",
+      "blockedBy": "[Report] mvp-core-loop",
+      "archivedTo": "docs/archive/2026-06/mvp-core-loop/",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Plan] protocol-builder",
+      "status": "completed",
+      "method": "plan-plus",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Design] protocol-builder",
+      "status": "completed",
+      "blockedBy": "[Plan] protocol-builder",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Do] protocol-builder",
+      "status": "completed",
+      "blockedBy": "[Design] protocol-builder",
+      "scope": [
+        "module-1",
+        "module-2"
+      ],
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Check] protocol-builder",
+      "status": "completed",
+      "blockedBy": "[Do] protocol-builder",
+      "matchRate": 99,
+      "mode": "runtime-verified",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Report] protocol-builder",
+      "status": "completed",
+      "blockedBy": "[Check] protocol-builder",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Archive] protocol-builder",
+      "status": "completed",
+      "blockedBy": "[Report] protocol-builder",
+      "archivedTo": "docs/archive/2026-06/protocol-builder/",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Plan] product-match",
+      "status": "completed",
+      "method": "plan-plus",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Design] product-match",
+      "status": "completed",
+      "blockedBy": "[Plan] product-match",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Do] product-match",
+      "status": "completed",
+      "blockedBy": "[Design] product-match",
+      "scope": [
+        "module-1",
+        "module-2"
+      ],
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Check] product-match",
+      "status": "completed",
+      "blockedBy": "[Do] product-match",
+      "matchRate": 99,
+      "mode": "runtime-verified",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Report] product-match",
+      "status": "completed",
+      "blockedBy": "[Check] product-match",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Archive] product-match",
+      "status": "completed",
+      "blockedBy": "[Report] product-match",
+      "archivedTo": "docs/archive/2026-06/product-match/",
+      "createdAt": "2026-06-11"
+    }
   ],
-  "updatedAt": "2026-06-11"
+  "updatedAt": "2026-06-15"
 }

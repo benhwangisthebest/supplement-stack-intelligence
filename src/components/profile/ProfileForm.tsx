@@ -12,8 +12,12 @@ import {
 } from "@/types";
 import { MultiSelect } from "@/components/ui/MultiSelect";
 import { TagInput } from "@/components/ui/TagInput";
+import { knownMedicationNames } from "@/lib/interactions/medication-names";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
+
+// Computed once: medication autocomplete options (medication-interactions v2).
+const MEDICATION_SUGGESTIONS = knownMedicationNames();
 
 // Design §5.4 — Profile core fields. Persists via PUT /api/profile.
 export function ProfileForm({ initial }: { initial: UserProfile | null }) {
@@ -142,7 +146,8 @@ export function ProfileForm({ initial }: { initial: UserProfile | null }) {
         label="Medications"
         values={medications}
         onChange={setMedications}
-        placeholder="Type and press Enter"
+        placeholder="Type and press Enter (e.g. warfarin, metformin)"
+        suggestions={MEDICATION_SUGGESTIONS}
       />
       <TagInput
         label="Avoided ingredients"

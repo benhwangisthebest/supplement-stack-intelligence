@@ -1,20 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 // Chip-style free-text tag input (Design §5.4 — allergies, medications, avoided).
+// `suggestions` adds optional <datalist> autocomplete (medication-interactions v2).
 export function TagInput({
   label,
   values,
   onChange,
   placeholder,
+  suggestions,
 }: {
   label: string;
   values: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
+  suggestions?: string[];
 }) {
   const [draft, setDraft] = useState("");
+  const listId = useId();
 
   function add() {
     const v = draft.trim();
@@ -54,6 +58,7 @@ export function TagInput({
         type="text"
         value={draft}
         placeholder={placeholder}
+        list={suggestions && suggestions.length > 0 ? listId : undefined}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === ",") {
@@ -64,6 +69,13 @@ export function TagInput({
         onBlur={add}
         className="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
       />
+      {suggestions && suggestions.length > 0 && (
+        <datalist id={listId}>
+          {suggestions.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+      )}
     </div>
   );
 }

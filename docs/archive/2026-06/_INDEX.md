@@ -5,6 +5,9 @@
 | [mvp-core-loop](mvp-core-loop/) | 2026-06-11 | 99% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 | [protocol-builder](protocol-builder/) | 2026-06-11 | 99% (runtime-verified) | — (report path) | plan · design · analysis · report |
 | [product-match](product-match/) | 2026-06-11 | 99% (runtime-verified) | — (report path) | plan · design · analysis · report |
+| [medication-interactions](medication-interactions/) | 2026-06-15 | 99% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
+
+> **v2 milestone begins** — first feature beyond the v1 MVP + two extensions.
 
 ## mvp-core-loop
 The MVP core loop: search the Library → build a profile-aware stack → evidence-aware evaluation → compare vs goals. Built via Plan-Plus → PDCA (Design Option C, Do ×7 modules, Check 96%→Act-1 98%, QA 99% live). Success criteria 5/5 met against a live Supabase backend.
@@ -30,3 +33,12 @@ Seed-backed Product Match: ranks real products per stack item by composite fit (
 - [Design](product-match/product-match.design.md)
 - [Analysis](product-match/product-match.analysis.md)
 - [Report](product-match/product-match.report.md)
+
+## medication-interactions (v2)
+Replaces v1's placeholder medication detection with a real, pure `lib/interactions` engine + curated seed datasets (18 medication aliases, 17 supplement↔drug + 3 supplement↔supplement rules). Normalizes meds (brand→generic→drug-class), grades severity, routes all copy through `lib/safety`, and surfaces findings across Stack Evaluation (with critical clinician-escalation banner), Protocol Builder, and Library ("Interactions" section + honest "no known interactions" empty state). Built via Plan-Plus → PDCA (Design Option C, Do ×2 modules, Check 97%→Act-1 99%, QA PASS live). Success criteria 6/6; honesty enforced by a banned-language sweep test. Deferred to v3: external interaction API, condition/pregnancy rules.
+
+- [Plan](medication-interactions/medication-interactions.plan.md)
+- [Design](medication-interactions/medication-interactions.design.md)
+- [Analysis](medication-interactions/medication-interactions.analysis.md)
+- [Report](medication-interactions/medication-interactions.report.md)
+- [QA Report](medication-interactions/medication-interactions.qa-report.md)

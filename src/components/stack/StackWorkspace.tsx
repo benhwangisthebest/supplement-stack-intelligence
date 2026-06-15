@@ -8,10 +8,14 @@ import type {
   Stack,
   StackItem,
 } from "@/types";
+import { DISCLAIMERS } from "@/lib/safety";
 import { AddItemForm, type SupplementOption } from "./AddItemForm";
 import { FlagCard } from "./FlagCard";
 import { CompareView } from "./CompareView";
 import { StackItemRow } from "./StackItemRow";
+
+// Interaction categories produced by the v2 engine (medication-interactions).
+const INTERACTION_CATEGORIES = new Set(["medication-caution", "interaction-risk"]);
 
 // Design §5.4, §2.2 — Stack Lab detail: editor + evaluate + report + compare.
 // This is where the core loop closes (Plan North Star).
@@ -78,6 +82,14 @@ export function StackWorkspace({
 
   const order: FlagSeverity[] = ["critical", "warning", "info"];
 
+  // Plan SC: high-severity interaction → clinician-escalation banner + disclaimer.
+  const hasCriticalInteraction = flags.some(
+    (f) => f.severity === "critical" && INTERACTION_CATEGORIES.has(f.category),
+  );
+  const hasAnyInteraction = flags.some((f) =>
+    INTERACTION_CATEGORIES.has(f.category),
+  );
+
   return (
     <div className="space-y-8">
       {/* Items */}
@@ -134,6 +146,21 @@ export function StackWorkspace({
           </p>
         )}
 
+        {hasCriticalInteraction && (
+          <div
+            role="alert"
+            className="mt-4 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800"
+          >
+            <p className="font-semibold">
+              A potentially serious interaction was flagged
+            </p>
+            <p className="mt-1">
+              Please review the flagged items with a clinician or pharmacist before
+              continuing.
+            </p>
+          </div>
+        )}
+
         {flags.length > 0 && (
           <div className="mt-4 space-y-3">
             {order.flatMap((sev) =>
@@ -142,6 +169,10 @@ export function StackWorkspace({
                 .map((f) => <FlagCard key={f.id} flag={f} />),
             )}
           </div>
+        )}
+
+        {hasAnyInteraction && (
+          <p className="mt-3 text-xs text-neutral-400">{DISCLAIMERS.interaction}</p>
         )}
       </section>
 

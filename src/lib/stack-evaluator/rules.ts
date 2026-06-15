@@ -7,6 +7,8 @@ import {
   type EvidenceLibrary,
 } from "@/lib/evidence";
 import { safetyCopy } from "@/lib/safety";
+import { findInteractions, normalizeMedications } from "@/lib/interactions";
+import { toInteractionFlags } from "@/lib/interactions/to-flags";
 import type {
   DraftFlag,
   Effect,
@@ -24,15 +26,6 @@ export const DOSE_EXCEED_WARN_RATIO = 1.5; // dose > 1.5x studied max -> warning
 export const DOSE_CRIT_RATIO = 2.5; // dose > 2.5x studied max -> critical
 export const REDUNDANCY_WARN_COUNT = 3; // group size >= 3 -> warning, else info
 export const COMPLEXITY_WARN = 12; // item count > 12 -> info
-
-/** Supplements with documented medication-interaction caution (placeholder set). */
-export const MED_CAUTION_IDS: ReadonlySet<string> = new Set([
-  "berberine",
-  "fish-oil",
-  "nac",
-  "caffeine",
-  "vitamin-d",
-]);
 
 export interface EvalContext {
   stack: Stack;
@@ -252,23 +245,39 @@ export function ruleLabRelevance(ctx: EvalContext): DraftFlag[] {
   return flags;
 }
 
-// ---- Rule 7: medication-caution (Design §11.4) ----
-export function ruleMedicationCaution(ctx: EvalContext): DraftFlag[] {
-  if (!ctx.profile || ctx.profile.medications.length === 0) return [];
-  const flags: DraftFlag[] = [];
+// ---- Rule 7: interactions (medication-interactions v2; Design §11.4) ----
+// Replaces the v1 placeholder (MED_CAUTION_IDS + generic copy) with the real
+// pure engine. Emits supplement↔drug (medication-caution) and supplement↔supplement
+// (interaction-risk) flags, severity-graded via lib/interactions/to-flags.
+export function ruleInteractions(ctx: EvalContext): DraftFlag[] {
+  const medications = ctx.profile?.medications ?? [];
 
+  // Resolve supplementId → stackItem id so flags can target the offending row.
+  const supplementToItemId: Record<string, string> = {};
   for (const item of ctx.items) {
-    if (!item.supplementId || !MED_CAUTION_IDS.has(item.supplementId)) continue;
-    const supp = getSupplementById(item.supplementId, ctx.library);
-    const copy = safetyCopy.medicationCaution(supp?.name ?? itemLabel(item, ctx));
-    flags.push({
-      stackItemId: item.id,
-      severity: "warning",
-      category: "medication-caution",
-      ...copy,
-      evidenceLevel: "n/a",
-    });
+    if (item.supplementId && !(item.supplementId in supplementToItemId)) {
+      supplementToItemId[item.supplementId] = item.id;
+    }
   }
+
+  const findings = findInteractions({ medications, stackItems: ctx.items });
+  const flags = toInteractionFlags(findings, { supplementToItemId });
+
+  // Curation honesty (Plan FR-10): a medication we can't recognize is NOT "safe" —
+  // surface it as an info flag rather than failing silently.
+  if (medications.length > 0) {
+    const { unresolved } = normalizeMedications(medications);
+    for (const name of unresolved) {
+      flags.push({
+        stackItemId: null,
+        severity: "info",
+        category: "medication-caution",
+        ...safetyCopy.unrecognizedMedication(name),
+        evidenceLevel: "n/a",
+      });
+    }
+  }
+
   return flags;
 }
 
@@ -294,6 +303,6 @@ export const ALL_RULES: ((ctx: EvalContext) => DraftFlag[])[] = [
   ruleAllergyConflict,
   ruleGoalAlignment,
   ruleLabRelevance,
-  ruleMedicationCaution,
+  ruleInteractions,
   ruleComplexity,
 ];

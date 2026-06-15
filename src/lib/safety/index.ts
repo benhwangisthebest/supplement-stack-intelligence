@@ -18,6 +18,9 @@ export const DISCLAIMERS = {
     "Lab values are used only to inform educational prioritization. They are not interpreted as a diagnosis. Discuss results with a qualified clinician.",
   evaluation:
     "This evaluation is educational and not medical advice. For medications, pregnancy, chronic conditions, abnormal labs, or high doses, consult a clinician.",
+  // medication-interactions (v2). Shown near interaction findings; escalates on high severity.
+  interaction:
+    "Interaction findings are educational and drawn from a limited curated dataset. The absence of a finding does not mean a combination is safe. For anything involving medications, review supplements with a clinician or pharmacist.",
 } as const;
 
 /**
@@ -213,5 +216,45 @@ export const safetyCopy = {
   },
   productReasonValue(): string {
     return "Good value by price per effective dose.";
+  },
+
+  // ---- Interaction copy (medication-interactions v2). Hedged, non-diagnostic. ----
+
+  /** Supplement↔drug interaction finding. `counterpart` is a human-readable label. */
+  interactionWithDrug(
+    supplementName: string,
+    counterpart: string,
+    mechanism: string,
+    management: string,
+  ): FlagCopy {
+    return {
+      title: `Possible interaction with ${counterpart}`,
+      explanation: `${supplementName} may interact with ${counterpart}: ${mechanism}.`,
+      recommendation: `${management} This may be worth discussing with a clinician or pharmacist.`,
+    };
+  },
+
+  /** Supplement↔supplement interaction finding within a stack. */
+  interactionBetweenSupplements(
+    nameA: string,
+    nameB: string,
+    mechanism: string,
+    management: string,
+  ): FlagCopy {
+    return {
+      title: `Possible interaction: ${nameA} + ${nameB}`,
+      explanation: `${nameA} and ${nameB} may interact: ${mechanism}.`,
+      recommendation: management,
+    };
+  },
+
+  /** A medication that could not be matched to the dataset — never implies safety. */
+  unrecognizedMedication(name: string): FlagCopy {
+    return {
+      title: "Medication not recognized",
+      explanation: `The app could not match "${name}" to its interaction dataset, so it could not check for interactions.`,
+      recommendation:
+        "This does not mean the combination is safe. Consider confirming with a clinician or pharmacist.",
+    };
   },
 } as const;
