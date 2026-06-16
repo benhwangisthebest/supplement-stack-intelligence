@@ -73,6 +73,52 @@ describe("generateProtocol", () => {
     expect(deficiency.suggestions[0].labBoosted).toBe(true);
   });
 
+  it("lab-timeline v4: a worsening trend nudges the supplement up with an explainable note", () => {
+    const worsening = {
+      biomarkerId: "vitamin-d-25oh",
+      biomarkerName: "25-OH Vitamin D",
+      latest: { value: 20, unit: "ng/mL", collectedAt: "2026-06-01" },
+      previous: { value: 28, unit: "ng/mL", collectedAt: "2025-12-01" },
+      delta: -8,
+      pctChange: -28,
+      direction: "falling" as const,
+      windowDays: 182,
+      points: 2,
+    };
+    const result = generateProtocol({
+      profile: makeProfile({ goals: ["deficiency"] }),
+      trends: [worsening],
+    });
+    const vitD = group(result, "deficiency")!.suggestions.find(
+      (s) => s.supplementId === "vitamin-d",
+    )!;
+    expect(vitD.labSignal).toBeGreaterThan(0);
+    expect(vitD.labBoosted).toBe(true);
+    expect(vitD.labRationale).toMatch(/away from range/i);
+  });
+
+  it("lab-timeline v4: trend nudge is bounded and copy stays non-diagnostic", () => {
+    const improving = {
+      biomarkerId: "vitamin-d-25oh",
+      biomarkerName: "25-OH Vitamin D",
+      latest: { value: 41, unit: "ng/mL", collectedAt: "2026-06-01" },
+      previous: { value: 28, unit: "ng/mL", collectedAt: "2025-12-01" },
+      delta: 13,
+      pctChange: 46,
+      direction: "rising" as const,
+      windowDays: 182,
+      points: 2,
+    };
+    const result = generateProtocol({
+      profile: makeProfile({ goals: ["deficiency"] }),
+      trends: [improving],
+    });
+    for (const s of group(result, "deficiency")!.suggestions) {
+      expect(Math.abs(s.labSignal ?? 0)).toBeLessThanOrEqual(1);
+      if (s.labRationale) expect(containsBannedLanguage(s.labRationale)).toBe(false);
+    }
+  });
+
   it("annotates items already in the target stack", () => {
     const items: StackItem[] = [
       {

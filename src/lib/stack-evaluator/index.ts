@@ -10,6 +10,7 @@ import type {
   StackItem,
   UserProfile,
 } from "@/types";
+import type { TrendSignal } from "@/types/lab";
 import { ALL_RULES, type EvalContext } from "./rules";
 
 export interface EvaluateStackInput {
@@ -17,6 +18,7 @@ export interface EvaluateStackInput {
   items: StackItem[];
   profile?: UserProfile | null;
   labMarkers?: LabMarker[];
+  trends?: TrendSignal[];
   library?: EvidenceLibrary;
 }
 
@@ -41,6 +43,7 @@ export function evaluateStack(input: EvaluateStackInput): EvaluationResult {
     items: input.items,
     profile: input.profile ?? null,
     labMarkers: input.labMarkers ?? [],
+    trends: input.trends ?? [],
     library: input.library ?? defaultLibrary,
   };
 

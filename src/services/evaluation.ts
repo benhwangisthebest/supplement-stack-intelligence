@@ -6,7 +6,9 @@ import { getStack } from "@/lib/db/stack-repo";
 import { listItems } from "@/lib/db/stack-item-repo";
 import { getProfile } from "@/lib/db/profile-repo";
 import { listLabMarkers } from "@/lib/db/lab-marker-repo";
+import { listTimelinePoints } from "@/lib/db/lab-panel-repo";
 import { listFlags, replaceFlags } from "@/lib/db/evaluation-flag-repo";
+import { computeTrends } from "@/lib/lab-trends";
 import type { StackItem } from "@/types";
 import { evaluateStack, summarize } from "@/lib/stack-evaluator";
 
@@ -28,14 +30,16 @@ export async function runEvaluation(
   const stack = await getStack(supabase, userId, stackId);
   if (!stack) return null;
 
-  const [items, profile, labMarkers] = await Promise.all([
+  const [items, profile, labMarkers, points] = await Promise.all([
     listItems(supabase, stackId),
     getProfile(supabase, userId),
     listLabMarkers(supabase, userId),
+    listTimelinePoints(supabase, userId),
   ]);
 
-  // Plan SC: profile + labs feed the engine — this is where personalization pays off.
-  const { flags: drafts } = evaluateStack({ stack, items, profile, labMarkers });
+  // Plan SC: profile + labs + trends feed the engine — personalization pays off.
+  const trends = computeTrends(points);
+  const { flags: drafts } = evaluateStack({ stack, items, profile, labMarkers, trends });
   const persisted = await replaceFlags(supabase, stackId, drafts);
 
   return { stackId, flags: persisted, summary: summarize(drafts) };

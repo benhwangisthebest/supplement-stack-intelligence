@@ -9,7 +9,7 @@ import {
 import { safetyCopy } from "@/lib/safety";
 import { findInteractions, normalizeMedications } from "@/lib/interactions";
 import { toInteractionFlags } from "@/lib/interactions/to-flags";
-import { assessLabMarkers, normalizeMarker } from "@/lib/biomarkers";
+import { assessLabMarkers, biomarkersForSupplement, normalizeMarker } from "@/lib/biomarkers";
 import { toLabFlags } from "@/lib/biomarkers/to-flags";
 import type {
   DraftFlag,
@@ -21,6 +21,7 @@ import type {
   StackItem,
   UserProfile,
 } from "@/types";
+import type { TrendSignal } from "@/types/lab";
 
 // ---- Thresholds (Design §11.4). Tunable constants live here only. ----
 export const DOSE_LOW_RATIO = 0.5; // dose < 0.5x studied min -> info
@@ -34,6 +35,7 @@ export interface EvalContext {
   items: StackItem[];
   profile: UserProfile | null;
   labMarkers: LabMarker[];
+  trends: TrendSignal[]; // lab-timeline v4 — per-biomarker trajectory (may be empty)
   library: EvidenceLibrary;
 }
 
@@ -294,6 +296,62 @@ export function ruleInteractions(ctx: EvalContext): DraftFlag[] {
   return flags;
 }
 
+// ---- Rule 9: lab-trend (lab-timeline v4; Design §2.1, §11.4) ----
+// Supplement-anchored trajectory notes: for each stacked supplement, if a
+// biomarker it's curated-relevant to is trending, describe the movement toward
+// or away from range. Anchored to a relevance rule (never a standalone
+// out-of-range insight) and routed through lib/safety (non-diagnostic).
+export function ruleLabTrend(ctx: EvalContext): DraftFlag[] {
+  if (ctx.trends.length === 0) return [];
+
+  const trendByBiomarker = new Map<string, TrendSignal>(
+    ctx.trends.map((t) => [t.biomarkerId, t]),
+  );
+
+  const flags: DraftFlag[] = [];
+  const seen = new Set<string>(); // dedupe per (supplement, biomarker)
+
+  for (const item of ctx.items) {
+    if (!item.supplementId) continue;
+    const supp = getSupplementById(item.supplementId, ctx.library);
+    if (!supp) continue;
+
+    for (const { rule } of biomarkersForSupplement(item.supplementId)) {
+      // Deficiency-support rules give the clearest toward/away-from-range story;
+      // caution rules are deferred (avoids canceling/ambiguous trajectory copy).
+      if (rule.relation !== "support") continue;
+      const trend = trendByBiomarker.get(rule.biomarkerId);
+      if (!trend || trend.pctChange === null) continue;
+      if (trend.direction !== "rising" && trend.direction !== "falling") continue;
+
+      // "improving" = moving toward the healthy side. trigger 'low' means a low
+      // value is the concern → rising is improving; trigger 'high' → falling is.
+      const improving =
+        rule.trigger === "low"
+          ? trend.direction === "rising"
+          : trend.direction === "falling";
+
+      const key = `${item.supplementId}:${rule.biomarkerId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      flags.push({
+        stackItemId: item.id,
+        severity: "info",
+        category: "lab-relevance",
+        ...safetyCopy.biomarkerTrend(
+          supp.name,
+          trend.biomarkerName,
+          improving ? "improving" : "worsening",
+          trend.pctChange,
+        ),
+        evidenceLevel: gradeToEvidenceLevel(rule.evidenceGrade),
+      });
+    }
+  }
+  return flags;
+}
+
 // ---- Rule 8: complexity (Design §11.4) ----
 export function ruleComplexity(ctx: EvalContext): DraftFlag[] {
   if (ctx.items.length <= COMPLEXITY_WARN) return [];
@@ -316,6 +374,7 @@ export const ALL_RULES: ((ctx: EvalContext) => DraftFlag[])[] = [
   ruleAllergyConflict,
   ruleGoalAlignment,
   ruleLabRelevance,
+  ruleLabTrend,
   ruleInteractions,
   ruleComplexity,
 ];

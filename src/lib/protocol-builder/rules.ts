@@ -1,6 +1,8 @@
 // Domain layer — PURE. Protocol generation rules (Design §11.4).
-// Imports only lib/evidence, lib/safety, lib/interactions, and types.
+// Imports only lib/evidence, lib/safety, lib/interactions, lib/biomarkers, and types.
 import { hasMedicationInteraction } from "@/lib/interactions";
+import { biomarkersForSupplement } from "@/lib/biomarkers";
+import { safetyCopy } from "@/lib/safety";
 import type {
   EvidenceGrade,
   ItemTiming,
@@ -8,6 +10,7 @@ import type {
   ProtocolTier,
   Supplement,
 } from "@/types";
+import type { TrendSignal } from "@/types/lab";
 
 // Default timing suggestion per goal (heuristic; null when no clear default).
 const TIMING_BY_GOAL: Partial<Record<OutcomeCategory, ItemTiming>> = {
@@ -55,6 +58,54 @@ export function hasMedicationCaution(
   medications: string[],
 ): boolean {
   return hasMedicationInteraction(supplementId, medications);
+}
+
+// lab-timeline v4 — bounded trajectory nudge to the lab signal. Per relevant
+// biomarker; total clamped so trends inform but never dominate ranking.
+export const TREND_NUDGE = 0.2;
+
+/**
+ * Adjustment to a supplement's lab signal from its relevant biomarkers' trends.
+ * A worsening marker (moving away from range) nudges the supplement UP (more
+ * likely relevant); an improving marker nudges it DOWN. Total bounded to
+ * ±TREND_NUDGE. Pure & deterministic. Returns an explainable note for the top
+ * contributor, or null.
+ */
+export function trendAdjustment(
+  supplementId: string,
+  trends: TrendSignal[],
+): { delta: number; note: string | null } {
+  if (trends.length === 0) return { delta: 0, note: null };
+  const byId = new Map(trends.map((t) => [t.biomarkerId, t]));
+
+  let delta = 0;
+  let note: string | null = null;
+  let topAbs = 0;
+
+  for (const { rule } of biomarkersForSupplement(supplementId)) {
+    // Trajectory framing is clearest for deficiency-support rules; caution rules
+    // (supplement could push an already-high marker further) are left to v5.
+    if (rule.relation !== "support") continue;
+    const trend = byId.get(rule.biomarkerId);
+    if (!trend || trend.pctChange === null) continue;
+    if (trend.direction !== "rising" && trend.direction !== "falling") continue;
+
+    const improving =
+      rule.trigger === "low"
+        ? trend.direction === "rising"
+        : trend.direction === "falling";
+    const contribution = improving ? -TREND_NUDGE : TREND_NUDGE;
+    delta += contribution;
+    if (Math.abs(contribution) >= topAbs) {
+      topAbs = Math.abs(contribution);
+      note = safetyCopy.protocolTrendNote(
+        trend.biomarkerName,
+        improving ? "improving" : "worsening",
+      );
+    }
+  }
+
+  return { delta: Math.max(-TREND_NUDGE, Math.min(TREND_NUDGE, delta)), note };
 }
 
 // Grade rank for ordering (A strongest).

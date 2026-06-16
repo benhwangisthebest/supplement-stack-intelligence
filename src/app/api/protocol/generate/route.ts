@@ -6,6 +6,8 @@ import { getStack } from "@/lib/db/stack-repo";
 import { listItems } from "@/lib/db/stack-item-repo";
 import { getProfile } from "@/lib/db/profile-repo";
 import { listLabMarkers } from "@/lib/db/lab-marker-repo";
+import { listTimelinePoints } from "@/lib/db/lab-panel-repo";
+import { computeTrends } from "@/lib/lab-trends";
 import { generateProtocol } from "@/lib/protocol-builder";
 import { generateProtocolSchema } from "@/lib/validation/schemas";
 import { handle, notFound, ok, unauthorized } from "@/lib/api/respond";
@@ -22,14 +24,16 @@ export async function POST(request: NextRequest) {
     const stack = await getStack(supabase, user.id, stackId);
     if (!stack) return notFound("Stack");
 
-    const [profile, labMarkers, stackItems] = await Promise.all([
+    const [profile, labMarkers, stackItems, points] = await Promise.all([
       getProfile(supabase, user.id),
       listLabMarkers(supabase, user.id),
       listItems(supabase, stackId),
+      listTimelinePoints(supabase, user.id),
     ]);
 
     // Plan SC: ephemeral, deterministic generation from profile (no Protocol persisted).
-    const result = generateProtocol({ profile, labMarkers, stackItems });
+    const trends = computeTrends(points);
+    const result = generateProtocol({ profile, labMarkers, trends, stackItems });
     return ok(result);
   });
 }

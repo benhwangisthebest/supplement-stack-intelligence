@@ -15,10 +15,31 @@ import {
   ruleEvidenceFit,
   ruleGoalAlignment,
   ruleLabRelevance,
+  ruleLabTrend,
   ruleInteractions,
   ruleRedundancy,
   type EvalContext,
 } from "./index";
+import type { TrendDirection, TrendSignal } from "@/types/lab";
+
+function makeTrend(
+  biomarkerId: string,
+  biomarkerName: string,
+  direction: TrendDirection,
+  pctChange: number | null,
+): TrendSignal {
+  return {
+    biomarkerId,
+    biomarkerName,
+    latest: { value: 0, unit: "ng/mL", collectedAt: "2026-06-01" },
+    previous: { value: 0, unit: "ng/mL", collectedAt: "2025-12-01" },
+    delta: 0,
+    pctChange,
+    direction,
+    windowDays: 182,
+    points: 2,
+  };
+}
 
 // ---- fixtures ----
 function makeStack(overrides: Partial<Stack> = {}): Stack {
@@ -79,6 +100,7 @@ function ctx(overrides: Partial<EvalContext>): EvalContext {
     items: [],
     profile: null,
     labMarkers: [],
+    trends: [],
     library: defaultLibrary,
     ...overrides,
   };
@@ -243,6 +265,46 @@ describe("ruleLabRelevance", () => {
     expect(note).toBeDefined();
     expect(note!.severity).toBe("info");
     expect(note!.category).toBe("lab-relevance");
+  });
+});
+
+describe("ruleLabTrend (lab-timeline v4)", () => {
+  const items = [makeItem({ supplementId: "vitamin-d", dose: 2000, unit: "IU" })];
+
+  it("notes an improving trajectory (low marker rising toward range)", () => {
+    const trends = [makeTrend("vitamin-d-25oh", "25-OH Vitamin D", "rising", 46)];
+    const flags = ruleLabTrend(ctx({ items, trends }));
+    expect(flags).toHaveLength(1);
+    expect(flags[0].category).toBe("lab-relevance");
+    expect(flags[0].severity).toBe("info");
+    expect(flags[0].stackItemId).toBe(items[0].id);
+    expect(/helpful direction/i.test(flags[0].title)).toBe(true);
+  });
+
+  it("notes a worsening trajectory (low marker falling further from range)", () => {
+    const trends = [makeTrend("vitamin-d-25oh", "25-OH Vitamin D", "falling", -20)];
+    const flags = ruleLabTrend(ctx({ items, trends }));
+    expect(flags[0].title).toMatch(/away from range/i);
+  });
+
+  it("emits nothing without a relevant supplement in the stack", () => {
+    const trends = [makeTrend("vitamin-d-25oh", "25-OH Vitamin D", "rising", 46)];
+    const other = [makeItem({ supplementId: "taurine", dose: 1000 })];
+    expect(ruleLabTrend(ctx({ items: other, trends }))).toHaveLength(0);
+  });
+
+  it("ignores stable / insufficient trends", () => {
+    const stable = [makeTrend("vitamin-d-25oh", "25-OH Vitamin D", "stable", 2)];
+    expect(ruleLabTrend(ctx({ items, trends: stable }))).toHaveLength(0);
+    const insufficient = [makeTrend("vitamin-d-25oh", "25-OH Vitamin D", "insufficient", null)];
+    expect(ruleLabTrend(ctx({ items, trends: insufficient }))).toHaveLength(0);
+  });
+
+  it("trend copy is non-diagnostic", () => {
+    const trends = [makeTrend("vitamin-d-25oh", "25-OH Vitamin D", "falling", -20)];
+    for (const f of ruleLabTrend(ctx({ items, trends }))) {
+      expect(containsBannedLanguage(`${f.title} ${f.explanation} ${f.recommendation}`)).toBe(false);
+    }
   });
 });
 

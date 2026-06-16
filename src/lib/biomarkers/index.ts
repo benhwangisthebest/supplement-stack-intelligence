@@ -147,6 +147,31 @@ export function labBoost(
   return { score: clamped, biomarkerName: topName, rationale };
 }
 
+/** Lookup a biomarker by canonical id (registry stays otherwise encapsulated). */
+export function getBiomarker(id: string): Biomarker | undefined {
+  return REGISTRY.get(id);
+}
+
+/**
+ * Lab-import surface (Design §4.2): resolve a raw marker + (value, unit) to its
+ * canonical id and value. Returns null when the marker is unrecognized or the
+ * unit can't be converted (caller stores raw-only; never guesses a canonical
+ * value — same safety rule as statusOf). PURE — reuses normalize + toCanonical.
+ */
+export function canonicalize(
+  markerName: string,
+  value: number,
+  unit: string,
+): { biomarkerId: string; canonicalValue: number; canonicalUnit: string } | null {
+  const id = normalizeMarker(markerName);
+  if (!id) return null;
+  const biomarker = REGISTRY.get(id);
+  if (!biomarker) return null;
+  const canonicalValue = toCanonical(value, unit, biomarker);
+  if (canonicalValue === null) return null;
+  return { biomarkerId: id, canonicalValue, canonicalUnit: biomarker.canonicalUnit };
+}
+
 /** Library surface: every rule involving a supplement, with its biomarker. */
 export function biomarkersForSupplement(
   supplementId: string,

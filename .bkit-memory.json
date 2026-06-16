@@ -3,6 +3,41 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "lab-timeline": {
+      "phase": "archived",
+      "milestone": "v4",
+      "archivedTo": "docs/archive/2026-06/lab-timeline/",
+      "archivedAt": "2026-06-16",
+      "matchRate": 99,
+      "matchRateMode": "static+unit; L1 auth-guards runtime-verified (live DB flows env-gated)",
+      "successCriteria": "9/9 met",
+      "qaStatus": "PASS",
+      "iterationCount": 1,
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete",
+        "module-3": "complete"
+      },
+      "method": "plan-plus",
+      "approach": "option-a-hybrid-extraction",
+      "architecture": "option-c-pragmatic-additive",
+      "engine": "pure-function-lab-trends + claude-extraction-adapter",
+      "anchor": "lab-timeline / upload-standardize-track",
+      "designDoc": "docs/02-design/features/lab-timeline.design.md",
+      "scope": [
+        "csv+paste+pdf-extraction",
+        "mandatory-confirm-gate",
+        "dated-lab-panels-storage",
+        "lab-trends-engine",
+        "evaluation+protocol-trajectory",
+        "profile-trend-charts"
+      ],
+      "deferred": [
+        "loinc-coding"
+      ],
+      "planDoc": "docs/01-plan/features/lab-timeline.plan.md",
+      "startedAt": "2026-06-16"
+    },
     "biomarker-intelligence": {
       "phase": "archived",
       "architecture": "option-c-pragmatic",
@@ -98,6 +133,87 @@
     }
   },
   "tasks": [
+    {
+      "title": "[Archive] lab-timeline",
+      "status": "completed",
+      "blockedBy": "[Report] lab-timeline",
+      "archivedTo": "docs/archive/2026-06/lab-timeline/",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Report] lab-timeline",
+      "status": "completed",
+      "blockedBy": "[QA] lab-timeline",
+      "result": "v4 completion report; 9/9 SC, 99% match (static + L1 runtime), QA PASS. Deferred: apply 0002 migration + E2E_LIVE authed verification (pre-deploy).",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[QA] lab-timeline",
+      "status": "completed",
+      "blockedBy": "[Act-1] lab-timeline",
+      "qaStatus": "PASS",
+      "result": "L0 147/147 unit + L1 3/3 live auth-guards green (dev server). Authed L1 + L2/L3 gated (E2E_LIVE unset + 0002 migration not applied to live DB). Fixed QA-1: spec fixture path used import.meta (ESM/CJS error) -> resolved via process.cwd(); tsc clean.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Check] lab-timeline",
+      "status": "completed",
+      "blockedBy": "[Do] lab-timeline --scope module-3",
+      "matchRate": 98,
+      "mode": "static-only (no live server)",
+      "gaps": "0 Critical, 1 Important (IMP-1 review-step disclaimer); SC 9/9",
+      "result": "Structural 100 / Functional 95 / Contract 100; 147/147 unit, tsc clean, next build green",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Act-1] lab-timeline",
+      "status": "completed",
+      "blockedBy": "[Check] lab-timeline",
+      "fix": "IMP-1 — added lib/safety Disclaimer banner inside LabReviewConfirm",
+      "matchRate": 99,
+      "result": "Functional 100; tsc clean, next build green (no warnings); 147/147 unit",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Do] lab-timeline --scope module-3",
+      "status": "completed",
+      "blockedBy": "[Do] lab-timeline --scope module-2",
+      "scope": ["module-3"],
+      "result": "Surfaces & UI: 7 created (useLabImport hook, LabUpload, LabReviewConfirm, LabTimeline, TrendChart, L2+L3 specs), 8 modified (safety trajectory copy, stack-evaluator ruleLabTrend +trends ctx, protocol-builder bounded trendAdjustment ±0.2, evaluation service + protocol route compute/pass trends, profile page wires Upload+Timeline, 2 engine test files extended). Trajectory restricted to support-relation rules (avoids canceling low/high rules). 147/147 unit green (+7), tsc clean, next build green (no warnings, /profile 6.12kB). L2/L3 Playwright gated behind E2E_LIVE.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Do] lab-timeline --scope module-2",
+      "status": "completed",
+      "blockedBy": "[Do] lab-timeline --scope module-1",
+      "scope": ["module-2"],
+      "result": "API & repo: 7 created (lab-panel-repo, extract/commit/lab-panels/lab-trends routes, L1 spec, labs-sample.csv fixture), 5 modified (db/types, db/mappers, biomarkers canonicalize()+getBiomarker(), pdf-adapter native-PDF extractFromPdf, package.json). Installed @anthropic-ai/sdk; switched adapter to static lazy import (warning gone). extract route is repo-free (no-write); commit recomputes canonical via repo. 140/140 unit green, tsc clean, next build green (32 pages, 6 lab routes). L1 Playwright deferred to Check (needs live server).",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Do] lab-timeline --scope module-1",
+      "status": "completed",
+      "blockedBy": "[Design] lab-timeline",
+      "scope": ["module-1"],
+      "result": "Engines & schema: 9 created (types/lab.ts, 0002_lab_panels.sql, lib/lab-import {schema,csv,paste,pdf-adapter}, lib/lab-trends, 2 test files), 1 modified (.env.example). 30 new unit tests; full suite 140/140 green (was 110); tsc clean; next build green. Adapter SDK dynamic-imported via variable specifier — build dependency-free.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Design] lab-timeline",
+      "status": "completed",
+      "blockedBy": "[Plan] lab-timeline",
+      "architecture": "option-c-pragmatic-additive",
+      "result": "3 options presented; selected C (additive: lab_panels + nullable panel_id/canonical cols on lab_markers, legacy rows untouched). Discovered lab_markers already has a date column. Modules: lib/lab-import (csv/paste/pdf-adapter) + lib/lab-trends; extract route is write-free; commit recomputes canonical fields server-side. 3-module session plan.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Plan] lab-timeline",
+      "status": "completed",
+      "method": "plan-plus",
+      "milestone": "v4",
+      "result": "plan-plus brainstorm: direction=deepen-lab, story=upload+standardize+trends, approach=A-hybrid, YAGNI in=charts+trajectory+paste (LOINC deferred); plan doc written",
+      "createdAt": "2026-06-16"
+    },
     {
       "title": "[Plan] biomarker-intelligence",
       "status": "completed",
@@ -376,5 +492,5 @@
       "createdAt": "2026-06-11"
     }
   ],
-  "updatedAt": "2026-06-15"
+  "updatedAt": "2026-06-16"
 }

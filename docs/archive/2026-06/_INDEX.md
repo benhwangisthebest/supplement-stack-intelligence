@@ -7,9 +7,11 @@
 | [product-match](product-match/) | 2026-06-11 | 99% (runtime-verified) | — (report path) | plan · design · analysis · report |
 | [medication-interactions](medication-interactions/) | 2026-06-15 | 99% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 | [biomarker-intelligence](biomarker-intelligence/) | 2026-06-15 | 98% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
+| [lab-timeline](lab-timeline/) | 2026-06-16 | 99% (static + L1 runtime) | PASS | plan · design · analysis · report · qa-report |
 
 > **v2 milestone begins** — first feature beyond the v1 MVP + two extensions.
 > **v3 milestone** — `biomarker-intelligence` (lab-informed intelligence).
+> **v4 milestone** — `lab-timeline` (lab upload + standardization + trend tracking).
 
 ## mvp-core-loop
 The MVP core loop: search the Library → build a profile-aware stack → evidence-aware evaluation → compare vs goals. Built via Plan-Plus → PDCA (Design Option C, Do ×7 modules, Check 96%→Act-1 98%, QA 99% live). Success criteria 5/5 met against a live Supabase backend.
@@ -53,3 +55,12 @@ Replaces v1's naive lab string-matching with a real, pure `lib/biomarkers` engin
 - [Analysis](biomarker-intelligence/biomarker-intelligence.analysis.md)
 - [Report](biomarker-intelligence/biomarker-intelligence.report.md)
 - [QA Report](biomarker-intelligence/biomarker-intelligence.qa-report.md)
+
+## lab-timeline (v4)
+Turns v3's single-snapshot lab layer into a tracked **timeline** with low-friction intake. Users upload a lab report — CSV/paste parsed deterministically, messy **PDF transcribed by a Claude adapter** (transcription only) — then a **mandatory confirm gate** reviews every marker before anything is saved. Confirmed markers normalize through v3's `lib/biomarkers` (server-side canonical recompute — clients can't inject canonical values) into dated `lab_panels`. A pure `lib/lab-trends` engine computes per-marker trajectory (delta/%Δ/direction/window, canonical-unit-correct) that drives a trend-aware Stack Evaluation flag (`ruleLabTrend`), a bounded Protocol ranking nudge (±0.2), and a Profile timeline with SVG sparklines + honest "insufficient data" states. Architecture **Option C (additive)**: new `lab_panels` + nullable `lab_markers` columns — legacy v3 rows keep working (`panel_id NULL`, coalesced date axis), no destructive migration. The LLM is the only non-deterministic module, isolated in Infrastructure behind the confirm gate. Built via Plan-Plus → PDCA (Do ×3 modules, Check 98%→Act-1 99%, QA PASS). Success criteria 7→**9/9**; 147/147 unit + 3/3 live L1 auth-guards. First LLM dependency (`@anthropic-ai/sdk`) and first new DB tables since the MVP. **Deferred to v5:** LOINC coding, caution-relation trajectory flags, live-DB E2E (needs `0002` migration applied + `E2E_LIVE`).
+
+- [Plan](lab-timeline/lab-timeline.plan.md)
+- [Design](lab-timeline/lab-timeline.design.md)
+- [Analysis](lab-timeline/lab-timeline.analysis.md)
+- [Report](lab-timeline/lab-timeline.report.md)
+- [QA Report](lab-timeline/lab-timeline.qa-report.md)

@@ -17,6 +17,7 @@ import type {
   StackItem,
   UserProfile,
 } from "@/types";
+import type { TrendSignal } from "@/types/lab";
 import { labBoost } from "@/lib/biomarkers";
 import {
   compareSuggestions,
@@ -24,11 +25,13 @@ import {
   hasMedicationCaution,
   tierFor,
   timingForGoal,
+  trendAdjustment,
 } from "./rules";
 
 export interface GenerateProtocolInput {
   profile: UserProfile | null;
   labMarkers?: LabMarker[];
+  trends?: TrendSignal[];
   stackItems?: StackItem[]; // target stack (for alreadyInStack annotation)
   library?: EvidenceLibrary;
 }
@@ -40,6 +43,7 @@ export interface GenerateProtocolInput {
 export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
   const profile = input.profile;
   const labMarkers = input.labMarkers ?? [];
+  const trends = input.trends ?? [];
   const library = input.library ?? defaultLibrary;
   const goals = profile?.goals ?? [];
   const allergies = profile?.allergies ?? [];
@@ -69,7 +73,12 @@ export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
       // Use the best effect for this goal (highest grade) for grade/dose.
       const best = getBestEffectForOutcome(supplementId, goal, library) ?? effect;
       const labSignal = labBoost(supplementId, labMarkers);
-      const labBoosted = labSignal.score > 0; // derived — keeps the "✦ lab" badge
+      // lab-timeline v4: fold a bounded trajectory nudge into the lab signal.
+      const trend = trendAdjustment(supplementId, trends);
+      const labScore = Math.max(-1, Math.min(1, labSignal.score + trend.delta));
+      const labRationale =
+        [labSignal.rationale, trend.note].filter(Boolean).join(" ") || null;
+      const labBoosted = labScore > 0; // derived — keeps the "✦ lab" badge
       const tier = tierFor(best.grade, supp.tags);
 
       const confidenceReason = labBoosted
@@ -90,8 +99,8 @@ export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
         rationale: safetyCopy.protocolRationale(supp.name, goal, best.grade),
         confidenceNote: safetyCopy.protocolConfidenceNote(confidenceReason),
         labBoosted,
-        labSignal: labSignal.score,
-        labRationale: labSignal.rationale,
+        labSignal: labScore,
+        labRationale,
         medicationCaution: hasMedicationCaution(supplementId, medications),
         alreadyInStack: inStack.has(supplementId),
       });

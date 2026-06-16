@@ -18,9 +18,11 @@ import type {
   SupplementForm,
   UserProfile,
 } from "@/types";
+import type { LabPanel, LabMarkerTimelinePoint } from "@/types/lab";
 import type {
   EvaluationFlagRow,
   LabMarkerRow,
+  LabPanelRow,
   StackItemRow,
   StackRow,
   UserProfileRow,
@@ -56,6 +58,43 @@ export function toLabMarker(row: LabMarkerRow): LabMarker {
     referenceHigh: row.reference_high,
     date: row.date,
     notes: row.notes,
+  };
+}
+
+export function toLabPanel(row: LabPanelRow): LabPanel {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    source: row.source as LabPanel["source"],
+    collectedAt: row.collected_at,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Build a trend timeline point from a lab_markers row. Returns null for rows
+ * that can't anchor a trend: no canonical biomarker/value (unrecognized marker
+ * or unconvertible unit) or no date. The timeline axis is panel.collected_at if
+ * present, else the row's own legacy `date` (Design §3.3 coalesce rule).
+ */
+export function toTimelinePoint(
+  row: LabMarkerRow,
+  panelCollectedAt: string | null,
+): LabMarkerTimelinePoint | null {
+  const collectedAt = panelCollectedAt ?? row.date;
+  if (
+    row.biomarker_id === null ||
+    row.canonical_value === null ||
+    row.canonical_unit === null ||
+    collectedAt === null
+  ) {
+    return null;
+  }
+  return {
+    biomarkerId: row.biomarker_id,
+    canonicalValue: row.canonical_value,
+    canonicalUnit: row.canonical_unit,
+    collectedAt,
   };
 }
 

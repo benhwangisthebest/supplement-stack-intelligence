@@ -284,6 +284,47 @@ export const safetyCopy = {
     };
   },
 
+  // ---- Lab-timeline copy (lab-timeline v4). Hedged, non-diagnostic. ----
+
+  /**
+   * A lab marker's TRAJECTORY over time, anchored to a stacked supplement.
+   * Describes movement only — never a diagnosis or a directive. `direction` is
+   * "improving" when the marker is moving toward its healthy side, "worsening"
+   * when moving away (decided by the caller from trend + relevance).
+   */
+  biomarkerTrend(
+    supplementName: string,
+    biomarkerName: string,
+    direction: "improving" | "worsening",
+    pctChange: number,
+  ): FlagCopy {
+    const magnitude = `${Math.abs(Math.round(pctChange))}%`;
+    if (direction === "improving") {
+      return {
+        title: "Lab value trending in a helpful direction",
+        explanation: `Your ${biomarkerName} has moved about ${magnitude} toward its reference range since your previous entry, which is relevant to ${supplementName}.`,
+        recommendation:
+          "This may be worth keeping in view as you decide whether this item is still a priority.",
+      };
+    }
+    return {
+      title: "Lab value trending away from range",
+      explanation: `Your ${biomarkerName} has moved about ${magnitude} further from its reference range since your previous entry, which is relevant to ${supplementName}.`,
+      recommendation:
+        "This is flagged for review. Consider revisiting it, and discussing the trend with a clinician.",
+    };
+  },
+
+  /** Short trajectory note appended to a protocol suggestion's lab rationale. */
+  protocolTrendNote(
+    biomarkerName: string,
+    direction: "improving" | "worsening",
+  ): string {
+    return direction === "improving"
+      ? `${biomarkerName} has been trending toward range recently.`
+      : `${biomarkerName} has been trending away from range recently.`;
+  },
+
   /** A lab marker that could not be matched to the biomarker registry. */
   unrecognizedMarker(name: string): FlagCopy {
     return {

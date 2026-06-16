@@ -28,6 +28,20 @@ export interface LabMarkerRow {
   reference_high: number | null;
   date: string | null;
   notes: string | null;
+  // lab-timeline (migration 0002, additive). Null for legacy v3 rows.
+  panel_id: string | null;
+  biomarker_id: string | null;
+  canonical_value: number | null;
+  canonical_unit: string | null;
+}
+
+// lab-timeline (migration 0002).
+export interface LabPanelRow {
+  id: string;
+  user_id: string;
+  source: string;
+  collected_at: string;
+  created_at: string;
 }
 
 export interface StackRow {
