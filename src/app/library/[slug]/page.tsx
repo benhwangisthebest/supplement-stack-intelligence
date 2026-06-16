@@ -11,6 +11,7 @@ import {
 } from "@/lib/evidence";
 import { SupplementDetail } from "@/components/library/SupplementDetail";
 import { InteractionSection } from "@/components/library/InteractionSection";
+import { BiomarkerRelevanceSection } from "@/components/library/BiomarkerRelevanceSection";
 import { AddToStackButton } from "@/components/stack/AddToStackButton";
 
 // Seed is static — prerender every supplement page (Design §11.3).
@@ -81,6 +82,8 @@ export default async function SupplementDetailPage({
       </div>
 
       <InteractionSection supplementId={supplement.id} />
+
+      <BiomarkerRelevanceSection supplementId={supplement.id} />
     </main>
   );
 }

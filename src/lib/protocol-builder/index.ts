@@ -17,11 +17,11 @@ import type {
   StackItem,
   UserProfile,
 } from "@/types";
+import { labBoost } from "@/lib/biomarkers";
 import {
   compareSuggestions,
   hasAllergenConflict,
   hasMedicationCaution,
-  isLabBoosted,
   tierFor,
   timingForGoal,
 } from "./rules";
@@ -68,7 +68,8 @@ export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
 
       // Use the best effect for this goal (highest grade) for grade/dose.
       const best = getBestEffectForOutcome(supplementId, goal, library) ?? effect;
-      const labBoosted = isLabBoosted(supp, labMarkers);
+      const labSignal = labBoost(supplementId, labMarkers);
+      const labBoosted = labSignal.score > 0; // derived — keeps the "✦ lab" badge
       const tier = tierFor(best.grade, supp.tags);
 
       const confidenceReason = labBoosted
@@ -89,6 +90,8 @@ export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
         rationale: safetyCopy.protocolRationale(supp.name, goal, best.grade),
         confidenceNote: safetyCopy.protocolConfidenceNote(confidenceReason),
         labBoosted,
+        labSignal: labSignal.score,
+        labRationale: labSignal.rationale,
         medicationCaution: hasMedicationCaution(supplementId, medications),
         alreadyInStack: inStack.has(supplementId),
       });

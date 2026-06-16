@@ -9,6 +9,8 @@ import {
 import { safetyCopy } from "@/lib/safety";
 import { findInteractions, normalizeMedications } from "@/lib/interactions";
 import { toInteractionFlags } from "@/lib/interactions/to-flags";
+import { assessLabMarkers, normalizeMarker } from "@/lib/biomarkers";
+import { toLabFlags } from "@/lib/biomarkers/to-flags";
 import type {
   DraftFlag,
   Effect,
@@ -218,30 +220,41 @@ export function ruleGoalAlignment(ctx: EvalContext): DraftFlag[] {
 }
 
 // ---- Rule 6: lab-relevance (Design §11.4) ----
+// biomarker-intelligence v3: replaces the v1 naive string-match with the real
+// pure biomarker engine (canonical-unit conversion + curated relevance rules).
 export function ruleLabRelevance(ctx: EvalContext): DraftFlag[] {
-  if (!ctx.profile || ctx.labMarkers.length === 0) return [];
-  const flags: DraftFlag[] = [];
+  if (ctx.labMarkers.length === 0) return [];
 
+  const supplementToItemId: Record<string, string> = {};
   for (const item of ctx.items) {
-    if (!item.supplementId) continue;
-    const supp = getSupplementById(item.supplementId, ctx.library);
-    if (!supp) continue;
-    const haystack = [supp.name, ...supp.aliases, ...supp.tags].map(norm);
-
-    for (const marker of ctx.labMarkers) {
-      const m = norm(marker.marker);
-      const related = haystack.some((h) => h.includes(m) || m.includes(h));
-      if (!related) continue;
-
-      if (marker.referenceLow !== null && marker.value < marker.referenceLow) {
-        const copy = safetyCopy.labSupported(supp.name, marker.marker);
-        flags.push({ stackItemId: item.id, severity: "info", category: "lab-relevance", ...copy, evidenceLevel: "n/a" });
-      } else if (marker.referenceHigh !== null && marker.value > marker.referenceHigh) {
-        const copy = safetyCopy.labCaution(supp.name, marker.marker);
-        flags.push({ stackItemId: item.id, severity: "warning", category: "lab-relevance", ...copy, evidenceLevel: "n/a" });
-      }
+    if (item.supplementId && !(item.supplementId in supplementToItemId)) {
+      supplementToItemId[item.supplementId] = item.id;
     }
   }
+
+  const findings = assessLabMarkers({
+    labMarkers: ctx.labMarkers,
+    stackItems: ctx.items,
+  });
+  const flags = toLabFlags(findings, { supplementToItemId });
+
+  // Curation honesty (Plan FR-9): a marker we can't recognize is NOT "fine" —
+  // surface it as an info flag rather than silently skipping it.
+  const seen = new Set<string>();
+  for (const marker of ctx.labMarkers) {
+    if (normalizeMarker(marker.marker) !== null) continue;
+    const key = marker.marker.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    flags.push({
+      stackItemId: null,
+      severity: "info",
+      category: "lab-relevance",
+      ...safetyCopy.unrecognizedMarker(marker.marker),
+      evidenceLevel: "n/a",
+    });
+  }
+
   return flags;
 }
 

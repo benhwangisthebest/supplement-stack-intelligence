@@ -4,7 +4,6 @@ import { hasMedicationInteraction } from "@/lib/interactions";
 import type {
   EvidenceGrade,
   ItemTiming,
-  LabMarker,
   OutcomeCategory,
   ProtocolTier,
   Supplement,
@@ -39,18 +38,8 @@ function norm(s: string): string {
   return s.trim().toLowerCase();
 }
 
-/**
- * True when a lab marker is relevant to this supplement (name/alias/tag overlap)
- * AND is below its reference low — i.e. a deficiency signal worth prioritizing.
- */
-export function isLabBoosted(supp: Supplement, labMarkers: LabMarker[]): boolean {
-  const haystack = [supp.name, ...supp.aliases, ...supp.tags].map(norm);
-  return labMarkers.some((m) => {
-    if (m.referenceLow === null || m.value >= m.referenceLow) return false;
-    const marker = norm(m.marker);
-    return haystack.some((h) => h.includes(marker) || marker.includes(h));
-  });
-}
+// Lab prioritization moved to lib/biomarkers `labBoost` (biomarker-intelligence v3);
+// the v1 string-match `isLabBoosted` is removed.
 
 export function hasAllergenConflict(supp: Supplement, allergies: string[]): boolean {
   const set = new Set(allergies.map(norm));
@@ -72,16 +61,18 @@ export function hasMedicationCaution(
 const GRADE_RANK: Record<EvidenceGrade, number> = { A: 4, B: 3, C: 2, D: 1 };
 
 /**
- * Ranking comparator within a goal group:
- *   1. lab-boosted first
+ * Ranking comparator within a goal group (biomarker-intelligence v3):
+ *   1. higher lab signal first (deficiency boosts; replete/caution demotes)
  *   2. then higher grade
  *   3. then alphabetical by name (stable, deterministic)
  */
 export function compareSuggestions(
-  a: { labBoosted: boolean; grade: EvidenceGrade; supplementName: string },
-  b: { labBoosted: boolean; grade: EvidenceGrade; supplementName: string },
+  a: { labSignal?: number; grade: EvidenceGrade; supplementName: string },
+  b: { labSignal?: number; grade: EvidenceGrade; supplementName: string },
 ): number {
-  if (a.labBoosted !== b.labBoosted) return a.labBoosted ? -1 : 1;
+  const sa = a.labSignal ?? 0;
+  const sb = b.labSignal ?? 0;
+  if (sa !== sb) return sb - sa;
   if (a.grade !== b.grade) return GRADE_RANK[b.grade] - GRADE_RANK[a.grade];
   return a.supplementName.localeCompare(b.supplementName);
 }

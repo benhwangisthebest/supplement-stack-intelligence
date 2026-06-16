@@ -6,8 +6,10 @@
 | [protocol-builder](protocol-builder/) | 2026-06-11 | 99% (runtime-verified) | — (report path) | plan · design · analysis · report |
 | [product-match](product-match/) | 2026-06-11 | 99% (runtime-verified) | — (report path) | plan · design · analysis · report |
 | [medication-interactions](medication-interactions/) | 2026-06-15 | 99% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
+| [biomarker-intelligence](biomarker-intelligence/) | 2026-06-15 | 98% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 
 > **v2 milestone begins** — first feature beyond the v1 MVP + two extensions.
+> **v3 milestone** — `biomarker-intelligence` (lab-informed intelligence).
 
 ## mvp-core-loop
 The MVP core loop: search the Library → build a profile-aware stack → evidence-aware evaluation → compare vs goals. Built via Plan-Plus → PDCA (Design Option C, Do ×7 modules, Check 96%→Act-1 98%, QA 99% live). Success criteria 5/5 met against a live Supabase backend.
@@ -42,3 +44,12 @@ Replaces v1's placeholder medication detection with a real, pure `lib/interactio
 - [Analysis](medication-interactions/medication-interactions.analysis.md)
 - [Report](medication-interactions/medication-interactions.report.md)
 - [QA Report](medication-interactions/medication-interactions.qa-report.md)
+
+## biomarker-intelligence (v3)
+Replaces v1's naive lab string-matching with a real, pure `lib/biomarkers` engine + curated seed datasets (13 biomarkers, 15 biomarker↔supplement relevance rules). Normalizes free-text markers to canonical biomarkers, **converts values to a canonical unit** before any range comparison (safety-critical; user reference range preferred over registry), and drives findings by direction (low/high) + relation (support/caution). Surfaces across Stack Evaluation (lab-relevance flags + honest "not recognized" note), Protocol Builder (bounded `labSignal` ranking — boost *and* demote), and Library ("Relevant biomarkers" section). Profile lab entry gains marker autocomplete + unit/range auto-fill. Built via Plan-Plus → PDCA (Design Option C, Do ×2 modules, Check 96%→Act-1 98%, QA PASS live). Success criteria 7/7. Deferred to v4: lab file parsing, LOINC, trend tracking.
+
+- [Plan](biomarker-intelligence/biomarker-intelligence.plan.md)
+- [Design](biomarker-intelligence/biomarker-intelligence.design.md)
+- [Analysis](biomarker-intelligence/biomarker-intelligence.analysis.md)
+- [Report](biomarker-intelligence/biomarker-intelligence.report.md)
+- [QA Report](biomarker-intelligence/biomarker-intelligence.qa-report.md)

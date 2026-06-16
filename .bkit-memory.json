@@ -3,6 +3,33 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "biomarker-intelligence": {
+      "phase": "archived",
+      "architecture": "option-c-pragmatic",
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete"
+      },
+      "matchRate": 98,
+      "matchRateMode": "runtime-verified",
+      "qaStatus": "PASS",
+      "successCriteria": "7/7 met",
+      "iterationCount": 1,
+      "milestone": "v3",
+      "method": "plan-plus",
+      "approach": "option-a-curated-seed-engine",
+      "engine": "pure-function-biomarkers",
+      "anchor": "lab-informed-intelligence / biomarker-knowledge-engine",
+      "scope": [
+        "unit-normalization",
+        "lab-weighted-protocol-ranking",
+        "library-biomarker-section",
+        "profile-biomarker-autocomplete"
+      ],
+      "archivedTo": "docs/archive/2026-06/biomarker-intelligence/",
+      "startedAt": "2026-06-15",
+      "archivedAt": "2026-06-15"
+    },
     "medication-interactions": {
       "phase": "archived",
       "doProgress": {
@@ -71,6 +98,71 @@
     }
   },
   "tasks": [
+    {
+      "title": "[Plan] biomarker-intelligence",
+      "status": "completed",
+      "method": "plan-plus",
+      "milestone": "v3",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Design] biomarker-intelligence",
+      "status": "completed",
+      "blockedBy": "[Plan] biomarker-intelligence",
+      "architecture": "option-c-pragmatic",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Do] biomarker-intelligence",
+      "status": "completed",
+      "blockedBy": "[Design] biomarker-intelligence",
+      "scope": [
+        "module-1",
+        "module-2"
+      ],
+      "result": "engine core + surface integration: 12 created, 9 modified; 109/109 unit green, tsc clean, next build green (15 library pages prerendered)",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Check] biomarker-intelligence",
+      "status": "completed",
+      "blockedBy": "[Do] biomarker-intelligence",
+      "matchRate": 96,
+      "mode": "runtime-verified",
+      "gaps": "1 Important (IMP-1 unrecognized-marker note), 0 Critical; SC 7/7",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Act-1] biomarker-intelligence",
+      "status": "completed",
+      "blockedBy": "[Check] biomarker-intelligence",
+      "fix": "IMP-1 unrecognized-lab-marker info flags in ruleLabRelevance",
+      "matchRate": 98,
+      "result": "110/110 unit green, tsc clean",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[QA] biomarker-intelligence",
+      "status": "completed",
+      "blockedBy": "[Act-1] biomarker-intelligence",
+      "qaStatus": "PASS",
+      "result": "110 unit + 4 L1 + 2 L2 green (live server); L3 gated by E2E_LIVE",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Report] biomarker-intelligence",
+      "status": "completed",
+      "blockedBy": "[QA] biomarker-intelligence",
+      "result": "completion report; 98% runtime-verified, SC 7/7",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "title": "[Archive] biomarker-intelligence",
+      "status": "completed",
+      "blockedBy": "[Report] biomarker-intelligence",
+      "archivedTo": "docs/archive/2026-06/biomarker-intelligence/",
+      "createdAt": "2026-06-15"
+    },
     {
       "title": "[Plan] medication-interactions",
       "status": "completed",

@@ -234,6 +234,16 @@ describe("ruleLabRelevance", () => {
       ruleLabRelevance(ctx({ items, profile: makeProfile(), labMarkers: [high] }))[0].severity,
     ).toBe("warning");
   });
+
+  it("surfaces an unrecognized lab marker as an info flag (curation honesty)", () => {
+    const unknown: LabMarker = { ...lowVitD, marker: "Dragon Enzyme" };
+    const items = [makeItem({ supplementId: "vitamin-d", dose: 2000, unit: "IU" })];
+    const flags = ruleLabRelevance(ctx({ items, profile: makeProfile(), labMarkers: [unknown] }));
+    const note = flags.find((f) => /not recognized/i.test(f.title));
+    expect(note).toBeDefined();
+    expect(note!.severity).toBe("info");
+    expect(note!.category).toBe("lab-relevance");
+  });
 });
 
 describe("ruleInteractions", () => {

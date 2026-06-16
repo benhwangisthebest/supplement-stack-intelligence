@@ -257,4 +257,40 @@ export const safetyCopy = {
         "This does not mean the combination is safe. Consider confirming with a clinician or pharmacist.",
     };
   },
+
+  // ---- Biomarker copy (biomarker-intelligence v3). Hedged, non-diagnostic. ----
+
+  /** A lab-driven relevance finding, keyed by marker status × relation. */
+  biomarkerRelevance(
+    supplementName: string,
+    biomarkerName: string,
+    status: "low" | "high",
+    relation: "support" | "caution",
+  ): FlagCopy {
+    const side = status === "low" ? "below" : "above";
+    if (relation === "caution") {
+      return {
+        title: "Lab value worth reviewing",
+        explanation: `Your ${biomarkerName} is ${side} the reference range, and ${supplementName} could affect it further.`,
+        recommendation:
+          "This is flagged for review. Consider discussing with a clinician before continuing.",
+      };
+    }
+    return {
+      title: "Could be relevant to your labs",
+      explanation: `Your ${biomarkerName} is ${side} the reference range, which is commonly studied in relation to ${supplementName}.`,
+      recommendation:
+        "Could be relevant based on the information provided. Consider confirming with a clinician.",
+    };
+  },
+
+  /** A lab marker that could not be matched to the biomarker registry. */
+  unrecognizedMarker(name: string): FlagCopy {
+    return {
+      title: "Lab marker not recognized",
+      explanation: `The app could not match "${name}" to its biomarker dataset, so it could not assess its relevance.`,
+      recommendation:
+        "This does not mean the value is fine. Consider reviewing it with a clinician.",
+    };
+  },
 } as const;

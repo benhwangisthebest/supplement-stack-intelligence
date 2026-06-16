@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { LabMarker } from "@/types";
+import {
+  markerCatalogEntry,
+  markerSuggestions,
+} from "@/lib/biomarkers/marker-catalog";
+
+// biomarker-intelligence v3 — autocomplete options computed once.
+const MARKER_SUGGESTIONS = markerSuggestions();
 
 // Design §5.4 — manual lab marker entry/list. Feeds the evaluator's lab-relevance rule.
 export function LabMarkerTable({ initial }: { initial: LabMarker[] }) {
@@ -13,6 +20,17 @@ export function LabMarkerTable({ initial }: { initial: LabMarker[] }) {
   const [refHigh, setRefHigh] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const markerListId = useId();
+
+  // On a recognized marker, auto-fill canonical unit + reference range (overridable).
+  function onMarkerChange(name: string) {
+    setMarker(name);
+    const entry = markerCatalogEntry(name);
+    if (!entry) return;
+    if (!unit.trim()) setUnit(entry.unit);
+    if (refLow === "" && entry.refLow !== null) setRefLow(String(entry.refLow));
+    if (refHigh === "" && entry.refHigh !== null) setRefHigh(String(entry.refHigh));
+  }
 
   async function add() {
     setError(null);
@@ -98,10 +116,16 @@ export function LabMarkerTable({ initial }: { initial: LabMarker[] }) {
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
         <input
           value={marker}
-          onChange={(e) => setMarker(e.target.value)}
+          list={markerListId}
+          onChange={(e) => onMarkerChange(e.target.value)}
           placeholder="Marker (e.g. Vitamin D)"
           className="col-span-2 rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
         />
+        <datalist id={markerListId}>
+          {MARKER_SUGGESTIONS.map((m) => (
+            <option key={m} value={m} />
+          ))}
+        </datalist>
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}

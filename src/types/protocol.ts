@@ -18,7 +18,9 @@ export interface ProtocolSuggestion {
   timing: ItemTiming | null;
   rationale: string; // "why it fits" — via lib/safety
   confidenceNote: string | null; // "what would raise confidence"
-  labBoosted: boolean; // prioritized due to a relevant lab marker
+  labBoosted: boolean; // prioritized due to a relevant lab marker (derived: labSignal > 0)
+  labSignal?: number; // biomarker-intelligence v3 — bounded ranking signal (+boost / −demote)
+  labRationale?: string | null; // biomarker-intelligence v3 — explainable lab note
   medicationCaution: boolean; // flagged because the profile lists medications
   alreadyInStack: boolean; // already present in the target stack
 }
