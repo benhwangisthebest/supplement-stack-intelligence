@@ -21,6 +21,7 @@ export interface ProtocolSuggestion {
   labBoosted: boolean; // prioritized due to a relevant lab marker (derived: labSignal > 0)
   labSignal?: number; // biomarker-intelligence v3 — bounded ranking signal (+boost / −demote)
   labRationale?: string | null; // biomarker-intelligence v3 — explainable lab note
+  composite?: number; // evidence-grading v5 — finer ranking key within an equal grade
   medicationCaution: boolean; // flagged because the profile lists medications
   alreadyInStack: boolean; // already present in the target stack
 }

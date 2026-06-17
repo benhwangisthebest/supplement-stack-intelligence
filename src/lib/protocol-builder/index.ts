@@ -2,6 +2,7 @@
 // Plan SC: deterministic, explainable, conflict-safe; unit-testable without a DB.
 import {
   defaultLibrary,
+  effectComposite,
   getBestEffectForOutcome,
   getEffectsByOutcome,
   getSupplementById,
@@ -101,6 +102,7 @@ export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
         labBoosted,
         labSignal: labScore,
         labRationale,
+        composite: effectComposite(best) ?? undefined,
         medicationCaution: hasMedicationCaution(supplementId, medications),
         alreadyInStack: inStack.has(supplementId),
       });

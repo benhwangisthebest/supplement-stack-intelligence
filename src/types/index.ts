@@ -58,6 +58,7 @@ export interface DoseRange {
 }
 
 export * from "./supplement";
+export * from "./evidence-grading";
 export * from "./effect";
 export * from "./paper";
 export * from "./profile";

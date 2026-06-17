@@ -112,18 +112,22 @@ export function trendAdjustment(
 const GRADE_RANK: Record<EvidenceGrade, number> = { A: 4, B: 3, C: 2, D: 1 };
 
 /**
- * Ranking comparator within a goal group (biomarker-intelligence v3):
- *   1. higher lab signal first (deficiency boosts; replete/caution demotes)
+ * Ranking comparator within a goal group:
+ *   1. higher lab signal first (biomarker-intelligence v3)
  *   2. then higher grade
- *   3. then alphabetical by name (stable, deterministic)
+ *   3. then higher composite (evidence-grading v5 — refines within equal grade)
+ *   4. then alphabetical by name (stable, deterministic)
  */
 export function compareSuggestions(
-  a: { labSignal?: number; grade: EvidenceGrade; supplementName: string },
-  b: { labSignal?: number; grade: EvidenceGrade; supplementName: string },
+  a: { labSignal?: number; grade: EvidenceGrade; composite?: number; supplementName: string },
+  b: { labSignal?: number; grade: EvidenceGrade; composite?: number; supplementName: string },
 ): number {
   const sa = a.labSignal ?? 0;
   const sb = b.labSignal ?? 0;
   if (sa !== sb) return sb - sa;
   if (a.grade !== b.grade) return GRADE_RANK[b.grade] - GRADE_RANK[a.grade];
+  const ca = a.composite ?? -1;
+  const cb = b.composite ?? -1;
+  if (ca !== cb) return cb - ca;
   return a.supplementName.localeCompare(b.supplementName);
 }

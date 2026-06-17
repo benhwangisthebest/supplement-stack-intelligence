@@ -17,6 +17,15 @@ export const SEED_EFFECTS: Effect[] = [
     studiedDose: { min: 200, max: 400, unit: "mg" },
     mechanismTags: ["GABA", "relaxation"],
     paperIds: ["p-magnesium-sleep"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: { score: 2, rationale: "Human trials, several in older adults.", paperIds: ["p-magnesium-sleep"] },
+        studyQuality: { score: 2, rationale: "Small randomized trials with some bias risk.", paperIds: ["p-magnesium-sleep"] },
+        consistency: { score: 2, rationale: "Subjective sleep benefit recurs, mainly with low status.", paperIds: ["p-magnesium-sleep"] },
+        effectSize: { score: 1, rationale: "Small subjective improvement.", paperIds: ["p-magnesium-sleep"] },
+        populationRelevance: { score: 2, rationale: "Largest in adults with suboptimal magnesium.", paperIds: [] },
+      },
+    },
   },
   {
     id: "magnesium-stress",
@@ -59,6 +68,15 @@ export const SEED_EFFECTS: Effect[] = [
     studiedDose: { min: 3, max: 5, unit: "g" },
     mechanismTags: ["phosphocreatine", "ATP"],
     paperIds: ["p-creatine-strength"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: { score: 3, rationale: "Extensive RCTs in trained humans.", paperIds: ["p-creatine-strength"] },
+        studyQuality: { score: 3, rationale: "Many randomized, placebo-controlled trials.", paperIds: ["p-creatine-strength"] },
+        consistency: { score: 3, rationale: "Findings replicate across populations and protocols.", paperIds: ["p-creatine-strength"] },
+        effectSize: { score: 3, rationale: "Meaningful strength/power and lean-mass gains.", paperIds: ["p-creatine-strength"] },
+        populationRelevance: { score: 2, rationale: "Strongest in training adults; less relevant to the sedentary.", paperIds: [] },
+      },
+    },
   },
   {
     id: "creatine-cognition",
@@ -73,6 +91,15 @@ export const SEED_EFFECTS: Effect[] = [
     studiedDose: { min: 5, max: 5, unit: "g" },
     mechanismTags: ["brain-energy"],
     paperIds: ["p-creatine-cognition"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: { score: 2, rationale: "Several human trials, smaller and more recent.", paperIds: ["p-creatine-cognition"] },
+        studyQuality: { score: 1, rationale: "Mixed designs; some underpowered.", paperIds: ["p-creatine-cognition"] },
+        consistency: { score: 1, rationale: "Benefit appears mainly under stressors (sleep loss, vegetarian).", paperIds: [] },
+        effectSize: { score: 1, rationale: "Modest and context-dependent.", paperIds: ["p-creatine-cognition"] },
+        populationRelevance: { score: 2, rationale: "Most relevant to sleep-deprived adults and vegetarians.", paperIds: [] },
+      },
+    },
   },
   {
     id: "creatine-recovery",
@@ -101,6 +128,15 @@ export const SEED_EFFECTS: Effect[] = [
     studiedDose: { min: 1000, max: 4000, unit: "IU" },
     mechanismTags: ["calcitriol"],
     paperIds: ["p-vitamin-d-deficiency"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: { score: 3, rationale: "Direct human supplementation trials.", paperIds: ["p-vitamin-d-deficiency"] },
+        studyQuality: { score: 3, rationale: "Well-controlled dose-response data.", paperIds: ["p-vitamin-d-deficiency"] },
+        consistency: { score: 3, rationale: "Reliably raises serum 25(OH)D.", paperIds: ["p-vitamin-d-deficiency"] },
+        effectSize: { score: 2, rationale: "Clear biomarker correction; clinical outcomes vary.", paperIds: ["p-vitamin-d-deficiency"] },
+        populationRelevance: { score: 3, rationale: "Directly applicable to deficient adults.", paperIds: [] },
+      },
+    },
   },
   {
     id: "vitamin-d-immune",
@@ -130,6 +166,15 @@ export const SEED_EFFECTS: Effect[] = [
     studiedDose: { min: 1000, max: 4000, unit: "mg" },
     mechanismTags: ["triglyceride-lowering", "anti-inflammatory"],
     paperIds: ["p-fish-oil-cv"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: { score: 2, rationale: "Human trials on triglyceride lowering.", paperIds: ["p-fish-oil-cv"] },
+        studyQuality: { score: 3, rationale: "Includes large randomized trials.", paperIds: ["p-fish-oil-cv"] },
+        consistency: { score: 2, rationale: "Triglyceride effect consistent; broader CV outcomes mixed.", paperIds: ["p-fish-oil-cv"] },
+        effectSize: { score: 1, rationale: "Dose-dependent and modest at common doses.", paperIds: ["p-fish-oil-cv"] },
+        populationRelevance: { score: 2, rationale: "Largest in adults with elevated triglycerides.", paperIds: [] },
+      },
+    },
   },
   {
     id: "fish-oil-mood",
@@ -217,6 +262,15 @@ export const SEED_EFFECTS: Effect[] = [
     studiedDose: { min: 0.5, max: 3, unit: "mg" },
     mechanismTags: ["circadian", "MT-receptor"],
     paperIds: ["p-melatonin-sleep"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: { score: 3, rationale: "Many human trials on sleep onset.", paperIds: ["p-melatonin-sleep"] },
+        studyQuality: { score: 3, rationale: "Randomized, placebo-controlled, meta-analyzed.", paperIds: ["p-melatonin-sleep"] },
+        consistency: { score: 2, rationale: "Onset-latency benefit consistent; sleep-quality effects smaller.", paperIds: ["p-melatonin-sleep"] },
+        effectSize: { score: 2, rationale: "Reliable but modest reduction in sleep latency.", paperIds: ["p-melatonin-sleep"] },
+        populationRelevance: { score: 3, rationale: "Directly relevant to delayed onset and jet lag.", paperIds: [] },
+      },
+    },
   },
 
   // ---- Ashwagandha ----
@@ -233,6 +287,15 @@ export const SEED_EFFECTS: Effect[] = [
     studiedDose: { min: 300, max: 600, unit: "mg" },
     mechanismTags: ["HPA-axis", "cortisol-modulation"],
     paperIds: ["p-ashwagandha-stress"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: { score: 2, rationale: "Multiple human RCTs over 6-8 weeks.", paperIds: ["p-ashwagandha-stress"] },
+        studyQuality: { score: 2, rationale: "Randomized but mostly small, single-region trials.", paperIds: ["p-ashwagandha-stress"] },
+        consistency: { score: 2, rationale: "Stress/cortisol reductions repeat across trials.", paperIds: ["p-ashwagandha-stress"] },
+        effectSize: { score: 2, rationale: "Moderate reduction in perceived stress.", paperIds: ["p-ashwagandha-stress"] },
+        populationRelevance: { score: 2, rationale: "Studied in chronically stressed adults.", paperIds: [] },
+      },
+    },
   },
   {
     id: "ashwagandha-sleep",
@@ -321,6 +384,15 @@ export const SEED_EFFECTS: Effect[] = [
     studiedDose: { min: 100, max: 200, unit: "mg" },
     mechanismTags: ["adenosine-antagonism"],
     paperIds: ["p-caffeine-focus"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: { score: 3, rationale: "Large human literature on alertness.", paperIds: ["p-caffeine-focus"] },
+        studyQuality: { score: 3, rationale: "Numerous controlled crossover trials.", paperIds: ["p-caffeine-focus"] },
+        consistency: { score: 3, rationale: "Alertness/vigilance gains highly reproducible.", paperIds: ["p-caffeine-focus"] },
+        effectSize: { score: 2, rationale: "Reliable, moderate improvement.", paperIds: ["p-caffeine-focus"] },
+        populationRelevance: { score: 2, rationale: "Broad in healthy adults; tolerance varies.", paperIds: [] },
+      },
+    },
   },
   {
     id: "caffeine-training",

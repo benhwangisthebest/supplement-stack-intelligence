@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Effect, Paper, Supplement } from "@/types";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { EffectGradeBadge } from "@/components/evidence/EffectGradeBadge";
+import { EvidenceBreakdown } from "@/components/evidence/EvidenceBreakdown";
 import { PaperSummaryCard } from "@/components/evidence/PaperSummaryCard";
 
 interface SupplementDetailProps {
@@ -21,7 +22,7 @@ export function SupplementDetail({
   const items: TabItem[] = [
     { id: "summary", label: "Summary", content: <SummaryTab supplement={supplement} /> },
     { id: "dose", label: "Dose", content: <DoseTab supplement={supplement} effects={effects} /> },
-    { id: "effects", label: "Effects", content: <EffectsTab effects={effects} /> },
+    { id: "effects", label: "Effects", content: <EffectsTab effects={effects} papers={papers} /> },
     {
       id: "papers",
       label: `Papers${papers.length ? ` (${papers.length})` : ""}`,
@@ -123,7 +124,7 @@ function DoseTab({ supplement, effects }: { supplement: Supplement; effects: Eff
   );
 }
 
-function EffectsTab({ effects }: { effects: Effect[] }) {
+function EffectsTab({ effects, papers }: { effects: Effect[]; papers: Paper[] }) {
   return (
     <div className="space-y-4">
       {effects.map((e) => (
@@ -136,6 +137,10 @@ function EffectsTab({ effects }: { effects: Effect[] }) {
             {e.outcomeCategory} · {e.relevantPopulation}
           </p>
           <p className="mt-2 text-sm text-neutral-700">{e.summary}</p>
+          {/* evidence-grading v5: per-dimension breakdown for profiled effects only. */}
+          {e.evidenceProfile && (
+            <EvidenceBreakdown profile={e.evidenceProfile} papers={papers} />
+          )}
         </article>
       ))}
     </div>

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import type { Effect } from "@/types";
 import {
   compareGrades,
+  effectComposite,
   getAllSupplements,
   getBestEffectForOutcome,
   getEffectsByOutcome,
@@ -10,6 +12,7 @@ import {
   getSupplementById,
   getSupplementBySlug,
   isStrongerGrade,
+  resolveEffect,
   searchSupplements,
 } from "./index";
 
@@ -65,5 +68,84 @@ describe("lib/evidence lookups", () => {
     expect(isStrongerGrade("A", "C")).toBe(true);
     expect(isStrongerGrade("D", "B")).toBe(false);
     expect(compareGrades("A", "B")).toBeLessThan(0); // A sorts before B
+  });
+});
+
+describe("evidence-grading v5 — grade resolution", () => {
+  function effect(partial: Partial<Effect> & { id: string }): Effect {
+    return {
+      supplementId: "x",
+      name: "n",
+      outcomeCategory: "focus",
+      grade: "C",
+      confidence: "low",
+      summary: "s",
+      relevantPopulation: "adults",
+      studiedDose: { min: 1, max: 1, unit: "mg" },
+      mechanismTags: [],
+      paperIds: [],
+      ...partial,
+    };
+  }
+
+  const profileAllStrong = {
+    dimensions: {
+      humanEvidence: { score: 3 as const, rationale: "x", paperIds: [] },
+      studyQuality: { score: 3 as const, rationale: "x", paperIds: [] },
+      consistency: { score: 3 as const, rationale: "x", paperIds: [] },
+      effectSize: { score: 3 as const, rationale: "x", paperIds: [] },
+      populationRelevance: { score: 3 as const, rationale: "x", paperIds: [] },
+    },
+  };
+
+  it("resolveEffect derives the grade from a profile (overriding a stale literal)", () => {
+    const e = effect({ id: "e1", grade: "D", evidenceProfile: profileAllStrong });
+    expect(resolveEffect(e).grade).toBe("A"); // derived from all-strong
+  });
+
+  it("resolveEffect leaves a profile-less effect unchanged (legacy)", () => {
+    const e = effect({ id: "e2", grade: "B" });
+    expect(resolveEffect(e)).toBe(e); // identity — no allocation
+  });
+
+  it("effectComposite returns a score for profiled, null for legacy", () => {
+    expect(effectComposite(effect({ id: "e3", evidenceProfile: profileAllStrong }))).toBeCloseTo(1.0, 6);
+    expect(effectComposite(effect({ id: "e4" }))).toBeNull();
+  });
+
+  it("the default library pre-resolves grades (profiled effect's grade is derived)", () => {
+    const creatineStrength = getEffectsForSupplement("creatine").find(
+      (e) => e.id === "creatine-strength",
+    )!;
+    expect(creatineStrength.grade).toBe("A"); // derived == curated
+    expect(effectComposite(creatineStrength)).not.toBeNull();
+  });
+
+  it("getBestEffectForOutcome breaks equal-grade ties by composite", () => {
+    const lib = {
+      supplements: [],
+      papers: [],
+      effects: [
+        effect({ id: "low", supplementId: "s", grade: "B", evidenceProfile: {
+          dimensions: {
+            humanEvidence: { score: 2 as const, rationale: "x", paperIds: [] },
+            studyQuality: { score: 2 as const, rationale: "x", paperIds: [] },
+            consistency: { score: 2 as const, rationale: "x", paperIds: [] },
+            effectSize: { score: 1 as const, rationale: "x", paperIds: [] },
+            populationRelevance: { score: 1 as const, rationale: "x", paperIds: [] },
+          },
+        } }),
+        effect({ id: "high", supplementId: "s", grade: "B", evidenceProfile: {
+          dimensions: {
+            humanEvidence: { score: 2 as const, rationale: "x", paperIds: [] },
+            studyQuality: { score: 3 as const, rationale: "x", paperIds: [] },
+            consistency: { score: 2 as const, rationale: "x", paperIds: [] },
+            effectSize: { score: 1 as const, rationale: "x", paperIds: [] },
+            populationRelevance: { score: 2 as const, rationale: "x", paperIds: [] },
+          },
+        } }),
+      ],
+    };
+    expect(getBestEffectForOutcome("s", "focus", lib)!.id).toBe("high");
   });
 });

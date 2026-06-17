@@ -8,10 +8,12 @@
 | [medication-interactions](medication-interactions/) | 2026-06-15 | 99% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 | [biomarker-intelligence](biomarker-intelligence/) | 2026-06-15 | 98% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 | [lab-timeline](lab-timeline/) | 2026-06-16 | 99% (static + L1 runtime) | PASS | plan · design · analysis · report · qa-report |
+| [evidence-grading](evidence-grading/) | 2026-06-16 | 100% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 
 > **v2 milestone begins** — first feature beyond the v1 MVP + two extensions.
 > **v3 milestone** — `biomarker-intelligence` (lab-informed intelligence).
 > **v4 milestone** — `lab-timeline` (lab upload + standardization + trend tracking).
+> **v5 milestone** — `evidence-grading` (effect-level multi-dimensional grading).
 
 ## mvp-core-loop
 The MVP core loop: search the Library → build a profile-aware stack → evidence-aware evaluation → compare vs goals. Built via Plan-Plus → PDCA (Design Option C, Do ×7 modules, Check 96%→Act-1 98%, QA 99% live). Success criteria 5/5 met against a live Supabase backend.
@@ -64,3 +66,12 @@ Turns v3's single-snapshot lab layer into a tracked **timeline** with low-fricti
 - [Analysis](lab-timeline/lab-timeline.analysis.md)
 - [Report](lab-timeline/lab-timeline.report.md)
 - [QA Report](lab-timeline/lab-timeline.qa-report.md)
+
+## evidence-grading (v5)
+Deepens the trust layer from a single opaque letter to **effect-level, multi-dimensional** grading. Each effect gains an optional curated `evidenceProfile` scoring 5 dimensions (human-evidence strength, study quality, consistency, effect size, population relevance) on an ordinal 0–3 scale, each with a rationale and the **papers that justify it**. A pure deterministic `lib/evidence-grading` module computes a weighted composite ∈ [0,1] and **derives** the A/B/C/D grade; `lib/evidence` pre-resolves the grade once when building `defaultLibrary`, so all v1–v4 consumers (evaluator evidence-fit, protocol tier/ranking, biomarker lab-signal weight) keep reading `effect.grade` **unchanged** (Architecture Option C — additive). Composite refines Protocol/Stack ranking *within* an equal grade (grade still dominates); the Library Effects tab gains an expandable `EvidenceBreakdown` (per-dimension bars + citation links). An integrity test asserts the derived grade equals each profiled effect's curated grade — so v5 changed no trusted grade. Built via Plan-Plus → PDCA (Do ×3 modules, Check **100%** runtime-verified, **0 iterations**, QA PASS). Success criteria **8/8**; 170/170 unit (+23) + 2/2 L2 live; **no new dependencies**. First feature this arc fully runtime-verified with no live-DB gating (pure domain + public Library). 8 effects profiled across 7 supplements. **Deferred to v6:** profile remaining ~19 effects, AI-assisted dimension drafting, population/context-adjusted grades.
+
+- [Plan](evidence-grading/evidence-grading.plan.md)
+- [Design](evidence-grading/evidence-grading.design.md)
+- [Analysis](evidence-grading/evidence-grading.analysis.md)
+- [Report](evidence-grading/evidence-grading.report.md)
+- [QA Report](evidence-grading/evidence-grading.qa-report.md)

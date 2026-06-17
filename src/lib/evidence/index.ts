@@ -3,6 +3,7 @@
 import { SEED_SUPPLEMENTS } from "@/data/seed-supplements";
 import { SEED_EFFECTS } from "@/data/seed-effects";
 import { SEED_PAPERS } from "@/data/seed-papers";
+import { compositeScore, deriveGrade } from "@/lib/evidence-grading";
 import type {
   Effect,
   EvidenceGrade,
@@ -18,9 +19,26 @@ export interface EvidenceLibrary {
   papers: Paper[];
 }
 
+/**
+ * evidence-grading v5 (Design §2.2): resolve an effect's grade. When the effect
+ * carries an evidenceProfile, the grade is DERIVED from it (single source of
+ * truth); otherwise the literal seed grade is kept. Pure & idempotent.
+ */
+export function resolveEffect(effect: Effect): Effect {
+  if (!effect.evidenceProfile) return effect;
+  const grade = deriveGrade(effect.evidenceProfile);
+  return grade === effect.grade ? effect : { ...effect, grade };
+}
+
+/** Bounded composite ∈ [0,1] for a profiled effect, else null (ranking key). */
+export function effectComposite(effect: Effect): number | null {
+  return effect.evidenceProfile ? compositeScore(effect.evidenceProfile) : null;
+}
+
 export const defaultLibrary: EvidenceLibrary = {
   supplements: SEED_SUPPLEMENTS,
-  effects: SEED_EFFECTS,
+  // Grades are pre-resolved once so every consumer reads the resolved value.
+  effects: SEED_EFFECTS.map(resolveEffect),
   papers: SEED_PAPERS,
 };
 
@@ -78,7 +96,13 @@ export function getBestEffectForOutcome(
 ): Effect | undefined {
   return getEffectsForSupplement(supplementId, lib)
     .filter((e) => e.outcomeCategory === outcome)
-    .sort((a, b) => compareGrades(a.grade, b.grade))[0];
+    .sort((a, b) => {
+      // Grade dominates; within an equal grade, the finer composite breaks ties
+      // (evidence-grading v5). Profiled effects sort ahead of unprofiled ones.
+      const byGrade = compareGrades(a.grade, b.grade);
+      if (byGrade !== 0) return byGrade;
+      return (effectComposite(b) ?? -1) - (effectComposite(a) ?? -1);
+    })[0];
 }
 
 export function getPaperById(

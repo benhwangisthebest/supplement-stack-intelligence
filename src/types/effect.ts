@@ -2,6 +2,7 @@ import type {
   Confidence,
   DoseRange,
   EvidenceGrade,
+  EvidenceProfile,
   OutcomeCategory,
 } from "./index";
 
@@ -19,4 +20,7 @@ export interface Effect {
   /** Mechanism tags used by the redundancy rule (Design §11.4) */
   mechanismTags: string[];
   paperIds: string[];
+  // evidence-grading v5 (Design §3.2): optional multi-dimensional profile.
+  // When present, lib/evidence derives `grade` from it; absent = legacy literal.
+  evidenceProfile?: EvidenceProfile;
 }

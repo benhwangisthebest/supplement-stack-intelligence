@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { containsBannedLanguage } from "@/lib/safety";
 import type { LabMarker, OutcomeCategory, StackItem, UserProfile } from "@/types";
 import { generateProtocol } from "./index";
-import { tierFor } from "./rules";
+import { compareSuggestions, tierFor } from "./rules";
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -167,5 +167,31 @@ describe("generateProtocol", () => {
     const a = generateProtocol({ profile });
     const b = generateProtocol({ profile });
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+});
+
+describe("compareSuggestions (evidence-grading v5 composite key)", () => {
+  it("breaks ties within an equal grade by higher composite", () => {
+    const lo = { grade: "B" as const, composite: 0.56, supplementName: "Zeta" };
+    const hi = { grade: "B" as const, composite: 0.72, supplementName: "Alpha" };
+    expect(compareSuggestions(hi, lo)).toBeLessThan(0); // hi first despite later name
+  });
+
+  it("grade still dominates across grades (composite cannot override)", () => {
+    const aWeakComposite = { grade: "A" as const, composite: 0.76, supplementName: "Z" };
+    const bStrongComposite = { grade: "B" as const, composite: 0.74, supplementName: "A" };
+    expect(compareSuggestions(aWeakComposite, bStrongComposite)).toBeLessThan(0); // A before B
+  });
+
+  it("lab signal still dominates grade and composite", () => {
+    const boosted = { labSignal: 0.5, grade: "C" as const, composite: 0.4, supplementName: "Z" };
+    const plain = { labSignal: 0, grade: "A" as const, composite: 0.9, supplementName: "A" };
+    expect(compareSuggestions(boosted, plain)).toBeLessThan(0);
+  });
+
+  it("falls back to name when grade and composite tie", () => {
+    const a = { grade: "B" as const, composite: 0.6, supplementName: "Alpha" };
+    const z = { grade: "B" as const, composite: 0.6, supplementName: "Zeta" };
+    expect(compareSuggestions(a, z)).toBeLessThan(0);
   });
 });

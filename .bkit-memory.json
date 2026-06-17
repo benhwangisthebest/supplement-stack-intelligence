@@ -3,6 +3,40 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "evidence-grading": {
+      "phase": "archived",
+      "milestone": "v5",
+      "archivedTo": "docs/archive/2026-06/evidence-grading/",
+      "archivedAt": "2026-06-16",
+      "matchRate": 100,
+      "matchRateMode": "runtime-verified (unit 170/170 + L2 2/2 live)",
+      "successCriteria": "8/8 met",
+      "qaStatus": "PASS",
+      "iterationCount": 0,
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete",
+        "module-3": "complete"
+      },
+      "method": "plan-plus",
+      "approach": "option-a-additive-derived-composite",
+      "architecture": "option-c-pragmatic",
+      "designDoc": "docs/02-design/features/evidence-grading.design.md",
+      "engine": "pure-function-evidence-grading",
+      "anchor": "content-evidence-depth / effect-level-multidimensional-grading",
+      "scope": [
+        "evidence-profile-model",
+        "lib-evidence-grading-composite+derive+breakdown",
+        "grade-resolution-in-lib-evidence",
+        "seed-subset+integrity-test",
+        "library-breakdown-ui",
+        "composite-re-ranking",
+        "per-dimension-citations"
+      ],
+      "deferred": ["ai-assisted-dimension-drafting", "population-adjusted-grades"],
+      "planDoc": "docs/01-plan/features/evidence-grading.plan.md",
+      "startedAt": "2026-06-16"
+    },
     "lab-timeline": {
       "phase": "archived",
       "milestone": "v4",
@@ -133,6 +167,78 @@
     }
   },
   "tasks": [
+    {
+      "title": "[Archive] evidence-grading",
+      "status": "completed",
+      "blockedBy": "[Report] evidence-grading",
+      "archivedTo": "docs/archive/2026-06/evidence-grading/",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Report] evidence-grading",
+      "status": "completed",
+      "blockedBy": "[QA] evidence-grading",
+      "result": "v5 completion report; 8/8 SC, 100% runtime-verified, QA PASS, 0 iterations. No new deps. Deferred to v6: profile remaining effects, AI-draft aid, population-adjusted grades.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[QA] evidence-grading",
+      "status": "completed",
+      "blockedBy": "[Check] evidence-grading",
+      "qaStatus": "PASS",
+      "result": "L0 170/170 unit + L2 2/2 live (public Library). L1/L3/L4/L5 N/A (pure domain + SSR, no endpoints, single-page). No env gating — fully runtime-verified. 0 defects.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Check] evidence-grading",
+      "status": "completed",
+      "blockedBy": "[Do] evidence-grading --scope module-3",
+      "matchRate": 100,
+      "mode": "runtime-verified",
+      "gaps": "0 Critical, 0 Important; SC 8/8",
+      "result": "Structural/Functional/Contract/Runtime all 100. Unit 170/170 + L2 2/2 live (public Library). First v5-era feature fully runtime-verified (no live DB needed). Integrity test confirms derived==curated for all 8 profiles.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Do] evidence-grading --scope module-3",
+      "status": "completed",
+      "blockedBy": "[Do] evidence-grading --scope module-2",
+      "scope": ["module-3"],
+      "result": "Library UI: 2 created (EvidenceBreakdown.tsx pure/server component with <details> expand + per-dimension bars + citation links; evidence-grading-actions L2 spec), 1 modified (SupplementDetail EffectsTab renders breakdown for profiled effects, passes papers). 170/170 unit, tsc clean, next build green. L2 2/2 PASS live against public Library (breakdown shows+expands for creatine, absent for l-theanine). No new deps.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Do] evidence-grading --scope module-2",
+      "status": "completed",
+      "blockedBy": "[Do] evidence-grading --scope module-1",
+      "scope": ["module-2"],
+      "result": "Resolution + ranking: 6 modified (lib/evidence resolveEffect/pre-resolve defaultLibrary/effectComposite/getBestEffectForOutcome composite tiebreak; protocol-builder compareSuggestions +composite key; protocol index wires composite; types/protocol +composite?; evidence+protocol tests). No evaluator rewrite (reads resolved grade via getBestEffectForOutcome). 9 new tests; full suite 170/170 (was 161), tsc clean, next build green. Resolution is a no-op on current seeds (derived==literal) — zero output change, verified.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Do] evidence-grading --scope module-1",
+      "status": "completed",
+      "blockedBy": "[Design] evidence-grading",
+      "scope": ["module-1"],
+      "result": "Rubric engine + seed: 4 created (types/evidence-grading, lib/evidence-grading {weights,index,test}), 3 modified (types/index re-export, effect.ts +evidenceProfile?, seed-effects 8 profiles). 14 new tests incl. integrity (derived grade == curated for all 8 across 7 supplements, A/B/C; citations real; non-diagnostic). Full suite 161/161 (was 147), tsc clean, next build green. Pure functions, no new deps.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Design] evidence-grading",
+      "status": "completed",
+      "blockedBy": "[Plan] evidence-grading",
+      "architecture": "option-c-pragmatic",
+      "result": "3 options; selected C (dedicated lib/evidence-grading module + pre-resolve grade once in defaultLibrary -> zero consumer rewrite + composite as secondary ranking key). Rubric: 5 dims x 0-3, weighted composite [0,1], thresholds .75/.55/.35. Integrity test: derived grade == curated. 3-module session plan.",
+      "createdAt": "2026-06-16"
+    },
+    {
+      "title": "[Plan] evidence-grading",
+      "status": "completed",
+      "method": "plan-plus",
+      "milestone": "v5",
+      "result": "plan-plus brainstorm: direction=content-evidence-depth, problem=effect-level grading rigor, approach=A additive+derived composite, YAGNI in=composite-re-ranking+per-dimension-citations (AI-drafting + population-adjusted deferred). Plan doc written.",
+      "createdAt": "2026-06-16"
+    },
     {
       "title": "[Archive] lab-timeline",
       "status": "completed",
