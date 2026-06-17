@@ -20,18 +20,22 @@ test.describe("L2: lab upload → review confirm gate", () => {
     await page.getByRole("button", { name: /upload report/i }).click();
     await page.setInputFiles('input[type="file"]', SAMPLE_CSV);
 
-    // Review table appears with parsed markers.
+    // Review table appears with parsed markers. Assert via the review-row approve
+    // checkbox (precise) — the page's Lab Timeline may also render the marker name.
     await expect(page.getByRole("heading", { name: /review parsed markers/i })).toBeVisible();
-    await expect(page.getByText("25-OH Vitamin D")).toBeVisible();
+    // Scope to the review-row checkboxes (aria-label "Approve …") — the page also
+    // has ProfileForm checkboxes that must NOT be matched.
+    const approveBoxes = page.getByRole("checkbox", { name: /^Approve / });
+    await expect(approveBoxes.first()).toBeVisible();
 
     // Uncheck every approved row → confirm button disables (the gate).
-    for (const cb of await page.getByRole("checkbox").all()) {
+    for (const cb of await approveBoxes.all()) {
       if (await cb.isChecked()) await cb.uncheck();
     }
     await expect(page.getByRole("button", { name: /confirm & save/i })).toBeDisabled();
 
     // Re-approve one and confirm.
-    await page.getByRole("checkbox").first().check();
+    await approveBoxes.first().check();
     await page.getByRole("button", { name: /confirm & save/i }).click();
 
     // After save, the timeline reflects the marker.
