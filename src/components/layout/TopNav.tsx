@@ -30,6 +30,16 @@ export async function TopNav() {
             </Link>
           ))}
 
+          {user && (
+            // The Advisor is an assistant over the three pillars (not a 4th pillar).
+            <Link
+              href="/advisor"
+              className="text-neutral-600 hover:text-neutral-900"
+            >
+              Advisor
+            </Link>
+          )}
+
           {user ? (
             <form action={signOut}>
               <button

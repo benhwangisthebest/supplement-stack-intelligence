@@ -9,11 +9,13 @@
 | [biomarker-intelligence](biomarker-intelligence/) | 2026-06-15 | 98% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 | [lab-timeline](lab-timeline/) | 2026-06-16 | 99% (static + L1 runtime) | PASS | plan · design · analysis · report · qa-report |
 | [evidence-grading](evidence-grading/) | 2026-06-16 | 100% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
+| [ai-advisor](ai-advisor/) | 2026-06-17 | 98% (static + L1/L2 runtime) | PASS | plan · design · analysis · report · qa-report |
 
 > **v2 milestone begins** — first feature beyond the v1 MVP + two extensions.
 > **v3 milestone** — `biomarker-intelligence` (lab-informed intelligence).
 > **v4 milestone** — `lab-timeline` (lab upload + standardization + trend tracking).
 > **v5 milestone** — `evidence-grading` (effect-level multi-dimensional grading).
+> **v6 milestone** — `ai-advisor` (read-only, strictly tool-grounded AI advisor over all engines).
 
 ## mvp-core-loop
 The MVP core loop: search the Library → build a profile-aware stack → evidence-aware evaluation → compare vs goals. Built via Plan-Plus → PDCA (Design Option C, Do ×7 modules, Check 96%→Act-1 98%, QA 99% live). Success criteria 5/5 met against a live Supabase backend.
@@ -75,3 +77,12 @@ Deepens the trust layer from a single opaque letter to **effect-level, multi-dim
 - [Analysis](evidence-grading/evidence-grading.analysis.md)
 - [Report](evidence-grading/evidence-grading.report.md)
 - [QA Report](evidence-grading/evidence-grading.qa-report.md)
+
+## ai-advisor (v6)
+The synthesis release: a **read-only, strictly tool-grounded AI Advisor** that turns every v1–v5 engine into a grounded tool behind a natural-language `/advisor` chat. A pure `lib/advisor` holds the tool registry (thin wrappers over `evidence`/`evidence-grading`, `stack-evaluator`, `interactions`, `biomarkers`, `lab-trends` — zero new business logic), a **bounded agent loop** (turn cap + per-user token-budget guard + **refuse-when-empty**), and the strict-grounding/non-diagnostic system prompt. The single non-deterministic unit — the Claude call — is isolated behind a `ClaudeAdapter` port (`claude-adapter.ts`), so the grounding/no-fabrication guarantee is unit-testable against a mock; a **12-case honesty sweep** proves the advisor strips banned/diagnostic language and never fabricates a claim absent from tool results. Answers carry **provenance** and stream over an SSE route that gates safety *before* the first token; conversations persist in additive RLS tables (`0003_advisor.sql`), and spend is capped per user. Architecture **Option C (additive)** — **0 existing engine/table files modified**; first feature to expose the engines conversationally. Built via Plan-Plus → PDCA (Do ×3 modules, Check **98%**, **0 iterations**, QA PASS). Success criteria **9/9**; **228/228 unit** (+58) incl. honesty sweep; L1/L2 auth-guards runtime-verified, live authed L3 env-gated (`E2E_LIVE`). First conversational/LLM-orchestration surface; reuses the v4 `@anthropic-ai/sdk` dep (no new dependencies). **Deferred to v7:** chip deep-linking, true LLM token-streaming, atomic usage RPC, suggest-then-confirm capability.
+
+- [Plan](ai-advisor/ai-advisor.plan.md)
+- [Design](ai-advisor/ai-advisor.design.md)
+- [Analysis](ai-advisor/ai-advisor.analysis.md)
+- [Report](ai-advisor/ai-advisor.report.md)
+- [QA Report](ai-advisor/ai-advisor.qa-report.md)

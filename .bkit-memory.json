@@ -3,6 +3,98 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "ai-advisor": {
+      "phase": "archived",
+      "archivedTo": "docs/archive/2026-06/ai-advisor/",
+      "archivedAt": "2026-06-17",
+      "qaStatus": "PASS",
+      "qaReport": "docs/archive/2026-06/ai-advisor/ai-advisor.qa-report.md",
+      "reportDoc": "docs/archive/2026-06/ai-advisor/ai-advisor.report.md",
+      "milestone": "v6",
+      "designDoc": "docs/archive/2026-06/ai-advisor/ai-advisor.design.md",
+      "analysisDoc": "docs/archive/2026-06/ai-advisor/ai-advisor.analysis.md",
+      "matchRate": 98,
+      "matchRateMode": "static+runtime (unit 228/228, build OK, e2e L1+L2 live; L3 gated on E2E_LIVE)",
+      "successCriteria": "9/9 met (SC5/SC7 with documented v7 polish deferrals)",
+      "iterationCount": 0,
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete",
+        "module-3": "complete"
+      },
+      "module3": {
+        "files": [
+          "src/lib/advisor/schema.ts",
+          "src/app/api/advisor/route.ts",
+          "src/app/api/advisor/conversations/route.ts",
+          "src/app/api/advisor/conversations/[id]/route.ts",
+          "src/app/advisor/page.tsx",
+          "src/components/advisor/AdvisorPanel.tsx",
+          "src/components/advisor/AdvisorMessageBubble.tsx",
+          "src/components/advisor/ProvenanceChips.tsx",
+          "src/components/advisor/ConversationRail.tsx",
+          "tests/e2e/ai-advisor.spec.ts"
+        ],
+        "modified": ["src/components/layout/TopNav.tsx"],
+        "verification": "tsc clean; next build OK (all advisor routes); 228/228 unit; e2e L1 401x2 + L2 redirect PASS live; L3 authed gated on E2E_LIVE",
+        "streaming": "finalized safety-gated answer streamed token-by-token (true LLM token-stream deferred to v7)",
+        "completedAt": "2026-06-17"
+      },
+      "doComplete": true,
+      "module2": {
+        "files": [
+          "supabase/migrations/0003_advisor.sql",
+          "src/lib/advisor/claude-adapter.ts",
+          "src/lib/advisor/repo.ts",
+          "src/lib/advisor/context-loader.ts"
+        ],
+        "modified": [".env.example"],
+        "tests": "16 new (58 advisor; 228/228 full suite); tsc clean; live SDK + migration runtime-verified in Check/QA",
+        "model": "claude-haiku-4-5-20251001 (overridable)",
+        "completedAt": "2026-06-17"
+      },
+      "module1": {
+        "files": [
+          "src/types/advisor.ts",
+          "src/lib/advisor/prompt.ts",
+          "src/lib/advisor/tools.ts",
+          "src/lib/advisor/citations.ts",
+          "src/lib/advisor/agent.ts",
+          "src/lib/advisor/mock-adapter.ts"
+        ],
+        "tests": "42/42 advisor (212/212 full suite); honesty sweep PASS; tsc clean",
+        "completedAt": "2026-06-17"
+      },
+      "method": "plan-plus",
+      "approach": "option-a-tool-calling-agent",
+      "architecture": "option-c-additive",
+      "capability": "read-only",
+      "grounding": "strict-tool-grounded",
+      "anchor": "ai-advisor / grounded-natural-language-synthesis-over-engines",
+      "engine": "lib-advisor tool-registry + agent-loop + isolated-claude-adapter",
+      "planDoc": "docs/archive/2026-06/ai-advisor/ai-advisor.plan.md",
+      "scope": [
+        "lib-advisor-tool-registry",
+        "bounded-agent-loop-turn+budget-cap",
+        "6-grounded-tools-library+stack-eval+interactions+biomarkers+labtrends+context",
+        "isolated-claude-adapter-streaming",
+        "api-advisor-auth+stream+persist",
+        "advisor_conversations+advisor_messages-rls-migration-0003",
+        "provenance-citations",
+        "safety-wrapper+honesty-sweep-test",
+        "per-user-token-budget",
+        "advisor-streaming-ui"
+      ],
+      "deferred": [
+        "write-actions-suggest-then-confirm-or-agent",
+        "ungrounded-general-knowledge",
+        "ai-assisted-evidence-drafting",
+        "personalization-context-adjusted-grades",
+        "condition-pregnancy-interaction-rules",
+        "external-interaction-api"
+      ],
+      "startedAt": "2026-06-17"
+    },
     "evidence-grading": {
       "phase": "archived",
       "milestone": "v5",
