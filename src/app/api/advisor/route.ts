@@ -107,6 +107,16 @@ function streamResult(
         controller.enqueue(sse("token", { delta }));
       }
       controller.enqueue(sse("citations", { citations: result.citations }));
+      // v7 advisor-actions: when the loop halted on a proposal, ship the structured
+      // proposal + pre-apply safety flags so the client can render the confirm card.
+      if (result.status === "proposed" && result.proposal) {
+        controller.enqueue(
+          sse("proposal", {
+            proposal: result.proposal,
+            safetyFlags: result.newSafetyFlags ?? [],
+          }),
+        );
+      }
       controller.enqueue(
         sse("done", {
           conversationId,

@@ -12,15 +12,35 @@ import {
   TURN_CAP_NOTE,
 } from "./prompt";
 import { ADVISOR_TOOLS, toolByName } from "./tools";
+// v7 advisor-actions: proposal tools + proposal-halt + pre-apply safety re-check.
+// Design Ref: §2.2 — the read loop gains a halt state; the model can now PROPOSE
+// a write (returned for user confirmation) but still never writes. Plan SC-2/3/4.
+import {
+  ADVISOR_ACTION_TOOLS,
+  PROPOSAL_TOOL_NAMES,
+  actionToolByName,
+} from "./actions/proposals";
+import { recheckForProposal } from "./safety-recheck";
+import type { ActionProposal } from "@/types/advisor-action";
+import type { DraftFlag } from "@/types/evaluation";
 import type {
   AdapterMessage,
   AdapterToolResult,
   AdvisorContext,
+  AdvisorTool,
   AdvisorTurnResult,
   Citation,
   ClaudeAdapter,
   ToolResult,
 } from "@/types/advisor";
+
+/** The model's full callable surface: v6 read tools + v7 proposal tools. */
+const ALL_TOOLS: AdvisorTool[] = [...ADVISOR_TOOLS, ...ADVISOR_ACTION_TOOLS];
+
+/** Resolve a tool call against both registries (read + action). */
+function lookupTool(name: string): AdvisorTool | undefined {
+  return toolByName(name) ?? actionToolByName(name);
+}
 
 /** Hard cap on model↔tool round-trips per turn (Design §6). */
 export const MAX_TURNS = 5;
@@ -75,7 +95,7 @@ export async function runAdvisorTurn(
     const step = await adapter.next({
       system: ADVISOR_SYSTEM_PROMPT,
       messages,
-      tools: ADVISOR_TOOLS,
+      tools: ALL_TOOLS,
       toolResults: pendingToolResults,
     });
     inputTokens += step.usage.inputTokens;
@@ -89,9 +109,12 @@ export async function runAdvisorTurn(
       }, toolsUsed);
     }
 
+    // A proposal tool, once it returns a valid proposal, HALTS the loop (Design §2.2).
+    let haltProposal: ActionProposal | null = null;
+
     // Dispatch each requested tool through its pure handler (Design §6: never throws out).
     pendingToolResults = step.toolCalls.map((call) => {
-      const tool = toolByName(call.name);
+      const tool = lookupTool(call.name);
       let result: ToolResult;
       if (!tool) {
         result = {
@@ -113,6 +136,10 @@ export async function runAdvisorTurn(
         }
         toolsUsed.push(call.name);
       }
+      // Capture the FIRST grounded proposal in this step for the halt (SC-2).
+      if (haltProposal === null && PROPOSAL_TOOL_NAMES.has(call.name) && result.ok && result.data) {
+        haltProposal = result.data as ActionProposal;
+      }
       allResults.push(result);
       return {
         toolCallId: call.id,
@@ -123,6 +150,11 @@ export async function runAdvisorTurn(
         }),
       };
     });
+
+    // Proposal produced → halt, attach pre-apply safety flags, return for confirmation.
+    if (haltProposal !== null) {
+      return finalizeProposal(haltProposal, ctx, allResults, { inputTokens, outputTokens }, toolsUsed);
+    }
 
     // Budget exhausted mid-loop → stop here and finalize from what we have.
     if (inputTokens + outputTokens >= budgetRemaining) {
@@ -160,6 +192,58 @@ function finalize(
     : modelText;
 
   return { status: "answered", answer, citations, usage, toolsUsed };
+}
+
+/**
+ * Halt on a proposal: run the pre-apply safety re-check on the PROJECTED stack
+ * (Plan SC-4) and return the proposal + any newly-introduced flags for the user
+ * to confirm. The LLM has still written nothing — the engines/repos remain the
+ * only writers (Plan SC-2).
+ */
+function finalizeProposal(
+  proposal: ActionProposal,
+  ctx: AdvisorContext,
+  _results: ToolResult[],
+  usage: { inputTokens: number; outputTokens: number },
+  toolsUsed: string[],
+): AdvisorTurnResult {
+  let newSafetyFlags: DraftFlag[];
+  try {
+    newSafetyFlags = recheckForProposal(ctx, proposal);
+  } catch {
+    // A re-check failure must never silently drop the safety gate — surface none
+    // and let module-2's server-side re-check (the authoritative gate) decide.
+    newSafetyFlags = [];
+  }
+  return {
+    status: "proposed",
+    answer: proposalSummary(proposal, newSafetyFlags),
+    citations: proposal.rationaleCitations,
+    usage,
+    toolsUsed,
+    proposal,
+    newSafetyFlags,
+  };
+}
+
+/** A short, non-diagnostic human summary of a proposal for the chat transcript.
+ *  Composed only from engine-grounded diff labels + fixed copy, then guarded. */
+function proposalSummary(proposal: ActionProposal, flags: DraftFlag[]): string {
+  const lines = proposal.diff.map((d) => {
+    const tail = d.after ? `: ${d.after}` : d.before ? `: ${d.before}` : "";
+    return `• ${d.label}${tail}`;
+  });
+  const flagNote =
+    flags.length > 0
+      ? `\n\nHeads up — this change would surface ${flags.length} new flag${flags.length > 1 ? "s" : ""} to review before applying.`
+      : "";
+  const composed =
+    "I've prepared a change for you to review:\n" +
+    lines.join("\n") +
+    flagNote +
+    "\n\nConfirm it below to apply, or reject it. Nothing has been saved yet.\n\n" +
+    DISCLAIMERS.general;
+  return containsBannedLanguage(composed) ? DISCLAIMERS.general : composed;
 }
 
 /** Finalize when the loop stopped on the turn cap / budget mid-flight. */

@@ -7,7 +7,11 @@
 
 import { useRef, useState } from "react";
 import type { AdvisorConversation, Citation } from "@/types/advisor";
+import type { ActionProposal } from "@/types/advisor-action";
+import type { DraftFlag } from "@/types/evaluation";
 import { AdvisorMessageBubble, type ChatMessageView } from "./AdvisorMessageBubble";
+import { ActionProposalCard, type ConfirmResult } from "./ActionProposalCard";
+import { UndoToast } from "./UndoToast";
 import { ConversationRail } from "./ConversationRail";
 
 interface ApiMessage {
@@ -33,6 +37,15 @@ export function AdvisorPanel({
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
     });
+  }
+
+  function updateAt(index: number, fn: (m: ChatMessageView) => ChatMessageView) {
+    setMessages((prev) => prev.map((m, i) => (i === index ? fn(m) : m)));
+  }
+
+  function onProposalConfirmed(index: number, result: ConfirmResult, summary: string) {
+    updateAt(index, (m) => ({ ...m, applied: { actionId: result.actionId, summary } }));
+    scrollToBottom();
   }
 
   async function refreshConversations() {
@@ -100,6 +113,10 @@ export function AdvisorPanel({
           setMessages((prev) => updateLast(prev, (m) => ({ ...m, content: m.content + delta }))),
         onCitations: (citations) =>
           setMessages((prev) => updateLast(prev, (m) => ({ ...m, citations }))),
+        onProposal: ({ proposal, safetyFlags }) =>
+          setMessages((prev) =>
+            updateLast(prev, (m) => ({ ...m, proposal, safetyFlags, applied: null, rejected: false })),
+          ),
         onDone: async ({ conversationId }) => {
           setMessages((prev) => updateLast(prev, (m) => ({ ...m, pending: false })));
           if (!activeId) {
@@ -130,20 +147,36 @@ export function AdvisorPanel({
       <div className="flex min-h-[28rem] flex-1 flex-col">
         <div
           ref={scrollRef}
-          className="flex-1 space-y-3 overflow-y-auto rounded-lg border border-neutral-200 bg-neutral-50/50 p-4"
+          className="flex-1 space-y-3 overflow-y-auto rounded-lg border border-hairline bg-surface-soft/50 p-4"
         >
           {messages.length === 0 ? (
-            <p className="mt-10 text-center text-sm text-neutral-400">
+            <p className="mt-10 text-center text-sm text-muted-soft">
               Ask about your stack, your labs, interactions with your meds, or the
               evidence for a supplement. Answers come only from the platform&apos;s data.
             </p>
           ) : (
-            messages.map((m, i) => <AdvisorMessageBubble key={i} message={m} />)
+            messages.map((m, i) => (
+              <div key={i}>
+                <AdvisorMessageBubble message={m} />
+                {m.proposal && !m.applied && !m.rejected && (
+                  <ActionProposalCard
+                    proposal={m.proposal}
+                    safetyFlags={m.safetyFlags ?? []}
+                    conversationId={activeId}
+                    onConfirmed={(result, summary) => onProposalConfirmed(i, result, summary)}
+                    onRejected={() => updateAt(i, (msg) => ({ ...msg, rejected: true }))}
+                  />
+                )}
+                {m.applied && (
+                  <UndoToast actionId={m.applied.actionId} summary={m.applied.summary} />
+                )}
+              </div>
+            ))
           )}
         </div>
 
         {error && (
-          <p role="alert" className="mt-2 text-sm text-red-600">
+          <p role="alert" className="mt-2 text-sm text-error">
             {error}
           </p>
         )}
@@ -162,12 +195,12 @@ export function AdvisorPanel({
             maxLength={2000}
             placeholder="Is creatine safe with my meds, and do my labs support it?"
             aria-label="Ask the advisor"
-            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none disabled:bg-neutral-100"
+            className="flex-1 rounded-md border border-hairline px-3 py-2 text-sm focus:border-muted focus:outline-none disabled:bg-surface-card"
           />
           <button
             type="submit"
             disabled={busy || input.trim().length === 0}
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-40"
+            className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-surface-dark-elevated disabled:opacity-40"
           >
             {busy ? "Thinking…" : "Send"}
           </button>
@@ -212,6 +245,7 @@ async function safeErrorMessage(res: Response): Promise<string> {
 interface StreamHandlers {
   onToken: (delta: string) => void;
   onCitations: (citations: Citation[]) => void;
+  onProposal: (payload: { proposal: ActionProposal; safetyFlags: DraftFlag[] }) => void;
   onDone: (payload: { conversationId: string; status: string }) => void | Promise<void>;
 }
 
@@ -236,6 +270,7 @@ async function consumeStream(body: ReadableStream<Uint8Array>, h: StreamHandlers
       const data = JSON.parse(dataLine);
       if (event === "token") h.onToken(data.delta);
       else if (event === "citations") h.onCitations(data.citations);
+      else if (event === "proposal") h.onProposal(data);
       else if (event === "done") await h.onDone(data);
     }
   }

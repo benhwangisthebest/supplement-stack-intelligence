@@ -137,16 +137,21 @@ export type AdvisorTurnStatus =
   | "answered" // grounded answer produced
   | "refused-no-data" // every tool returned ok=false → honest refusal
   | "refused-budget" // per-user budget exhausted before any model call
-  | "refused-turn-cap"; // hit MAX_TURNS without a final answer → grounded summary
+  | "refused-turn-cap" // hit MAX_TURNS without a final answer → grounded summary
+  | "proposed"; // v7 advisor-actions: the loop halted on a write-proposal to confirm
 
 export interface AdvisorTurnResult {
   status: AdvisorTurnStatus;
-  /** Final, safety-reviewed assistant text. */
+  /** Final, safety-reviewed assistant text (a human summary when status="proposed"). */
   answer: string;
   citations: Citation[];
   usage: { inputTokens: number; outputTokens: number };
   /** Tool names invoked this turn, in order — for audit/tests. */
   toolsUsed: string[];
+  /** v7: present only when status="proposed" — the change awaiting user confirmation. */
+  proposal?: import("./advisor-action").ActionProposal;
+  /** v7: flags the proposal WOULD newly introduce (pre-apply safety re-check, SC-4). */
+  newSafetyFlags?: import("./evaluation").DraftFlag[];
 }
 
 /** Per-turn budget snapshot the agent consults before/while running. Design §3.3. */

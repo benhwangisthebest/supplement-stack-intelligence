@@ -10,12 +10,14 @@
 | [lab-timeline](lab-timeline/) | 2026-06-16 | 99% (static + L1 runtime) | PASS | plan · design · analysis · report · qa-report |
 | [evidence-grading](evidence-grading/) | 2026-06-16 | 100% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 | [ai-advisor](ai-advisor/) | 2026-06-17 | 98% (static + L1/L2 runtime) | PASS | plan · design · analysis · report · qa-report |
+| [advisor-actions](advisor-actions/) | 2026-06-23 | 98% (static + L1 runtime) | — (analysis-gated) | plan · design · analysis · report |
 
 > **v2 milestone begins** — first feature beyond the v1 MVP + two extensions.
 > **v3 milestone** — `biomarker-intelligence` (lab-informed intelligence).
 > **v4 milestone** — `lab-timeline` (lab upload + standardization + trend tracking).
 > **v5 milestone** — `evidence-grading` (effect-level multi-dimensional grading).
 > **v6 milestone** — `ai-advisor` (read-only, strictly tool-grounded AI advisor over all engines).
+> **v7 milestone** — `advisor-actions` (suggest-then-confirm: the advisor proposes guarded stack/protocol/product writes).
 
 ## mvp-core-loop
 The MVP core loop: search the Library → build a profile-aware stack → evidence-aware evaluation → compare vs goals. Built via Plan-Plus → PDCA (Design Option C, Do ×7 modules, Check 96%→Act-1 98%, QA 99% live). Success criteria 5/5 met against a live Supabase backend.
@@ -86,3 +88,11 @@ The synthesis release: a **read-only, strictly tool-grounded AI Advisor** that t
 - [Analysis](ai-advisor/ai-advisor.analysis.md)
 - [Report](ai-advisor/ai-advisor.report.md)
 - [QA Report](ai-advisor/ai-advisor.qa-report.md)
+
+## advisor-actions (v7)
+Turns the v6 read-only advisor into a **suggest-then-confirm actor**: it can now *propose* concrete stack/protocol/product changes (add / remove / edit item, generate-&-save protocol, attach matched product) but **never writes**. A dedicated pure `lib/advisor/actions` holds 5 proposal tools that validate every id/dose against `AdvisorContext` + the engines and **refuse when ungrounded**; a small **proposal-halt** extension to the v6 agent loop returns an `ActionProposal` (the `ClaudeAdapter` stays isolated). Before the confirm card renders, a pure `safety-recheck` re-runs the projected stack through `evaluateStack` (which already composes interactions + biomarkers) and surfaces only **newly-introduced** flags. On confirm, `POST /api/advisor/actions` is the trust boundary: it re-loads context server-side, **re-validates** ownership + re-parses via `stackItemInputSchema` (client canonical values never trusted; only editable dose/timing merged), **hard-blocks** a projected critical flag (`SAFETY_BLOCK` 409), then executes through the **existing repos** (the only writers) and audits the action with an **inverse** for one-click **undo**. Architecture **Option C (additive)** — **0 engine/write-API-route files modified**; additive `0004_advisor_actions.sql` (RLS audit table + nullable `stack_items.product_id`). Built via Plan-Plus → PDCA (Do ×3 modules, Check **98%**, **0 iterations**). Success criteria **8/8**; **268/268 unit** (+40) incl. proposal-grounding + inverse-mapping + honesty sweep; `next build` OK; L1 auth-guards runtime-verified live, authed L1 + L2/L3 env-gated (`E2E_LIVE`, needs `0004` applied). No new dependencies. **Deferred to v8:** batch multi-action proposals, true LLM token-streaming, provenance chip deep-linking, attached-product UI surfacing.
+
+- [Plan](advisor-actions/advisor-actions.plan.md)
+- [Design](advisor-actions/advisor-actions.design.md)
+- [Analysis](advisor-actions/advisor-actions.analysis.md)
+- [Report](advisor-actions/advisor-actions.report.md)

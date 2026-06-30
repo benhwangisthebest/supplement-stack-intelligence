@@ -2,6 +2,8 @@
 // assistant bubble carries provenance chips. Plain text (no markdown execution)
 // keeps rendering safe.
 import type { Citation } from "@/types/advisor";
+import type { ActionProposal } from "@/types/advisor-action";
+import type { DraftFlag } from "@/types/evaluation";
 import { ProvenanceChips } from "./ProvenanceChips";
 
 export interface ChatMessageView {
@@ -10,6 +12,14 @@ export interface ChatMessageView {
   citations: Citation[];
   /** true while this assistant message is still streaming in. */
   pending?: boolean;
+  /** v7 advisor-actions: a write-proposal awaiting confirmation (assistant only). */
+  proposal?: ActionProposal;
+  /** v7: pre-apply safety flags the proposal would introduce. */
+  safetyFlags?: DraftFlag[];
+  /** v7: set once the proposal is applied — drives the UndoToast. */
+  applied?: { actionId: string; summary: string } | null;
+  /** v7: set when the user rejects the proposal (card dismissed). */
+  rejected?: boolean;
 }
 
 export function AdvisorMessageBubble({ message }: { message: ChatMessageView }) {
@@ -19,8 +29,8 @@ export function AdvisorMessageBubble({ message }: { message: ChatMessageView }) 
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
           isUser
-            ? "bg-neutral-900 text-white"
-            : "border border-neutral-200 bg-white text-neutral-800"
+            ? "bg-ink text-white"
+            : "border border-hairline bg-white text-ink"
         }`}
       >
         <p className="whitespace-pre-wrap">

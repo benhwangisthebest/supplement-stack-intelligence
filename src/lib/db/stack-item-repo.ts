@@ -73,3 +73,34 @@ export async function deleteItem(
   const { error } = await supabase.from("stack_items").delete().eq("id", itemId);
   if (error) throw error;
 }
+
+// ---- advisor-actions v7: product attachment (DB-only column; the StackItem domain
+// type intentionally does NOT carry product_id — the attachment affects no evaluation,
+// so it stays a persistence detail). Migration 0004. ---------------------------------
+
+/** The product_id currently attached to an item (null if none) — for undo snapshots. */
+export async function getItemProductId(
+  supabase: SupabaseClient,
+  itemId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("stack_items")
+    .select("product_id")
+    .eq("id", itemId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.product_id as string | null | undefined) ?? null;
+}
+
+/** Attach (or clear, with null) a matched product on a stack item. */
+export async function setItemProduct(
+  supabase: SupabaseClient,
+  itemId: string,
+  productId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("stack_items")
+    .update({ product_id: productId })
+    .eq("id", itemId);
+  if (error) throw error;
+}

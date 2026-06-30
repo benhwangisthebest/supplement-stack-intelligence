@@ -3,6 +3,87 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "advisor-actions": {
+      "phase": "archived",
+      "archivedTo": "docs/archive/2026-06/advisor-actions/",
+      "archivedAt": "2026-06-23",
+      "milestone": "v7",
+      "matchRate": 98,
+      "matchRateMode": "static + runtime (unit 268/268, tsc clean, build OK, L1 auth-guards 2/2 live; authed L1 + L2/L3 gated on E2E_LIVE)",
+      "analysisDoc": "docs/03-analysis/advisor-actions.analysis.md",
+      "reportDoc": "docs/04-report/advisor-actions.report.md",
+      "successCriteria": "8/8 met",
+      "milestone": "v7",
+      "planDoc": "docs/01-plan/features/advisor-actions.plan.md",
+      "designDoc": "docs/02-design/features/advisor-actions.design.md",
+      "architecture": "Option C (Pragmatic)",
+      "method": "plan-plus",
+      "createdAt": "2026-06-22",
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete",
+        "module-3": "complete"
+      },
+      "doComplete": true,
+      "module3": {
+        "created": [
+          "src/components/advisor/ActionProposalCard.tsx",
+          "src/components/advisor/UndoToast.tsx",
+          "tests/e2e/advisor-actions-ui.spec.ts"
+        ],
+        "modified": [
+          "src/components/advisor/AdvisorPanel.tsx",
+          "src/components/advisor/AdvisorMessageBubble.tsx"
+        ],
+        "verification": "tsc clean; 268/268 unit; next build OK (/advisor 4.18kB); 7 e2e specs discovered (L1 always-on + L2/L3 E2E_LIVE-gated)",
+        "completedAt": "2026-06-23"
+      },
+      "safetyPolicy": "critical projected flag = HARD-BLOCK (409 SAFETY_BLOCK) — user-confirmed",
+      "module2": {
+        "created": [
+          "supabase/migrations/0004_advisor_actions.sql",
+          "src/lib/db/advisor-action-repo.ts",
+          "src/lib/advisor/actions/execute.ts",
+          "src/app/api/advisor/actions/route.ts",
+          "src/app/api/advisor/actions/[id]/undo/route.ts",
+          "tests/e2e/advisor-actions.spec.ts"
+        ],
+        "modified": [
+          "src/lib/db/stack-item-repo.ts",
+          "src/app/api/advisor/route.ts"
+        ],
+        "decisions": [
+          "product attachment is a DB-ONLY column (product_id on stack_items) via setItemProduct/getItemProductId — StackItem domain type intentionally NOT changed (attachment affects no evaluation); avoided cascading churn",
+          "critical projected flag hard-blocks confirm (409 SAFETY_BLOCK)"
+        ],
+        "verification": "tsc clean; 268/268 unit; next build OK (/api/advisor/actions + /[id]/undo registered); L1 auth-guards always-on, authed confirm/undo round-trip gated on E2E_LIVE (needs 0004 applied)",
+        "completedAt": "2026-06-22"
+      },
+      "module1": {
+        "created": [
+          "src/types/advisor-action.ts",
+          "src/lib/advisor/actions/schema.ts",
+          "src/lib/advisor/actions/proposals.ts",
+          "src/lib/advisor/actions/apply.ts",
+          "src/lib/advisor/safety-recheck.ts",
+          "src/lib/advisor/actions/proposals.test.ts",
+          "src/lib/advisor/actions/apply.test.ts",
+          "src/lib/advisor/safety-recheck.test.ts",
+          "src/lib/advisor/agent-proposals.test.ts"
+        ],
+        "modified": [
+          "src/lib/advisor/agent.ts",
+          "src/lib/advisor/prompt.ts",
+          "src/types/advisor.ts"
+        ],
+        "verification": "tsc clean; 268/268 unit (+40 new); 0 engine/write-API/route files touched",
+        "carryToModule2": [
+          "stack_items has NO product column — module-2 must add nullable product_id (additive migration) + setItemProduct repo for attach_product / set_item_product WriteIntent",
+          "critical-flag policy still open: hard-block vs warn-and-allow on confirm (route-level)"
+        ],
+        "completedAt": "2026-06-22"
+      }
+    },
     "ai-advisor": {
       "phase": "archived",
       "archivedTo": "docs/archive/2026-06/ai-advisor/",
