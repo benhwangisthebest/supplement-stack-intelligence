@@ -67,26 +67,26 @@ export function AddToStackButton({
   const visible = open ? (stacks ?? []).filter((s) => s.mode === open) : [];
 
   return (
-    <div className="rounded-lg border border-neutral-200 p-4">
+    <div className="rounded-lg border border-hairline p-4">
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => void openFor("current")}
-          className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white"
+          className="rounded-md bg-ink px-3 py-2 text-sm font-medium text-white"
         >
           Add to Current Stack
         </button>
         <button
           type="button"
           onClick={() => void openFor("planned")}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          className="rounded-md border border-hairline px-3 py-2 text-sm font-medium text-body hover:bg-surface-soft"
         >
           Add to Planned Stack
         </button>
       </div>
 
       {needsAuth && (
-        <p className="mt-3 text-sm text-neutral-600">
+        <p className="mt-3 text-sm text-body">
           <Link href="/auth/login" className="underline">
             Log in
           </Link>{" "}
@@ -97,7 +97,7 @@ export function AddToStackButton({
       {open && !needsAuth && (
         <div className="mt-3">
           {visible.length === 0 ? (
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-muted">
               No {open} stacks yet.{" "}
               <Link href="/stack-lab" className="underline">
                 Create one
@@ -112,7 +112,7 @@ export function AddToStackButton({
                     type="button"
                     disabled={busy}
                     onClick={() => void addTo(s.id)}
-                    className="rounded-full border border-neutral-300 px-3 py-1 text-sm text-neutral-700 hover:border-neutral-500 disabled:opacity-50"
+                    className="rounded-full border border-hairline px-3 py-1 text-sm text-body hover:border-muted disabled:opacity-50"
                   >
                     {s.name}
                   </button>
@@ -123,7 +123,7 @@ export function AddToStackButton({
         </div>
       )}
 
-      {status && <p className="mt-2 text-sm text-emerald-600">{status}</p>}
+      {status && <p className="mt-2 text-sm text-success">{status}</p>}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   SupplementSearch,
   type LibraryEntry,
 } from "@/components/library/SupplementSearch";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata = { title: "Library — Supplement Stack Intelligence" };
 
@@ -21,12 +22,12 @@ export default function LibraryPage() {
   });
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Library</h1>
-      <p className="mt-2 text-neutral-600">
-        Search supplements and understand the evidence — graded by effect.
-      </p>
-      <div className="mt-6">
+    <main className="container-page max-w-4xl py-12">
+      <PageHeader
+        title="Library"
+        lead="Search supplements and understand the evidence — graded by effect, never overstated."
+      />
+      <div className="mt-8">
         <SupplementSearch entries={entries} />
       </div>
     </main>

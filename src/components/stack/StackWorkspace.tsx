@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import type {
   EvaluationFlag,
   EvaluationSummary,
@@ -9,6 +9,7 @@ import type {
   StackItem,
 } from "@/types";
 import { DISCLAIMERS } from "@/lib/safety";
+import { CollapseToggle } from "@/components/ui/CollapseToggle";
 import { AddItemForm, type SupplementOption } from "./AddItemForm";
 import { FlagCard } from "./FlagCard";
 import { CompareView } from "./CompareView";
@@ -21,16 +22,19 @@ const INTERACTION_CATEGORIES = new Set(["medication-caution", "interaction-risk"
 // This is where the core loop closes (Plan North Star).
 export function StackWorkspace({
   stack,
-  initialItems,
+  items,
+  setItems,
   initialFlags,
   supplements,
 }: {
   stack: Stack;
-  initialItems: StackItem[];
+  // Items state is lifted to the parent so sibling panels (e.g. Suggested
+  // Protocol) can add to the stack and have it show here immediately.
+  items: StackItem[];
+  setItems: Dispatch<SetStateAction<StackItem[]>>;
   initialFlags: EvaluationFlag[];
   supplements: SupplementOption[];
 }) {
-  const [items, setItems] = useState<StackItem[]>(initialItems);
   const [flags, setFlags] = useState<EvaluationFlag[]>(initialFlags);
   const [summary, setSummary] = useState<EvaluationSummary | null>(
     initialFlags.length
@@ -43,6 +47,7 @@ export function StackWorkspace({
   );
   const [evaluating, setEvaluating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [evalCollapsed, setEvalCollapsed] = useState(false);
 
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -96,11 +101,11 @@ export function StackWorkspace({
       <section>
         <h2 className="text-lg font-semibold tracking-tight">Items ({items.length})</h2>
         {items.length === 0 ? (
-          <p className="mt-2 text-sm text-neutral-500">
+          <p className="mt-2 text-sm text-muted">
             No items yet. Add supplements below, then evaluate.
           </p>
         ) : (
-          <ul className="mt-3 divide-y divide-neutral-100 rounded-lg border border-neutral-200">
+          <ul className="mt-3 divide-y divide-hairline-soft rounded-lg border border-hairline">
             {items.map((item) => (
               <StackItemRow
                 key={item.id}
@@ -124,24 +129,33 @@ export function StackWorkspace({
       />
 
       {/* Evaluate */}
-      <section>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => void evaluate()}
-            disabled={evaluating || items.length === 0}
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {evaluating ? "Evaluating…" : "Evaluate stack"}
-          </button>
-          {summary && (
-            <p className="text-sm text-neutral-600">
-              {summary.critical} critical · {summary.warning} warning · {summary.info} info
-            </p>
-          )}
+      <section className="rounded-lg border border-hairline p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void evaluate()}
+              disabled={evaluating || items.length === 0}
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {evaluating ? "Evaluating…" : "Evaluate stack"}
+            </button>
+            {summary && (
+              <p className="text-sm text-body">
+                {summary.critical} critical · {summary.warning} warning · {summary.info} info
+              </p>
+            )}
+          </div>
+          <CollapseToggle
+            collapsed={evalCollapsed}
+            onToggle={() => setEvalCollapsed((c) => !c)}
+            label="stack evaluation"
+          />
         </div>
+        {!evalCollapsed && (
+          <>
         {error && (
-          <p role="alert" className="mt-2 text-sm text-red-600">
+          <p role="alert" className="mt-2 text-sm text-error">
             {error}
           </p>
         )}
@@ -149,7 +163,7 @@ export function StackWorkspace({
         {hasCriticalInteraction && (
           <div
             role="alert"
-            className="mt-4 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800"
+            className="mt-4 rounded-lg border border-error/30 bg-error/10 p-4 text-sm text-error"
           >
             <p className="font-semibold">
               A potentially serious interaction was flagged
@@ -172,7 +186,9 @@ export function StackWorkspace({
         )}
 
         {hasAnyInteraction && (
-          <p className="mt-3 text-xs text-neutral-400">{DISCLAIMERS.interaction}</p>
+          <p className="mt-3 text-xs text-muted-soft">{DISCLAIMERS.interaction}</p>
+        )}
+          </>
         )}
       </section>
 

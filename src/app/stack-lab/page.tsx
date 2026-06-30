@@ -4,6 +4,7 @@ import { listStacks } from "@/lib/db/stack-repo";
 import { NewStackForm } from "@/components/stack/NewStackForm";
 import { StackList } from "@/components/stack/StackList";
 import { Disclaimer } from "@/components/ui/Disclaimer";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata = { title: "Stack Lab — Supplement Stack Intelligence" };
 export const dynamic = "force-dynamic"; // reads auth session + user data per request
@@ -15,13 +16,13 @@ export default async function StackLabPage() {
   const stacks = await listStacks(supabase, user.id);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Stack Lab</h1>
-      <p className="mt-2 text-neutral-600">
-        Build, evaluate, and optimize your supplement stacks.
-      </p>
+    <main className="container-page max-w-4xl py-12">
+      <PageHeader
+        title="Stack Lab"
+        lead="Build, evaluate, and optimize your supplement stacks — with you in control."
+      />
 
-      <div className="mt-6">
+      <div className="mt-8">
         <NewStackForm />
       </div>
 

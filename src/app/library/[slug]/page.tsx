@@ -51,14 +51,14 @@ export default async function SupplementDetailPage({
   const papers = [...paperMap.values()];
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <Link href="/library" className="text-sm text-neutral-500 hover:text-neutral-800">
+    <main className="container-page max-w-4xl py-10">
+      <Link href="/library" className="text-sm font-medium text-muted hover:text-ink">
         ← Back to Library
       </Link>
 
-      <header className="mt-3">
-        <h1 className="text-3xl font-semibold tracking-tight">{supplement.name}</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+      <header className="mt-4">
+        <h1 className="display-md">{supplement.name}</h1>
+        <p className="mt-2 text-sm text-muted">
           {supplement.category}
           {supplement.aliases.length > 0 && <> · {supplement.aliases.join(", ")}</>}
         </p>

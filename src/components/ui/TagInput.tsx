@@ -35,19 +35,19 @@ export function TagInput({
 
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-neutral-700">{label}</label>
+      <label className="mb-1 block text-sm font-medium text-body">{label}</label>
       <div className="flex flex-wrap gap-1.5">
         {values.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-sm text-neutral-700"
+            className="inline-flex items-center gap-1 rounded-full bg-surface-card px-2 py-0.5 text-sm text-body"
           >
             {tag}
             <button
               type="button"
               aria-label={`Remove ${tag}`}
               onClick={() => remove(tag)}
-              className="text-neutral-400 hover:text-neutral-700"
+              className="text-muted-soft hover:text-body"
             >
               ×
             </button>
@@ -67,7 +67,7 @@ export function TagInput({
           }
         }}
         onBlur={add}
-        className="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+        className="mt-2 w-full rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
       />
       {suggestions && suggestions.length > 0 && (
         <datalist id={listId}>

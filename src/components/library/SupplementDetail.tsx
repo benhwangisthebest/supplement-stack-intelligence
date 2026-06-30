@@ -37,44 +37,44 @@ export function SupplementDetail({
 function SummaryTab({ supplement }: { supplement: Supplement }) {
   return (
     <div className="space-y-5">
-      <p className="text-neutral-700">{supplement.description}</p>
+      <p className="text-body">{supplement.description}</p>
 
       <section>
-        <h3 className="text-sm font-semibold text-neutral-900">Mechanism</h3>
-        <p className="mt-1 text-sm text-neutral-600">{supplement.mechanismSummary}</p>
+        <h3 className="text-sm font-semibold text-ink">Mechanism</h3>
+        <p className="mt-1 text-sm text-body">{supplement.mechanismSummary}</p>
       </section>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <section>
-          <h3 className="text-sm font-semibold text-neutral-900">Side effects</h3>
-          <ul className="mt-1 list-disc pl-5 text-sm text-neutral-600">
+          <h3 className="text-sm font-semibold text-ink">Side effects</h3>
+          <ul className="mt-1 list-disc pl-5 text-sm text-body">
             {supplement.sideEffects.map((s) => (
               <li key={s}>{s}</li>
             ))}
           </ul>
         </section>
         <section>
-          <h3 className="text-sm font-semibold text-neutral-900">Contraindications</h3>
+          <h3 className="text-sm font-semibold text-ink">Contraindications</h3>
           {supplement.contraindications.length ? (
-            <ul className="mt-1 list-disc pl-5 text-sm text-neutral-600">
+            <ul className="mt-1 list-disc pl-5 text-sm text-body">
               {supplement.contraindications.map((c) => (
                 <li key={c}>{c}</li>
               ))}
             </ul>
           ) : (
-            <p className="mt-1 text-sm text-neutral-500">None noted.</p>
+            <p className="mt-1 text-sm text-muted">None noted.</p>
           )}
         </section>
       </div>
 
       {supplement.allergenTags.length > 0 && (
         <section>
-          <h3 className="text-sm font-semibold text-neutral-900">Allergens</h3>
+          <h3 className="text-sm font-semibold text-ink">Allergens</h3>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {supplement.allergenTags.map((a) => (
               <span
                 key={a}
-                className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs text-red-700"
+                className="rounded-full border border-error/30 bg-error/10 px-2 py-0.5 text-xs text-error"
               >
                 {a}
               </span>
@@ -90,29 +90,29 @@ function DoseTab({ supplement, effects }: { supplement: Supplement; effects: Eff
   return (
     <div className="space-y-5">
       <section>
-        <h3 className="text-sm font-semibold text-neutral-900">General dose range</h3>
-        <p className="mt-1 text-sm text-neutral-700">
+        <h3 className="text-sm font-semibold text-ink">General dose range</h3>
+        <p className="mt-1 text-sm text-body">
           {supplement.generalDose.min}–{supplement.generalDose.max} {supplement.generalDose.unit}
         </p>
-        <p className="mt-1 text-xs text-neutral-400">
+        <p className="mt-1 text-xs text-muted-soft">
           Common forms: {supplement.commonForms.join(", ")}
         </p>
       </section>
 
       <section>
-        <h3 className="text-sm font-semibold text-neutral-900">Doses used in studies</h3>
+        <h3 className="text-sm font-semibold text-ink">Doses used in studies</h3>
         <table className="mt-2 w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+            <tr className="border-b border-hairline text-left text-xs uppercase tracking-wide text-muted">
               <th className="py-2 pr-3">Effect</th>
               <th className="py-2 pr-3">Studied dose</th>
             </tr>
           </thead>
           <tbody>
             {effects.map((e) => (
-              <tr key={e.id} className="border-b border-neutral-100">
-                <td className="py-2 pr-3 text-neutral-700">{e.name}</td>
-                <td className="py-2 pr-3 text-neutral-600">
+              <tr key={e.id} className="border-b border-hairline-soft">
+                <td className="py-2 pr-3 text-body">{e.name}</td>
+                <td className="py-2 pr-3 text-body">
                   {e.studiedDose.min}–{e.studiedDose.max} {e.studiedDose.unit}
                 </td>
               </tr>
@@ -128,15 +128,15 @@ function EffectsTab({ effects, papers }: { effects: Effect[]; papers: Paper[] })
   return (
     <div className="space-y-4">
       {effects.map((e) => (
-        <article key={e.id} className="rounded-lg border border-neutral-200 p-4">
+        <article key={e.id} className="rounded-lg border border-hairline p-4">
           <div className="flex items-start justify-between gap-3">
-            <h3 className="font-medium text-neutral-900">{e.name}</h3>
+            <h3 className="font-medium text-ink">{e.name}</h3>
             <EffectGradeBadge grade={e.grade} confidence={e.confidence} />
           </div>
-          <p className="mt-1 text-xs uppercase tracking-wide text-neutral-400">
+          <p className="mt-1 text-xs uppercase tracking-wide text-muted-soft">
             {e.outcomeCategory} · {e.relevantPopulation}
           </p>
-          <p className="mt-2 text-sm text-neutral-700">{e.summary}</p>
+          <p className="mt-2 text-sm text-body">{e.summary}</p>
           {/* evidence-grading v5: per-dimension breakdown for profiled effects only. */}
           {e.evidenceProfile && (
             <EvidenceBreakdown profile={e.evidenceProfile} papers={papers} />
@@ -149,7 +149,7 @@ function EffectsTab({ effects, papers }: { effects: Effect[]; papers: Paper[] })
 
 function PapersTab({ papers }: { papers: Paper[] }) {
   if (papers.length === 0) {
-    return <p className="text-sm text-neutral-500">No study summaries seeded yet.</p>;
+    return <p className="text-sm text-muted">No study summaries seeded yet.</p>;
   }
   return (
     <div className="space-y-3">
@@ -162,7 +162,7 @@ function PapersTab({ papers }: { papers: Paper[] }) {
 
 function RelatedTab({ related }: { related: Supplement[] }) {
   if (related.length === 0) {
-    return <p className="text-sm text-neutral-500">No related supplements listed.</p>;
+    return <p className="text-sm text-muted">No related supplements listed.</p>;
   }
   return (
     <ul className="flex flex-wrap gap-2">
@@ -170,7 +170,7 @@ function RelatedTab({ related }: { related: Supplement[] }) {
         <li key={s.id}>
           <Link
             href={`/library/${s.slug}`}
-            className="rounded-full border border-neutral-300 px-3 py-1 text-sm text-neutral-700 hover:border-neutral-500"
+            className="rounded-full border border-hairline px-3 py-1 text-sm text-body hover:border-muted"
           >
             {s.name}
           </Link>

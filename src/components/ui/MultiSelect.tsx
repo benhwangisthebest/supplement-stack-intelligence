@@ -28,7 +28,7 @@ export function MultiSelect<T extends string>({
   return (
     <fieldset>
       {label && (
-        <legend className="mb-1 text-sm font-medium text-neutral-700">{label}</legend>
+        <legend className="mb-1 text-sm font-medium text-body">{label}</legend>
       )}
       <div className="flex flex-wrap gap-2">
         {options.map((o) => {
@@ -41,8 +41,8 @@ export function MultiSelect<T extends string>({
               onClick={() => toggle(o.value)}
               className={`rounded-full border px-3 py-1 text-sm capitalize transition-colors ${
                 active
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-300 text-neutral-700 hover:border-neutral-500"
+                  ? "border-ink bg-ink text-white"
+                  : "border-hairline text-body hover:border-muted"
               }`}
             >
               {o.label}

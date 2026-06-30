@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { ProtocolResult, ProtocolSuggestion } from "@/types";
+import type { ProtocolResult, ProtocolSuggestion, StackItem } from "@/types";
+import { CollapseToggle } from "@/components/ui/CollapseToggle";
 import { SuggestionCard } from "./SuggestionCard";
 
 // Design §5.4 — Protocol Builder panel on the stack detail page.
@@ -11,11 +12,19 @@ function key(s: ProtocolSuggestion): string {
   return `${s.outcomeCategory}:${s.supplementId}`;
 }
 
-export function ProtocolPanel({ stackId }: { stackId: string }) {
+export function ProtocolPanel({
+  stackId,
+  onAccepted,
+}: {
+  stackId: string;
+  // Called with the newly created stack item so the Items list updates live.
+  onAccepted?: (item: StackItem) => void;
+}) {
   const [result, setResult] = useState<ProtocolResult | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
 
   async function generate() {
     setBusy(true);
@@ -71,6 +80,12 @@ export function ProtocolPanel({ stackId }: { stackId: string }) {
     });
     if (res.ok) {
       markAdded(s);
+      try {
+        const json = await res.json();
+        if (json?.data) onAccepted?.(json.data as StackItem);
+      } catch {
+        // Non-fatal: the item was created server-side; the live add is best-effort.
+      }
       return true;
     }
     return false;
@@ -105,21 +120,21 @@ export function ProtocolPanel({ stackId }: { stackId: string }) {
   const noGoals = result && result.groups.length === 0;
 
   return (
-    <section className="rounded-lg border border-neutral-200 p-4">
+    <section className="rounded-lg border border-hairline p-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Suggested Protocol</h2>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted">
             Evidence-graded suggestions from your profile — accept what fits.
           </p>
         </div>
-        <div className="flex gap-2">
-          {hasGroups && (
+        <div className="flex items-center gap-2">
+          {hasGroups && !collapsed && (
             <button
               type="button"
               onClick={() => void acceptAll()}
               disabled={busy}
-              className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+              className="rounded-md border border-hairline px-3 py-1.5 text-sm text-body hover:bg-surface-soft disabled:opacity-50"
             >
               Accept all
             </button>
@@ -128,21 +143,28 @@ export function ProtocolPanel({ stackId }: { stackId: string }) {
             type="button"
             onClick={() => void generate()}
             disabled={busy}
-            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
           >
             {busy ? "Working…" : result ? "Regenerate" : "Generate Protocol"}
           </button>
+          <CollapseToggle
+            collapsed={collapsed}
+            onToggle={() => setCollapsed((c) => !c)}
+            label="suggested protocol"
+          />
         </div>
       </div>
 
+      {collapsed ? null : (
+        <>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-600">
+        <p role="alert" className="mt-2 text-sm text-error">
           {error}
         </p>
       )}
 
       {noGoals && (
-        <p className="mt-4 text-sm text-neutral-500">
+        <p className="mt-4 text-sm text-muted">
           Add goals to your{" "}
           <Link href="/profile" className="underline">
             Profile
@@ -158,7 +180,7 @@ export function ProtocolPanel({ stackId }: { stackId: string }) {
             if (visible.length === 0) return null;
             return (
               <div key={g.goal}>
-                <h3 className="mb-2 text-sm font-medium capitalize text-neutral-700">
+                <h3 className="mb-2 text-sm font-medium capitalize text-body">
                   {g.goal} ({visible.length})
                 </h3>
                 <div className="space-y-3">
@@ -176,6 +198,8 @@ export function ProtocolPanel({ stackId }: { stackId: string }) {
             );
           })}
         </div>
+      )}
+        </>
       )}
     </section>
   );

@@ -86,13 +86,13 @@ export function AddItemForm({
   }
 
   return (
-    <div className="rounded-lg border border-neutral-200 p-4">
-      <h3 className="text-sm font-semibold text-neutral-900">Add item</h3>
+    <div className="rounded-lg border border-hairline p-4">
+      <h3 className="text-sm font-semibold text-ink">Add item</h3>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <select
           value={supplementId}
           onChange={(e) => pickSupplement(e.target.value)}
-          className="col-span-2 rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+          className="col-span-2 rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         >
           <option value="">Select supplement…</option>
           {supplements.map((s) => (
@@ -106,25 +106,25 @@ export function AddItemForm({
           onChange={(e) => setCustomName(e.target.value)}
           placeholder="…or custom name"
           disabled={Boolean(supplementId)}
-          className="col-span-2 rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 disabled:bg-neutral-50"
+          className="col-span-2 rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink disabled:bg-surface-soft"
         />
         <input
           value={dose}
           onChange={(e) => setDose(e.target.value)}
           placeholder="Dose"
           inputMode="decimal"
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         />
         <input
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
           placeholder="Unit"
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         />
         <select
           value={timing}
           onChange={(e) => setTiming(e.target.value as ItemTiming | "")}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         >
           <option value="">Timing…</option>
           {TIMINGS.map((t) => (
@@ -136,7 +136,7 @@ export function AddItemForm({
         <select
           value={frequency}
           onChange={(e) => setFrequency(e.target.value as ItemFrequency | "")}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         >
           <option value="">Frequency…</option>
           {FREQUENCIES.map((f) => (
@@ -149,19 +149,19 @@ export function AddItemForm({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Reason (optional)"
-          className="col-span-3 rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+          className="col-span-3 rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         />
         <button
           type="button"
           onClick={() => void add()}
           disabled={busy}
-          className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           {busy ? "Adding…" : "Add"}
         </button>
       </div>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-600">
+        <p role="alert" className="mt-2 text-sm text-error">
           {error}
         </p>
       )}

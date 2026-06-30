@@ -14,7 +14,7 @@ export function Disclaimer({
   return (
     <p
       role="note"
-      className={`text-xs leading-relaxed text-neutral-500 ${className}`}
+      className={`text-xs leading-relaxed text-muted ${className}`}
     >
       {DISCLAIMERS[variant]}
     </p>

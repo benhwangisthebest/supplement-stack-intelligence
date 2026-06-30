@@ -6,10 +6,10 @@ import type { InteractionRule, InteractionSeverity } from "@/types/interaction";
 // Design §5.4 — Library "Interactions" section. Server component over static seed data.
 // Empty state never implies safety (Plan FR-10).
 const SEVERITY_STYLES: Record<InteractionSeverity, string> = {
-  serious: "bg-red-100 text-red-800 border-red-200",
-  warning: "bg-amber-100 text-amber-800 border-amber-200",
-  caution: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  info: "bg-sky-100 text-sky-800 border-sky-200",
+  serious: "bg-error/10 text-error border-error/30",
+  warning: "bg-warning/10 text-warning border-warning/30",
+  caution: "bg-warning/10 text-warning border-warning/30",
+  info: "bg-brand/10 text-brand border-brand/30",
 };
 
 function humanize(s: string): string {
@@ -36,7 +36,7 @@ export function InteractionSection({ supplementId }: { supplementId: string }) {
       <h2 className="text-lg font-semibold tracking-tight">Interactions</h2>
 
       {rules.length === 0 ? (
-        <p className="mt-2 text-sm text-neutral-500">
+        <p className="mt-2 text-sm text-muted">
           No known interactions in our dataset. This does not mean a combination is
           safe — our dataset is limited.
         </p>
@@ -45,7 +45,7 @@ export function InteractionSection({ supplementId }: { supplementId: string }) {
           {rules.map((rule) => (
             <li
               key={rule.id}
-              className="rounded-lg border border-neutral-200 p-4"
+              className="rounded-lg border border-hairline p-4"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span
@@ -53,22 +53,22 @@ export function InteractionSection({ supplementId }: { supplementId: string }) {
                 >
                   {rule.severity}
                 </span>
-                <h4 className="text-sm font-semibold text-neutral-900">
+                <h4 className="text-sm font-semibold text-ink">
                   {counterpartLabel(rule, supplementId)}
                 </h4>
-                <span className="text-[11px] uppercase tracking-wide text-neutral-400">
+                <span className="text-[11px] uppercase tracking-wide text-muted-soft">
                   {rule.kind === "supplement-drug" ? "medication" : "supplement"} ·
                   evidence {rule.evidenceGrade}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-neutral-700">{rule.mechanism}.</p>
-              <p className="mt-1 text-sm text-neutral-600">{rule.management}</p>
+              <p className="mt-1 text-sm text-body">{rule.mechanism}.</p>
+              <p className="mt-1 text-sm text-body">{rule.management}</p>
             </li>
           ))}
         </ul>
       )}
 
-      <p className="mt-3 text-xs text-neutral-400">{DISCLAIMERS.interaction}</p>
+      <p className="mt-3 text-xs text-muted-soft">{DISCLAIMERS.interaction}</p>
     </section>
   );
 }

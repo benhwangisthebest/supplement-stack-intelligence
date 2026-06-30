@@ -14,7 +14,7 @@ export function Tabs({ items }: { items: TabItem[] }) {
 
   return (
     <div>
-      <div role="tablist" className="flex flex-wrap gap-1 border-b border-neutral-200">
+      <div role="tablist" className="flex flex-wrap gap-1 border-b border-hairline">
         {items.map((t) => {
           const selected = t.id === active;
           return (
@@ -26,8 +26,8 @@ export function Tabs({ items }: { items: TabItem[] }) {
               onClick={() => setActive(t.id)}
               className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
                 selected
-                  ? "border-neutral-900 text-neutral-900"
-                  : "border-transparent text-neutral-500 hover:text-neutral-800"
+                  ? "border-ink text-ink"
+                  : "border-transparent text-muted hover:text-ink"
               }`}
             >
               {t.label}

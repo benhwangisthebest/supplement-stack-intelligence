@@ -31,41 +31,41 @@ export function CompareView({ stackId }: { stackId: string }) {
   }
 
   return (
-    <div className="rounded-lg border border-neutral-200 p-4">
+    <div className="rounded-lg border border-hairline p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-neutral-900">Compare to goals</h3>
+        <h3 className="text-sm font-semibold text-ink">Compare to goals</h3>
         <button
           type="button"
           onClick={() => void run()}
           disabled={busy}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+          className="rounded-md border border-hairline px-3 py-1.5 text-sm text-body hover:bg-surface-soft disabled:opacity-50"
         >
           {busy ? "Comparing…" : "Compare"}
         </button>
       </div>
 
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-600">
+        <p role="alert" className="mt-2 text-sm text-error">
           {error}
         </p>
       )}
 
       {data &&
         (data.goals.length === 0 ? (
-          <p className="mt-3 text-sm text-neutral-500">
+          <p className="mt-3 text-sm text-muted">
             No goals set in your profile yet — add goals to compare coverage.
           </p>
         ) : (
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <h4 className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+              <h4 className="text-xs font-medium uppercase tracking-wide text-success">
                 Covered ({data.coveredGoals.length})
               </h4>
               <ul className="mt-1 flex flex-wrap gap-1.5">
                 {data.coveredGoals.map((g) => (
                   <li
                     key={g}
-                    className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs capitalize text-emerald-800"
+                    className="rounded-full bg-success/10 px-2 py-0.5 text-xs capitalize text-success"
                   >
                     {g}
                   </li>
@@ -73,7 +73,7 @@ export function CompareView({ stackId }: { stackId: string }) {
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-medium uppercase tracking-wide text-amber-700">
+              <h4 className="text-xs font-medium uppercase tracking-wide text-warning">
                 Uncovered ({data.uncoveredGoals.length})
               </h4>
               <ul className="mt-1 flex flex-wrap gap-1.5">
@@ -81,13 +81,13 @@ export function CompareView({ stackId }: { stackId: string }) {
                   data.uncoveredGoals.map((g) => (
                     <li
                       key={g}
-                      className="rounded-full bg-amber-100 px-2 py-0.5 text-xs capitalize text-amber-800"
+                      className="rounded-full bg-warning/10 px-2 py-0.5 text-xs capitalize text-warning"
                     >
                       {g}
                     </li>
                   ))
                 ) : (
-                  <li className="text-xs text-neutral-500">All goals covered 🎉</li>
+                  <li className="text-xs text-muted">All goals covered 🎉</li>
                 )}
               </ul>
             </div>

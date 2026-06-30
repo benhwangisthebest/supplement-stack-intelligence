@@ -1,3 +1,109 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Cal.com-style design system (see .claude/DESIGN.md)
+   White canvas · near-black actions · light-gray cards · one dark footer.
+   Brand voltage from display typography, not accent color.
+   ────────────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-canvas text-body font-sans;
+  }
+
+  /* Display headings carry the geometric, tightly-tracked brand voice.
+     The boundary is strict: display = font-display 600 negative tracking. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-ink;
+  }
+
+  ::selection {
+    @apply bg-ink text-on-dark;
+  }
+}
+
+@layer components {
+  /* Layout ---------------------------------------------------------------- */
+  .container-page {
+    @apply mx-auto w-full max-w-content px-6;
+  }
+
+  .section {
+    @apply py-16 sm:py-24;
+  }
+
+  /* Display type utilities ------------------------------------------------ */
+  .display-xl {
+    @apply font-display text-[40px] leading-[1.05] tracking-[-1.5px] sm:text-display-xl;
+  }
+  .display-lg {
+    @apply font-display text-[34px] leading-[1.1] tracking-[-1px] sm:text-display-lg;
+  }
+  .display-md {
+    @apply font-display text-display-md;
+  }
+  .display-sm {
+    @apply font-display text-display-sm;
+  }
+
+  /* Buttons --------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold leading-none transition-colors disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-on-dark hover:bg-primary-active active:bg-primary-active disabled:bg-primary-disabled disabled:text-muted;
+  }
+  .btn-secondary {
+    @apply btn border border-hairline bg-canvas text-ink hover:bg-surface-soft;
+  }
+  .btn-ghost {
+    @apply btn px-3 text-ink hover:bg-surface-soft;
+  }
+
+  /* Inputs ---------------------------------------------------------------- */
+  .input {
+    @apply h-10 w-full rounded-md border border-hairline bg-canvas px-3.5 text-sm text-ink placeholder:text-muted-soft outline-none transition-colors focus:border-ink;
+  }
+  .textarea {
+    @apply w-full rounded-md border border-hairline bg-canvas px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-soft outline-none transition-colors focus:border-ink;
+  }
+  .label {
+    @apply block text-sm font-semibold text-ink;
+  }
+
+  /* Cards ----------------------------------------------------------------- */
+  .card {
+    @apply rounded-lg border border-hairline bg-canvas;
+  }
+  .card-feature {
+    @apply rounded-lg bg-surface-card p-8;
+  }
+  .card-soft {
+    @apply rounded-lg border border-hairline bg-canvas p-6 shadow-card transition-shadow;
+  }
+
+  /* Badges ---------------------------------------------------------------- */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-pill border border-hairline bg-surface-card px-3 py-1 text-[13px] font-medium text-ink;
+  }
+
+  /* Nav pill group (signature Cal.com component) -------------------------- */
+  .nav-pill-group {
+    @apply inline-flex items-center gap-1 rounded-pill bg-surface-soft p-1.5;
+  }
+  .nav-pill {
+    @apply rounded-md px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:text-ink;
+  }
+  .nav-pill-active {
+    @apply rounded-md bg-canvas px-3.5 py-2 text-sm font-medium text-ink shadow-card;
+  }
+}

@@ -4,10 +4,10 @@ import type { Confidence, EvidenceGrade } from "@/types";
 // Effect-level grading is the trust layer (Plan §3.1, Design §1.1).
 
 const GRADE_STYLES: Record<EvidenceGrade, string> = {
-  A: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  B: "bg-sky-100 text-sky-800 border-sky-200",
-  C: "bg-amber-100 text-amber-800 border-amber-200",
-  D: "bg-neutral-100 text-neutral-600 border-neutral-200",
+  A: "bg-success/10 text-success border-success/30",
+  B: "bg-brand/10 text-brand border-brand/30",
+  C: "bg-warning/10 text-warning border-warning/30",
+  D: "bg-surface-card text-body border-hairline",
 };
 
 const GRADE_LABEL: Record<EvidenceGrade, string> = {

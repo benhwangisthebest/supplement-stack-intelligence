@@ -27,16 +27,16 @@ export function ProvenanceChips({ citations }: { citations: Citation[] }) {
         const href = hrefFor(c);
         const body = (
           <>
-            <span className="font-medium text-neutral-500">{KIND_LABEL[c.kind]}</span>
-            <span className="text-neutral-700">{c.label}</span>
+            <span className="font-medium text-muted">{KIND_LABEL[c.kind]}</span>
+            <span className="text-body">{c.label}</span>
           </>
         );
         const className =
-          "inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-xs";
+          "inline-flex items-center gap-1 rounded-full border border-hairline bg-surface-soft px-2 py-0.5 text-xs";
         return (
           <li key={`${c.kind}:${c.refId}`} title={c.detail}>
             {href ? (
-              <Link href={href} className={`${className} hover:bg-neutral-100`}>
+              <Link href={href} className={`${className} hover:bg-surface-card`}>
                 {body}
               </Link>
             ) : (

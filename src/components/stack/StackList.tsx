@@ -20,8 +20,8 @@ export function StackList({ stacks }: { stacks: Stack[] }) {
             onClick={() => setFilter(f)}
             className={`rounded-full px-3 py-1 text-sm capitalize ${
               filter === f
-                ? "bg-neutral-900 text-white"
-                : "text-neutral-600 hover:bg-neutral-100"
+                ? "bg-ink text-white"
+                : "text-body hover:bg-surface-card"
             }`}
           >
             {f}
@@ -30,7 +30,7 @@ export function StackList({ stacks }: { stacks: Stack[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="mt-6 text-sm text-neutral-500">
+        <p className="mt-6 text-sm text-muted">
           No stacks yet. Create one above to get started.
         </p>
       ) : (
@@ -39,15 +39,15 @@ export function StackList({ stacks }: { stacks: Stack[] }) {
             <li key={s.id}>
               <Link
                 href={`/stack-lab/${s.id}`}
-                className="block rounded-lg border border-neutral-200 p-4 transition-colors hover:border-neutral-400"
+                className="block rounded-lg border border-hairline p-4 transition-colors hover:border-muted-soft"
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-neutral-900">{s.name}</h3>
-                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs capitalize text-neutral-600">
+                  <h3 className="font-medium text-ink">{s.name}</h3>
+                  <span className="rounded-full bg-surface-card px-2 py-0.5 text-xs capitalize text-body">
                     {s.mode}
                   </span>
                 </div>
-                <p className="mt-1 text-xs capitalize text-neutral-500">
+                <p className="mt-1 text-xs capitalize text-muted">
                   Intent: {s.intent}
                 </p>
               </Link>

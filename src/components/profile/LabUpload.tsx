@@ -32,7 +32,7 @@ export function LabUpload() {
   const busy = imp.phase === "extracting";
 
   return (
-    <div className="rounded-lg border border-dashed border-neutral-300 p-4">
+    <div className="rounded-lg border border-dashed border-hairline p-4">
       <div className="flex flex-wrap items-center gap-3">
         <input
           ref={fileRef}
@@ -49,18 +49,18 @@ export function LabUpload() {
           type="button"
           disabled={busy}
           onClick={() => fileRef.current?.click()}
-          className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white disabled:opacity-40"
+          className="rounded bg-ink px-3 py-1.5 text-sm text-white disabled:opacity-40"
         >
           {busy ? "Reading…" : "Upload report"}
         </button>
         <button
           type="button"
           onClick={() => setShowPaste((s) => !s)}
-          className="text-sm text-neutral-600 hover:text-neutral-900"
+          className="text-sm text-body hover:text-ink"
         >
           Paste table
         </button>
-        <span className="text-xs text-neutral-400">CSV or PDF, up to 5 MB</span>
+        <span className="text-xs text-muted-soft">CSV or PDF, up to 5 MB</span>
       </div>
 
       {showPaste && (
@@ -70,20 +70,20 @@ export function LabUpload() {
             onChange={(e) => setPaste(e.target.value)}
             placeholder={"One marker per line: name, value, unit\nVitamin D, 41, ng/mL"}
             rows={4}
-            className="w-full rounded border border-neutral-300 p-2 text-sm"
+            className="w-full rounded border border-hairline p-2 text-sm"
           />
           <button
             type="button"
             disabled={busy || paste.trim() === ""}
             onClick={() => imp.extractPaste(paste)}
-            className="mt-2 rounded bg-neutral-700 px-3 py-1.5 text-sm text-white disabled:opacity-40"
+            className="mt-2 rounded bg-surface-dark-elevated px-3 py-1.5 text-sm text-white disabled:opacity-40"
           >
             Parse pasted table
           </button>
         </div>
       )}
 
-      {imp.error && <p className="mt-2 text-xs text-red-600">{imp.error}</p>}
+      {imp.error && <p className="mt-2 text-xs text-error">{imp.error}</p>}
     </div>
   );
 }

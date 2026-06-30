@@ -75,13 +75,13 @@ export function StackItemRow({
     return (
       <li className="flex items-center justify-between px-4 py-3">
         <div>
-          <p className="text-sm font-medium text-neutral-900">
+          <p className="text-sm font-medium text-ink">
             {label}{" "}
-            <span className="font-normal text-neutral-500">
+            <span className="font-normal text-muted">
               — {item.dose} {item.unit}
             </span>
           </p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs text-muted-soft">
             {[item.timing, item.frequency, item.reason].filter(Boolean).join(" · ") ||
               "no timing set"}
           </p>
@@ -90,14 +90,14 @@ export function StackItemRow({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="text-xs text-neutral-500 hover:text-neutral-900"
+            className="text-xs text-muted hover:text-ink"
           >
             Edit
           </button>
           <button
             type="button"
             onClick={() => onRemoved(item.id)}
-            className="text-xs text-neutral-400 hover:text-red-600"
+            className="text-xs text-muted-soft hover:text-error"
           >
             Remove
           </button>
@@ -108,25 +108,25 @@ export function StackItemRow({
 
   return (
     <li className="px-4 py-3">
-      <p className="text-sm font-medium text-neutral-900">{label}</p>
+      <p className="text-sm font-medium text-ink">{label}</p>
       <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
         <input
           value={dose}
           onChange={(e) => setDose(e.target.value)}
           placeholder="Dose"
           inputMode="decimal"
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-2 py-1.5 text-sm outline-none focus:border-ink"
         />
         <input
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
           placeholder="Unit"
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-2 py-1.5 text-sm outline-none focus:border-ink"
         />
         <select
           value={timing}
           onChange={(e) => setTiming(e.target.value as ItemTiming | "")}
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-2 py-1.5 text-sm outline-none focus:border-ink"
         >
           <option value="">Timing…</option>
           {TIMINGS.map((t) => (
@@ -138,7 +138,7 @@ export function StackItemRow({
         <select
           value={frequency}
           onChange={(e) => setFrequency(e.target.value as ItemFrequency | "")}
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-2 py-1.5 text-sm outline-none focus:border-ink"
         >
           <option value="">Frequency…</option>
           {FREQUENCIES.map((f) => (
@@ -151,11 +151,11 @@ export function StackItemRow({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Reason"
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-2 py-1.5 text-sm outline-none focus:border-ink"
         />
       </div>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-600">
+        <p role="alert" className="mt-2 text-sm text-error">
           {error}
         </p>
       )}
@@ -164,14 +164,14 @@ export function StackItemRow({
           type="button"
           onClick={() => void save()}
           disabled={busy}
-          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
         >
           {busy ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+          className="rounded-md border border-hairline px-3 py-1.5 text-sm text-body hover:bg-surface-soft"
         >
           Cancel
         </button>

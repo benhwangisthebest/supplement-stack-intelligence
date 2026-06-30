@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getUser } from "@/lib/auth/session";
 import { signOut } from "@/app/auth/actions";
+import { NavPills } from "./NavPills";
 
 // Clean three-pillar navigation (Design §5.1, Plan §4.1).
 const PILLARS = [
@@ -12,50 +13,41 @@ const PILLARS = [
 export async function TopNav() {
   const user = await getUser();
 
+  // The Advisor is an assistant over the three pillars (not a 4th pillar) —
+  // only surfaced once signed in.
+  const pillars = user
+    ? [...PILLARS, { href: "/advisor", label: "Advisor" }]
+    : PILLARS;
+
   return (
-    <header className="border-b border-neutral-200">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        <Link href="/" className="text-sm font-semibold tracking-tight">
+    <header className="sticky top-0 z-40 border-b border-hairline bg-canvas/80 backdrop-blur">
+      <nav className="container-page flex h-16 items-center justify-between">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight text-ink"
+        >
+          <span className="inline-block h-5 w-5 rounded-full bg-ink" />
           Supplement Stack Intelligence
         </Link>
 
-        <div className="flex items-center gap-6 text-sm">
-          {PILLARS.map((p) => (
-            <Link
-              key={p.href}
-              href={p.href}
-              className="text-neutral-600 hover:text-neutral-900"
-            >
-              {p.label}
-            </Link>
-          ))}
+        <NavPills items={pillars} />
 
-          {user && (
-            // The Advisor is an assistant over the three pillars (not a 4th pillar).
-            <Link
-              href="/advisor"
-              className="text-neutral-600 hover:text-neutral-900"
-            >
-              Advisor
-            </Link>
-          )}
-
+        <div className="flex items-center gap-2">
           {user ? (
             <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded-md border border-neutral-300 px-3 py-1.5 text-neutral-700 hover:bg-neutral-50"
-              >
+              <button type="submit" className="btn-secondary">
                 Sign out
               </button>
             </form>
           ) : (
-            <Link
-              href="/auth/login"
-              className="rounded-md bg-neutral-900 px-3 py-1.5 font-medium text-white"
-            >
-              Log in
-            </Link>
+            <>
+              <Link href="/auth/login" className="btn-ghost">
+                Sign in
+              </Link>
+              <Link href="/auth/login" className="btn-primary">
+                Get started
+              </Link>
+            </>
           )}
         </div>
       </nav>

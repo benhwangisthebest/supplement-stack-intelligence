@@ -91,20 +91,20 @@ export function ProfileForm({ initial }: { initial: UserProfile | null }) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-neutral-700">Diet</span>
+          <span className="font-medium text-body">Diet</span>
           <input
             value={diet}
             onChange={(e) => setDiet(e.target.value)}
             placeholder="e.g. omnivore, vegan"
-            className="rounded-md border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900"
+            className="rounded-md border border-hairline px-3 py-2 outline-none focus:border-ink"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-neutral-700">Risk tolerance</span>
+          <span className="font-medium text-body">Risk tolerance</span>
           <select
             value={riskTolerance}
             onChange={(e) => setRiskTolerance(e.target.value as RiskTolerance | "")}
-            className="rounded-md border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900"
+            className="rounded-md border border-hairline px-3 py-2 outline-none focus:border-ink"
           >
             <option value="">—</option>
             <option value="low">Low</option>
@@ -113,11 +113,11 @@ export function ProfileForm({ initial }: { initial: UserProfile | null }) {
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-neutral-700">Experience</span>
+          <span className="font-medium text-body">Experience</span>
           <select
             value={experienceLevel}
             onChange={(e) => setExperienceLevel(e.target.value as ExperienceLevel | "")}
-            className="rounded-md border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900"
+            className="rounded-md border border-hairline px-3 py-2 outline-none focus:border-ink"
           >
             <option value="">—</option>
             <option value="beginner">Beginner</option>
@@ -133,7 +133,7 @@ export function ProfileForm({ initial }: { initial: UserProfile | null }) {
           checked={caffeineSensitivity}
           onChange={(e) => setCaffeineSensitivity(e.target.checked)}
         />
-        <span className="font-medium text-neutral-700">Caffeine sensitive</span>
+        <span className="font-medium text-body">Caffeine sensitive</span>
       </label>
 
       <TagInput
@@ -164,12 +164,12 @@ export function ProfileForm({ initial }: { initial: UserProfile | null }) {
       />
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-neutral-700">Notes</span>
+        <span className="font-medium text-body">Notes</span>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          className="rounded-md border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900"
+          className="rounded-md border border-hairline px-3 py-2 outline-none focus:border-ink"
         />
       </label>
 
@@ -177,13 +177,13 @@ export function ProfileForm({ initial }: { initial: UserProfile | null }) {
         <button
           type="submit"
           disabled={state === "saving"}
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           {state === "saving" ? "Saving…" : "Save profile"}
         </button>
-        {state === "saved" && <span className="text-sm text-emerald-600">Saved ✓</span>}
+        {state === "saved" && <span className="text-sm text-success">Saved ✓</span>}
         {state === "error" && error && (
-          <span role="alert" className="text-sm text-red-600">
+          <span role="alert" className="text-sm text-error">
             {error}
           </span>
         )}

@@ -13,18 +13,18 @@ export function SupplementCard({
   return (
     <Link
       href={`/library/${supplement.slug}`}
-      className="block rounded-lg border border-neutral-200 p-4 transition-colors hover:border-neutral-400"
+      className="card block p-4 shadow-card transition-shadow hover:shadow-card-hover"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-medium text-neutral-900">{supplement.name}</h3>
-          <p className="text-xs text-neutral-500">{supplement.category}</p>
+          <h3 className="text-title-sm text-ink">{supplement.name}</h3>
+          <p className="text-xs text-muted">{supplement.category}</p>
         </div>
         {topEffect && (
           <EffectGradeBadge grade={topEffect.grade} confidence={topEffect.confidence} />
         )}
       </div>
-      <p className="mt-2 line-clamp-2 text-sm text-neutral-600">
+      <p className="mt-2 line-clamp-2 text-sm text-body">
         {supplement.description}
       </p>
     </Link>

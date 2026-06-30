@@ -30,15 +30,15 @@ export function SupplementSearch({ entries }: { entries: LibraryEntry[] }) {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search supplements (e.g. magnesium, omega-3, ashwagandha)…"
         aria-label="Search supplements"
-        className="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-sm outline-none focus:border-neutral-900"
+        className="input h-11"
       />
 
-      <p className="mt-2 text-xs text-neutral-400">
+      <p className="mt-2 text-xs text-muted">
         {filtered.length} of {entries.length} supplements
       </p>
 
       {filtered.length === 0 ? (
-        <p className="mt-8 text-sm text-neutral-500">
+        <p className="mt-8 text-sm text-muted">
           No matches in the current dataset.
         </p>
       ) : (
