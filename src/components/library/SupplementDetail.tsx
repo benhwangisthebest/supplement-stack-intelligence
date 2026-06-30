@@ -31,7 +31,9 @@ export function SupplementDetail({
     { id: "related", label: "Related", content: <RelatedTab related={related} /> },
   ];
 
-  return <Tabs items={items} />;
+  // v8: advisor provenance chips deep-link to #effect-{id} / #paper-{id}; map those
+  // hash prefixes to their tabs so the link lands on the right section (gap G1).
+  return <Tabs items={items} anchorTabMap={{ "effect-": "effects", "paper-": "papers" }} />;
 }
 
 function SummaryTab({ supplement }: { supplement: Supplement }) {
@@ -128,7 +130,12 @@ function EffectsTab({ effects, papers }: { effects: Effect[]; papers: Paper[] })
   return (
     <div className="space-y-4">
       {effects.map((e) => (
-        <article key={e.id} className="rounded-lg border border-hairline p-4">
+        // v8: anchor target for advisor provenance chips (citationHref → #effect-{id}).
+        <article
+          key={e.id}
+          id={`effect-${e.id}`}
+          className="scroll-mt-24 rounded-lg border border-hairline p-4"
+        >
           <div className="flex items-start justify-between gap-3">
             <h3 className="font-medium text-ink">{e.name}</h3>
             <EffectGradeBadge grade={e.grade} confidence={e.confidence} />
@@ -154,7 +161,10 @@ function PapersTab({ papers }: { papers: Paper[] }) {
   return (
     <div className="space-y-3">
       {papers.map((p) => (
-        <PaperSummaryCard key={p.id} paper={p} />
+        // v8: anchor target for advisor 'paper' provenance chips (#paper-{id}).
+        <div key={p.id} id={`paper-${p.id}`} className="scroll-mt-24">
+          <PaperSummaryCard paper={p} />
+        </div>
       ))}
     </div>
   );

@@ -30,5 +30,43 @@
     "enabled": true,
     "stateFile": ".bkit/runtime/agent-state.json",
     "eventsFile": ".bkit/runtime/agent-events.jsonl"
-  }
+  },
+  "taskHistory": [
+    {
+      "taskId": "1",
+      "phase": "plan",
+      "feature": "advisor-experience",
+      "createdAt": "2026-06-30T08:14:45.526Z"
+    },
+    {
+      "taskId": "2",
+      "phase": "design",
+      "feature": "advisor-experience",
+      "createdAt": "2026-06-30T08:22:42.610Z"
+    },
+    {
+      "taskId": "3",
+      "phase": "do",
+      "feature": "advisor-experience",
+      "createdAt": "2026-06-30T08:25:40.502Z"
+    },
+    {
+      "taskId": "4",
+      "phase": "check",
+      "feature": "advisor-experience",
+      "createdAt": "2026-06-30T15:39:27.588Z"
+    },
+    {
+      "taskId": "7",
+      "phase": "report",
+      "feature": "advisor-experience",
+      "createdAt": "2026-06-30T15:47:17.606Z"
+    },
+    {
+      "taskId": "8",
+      "phase": "archive",
+      "feature": "advisor-experience",
+      "createdAt": "2026-06-30T15:49:19.925Z"
+    }
+  ]
 }

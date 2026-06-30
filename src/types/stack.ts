@@ -37,4 +37,8 @@ export interface StackItem {
   frequency: ItemFrequency | null;
   reason: string | null;
   notes: string | null;
+  /** v8 advisor-experience: the matched product attached to this item (migration
+   *  0004 column). Read-only display field — affects no evaluation, so it's OPTIONAL
+   *  and ignored by the engines; the domain still treats items product-agnostically. */
+  productId?: string | null;
 }

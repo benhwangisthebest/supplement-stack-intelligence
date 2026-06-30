@@ -47,6 +47,22 @@ export function toolStep(
   };
 }
 
+/** Build a step where the model requests SEVERAL tool calls at once (v8 batch). */
+export function multiToolStep(
+  calls: { name: string; input?: Record<string, unknown>; id?: string }[],
+  usage: { inputTokens: number; outputTokens: number } = noUsage,
+): AdapterStep {
+  return {
+    text: "",
+    toolCalls: calls.map((c) => ({
+      id: c.id ?? `call_${c.name}`,
+      name: c.name,
+      input: c.input ?? {},
+    })),
+    usage,
+  };
+}
+
 /** Build a step where the model produces a final answer (no tools). */
 export function finalStep(
   text: string,

@@ -3,6 +3,85 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "advisor-experience": {
+      "phase": "archived",
+      "archivedTo": "docs/archive/2026-06/advisor-experience/",
+      "archivedAt": "2026-06-30",
+      "reportDoc": "docs/04-report/advisor-experience.report.md",
+      "qaStatus": "PASS",
+      "qaReportDoc": "docs/05-qa/advisor-experience.qa-report.md",
+      "qaResult": "e2e 4 passed / 4 skipped (E2E_LIVE-gated) / 0 failed; unit 282/282; tsc clean; build OK",
+      "matchRate": 99,
+      "matchRateMode": "static + runtime (unit 282/282, tsc clean, build OK, L1 auth-guards 2/2 + L2 deep-link 2/2 live incl. auto-open; authed batch/undo/streaming gated on E2E_LIVE + 0005)",
+      "analysisDoc": "docs/03-analysis/advisor-experience.analysis.md",
+      "successCriteria": "10/10 met",
+      "iterations": 1,
+      "act1": "G1 resolved — Tabs anchorTabMap hash-sync auto-opens Library tab on #effect-/#paper- deep links; +1 L2 e2e (auto-open). Modified: src/components/ui/Tabs.tsx, src/components/library/SupplementDetail.tsx, tests/e2e/advisor-experience-actions.spec.ts",
+      "milestone": "v8",
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete",
+        "module-3": "complete"
+      },
+      "doComplete": true,
+      "module3": {
+        "modified": [
+          "src/types/stack.ts",
+          "src/lib/db/types.ts",
+          "src/lib/db/mappers.ts",
+          "src/lib/product-matcher/index.ts",
+          "src/components/advisor/ProvenanceChips.tsx",
+          "src/components/advisor/ActionProposalCard.tsx",
+          "src/components/advisor/AdvisorMessageBubble.tsx",
+          "src/components/advisor/AdvisorPanel.tsx",
+          "src/components/stack/StackItemRow.tsx",
+          "src/components/library/SupplementDetail.tsx"
+        ],
+        "created": ["tests/e2e/advisor-experience-actions.spec.ts"],
+        "verification": "tsc clean; 282/282 unit; next build OK (/advisor 4.99kB); L2 deep-link-target 1/1 live; progress+batch UI gated on E2E_LIVE",
+        "knownLimitation": "deep-link hash does not auto-open the Library Effects/Papers tab (lands on page, graceful) — minor polish deferred",
+        "completedAt": "2026-06-30"
+      },
+      "module2": {
+        "modified": [
+          "src/lib/db/advisor-action-repo.ts",
+          "src/lib/advisor/actions/execute.ts",
+          "src/app/api/advisor/route.ts",
+          "src/app/api/advisor/actions/route.ts",
+          "src/app/api/advisor/actions/[id]/undo/route.ts"
+        ],
+        "created": ["tests/e2e/advisor-experience.spec.ts"],
+        "verification": "tsc clean; 282/282 unit; next build OK; L1 auth-guards 2/2 live; batch/undo gated on E2E_LIVE (needs 0005 applied)",
+        "completedAt": "2026-06-30"
+      },
+      "module1": {
+        "created": [
+          "supabase/migrations/0005_advisor_batch.sql",
+          "src/lib/advisor/citation-href.ts",
+          "src/lib/advisor/citation-href.test.ts"
+        ],
+        "modified": [
+          "src/types/advisor.ts",
+          "src/types/advisor-action.ts",
+          "src/lib/advisor/agent.ts",
+          "src/lib/advisor/safety-recheck.ts",
+          "src/lib/advisor/mock-adapter.ts",
+          "src/lib/advisor/agent-proposals.test.ts",
+          "src/lib/db/advisor-action-repo.ts"
+        ],
+        "verification": "tsc clean; 282/282 unit (+14); domain-only (build deferred to module-2)",
+        "completedAt": "2026-06-30"
+      },
+      "method": "plan-plus",
+      "createdAt": "2026-06-30",
+      "planDoc": "docs/01-plan/features/advisor-experience.plan.md",
+      "designDoc": "docs/02-design/features/advisor-experience.design.md",
+      "migration": "0005_advisor_batch.sql (additive nullable batch_id)",
+      "architecture": "Option C (Pragmatic) — Approach A: progress-stream + buffered-safe",
+      "scope": "true LLM token-streaming, batch multi-action proposals (selective confirm + configurable cap), provenance chip deep-linking, attached-product UI",
+      "deferred": "stream reconnect/resume; sentence-level final-token gating (Approach B); transaction RPC for batch atomicity",
+      "successCriteria": "10 (SC1-SC10)"
+    },
     "advisor-actions": {
       "phase": "archived",
       "archivedTo": "docs/archive/2026-06/advisor-actions/",

@@ -1,10 +1,17 @@
 // Application — POST /api/advisor/actions/:id/undo (Design §4.2). Replays the
-// stored inverse via the existing repos and flips the audit row to 'undone'.
+// stored inverse(s) via the existing repos and flips the audit row(s) to 'undone'.
 // RLS scopes the action to its owner; double-undo is guarded by status. SC-7.
+// v8 advisor-experience: if the action belongs to a BATCH (batch_id set), undo is
+// GROUPED — every still-applied sibling is reversed in REVERSE apply order so the
+// whole multi-action change is undone in one click (Design §3.3).
 import type { NextRequest } from "next/server";
 import { getUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { getAction, markUndone } from "@/lib/db/advisor-action-repo";
+import {
+  getAction,
+  getActionsByBatch,
+  markUndone,
+} from "@/lib/db/advisor-action-repo";
 import { executeIntent } from "@/lib/advisor/actions/execute";
 import { fail, ok, notFound, unauthorized } from "@/lib/api/respond";
 
@@ -27,10 +34,20 @@ export async function POST(
       return fail("ALREADY_UNDONE", "This action has already been undone.", 409);
     }
 
-    await executeIntent(supabase, user.id, action.inverse);
-    await markUndone(supabase, id);
+    // Grouped undo for a batch; single-row undo otherwise (incl. legacy v7 rows).
+    const rows = action.batchId
+      ? (await getActionsByBatch(supabase, action.batchId)).filter(
+          (r) => r.status === "applied",
+        )
+      : [action];
 
-    return ok({ id, undone: true });
+    // Reverse in REVERSE apply order so dependent writes unwind correctly.
+    for (let i = rows.length - 1; i >= 0; i--) {
+      await executeIntent(supabase, user.id, rows[i].inverse);
+      await markUndone(supabase, rows[i].id);
+    }
+
+    return ok({ id, undone: true, batchId: action.batchId, count: rows.length });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Undo failed.";
     return fail("UNDO_ERROR", message, 500);

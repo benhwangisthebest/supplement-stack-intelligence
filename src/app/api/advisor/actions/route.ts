@@ -12,8 +12,8 @@ import { getSupplementById } from "@/lib/evidence";
 import { matchProducts } from "@/lib/product-matcher";
 import { getStack } from "@/lib/db/stack-repo";
 import { loadAdvisorContext } from "@/lib/advisor/context-loader";
-import { recheckForProposal } from "@/lib/advisor/safety-recheck";
-import { executeProposal } from "@/lib/advisor/actions/execute";
+import { cumulativeRecheck } from "@/lib/advisor/safety-recheck";
+import { executeBatch } from "@/lib/advisor/actions/execute";
 import {
   addItemPayloadSchema,
   attachProductPayloadSchema,
@@ -23,7 +23,7 @@ import {
   removeItemPayloadSchema,
 } from "@/lib/advisor/actions/schema";
 import { stackItemInputSchema } from "@/lib/validation/schemas";
-import { recordAction } from "@/lib/db/advisor-action-repo";
+import { recordBatch, type NewAction } from "@/lib/db/advisor-action-repo";
 import { fail, ok, unauthorized, validationError } from "@/lib/api/respond";
 import type { ActionProposal, EditableProposalFields } from "@/types/advisor-action";
 import type { AdvisorContext } from "@/types/advisor";
@@ -34,18 +34,54 @@ export const dynamic = "force-dynamic";
 
 const ACTION_TYPES = ["add_item", "remove_item", "edit_item", "generate_protocol", "attach_product"] as const;
 
-const confirmSchema = z.object({
-  conversationId: z.string().nullish(),
-  proposal: z.object({
-    type: z.enum(ACTION_TYPES),
-    stackId: z.string(),
-    payload: z.record(z.unknown()),
-    diff: z.array(z.unknown()).optional(),
-    editable: z.unknown().optional(),
-    rationaleCitations: z.array(z.unknown()).optional(),
-  }),
-  edits: editableFieldsSchema.optional(),
+const proposalSchema = z.object({
+  type: z.enum(ACTION_TYPES),
+  stackId: z.string(),
+  payload: z.record(z.unknown()),
+  diff: z.array(z.unknown()).optional(),
+  editable: z.unknown().optional(),
+  rationaleCitations: z.array(z.unknown()).optional(),
 });
+
+// v8 advisor-experience: the confirm body is a SELECTED SUBSET of proposals
+// (selective confirm, Design §5.1). A legacy single `{ proposal, edits }` body is
+// coerced into a length-1 batch for back-compat with the v7 client.
+const confirmSchema = z.union([
+  z.object({
+    conversationId: z.string().nullish(),
+    actions: z
+      .array(
+        z.object({
+          proposal: proposalSchema,
+          edits: editableFieldsSchema.optional(),
+        }),
+      )
+      .min(1),
+  }),
+  z.object({
+    conversationId: z.string().nullish(),
+    proposal: proposalSchema,
+    edits: editableFieldsSchema.optional(),
+  }),
+]);
+
+/** Normalize either body shape to a list of {proposal, edits}. */
+function toActions(
+  body: z.infer<typeof confirmSchema>,
+): { proposal: ActionProposal; edits?: EditableProposalFields }[] {
+  if ("actions" in body) {
+    return body.actions.map((a) => ({
+      proposal: a.proposal as unknown as ActionProposal,
+      edits: a.edits as EditableProposalFields | undefined,
+    }));
+  }
+  return [
+    {
+      proposal: body.proposal as unknown as ActionProposal,
+      edits: body.edits as EditableProposalFields | undefined,
+    },
+  ];
+}
 
 const staleError = (what = "This proposal is no longer valid") =>
   fail("STALE_PROPOSAL", `${what}; please ask the advisor again.`, 409);
@@ -122,39 +158,66 @@ export async function POST(request: NextRequest) {
     return fail("BAD_REQUEST", "Invalid request body.", 400);
   }
 
-  const proposal = body.proposal as unknown as ActionProposal;
-  const edits = body.edits as EditableProposalFields | undefined;
+  const actions = toActions(body);
+  const conversationId = body.conversationId ?? null;
   const supabase = await createClient();
 
   try {
     const ctx = await loadAdvisorContext(supabase, user.id);
 
-    const checked = await revalidate(supabase, user.id, proposal, ctx);
-    if ("error" in checked) return checked.error;
+    // SC-6: re-validate EVERY selected action against fresh, owned data. Any stale
+    // or unowned action rejects the WHOLE batch (all-or-nothing, Design §4.2).
+    const priorItems: (StackItem | null)[] = [];
+    for (const { proposal } of actions) {
+      const checked = await revalidate(supabase, user.id, proposal, ctx);
+      if ("error" in checked) return checked.error;
+      priorItems.push(checked.priorItem);
+    }
 
-    // Authoritative pre-apply safety gate (SC-4): hard-block a NEW critical flag.
-    const newSafetyFlags = recheckForProposal(ctx, proposal, edits);
+    // Authoritative CUMULATIVE pre-apply safety gate over the projected combined
+    // stack (SC-4, Design §3.2): a NEW critical flag — even one only the combination
+    // introduces — hard-blocks the entire batch.
+    const newSafetyFlags = cumulativeRecheck(ctx, actions);
     const critical = newSafetyFlags.find((f) => f.severity === "critical");
     if (critical) {
       return fail("SAFETY_BLOCK", critical.title, 409, { flag: critical });
     }
 
-    // Execute via existing repos (the only writers), then audit with the inverse.
-    const exec = await executeProposal(supabase, user.id, proposal, checked.priorItem, edits);
-    const record = await recordAction(supabase, user.id, {
-      conversationId: body.conversationId ?? null,
-      actionType: proposal.type,
-      payload: proposal.payload as unknown as Record<string, unknown>,
-      inverse: exec.inverse,
-    });
+    // Execute all-or-nothing via existing repos; compensating rollback on failure.
+    let results;
+    try {
+      results = await executeBatch(supabase, user.id, actions, priorItems);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Action failed.";
+      return fail("ACTION_ERROR", message, 500, { rolledBack: true });
+    }
+
+    // Audit all applied actions under one batch_id → grouped one-click undo (SC-7).
+    const batchId = crypto.randomUUID();
+    const newActions: NewAction[] = results.map((r) => ({
+      conversationId,
+      actionType: r.proposal.type,
+      payload: r.proposal.payload as unknown as Record<string, unknown>,
+      inverse: r.exec.inverse,
+    }));
+    const records = await recordBatch(supabase, user.id, batchId, newActions);
+
+    const perAction = records.map((rec, i) => ({
+      actionId: rec.id,
+      resultingItemId: results[i].exec.resultingItemId,
+      createdStackId: results[i].exec.createdStackId,
+    }));
 
     return ok(
       {
-        actionId: record.id,
         applied: true,
-        resultingItemId: exec.resultingItemId,
-        createdStackId: exec.createdStackId,
+        batchId,
+        results: perAction,
         newSafetyFlags,
+        // Back-compat with the v7 single-action client shape:
+        actionId: perAction[0].actionId,
+        resultingItemId: perAction[0].resultingItemId,
+        createdStackId: perAction[0].createdStackId,
       },
       201,
     );

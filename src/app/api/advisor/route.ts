@@ -1,7 +1,11 @@
-// Application — POST /api/advisor (Design §4.2). Auth-guarded + Zod-validated.
+// Application — POST /api/advisor (Design §4.2/§2.2). Auth-guarded + Zod-validated.
 // Thin orchestration over the pure agent loop: auth → budget → context → run →
-// persist → STREAM. The grounding + lib/safety gate run BEFORE any token is
-// streamed, so the client never sees an unsafe/ungrounded token. Plan SC-3/4/6/7.
+// persist → STREAM. v8 advisor-experience: LIVE progress events stream DURING the
+// slow tool loop (via the agent's onProgress sink), then the FINAL answer — already
+// through the grounding + lib/safety gate — is token-streamed. The gate still runs
+// BEFORE any answer token leaves the server, so the client never sees an unsafe or
+// ungrounded token (the invariant is layered AROUND streaming, never through it).
+// Plan SC-1/2/3/4/6/7.
 import type { NextRequest } from "next/server";
 import { getUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -18,7 +22,7 @@ import {
 } from "@/lib/advisor/repo";
 import { advisorRequestSchema } from "@/lib/advisor/schema";
 import { fail, unauthorized, validationError } from "@/lib/api/respond";
-import type { AdapterMessage, AdvisorTurnResult } from "@/types/advisor";
+import type { AdapterMessage, ProgressEvent } from "@/types/advisor";
 import { ZodError } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +39,13 @@ export async function POST(request: NextRequest) {
     return fail("BAD_REQUEST", "Invalid request body.", 400);
   }
 
+  // Pre-flight the live-LLM key BEFORE committing to a 200 SSE response, so a
+  // missing key still returns a proper 503 (preserves the v7 contract). The route
+  // always uses the real adapter, which reads this env var.
+  if (!process.env.API_ANTHROPIC_KEY) {
+    return fail("NOT_CONFIGURED", "API_ANTHROPIC_KEY not configured", 503);
+  }
+
   const supabase = await createClient();
 
   // Load budget + context + prior turns in parallel (all read-only).
@@ -49,82 +60,72 @@ export async function POST(request: NextRequest) {
       : Promise.resolve([] as AdapterMessage[]),
   ]);
 
-  // One adapter instance per turn (it threads the tool-use transcript internally).
-  const adapter = new AdvisorClaudeAdapter();
-  let result: AdvisorTurnResult;
-  try {
-    result = await runAdvisorTurn({
-      adapter,
-      ctx,
-      userMessage: body.message,
-      history,
-      budgetRemaining,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Advisor failed.";
-    // 'not configured' → the live LLM key is missing (503), else 500.
-    return message.includes("not configured")
-      ? fail("NOT_CONFIGURED", message, 503)
-      : fail("ADVISOR_ERROR", message, 500);
-  }
+  const message = body.message;
+  const requestedConversationId = body.conversationId ?? null;
 
-  // Persist the turn (user + assistant) and meter usage. A new conversation is
-  // created lazily on the first message.
-  const conversationId =
-    body.conversationId ??
-    (await createConversation(supabase, user.id, deriveTitle(body.message))).id;
-
-  await appendMessages(supabase, conversationId, [
-    { role: "user", content: body.message, citations: [] },
-    { role: "assistant", content: result.answer, citations: result.citations },
-  ]);
-  if (result.usage.inputTokens + result.usage.outputTokens > 0) {
-    await recordUsage(supabase, user.id, result.usage);
-  }
-
-  return streamResult(result, conversationId);
-}
-
-// ---- SSE streaming of the finalized, safety-gated answer ----------------------
-
-const encoder = new TextEncoder();
-function sse(event: string, data: unknown): Uint8Array {
-  return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-}
-
-/** Split into word-ish chunks for a typing effect (whitespace preserved). */
-function chunkAnswer(answer: string): string[] {
-  return answer.match(/\S+\s*/g) ?? [answer];
-}
-
-function streamResult(
-  result: AdvisorTurnResult,
-  conversationId: string,
-): Response {
   const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      for (const delta of chunkAnswer(result.answer)) {
-        controller.enqueue(sse("token", { delta }));
-      }
-      controller.enqueue(sse("citations", { citations: result.citations }));
-      // v7 advisor-actions: when the loop halted on a proposal, ship the structured
-      // proposal + pre-apply safety flags so the client can render the confirm card.
-      if (result.status === "proposed" && result.proposal) {
+    async start(controller) {
+      const onProgress = (e: ProgressEvent) =>
+        controller.enqueue(sse("progress", e));
+
+      // One adapter instance per turn (it threads the tool-use transcript internally).
+      const adapter = new AdvisorClaudeAdapter();
+      try {
+        const result = await runAdvisorTurn({
+          adapter,
+          ctx,
+          userMessage: message,
+          history,
+          budgetRemaining,
+          onProgress,
+        });
+
+        // Persist the turn + meter usage. A new conversation is created lazily.
+        const conversationId =
+          requestedConversationId ??
+          (await createConversation(supabase, user.id, deriveTitle(message))).id;
+        await appendMessages(supabase, conversationId, [
+          { role: "user", content: message, citations: [] },
+          { role: "assistant", content: result.answer, citations: result.citations },
+        ]);
+        if (result.usage.inputTokens + result.usage.outputTokens > 0) {
+          await recordUsage(supabase, user.id, result.usage);
+        }
+
+        // Token-stream the FINAL, already-gated answer (SC-2/SC-3).
+        for (const delta of chunkAnswer(result.answer)) {
+          controller.enqueue(sse("token", { delta }));
+        }
+        controller.enqueue(sse("citations", { citations: result.citations }));
+
+        // v8: when the loop halted on proposal(s), ship the (possibly batched)
+        // structured proposals + cumulative pre-apply safety flags for the confirm
+        // card. proposals[] always carries the full set (length ≥ 1).
+        if (result.status === "proposed") {
+          const proposals =
+            result.proposals ?? (result.proposal ? [result.proposal] : []);
+          controller.enqueue(
+            sse("proposals", {
+              proposals,
+              safetyFlags: result.newSafetyFlags ?? [],
+            }),
+          );
+        }
+
         controller.enqueue(
-          sse("proposal", {
-            proposal: result.proposal,
-            safetyFlags: result.newSafetyFlags ?? [],
+          sse("done", {
+            conversationId,
+            status: result.status,
+            toolsUsed: result.toolsUsed,
           }),
         );
+      } catch (err) {
+        // We're already committed to the SSE response → surface a typed error event.
+        const msg = err instanceof Error ? err.message : "Advisor failed.";
+        controller.enqueue(sse("error", { message: msg }));
+      } finally {
+        controller.close();
       }
-      controller.enqueue(
-        sse("done", {
-          conversationId,
-          status: result.status,
-          toolsUsed: result.toolsUsed,
-        }),
-      );
-      controller.close();
     },
   });
 
@@ -135,4 +136,16 @@ function streamResult(
       Connection: "keep-alive",
     },
   });
+}
+
+// ---- SSE helpers --------------------------------------------------------------
+
+const encoder = new TextEncoder();
+function sse(event: string, data: unknown): Uint8Array {
+  return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+
+/** Split into word-ish chunks for a typing effect (whitespace preserved). */
+function chunkAnswer(answer: string): string[] {
+  return answer.match(/\S+\s*/g) ?? [answer];
 }

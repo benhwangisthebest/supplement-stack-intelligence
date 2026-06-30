@@ -17,6 +17,7 @@ interface ActionRow {
   payload: Record<string, unknown>;
   inverse: WriteIntent;
   created_at: string;
+  batch_id: string | null; // v8 advisor-experience (migration 0005); NULL for legacy/single rows
   undone_at: string | null;
 }
 
@@ -30,6 +31,7 @@ function toRecord(r: ActionRow): AdvisorActionRecord {
     payload: r.payload,
     inverse: r.inverse,
     createdAt: r.created_at,
+    batchId: r.batch_id ?? null,
     undoneAt: r.undone_at,
   };
 }
@@ -61,6 +63,48 @@ export async function recordAction(
     .single();
   if (error) throw error;
   return toRecord(data as ActionRow);
+}
+
+/**
+ * v8 advisor-experience — insert a BATCH of applied actions that share one
+ * batch_id (Design §3.3). Rows are stored in the given order; grouped undo reverses
+ * them via getActionsByBatch. A single-action confirm is just a length-1 batch.
+ */
+export async function recordBatch(
+  supabase: SupabaseClient,
+  userId: string,
+  batchId: string,
+  actions: NewAction[],
+): Promise<AdvisorActionRecord[]> {
+  const rows = actions.map((a) => ({
+    user_id: userId,
+    conversation_id: a.conversationId,
+    action_type: a.actionType,
+    status: "applied" as const,
+    payload: a.payload,
+    inverse: a.inverse,
+    batch_id: batchId,
+  }));
+  const { data, error } = await supabase
+    .from("advisor_actions")
+    .insert(rows)
+    .select("*");
+  if (error) throw error;
+  return (data as ActionRow[]).map(toRecord);
+}
+
+/** All still-applied rows in a batch, oldest first (for grouped undo, SC-7). */
+export async function getActionsByBatch(
+  supabase: SupabaseClient,
+  batchId: string,
+): Promise<AdvisorActionRecord[]> {
+  const { data, error } = await supabase
+    .from("advisor_actions")
+    .select("*")
+    .eq("batch_id", batchId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data as ActionRow[]).map(toRecord);
 }
 
 /** Fetch one action (RLS scopes it to the caller). */

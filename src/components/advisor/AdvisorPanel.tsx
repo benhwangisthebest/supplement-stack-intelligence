@@ -6,7 +6,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { AdvisorConversation, Citation } from "@/types/advisor";
+import type { AdvisorConversation, Citation, ProgressEvent } from "@/types/advisor";
 import type { ActionProposal } from "@/types/advisor-action";
 import type { DraftFlag } from "@/types/evaluation";
 import { AdvisorMessageBubble, type ChatMessageView } from "./AdvisorMessageBubble";
@@ -109,16 +109,25 @@ export function AdvisorPanel({
       }
 
       await consumeStream(res.body, {
+        // v8: live progress during the tool loop (before any answer token).
+        onProgress: (e) =>
+          setMessages((prev) => updateLast(prev, (m) => ({ ...m, progress: progressLabel(e) }))),
         onToken: (delta) =>
-          setMessages((prev) => updateLast(prev, (m) => ({ ...m, content: m.content + delta }))),
+          setMessages((prev) =>
+            updateLast(prev, (m) => ({ ...m, content: m.content + delta, progress: null })),
+          ),
         onCitations: (citations) =>
           setMessages((prev) => updateLast(prev, (m) => ({ ...m, citations }))),
-        onProposal: ({ proposal, safetyFlags }) =>
+        onProposals: ({ proposals, safetyFlags }) =>
           setMessages((prev) =>
-            updateLast(prev, (m) => ({ ...m, proposal, safetyFlags, applied: null, rejected: false })),
+            updateLast(prev, (m) => ({ ...m, proposals, safetyFlags, applied: null, rejected: false })),
           ),
+        onError: (message) => {
+          failPendingMessage(setMessages, message);
+          setError(message);
+        },
         onDone: async ({ conversationId }) => {
-          setMessages((prev) => updateLast(prev, (m) => ({ ...m, pending: false })));
+          setMessages((prev) => updateLast(prev, (m) => ({ ...m, pending: false, progress: null })));
           if (!activeId) {
             setActiveId(conversationId);
             await refreshConversations();
@@ -158,9 +167,9 @@ export function AdvisorPanel({
             messages.map((m, i) => (
               <div key={i}>
                 <AdvisorMessageBubble message={m} />
-                {m.proposal && !m.applied && !m.rejected && (
+                {m.proposals && m.proposals.length > 0 && !m.applied && !m.rejected && (
                   <ActionProposalCard
-                    proposal={m.proposal}
+                    proposals={m.proposals}
                     safetyFlags={m.safetyFlags ?? []}
                     conversationId={activeId}
                     onConfirmed={(result, summary) => onProposalConfirmed(i, result, summary)}
@@ -243,13 +252,15 @@ async function safeErrorMessage(res: Response): Promise<string> {
 }
 
 interface StreamHandlers {
+  onProgress: (e: ProgressEvent) => void;
   onToken: (delta: string) => void;
   onCitations: (citations: Citation[]) => void;
-  onProposal: (payload: { proposal: ActionProposal; safetyFlags: DraftFlag[] }) => void;
+  onProposals: (payload: { proposals: ActionProposal[]; safetyFlags: DraftFlag[] }) => void;
+  onError: (message: string) => void;
   onDone: (payload: { conversationId: string; status: string }) => void | Promise<void>;
 }
 
-/** Parse the text/event-stream body into token/citations/done callbacks. */
+/** Parse the text/event-stream body into progress/token/citations/proposals/done. */
 async function consumeStream(body: ReadableStream<Uint8Array>, h: StreamHandlers) {
   const reader = body.getReader();
   const decoder = new TextDecoder();
@@ -268,10 +279,33 @@ async function consumeStream(body: ReadableStream<Uint8Array>, h: StreamHandlers
       const dataLine = /^data: (.*)$/m.exec(raw)?.[1];
       if (!event || !dataLine) continue;
       const data = JSON.parse(dataLine);
-      if (event === "token") h.onToken(data.delta);
+      if (event === "progress") h.onProgress(data as ProgressEvent);
+      else if (event === "token") h.onToken(data.delta);
       else if (event === "citations") h.onCitations(data.citations);
-      else if (event === "proposal") h.onProposal(data);
+      else if (event === "proposals") h.onProposals(data);
+      else if (event === "error") h.onError(data.message ?? "The advisor couldn't answer that request.");
       else if (event === "done") await h.onDone(data);
     }
   }
 }
+
+/** Map a structured progress event to a friendly, non-diagnostic status label. */
+function progressLabel(e: ProgressEvent): string {
+  if (e.type === "turn-start") return "Thinking…";
+  if (e.type === "composing") return "Composing…";
+  return TOOL_LABEL[e.name] ?? "Working…";
+}
+
+const TOOL_LABEL: Record<string, string> = {
+  lookupEvidence: "Reading the evidence…",
+  gradeEvidence: "Grading evidence…",
+  evaluateStack: "Evaluating your stack…",
+  checkInteractions: "Checking interactions…",
+  checkBiomarkers: "Reviewing your labs…",
+  computeLabTrends: "Reviewing lab trends…",
+  propose_add_item: "Preparing a change…",
+  propose_remove_item: "Preparing a change…",
+  propose_edit_item: "Preparing a change…",
+  propose_generate_protocol: "Preparing a protocol…",
+  propose_attach_product: "Matching a product…",
+};

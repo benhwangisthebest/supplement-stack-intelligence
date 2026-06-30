@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getProductById } from "@/lib/product-matcher";
 import type { ItemFrequency, ItemTiming, StackItem } from "@/types";
 
 const TIMINGS: ItemTiming[] = [
@@ -85,6 +86,9 @@ export function StackItemRow({
             {[item.timing, item.frequency, item.reason].filter(Boolean).join(" · ") ||
               "no timing set"}
           </p>
+          {/* v8 advisor-experience: surface the matched product the advisor attached
+              (migration 0004 product_id). Absent → no badge (no empty box). */}
+          {item.productId ? <AttachedProduct productId={item.productId} /> : null}
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -177,5 +181,20 @@ export function StackItemRow({
         </button>
       </div>
     </li>
+  );
+}
+
+/** A small badge for the product the advisor matched to this item (Design §5.1).
+ *  Resolves the seeded product purely; an unknown id renders nothing (graceful). */
+function AttachedProduct({ productId }: { productId: string }) {
+  const product = getProductById(productId);
+  if (!product) return null;
+  return (
+    <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface-soft px-2 py-0.5 text-xs text-muted">
+      <span aria-hidden>🧴</span>
+      <span className="font-medium text-body">{product.brand}</span>
+      <span>{product.name}</span>
+      <span className="text-muted-soft">· matched by advisor</span>
+    </p>
   );
 }

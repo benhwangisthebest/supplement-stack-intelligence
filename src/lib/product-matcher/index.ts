@@ -29,6 +29,15 @@ export interface MatchProductsInput {
   products?: Product[];
 }
 
+/** v8 advisor-experience — resolve a seeded product by id (for the attached-product
+ *  UI badge). PURE: reads the deterministic seed catalog. Returns undefined if gone. */
+export function getProductById(
+  id: string,
+  products: Product[] = SEED_PRODUCTS,
+): Product | undefined {
+  return products.find((p) => p.id === id);
+}
+
 /** Strips affiliate/display-only fields so the scorer literally cannot read them. */
 function toScorable(p: Product): ScorableProduct {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

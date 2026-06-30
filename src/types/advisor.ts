@@ -131,6 +131,17 @@ export interface ClaudeAdapter {
   }): Promise<AdapterStep>;
 }
 
+// ---- Progress events (v8 advisor-experience) ---------------------------------
+// Emitted by the agent loop through an injected onProgress sink as it advances,
+// so the route can stream LIVE feedback during the slow tool phase. Carries NO
+// model prose — only lifecycle markers + tool names — so it can never leak an
+// ungrounded/unsafe token (the gate still runs on the final answer). Design §2.2.
+
+export type ProgressEvent =
+  | { type: "turn-start" }
+  | { type: "tool-call"; name: string }
+  | { type: "composing" };
+
 // ---- Agent loop result -------------------------------------------------------
 
 export type AdvisorTurnStatus =
@@ -148,9 +159,14 @@ export interface AdvisorTurnResult {
   usage: { inputTokens: number; outputTokens: number };
   /** Tool names invoked this turn, in order — for audit/tests. */
   toolsUsed: string[];
-  /** v7: present only when status="proposed" — the change awaiting user confirmation. */
+  /** v7: present only when status="proposed" — the FIRST change awaiting confirmation.
+   *  Retained for back-compat; v8 callers prefer `proposals` (this == proposals[0]). */
   proposal?: import("./advisor-action").ActionProposal;
-  /** v7: flags the proposal WOULD newly introduce (pre-apply safety re-check, SC-4). */
+  /** v8 advisor-experience: ALL grounded proposals collected this turn (≤ cap), in
+   *  order. Present only when status="proposed". A single proposal yields length 1. */
+  proposals?: import("./advisor-action").ActionProposal[];
+  /** v7/v8: flags the proposal(s) WOULD newly introduce. For a batch this is the
+   *  CUMULATIVE set over the projected combined stack (pre-apply re-check, SC-4). */
   newSafetyFlags?: import("./evaluation").DraftFlag[];
 }
 

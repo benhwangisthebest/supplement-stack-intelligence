@@ -123,6 +123,7 @@ export function toStackItem(row: StackItemRow): StackItem {
     frequency: row.frequency as ItemFrequency | null,
     reason: row.reason,
     notes: row.notes,
+    productId: row.product_id ?? null, // v8: read-only attached-product surface
   };
 }
 

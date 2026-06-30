@@ -66,6 +66,7 @@ export interface StackItemRow {
   frequency: string | null;
   reason: string | null;
   notes: string | null;
+  product_id?: string | null; // v8 advisor-experience (migration 0004 column)
 }
 
 export interface EvaluationFlagRow {

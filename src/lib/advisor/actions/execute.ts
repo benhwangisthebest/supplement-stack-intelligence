@@ -97,6 +97,46 @@ export async function executeProposal(
   }
 }
 
+export interface BatchItemResult {
+  proposal: ActionProposal;
+  exec: ExecuteResult;
+}
+
+/**
+ * v8 advisor-experience — apply a re-validated BATCH all-or-nothing (Design §4.2).
+ * Executes each action sequentially through executeProposal (the existing repos
+ * stay the only writers). On ANY failure it replays the already-applied actions'
+ * inverses in REVERSE order (compensating rollback) so the stack is left as it was,
+ * then re-throws. Returns each action's ExecuteResult (incl. its inverse) for the
+ * audit, in order. `priorItems[i]` pairs with `actions[i]` (null for add/protocol).
+ */
+export async function executeBatch(
+  supabase: SupabaseClient,
+  userId: string,
+  actions: { proposal: ActionProposal; edits?: EditableProposalFields }[],
+  priorItems: (StackItem | null)[],
+): Promise<BatchItemResult[]> {
+  const done: BatchItemResult[] = [];
+  try {
+    for (let i = 0; i < actions.length; i++) {
+      const { proposal, edits } = actions[i];
+      const exec = await executeProposal(supabase, userId, proposal, priorItems[i], edits);
+      done.push({ proposal, exec });
+    }
+    return done;
+  } catch (err) {
+    // Compensating rollback: reverse what already succeeded, newest first.
+    for (let i = done.length - 1; i >= 0; i--) {
+      try {
+        await executeIntent(supabase, userId, done[i].exec.inverse);
+      } catch {
+        // Best-effort rollback — never mask the original failure with a rollback error.
+      }
+    }
+    throw err;
+  }
+}
+
 /** Execute a stored WriteIntent (used by undo to replay the inverse). */
 export async function executeIntent(
   supabase: SupabaseClient,

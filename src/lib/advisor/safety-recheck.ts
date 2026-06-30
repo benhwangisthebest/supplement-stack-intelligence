@@ -150,3 +150,64 @@ export function recheckForProposal(
   const projected = evaluateStack({ ...evalArgs, items: projectItems(ctx, proposal, edits) });
   return diffNewFlags(current.flags, projected.flags);
 }
+
+/** De-dupe flags by their stable identity. */
+function dedupeFlags(flags: DraftFlag[]): DraftFlag[] {
+  const seen = new Set<string>();
+  return flags.filter((f) => {
+    const id = flagIdentity(f);
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+/**
+ * v8 advisor-experience — cumulative pre-apply re-check for a BATCH of proposals
+ * (Design §3.2). Folds add/remove/edit projections onto a running item set so the
+ * COMBINED projected stack is evaluated against the current one — catching a flag
+ * that only the *combination* introduces (which independent per-proposal rechecks
+ * would miss). Proposals projectItems doesn't model into the active stack
+ * (generate_protocol / attach_product) contribute their independent recheck,
+ * unioned in. Returns the de-duped cumulative NEW flag set. PURE — no I/O.
+ */
+export function cumulativeRecheck(
+  ctx: AdvisorContext,
+  actions: { proposal: ActionProposal; edits?: EditableProposalFields }[],
+): DraftFlag[] {
+  if (actions.length === 0) return [];
+
+  // No active stack (e.g. a lone generate_protocol) → union per-proposal rechecks.
+  if (!ctx.stack) {
+    return dedupeFlags(
+      actions.flatMap((a) => recheckForProposal(ctx, a.proposal, a.edits)),
+    );
+  }
+
+  const trends = computeTrends(ctx.timelinePoints);
+  const evalArgs = {
+    stack: ctx.stack,
+    profile: ctx.profile,
+    labMarkers: ctx.labMarkers,
+    trends,
+  };
+  const current = evaluateStack({ ...evalArgs, items: ctx.stackItems });
+
+  let items = ctx.stackItems;
+  const extra: DraftFlag[] = [];
+  for (const { proposal, edits } of actions) {
+    if (
+      proposal.type === "add_item" ||
+      proposal.type === "remove_item" ||
+      proposal.type === "edit_item"
+    ) {
+      items = projectItems({ ...ctx, stackItems: items }, proposal, edits);
+    } else {
+      // generate_protocol / attach_product don't compose into the active item set
+      // the same way → take their independent contribution.
+      extra.push(...recheckForProposal(ctx, proposal, edits));
+    }
+  }
+  const projected = evaluateStack({ ...evalArgs, items });
+  return dedupeFlags([...diffNewFlags(current.flags, projected.flags), ...extra]);
+}

@@ -122,5 +122,19 @@ export interface AdvisorActionRecord {
   payload: Record<string, unknown>; // what was applied (post re-validation)
   inverse: WriteIntent; // how to reverse it
   createdAt: string;
+  /** v8 advisor-experience: rows applied together in one confirm share a batch_id
+   *  → grouped atomic undo (Design §3.3). NULL for legacy/single-action rows. */
+  batchId: string | null;
   undoneAt: string | null;
+}
+
+/**
+ * v8 advisor-experience — the confirm-apply request body for a (possibly batched)
+ * set of proposals. The client submits ONLY the user-selected subset (selective
+ * confirm, Design §5.1). Canonical values are never trusted; only each action's
+ * `edits` (dose/timing) merge, then re-parse server-side (Design §4.2).
+ */
+export interface BatchActionRequest {
+  conversationId: string | null;
+  actions: { proposal: ActionProposal; edits?: EditableProposalFields }[];
 }

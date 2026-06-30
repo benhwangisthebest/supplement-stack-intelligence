@@ -11,6 +11,7 @@
 | [evidence-grading](evidence-grading/) | 2026-06-16 | 100% (runtime-verified) | PASS | plan · design · analysis · report · qa-report |
 | [ai-advisor](ai-advisor/) | 2026-06-17 | 98% (static + L1/L2 runtime) | PASS | plan · design · analysis · report · qa-report |
 | [advisor-actions](advisor-actions/) | 2026-06-23 | 98% (static + L1 runtime) | — (analysis-gated) | plan · design · analysis · report |
+| [advisor-experience](advisor-experience/) | 2026-06-30 | 99% (static + L1/L2 runtime) | PASS | plan · design · analysis · report · qa-report |
 
 > **v2 milestone begins** — first feature beyond the v1 MVP + two extensions.
 > **v3 milestone** — `biomarker-intelligence` (lab-informed intelligence).
@@ -18,6 +19,7 @@
 > **v5 milestone** — `evidence-grading` (effect-level multi-dimensional grading).
 > **v6 milestone** — `ai-advisor` (read-only, strictly tool-grounded AI advisor over all engines).
 > **v7 milestone** — `advisor-actions` (suggest-then-confirm: the advisor proposes guarded stack/protocol/product writes).
+> **v8 milestone** — `advisor-experience` (the advisor UX finishing release: true token-streaming + live progress, batch multi-action with selective confirm + grouped undo, provenance chip deep-linking, attached-product UI).
 
 ## mvp-core-loop
 The MVP core loop: search the Library → build a profile-aware stack → evidence-aware evaluation → compare vs goals. Built via Plan-Plus → PDCA (Design Option C, Do ×7 modules, Check 96%→Act-1 98%, QA 99% live). Success criteria 5/5 met against a live Supabase backend.
@@ -96,3 +98,12 @@ Turns the v6 read-only advisor into a **suggest-then-confirm actor**: it can now
 - [Design](advisor-actions/advisor-actions.design.md)
 - [Analysis](advisor-actions/advisor-actions.analysis.md)
 - [Report](advisor-actions/advisor-actions.report.md)
+
+## advisor-experience (v8)
+The advisor UX **finishing release** — closes the four items v7 deferred, additively and with the safety invariant intact. **Streaming** stops being faked: a `ProgressEvent` sink in the agent loop streams **live tool-progress** (`turn-start`/`tool-call`/`composing`) during the slow tool phase, then the **already-gated** answer is token-streamed — the grounding + `lib/safety` gate is byte-for-byte unchanged and `progress` events carry no model prose (a *design refinement* means **no Claude streaming API** is added; `ClaudeAdapter` stays untouched). **Batch multi-action**: the v7 single proposal-halt generalizes to a capped collection (`MAX_BATCH_PROPOSALS=4`); the confirm card lets the user **toggle individual actions**; `POST /api/advisor/actions` takes the selected subset, runs a pure **`cumulativeRecheck`** over the *projected combined* stack (catching a flag only the combination introduces), hard-blocks a new critical (`SAFETY_BLOCK`), then applies **all-or-nothing** via `executeBatch` (sequential execute + **compensating-inverse rollback**) through the existing repos, auditing N rows under one **`batch_id`** for **grouped one-click undo**. **Provenance chips** become deep-links via a pure `citationHref` (`#effect-{id}`/`#paper-{id}`) with `Tabs` hash-sync that auto-opens the right Library tab. **Attached-product** surfaces on the stack item (read-only `productId` + `getProductById`). Architecture **Option C (additive)** — **0 engine/write-logic files modified**; one additive `0005_advisor_batch.sql` (nullable `batch_id` + partial index only; no CHECK/RLS change). Built via Plan-Plus → PDCA (Do ×3 modules, Check **98%→99%** after Act-1 closed the deep-link tab-hash gap, QA **PASS**). Success criteria **10/10**; **282/282 unit** (+14); `next build` OK; L1 auth-guards 2/2 + L2 deep-link 2/2 runtime-verified live, authed batch/undo/streaming env-gated (`E2E_LIVE`, needs `0005` applied, run `--workers=1`). No new dependencies. **Deferred to v9:** true off-the-wire token streaming, authed live E2E provisioning, cross-action batch dependencies.
+
+- [Plan](advisor-experience/advisor-experience.plan.md)
+- [Design](advisor-experience/advisor-experience.design.md)
+- [Analysis](advisor-experience/advisor-experience.analysis.md)
+- [Report](advisor-experience/advisor-experience.report.md)
+- [QA Report](advisor-experience/advisor-experience.qa-report.md)

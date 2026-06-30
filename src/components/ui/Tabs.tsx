@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface TabItem {
   id: string;
@@ -9,8 +9,37 @@ export interface TabItem {
 }
 
 // Minimal accessible tabs (Design §5.4 — progressive depth).
-export function Tabs({ items }: { items: TabItem[] }) {
+// v8 advisor-experience: `anchorTabMap` maps a URL-hash PREFIX → tab id so a deep
+// link like #effect-{id} (from an advisor provenance chip) auto-opens the right tab
+// and scrolls to the anchor — closing analysis gap G1.
+export function Tabs({
+  items,
+  anchorTabMap,
+}: {
+  items: TabItem[];
+  anchorTabMap?: Record<string, string>;
+}) {
   const [active, setActive] = useState(items[0]?.id);
+
+  useEffect(() => {
+    if (!anchorTabMap) return;
+    function syncFromHash() {
+      const hash = window.location.hash.slice(1);
+      if (!hash) return;
+      const match = Object.entries(anchorTabMap!).find(([prefix]) => hash.startsWith(prefix));
+      if (!match) return;
+      setActive(match[1]);
+      // Scroll after the (now-active) panel has painted.
+      requestAnimationFrame(() => {
+        document.getElementById(hash)?.scrollIntoView({ block: "start" });
+      });
+    }
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+    // anchorTabMap is a stable literal from the parent render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div>

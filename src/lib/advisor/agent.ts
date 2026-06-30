@@ -20,7 +20,7 @@ import {
   PROPOSAL_TOOL_NAMES,
   actionToolByName,
 } from "./actions/proposals";
-import { recheckForProposal } from "./safety-recheck";
+import { cumulativeRecheck } from "./safety-recheck";
 import type { ActionProposal } from "@/types/advisor-action";
 import type { DraftFlag } from "@/types/evaluation";
 import type {
@@ -31,6 +31,7 @@ import type {
   AdvisorTurnResult,
   Citation,
   ClaudeAdapter,
+  ProgressEvent,
   ToolResult,
 } from "@/types/advisor";
 
@@ -45,6 +46,13 @@ function lookupTool(name: string): AdvisorTool | undefined {
 /** Hard cap on model↔tool round-trips per turn (Design §6). */
 export const MAX_TURNS = 5;
 
+/**
+ * v8 advisor-experience — max grounded proposals collected into one batch per turn
+ * (Design §10.4, Plan SC4 / YAGNI "configurable batch size"). A fixed small const;
+ * over-cap proposals are dropped (not errored). Overridable via `maxBatch` in tests.
+ */
+export const MAX_BATCH_PROPOSALS = 4;
+
 export interface RunAdvisorTurnArgs {
   adapter: ClaudeAdapter;
   ctx: AdvisorContext;
@@ -56,6 +64,11 @@ export interface RunAdvisorTurnArgs {
   budgetRemaining: number;
   /** Override the turn cap (tests). */
   maxTurns?: number;
+  /** v8: injected sink for LIVE progress events (tool-call / composing). The loop
+   *  stays pure-ish — it emits markers, never model prose. Design §2.2. */
+  onProgress?: (event: ProgressEvent) => void;
+  /** v8: override the batch proposal cap (tests). Defaults to MAX_BATCH_PROPOSALS. */
+  maxBatch?: number;
 }
 
 /**
@@ -66,8 +79,9 @@ export interface RunAdvisorTurnArgs {
 export async function runAdvisorTurn(
   args: RunAdvisorTurnArgs,
 ): Promise<AdvisorTurnResult> {
-  const { adapter, ctx, userMessage, budgetRemaining } = args;
+  const { adapter, ctx, userMessage, budgetRemaining, onProgress } = args;
   const maxTurns = args.maxTurns ?? MAX_TURNS;
+  const maxBatch = args.maxBatch ?? MAX_BATCH_PROPOSALS;
 
   // SC-8: budget guard — short-circuit before any model call.
   if (budgetRemaining <= 0) {
@@ -91,6 +105,8 @@ export async function runAdvisorTurn(
   let inputTokens = 0;
   let outputTokens = 0;
 
+  onProgress?.({ type: "turn-start" });
+
   for (let turn = 0; turn < maxTurns; turn++) {
     const step = await adapter.next({
       system: ADVISOR_SYSTEM_PROMPT,
@@ -103,14 +119,17 @@ export async function runAdvisorTurn(
 
     // Model produced a final answer (no further tools requested).
     if (step.toolCalls.length === 0) {
+      onProgress?.({ type: "composing" });
       return finalize(step.text, allResults, {
         inputTokens,
         outputTokens,
       }, toolsUsed);
     }
 
-    // A proposal tool, once it returns a valid proposal, HALTS the loop (Design §2.2).
-    let haltProposal: ActionProposal | null = null;
+    // v8: collect ALL grounded proposals produced this step (a batch), capped.
+    // Generalizes v7's single proposal-halt (Design §2.2): the model may propose
+    // several changes in one step; the loop halts once any are grounded.
+    const stepProposals: ActionProposal[] = [];
 
     // Dispatch each requested tool through its pure handler (Design §6: never throws out).
     pendingToolResults = step.toolCalls.map((call) => {
@@ -124,6 +143,8 @@ export async function runAdvisorTurn(
           citations: [],
         };
       } else {
+        // v8: live progress — name the tool as it runs (Plan SC1). No model prose.
+        onProgress?.({ type: "tool-call", name: call.name });
         try {
           result = tool.handler(call.input, ctx);
         } catch (err) {
@@ -136,9 +157,9 @@ export async function runAdvisorTurn(
         }
         toolsUsed.push(call.name);
       }
-      // Capture the FIRST grounded proposal in this step for the halt (SC-2).
-      if (haltProposal === null && PROPOSAL_TOOL_NAMES.has(call.name) && result.ok && result.data) {
-        haltProposal = result.data as ActionProposal;
+      // Collect each grounded proposal in this step for the batch halt (SC-2/SC4).
+      if (PROPOSAL_TOOL_NAMES.has(call.name) && result.ok && result.data) {
+        stepProposals.push(result.data as ActionProposal);
       }
       allResults.push(result);
       return {
@@ -151,9 +172,12 @@ export async function runAdvisorTurn(
       };
     });
 
-    // Proposal produced → halt, attach pre-apply safety flags, return for confirmation.
-    if (haltProposal !== null) {
-      return finalizeProposal(haltProposal, ctx, allResults, { inputTokens, outputTokens }, toolsUsed);
+    // One or more proposals produced → halt, attach cumulative pre-apply safety
+    // flags, return the (capped) batch for confirmation. Over-cap proposals are
+    // dropped, not errored (Plan SC4 / YAGNI).
+    if (stepProposals.length > 0) {
+      const batch = stepProposals.slice(0, maxBatch);
+      return finalizeProposalBatch(batch, ctx, { inputTokens, outputTokens }, toolsUsed);
     }
 
     // Budget exhausted mid-loop → stop here and finalize from what we have.
@@ -195,21 +219,25 @@ function finalize(
 }
 
 /**
- * Halt on a proposal: run the pre-apply safety re-check on the PROJECTED stack
- * (Plan SC-4) and return the proposal + any newly-introduced flags for the user
- * to confirm. The LLM has still written nothing — the engines/repos remain the
- * only writers (Plan SC-2).
+ * Halt on a BATCH of proposals (v8 advisor-experience, generalizes v7's single
+ * halt). Runs the CUMULATIVE pre-apply safety re-check over the projected combined
+ * stack (Plan SC-4, Design §3.2) and returns the proposals + the cumulative
+ * newly-introduced flags for the user to confirm. The LLM has still written
+ * nothing — the engines/repos remain the only writers (Plan SC-2). `proposal`
+ * (singular) is kept as proposals[0] for v7 back-compat.
  */
-function finalizeProposal(
-  proposal: ActionProposal,
+function finalizeProposalBatch(
+  proposals: ActionProposal[],
   ctx: AdvisorContext,
-  _results: ToolResult[],
   usage: { inputTokens: number; outputTokens: number },
   toolsUsed: string[],
 ): AdvisorTurnResult {
   let newSafetyFlags: DraftFlag[];
   try {
-    newSafetyFlags = recheckForProposal(ctx, proposal);
+    newSafetyFlags = cumulativeRecheck(
+      ctx,
+      proposals.map((proposal) => ({ proposal })),
+    );
   } catch {
     // A re-check failure must never silently drop the safety gate — surface none
     // and let module-2's server-side re-check (the authoritative gate) decide.
@@ -217,31 +245,53 @@ function finalizeProposal(
   }
   return {
     status: "proposed",
-    answer: proposalSummary(proposal, newSafetyFlags),
-    citations: proposal.rationaleCitations,
+    answer: proposalBatchSummary(proposals, newSafetyFlags),
+    citations: dedupeCitations(proposals.flatMap((p) => p.rationaleCitations)),
     usage,
     toolsUsed,
-    proposal,
+    proposal: proposals[0],
+    proposals,
     newSafetyFlags,
   };
 }
 
-/** A short, non-diagnostic human summary of a proposal for the chat transcript.
- *  Composed only from engine-grounded diff labels + fixed copy, then guarded. */
-function proposalSummary(proposal: ActionProposal, flags: DraftFlag[]): string {
-  const lines = proposal.diff.map((d) => {
-    const tail = d.after ? `: ${d.after}` : d.before ? `: ${d.before}` : "";
-    return `• ${d.label}${tail}`;
+/** De-dupe citations across a batch by their engine identity. */
+function dedupeCitations(citations: Citation[]): Citation[] {
+  const seen = new Set<string>();
+  return citations.filter((c) => {
+    const id = `${c.kind}:${c.refId}`;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
   });
+}
+
+/** A short, non-diagnostic human summary of one or more proposals for the chat
+ *  transcript. Composed only from engine-grounded diff labels + fixed copy, then
+ *  guarded against banned/diagnostic language. */
+function proposalBatchSummary(
+  proposals: ActionProposal[],
+  flags: DraftFlag[],
+): string {
+  const lines = proposals.flatMap((p) =>
+    p.diff.map((d) => {
+      const tail = d.after ? `: ${d.after}` : d.before ? `: ${d.before}` : "";
+      return `• ${d.label}${tail}`;
+    }),
+  );
   const flagNote =
     flags.length > 0
-      ? `\n\nHeads up — this change would surface ${flags.length} new flag${flags.length > 1 ? "s" : ""} to review before applying.`
+      ? `\n\nHeads up — these changes would surface ${flags.length} new flag${flags.length > 1 ? "s" : ""} to review before applying.`
       : "";
+  const header =
+    proposals.length > 1
+      ? `I've prepared ${proposals.length} changes for you to review:\n`
+      : "I've prepared a change for you to review:\n";
   const composed =
-    "I've prepared a change for you to review:\n" +
+    header +
     lines.join("\n") +
     flagNote +
-    "\n\nConfirm it below to apply, or reject it. Nothing has been saved yet.\n\n" +
+    "\n\nConfirm below to apply, or reject. Nothing has been saved yet.\n\n" +
     DISCLAIMERS.general;
   return containsBannedLanguage(composed) ? DISCLAIMERS.general : composed;
 }
