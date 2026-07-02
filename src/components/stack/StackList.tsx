@@ -3,11 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Stack, StackMode } from "@/types";
+import type { StackArchetype } from "@/types/identity";
+import { StackArchetypeBadge } from "@/components/identity/StackArchetypeBadge";
 
 type Filter = "all" | StackMode;
 
 // Design §5.4 — stack list with Current/Planned filter.
-export function StackList({ stacks }: { stacks: Stack[] }) {
+// v9 identity-cards: each stack optionally carries its derived archetype badge.
+export function StackList({
+  stacks,
+  archetypes = {},
+}: {
+  stacks: Stack[];
+  archetypes?: Record<string, StackArchetype>;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const filtered = filter === "all" ? stacks : stacks.filter((s) => s.mode === filter);
 
@@ -50,6 +59,11 @@ export function StackList({ stacks }: { stacks: Stack[] }) {
                 <p className="mt-1 text-xs capitalize text-muted">
                   Intent: {s.intent}
                 </p>
+                {archetypes[s.id] && (
+                  <div className="mt-2">
+                    <StackArchetypeBadge archetype={archetypes[s.id]} />
+                  </div>
+                )}
               </Link>
             </li>
           ))}

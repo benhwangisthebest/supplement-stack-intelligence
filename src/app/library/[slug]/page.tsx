@@ -9,9 +9,11 @@ import {
   getRelatedSupplements,
   getSupplementBySlug,
 } from "@/lib/evidence";
+import { deriveSupplementArchetype } from "@/lib/identity";
 import { SupplementDetail } from "@/components/library/SupplementDetail";
 import { InteractionSection } from "@/components/library/InteractionSection";
 import { BiomarkerRelevanceSection } from "@/components/library/BiomarkerRelevanceSection";
+import { SupplementArchetypeBadge } from "@/components/identity/SupplementArchetypeBadge";
 import { AddToStackButton } from "@/components/stack/AddToStackButton";
 
 // Seed is static — prerender every supplement page (Design §11.3).
@@ -62,6 +64,13 @@ export default async function SupplementDetailPage({
           {supplement.category}
           {supplement.aliases.length > 0 && <> · {supplement.aliases.join(", ")}</>}
         </p>
+        {/* v9 identity-cards (Design §5.4, Plan SC6) — compound archetype, derived
+            SSR from the seed evidence (public, deterministic). */}
+        <div className="mt-3">
+          <SupplementArchetypeBadge
+            archetype={deriveSupplementArchetype(supplement.id)}
+          />
+        </div>
       </header>
 
       <div className="mt-6">

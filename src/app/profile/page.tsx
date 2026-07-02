@@ -4,6 +4,9 @@ import { getProfile } from "@/lib/db/profile-repo";
 import { listLabMarkers } from "@/lib/db/lab-marker-repo";
 import { listTimelinePoints } from "@/lib/db/lab-panel-repo";
 import { computeTrends } from "@/lib/lab-trends";
+import { loadIdentityContext } from "@/lib/identity/context";
+import { deriveUserIdentity } from "@/lib/identity";
+import { IdentityCard } from "@/components/identity/IdentityCard";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { LabMarkerTable } from "@/components/profile/LabMarkerTable";
 import { LabUpload } from "@/components/profile/LabUpload";
@@ -18,12 +21,16 @@ export const dynamic = "force-dynamic"; // reads auth session + user data per re
 export default async function ProfilePage() {
   const user = await requireUser();
   const supabase = await createClient();
-  const [profile, markers, points] = await Promise.all([
+  const [profile, markers, points, identityCtx] = await Promise.all([
     getProfile(supabase, user.id),
     listLabMarkers(supabase, user.id),
     listTimelinePoints(supabase, user.id),
+    loadIdentityContext(supabase, user.id),
   ]);
   const trends = computeTrends(points);
+  // v9 identity-cards (Design §5.1) — derived server-side (no self-fetch); the
+  // /api/identity route serves the same data for any client caller.
+  const identity = deriveUserIdentity(identityCtx);
 
   return (
     <main className="container-page max-w-3xl py-12">
@@ -33,6 +40,10 @@ export default async function ProfilePage() {
       />
 
       <Disclaimer variant="profile" className="mt-4" />
+
+      <section className="mt-8">
+        <IdentityCard card={identity} />
+      </section>
 
       <section className="mt-8">
         <ProfileForm initial={profile} />

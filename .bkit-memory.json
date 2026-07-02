@@ -3,6 +3,104 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "identity-cards": {
+      "phase": "archived",
+      "milestone": "v9",
+      "archivedTo": "docs/archive/2026-07/identity-cards/",
+      "archivedAt": "2026-07-02",
+      "reportDoc": "docs/archive/2026-07/identity-cards/identity-cards.report.md",
+      "qaStatus": "PASS",
+      "qaReportDoc": "docs/05-qa/identity-cards.qa-report.md",
+      "qaResult": "L0 311/311 (29 identity) + L1 auth-guard 1/1 live + L2 public Library badge 1/1 live; L3 authed 2 skipped (E2E_LIVE-gated); tsc clean; next build OK; 0 defects",
+      "matchRate": 98,
+      "matchRateMode": "static + runtime (unit 311/311, tsc clean, next build OK, L1 auth-guard 1/1 + L2 public Library badge 1/1 live; L3 authed card gated on E2E_LIVE)",
+      "analysisDoc": "docs/03-analysis/identity-cards.analysis.md",
+      "successCriteriaResult": "10/10 met",
+      "gaps": "0 Critical, 0 Important (2 Info: Profile SSR-computes vs self-fetch; L3 authed render E2E_LIVE-gated)",
+      "iterationCount": 0,
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete",
+        "module-3": "complete"
+      },
+      "doComplete": true,
+      "module3": {
+        "created": [
+          "src/components/identity/IdentityCard.tsx",
+          "src/components/identity/TraitBars.tsx",
+          "src/components/identity/StackArchetypeBadge.tsx",
+          "src/components/identity/SupplementArchetypeBadge.tsx"
+        ],
+        "modified": [
+          "src/app/profile/page.tsx",
+          "src/app/stack-lab/page.tsx",
+          "src/components/stack/StackList.tsx",
+          "src/app/library/[slug]/page.tsx",
+          "tests/e2e/identity-cards.spec.ts"
+        ],
+        "verification": "tsc clean; full unit suite 311/311; next build OK (/library/[slug] SSG prerendered incl badge, /profile+/stack-lab dynamic); L1 auth-guard 401 + L2 public Library archetype badge runtime-verified LIVE via playwright. Profile IdentityCard + per-stack StackList badges surfaced SSR (no self-fetch); deep-link trail reuses v8 citationHref; emerging state shows sharpen checklist. Authed L3 (Profile card render) gated on E2E_LIVE. No new deps.",
+        "surfaces": "Profile (IdentityCard), Stack Lab (per-stack StackArchetypeBadge via StackList), Library detail (SupplementArchetypeBadge SSR — the deferred M2 wiring)",
+        "completedAt": "2026-07-02"
+      },
+      "module2": {
+        "created": [
+          "src/lib/identity/context.ts",
+          "src/app/api/identity/route.ts",
+          "tests/e2e/identity-cards.spec.ts"
+        ],
+        "modified": [],
+        "boundaryRefinement": "Library SSR supplement-archetype RENDER moved from M2 to M3 (inseparable from its SupplementArchetypeBadge component); the pure deriveSupplementArchetype it needs already shipped in M1.",
+        "verification": "tsc clean; full unit suite 311/311; next build OK (/api/identity registered, dynamic); L1 auth-guard runtime-verified LIVE (GET /api/identity → 401 UNAUTHORIZED anonymous). Authed L3 gated on E2E_LIVE (needs seeded profile+stacks). 0 files modified, no deps.",
+        "completedAt": "2026-07-02"
+      },
+      "module1": {
+        "created": [
+          "src/types/identity.ts",
+          "src/lib/identity/archetypes.ts",
+          "src/lib/identity/traits.ts",
+          "src/lib/identity/classify.ts",
+          "src/lib/identity/confidence.ts",
+          "src/lib/identity/stack-archetypes.ts",
+          "src/lib/identity/supplement-archetypes.ts",
+          "src/lib/identity/index.ts",
+          "src/lib/identity/traits.test.ts",
+          "src/lib/identity/classify.test.ts",
+          "src/lib/identity/confidence.test.ts",
+          "src/lib/identity/supplement-archetypes.test.ts",
+          "src/lib/identity/honesty.test.ts"
+        ],
+        "modified": [],
+        "verification": "tsc clean; full unit suite 311/311 (+29); integrity (every archetype unique nearest neighbour of its own target) + anti-over-claim guard (emerging when dataDepth<0.25 or matchScore<0.35) + honesty sweep (0 banned phrases) all green. Pure domain — 0 files modified, no deps, no build dependency.",
+        "completedAt": "2026-07-02"
+      },
+      "method": "plan-plus",
+      "createdAt": "2026-07-01",
+      "planDoc": "docs/01-plan/features/identity-cards.plan.md",
+      "designDoc": "docs/02-design/features/identity-cards.design.md",
+      "approach": "option-a-derived-archetype-engine",
+      "architecture": "option-c-pragmatic (data-driven taxonomy + pure nearest-profile classifier); additive",
+      "engine": "pure-function-lib-identity",
+      "anchor": "identity-layer / derived-supplement-thinking-archetype",
+      "scope": [
+        "lib-identity-engine (traits+classify+confidence+archetypes)",
+        "trait-dimension-breakdown",
+        "per-stack-archetypes",
+        "confidence-sharpen-honesty-guard",
+        "supplement-archetype-cards-library",
+        "GET-api-identity-authed-rls",
+        "identity-card-ui + deep-link-reuse"
+      ],
+      "deferred": [
+        "identity-snapshot-history-table",
+        "shareable-image-export",
+        "evidence-literacy-score",
+        "standalone-stack-quality-scores",
+        "achievement-badges",
+        "advisor-integration"
+      ],
+      "constraints": "deterministic-no-LLM; identity!=medical-status; additive-0-engine-files; target-0-migration; no-new-dependency",
+      "successCriteria": "10 (SC1-SC10)"
+    },
     "advisor-experience": {
       "phase": "archived",
       "archivedTo": "docs/archive/2026-06/advisor-experience/",
@@ -419,6 +517,85 @@
     }
   },
   "tasks": [
+    {
+      "title": "[Archive] identity-cards",
+      "status": "completed",
+      "blockedBy": "[Report] identity-cards",
+      "archivedTo": "docs/archive/2026-07/identity-cards/",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Report] identity-cards",
+      "status": "completed",
+      "blockedBy": "[QA] identity-cards",
+      "milestone": "v9",
+      "result": "v9 completion report: 10/10 SC met, 98% match (static+runtime), QA PASS, 0 iterations, 0 defects. Additive Option-C held: 0 engine/table files, no migration, no dep. 12 source + 6 test/spec created, 4 surfaces modified. Deferred to v10: snapshot/history, share-image, literacy/quality scores, badges, advisor-integration, authed L3 live provisioning. Report doc written.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[QA] identity-cards",
+      "status": "completed",
+      "blockedBy": "[Check] identity-cards",
+      "qaStatus": "PASS",
+      "milestone": "v9",
+      "result": "L0 311/311 (29 identity incl. classify integrity + honesty sweep) + L1 auth-guard 401 live + L2 public Library archetype badge live; L3 authed (card shape + Profile render) 2 skipped E2E_LIVE-gated; tsc clean; next build OK. Security: auth 401 + RLS-reuse + non-diagnostic honesty sweep. 0 defects. QA report written.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Check] identity-cards",
+      "status": "completed",
+      "blockedBy": "[Do] identity-cards --scope module-3",
+      "matchRate": 98,
+      "mode": "static + runtime",
+      "milestone": "v9",
+      "gaps": "0 Critical, 0 Important; SC 10/10",
+      "result": "Structural 100 / Functional 98 / Contract 95 / Runtime 98 → Overall 98%. 10/10 success criteria met. Additive Option-C held: 0 engine/table files modified, no migration (still 0005), no new dep. Anti-over-claim emerging guard + taxonomy reachability integrity both unit-proven. Runtime: unit 311/311, tsc clean, next build OK, L1 401 + L2 public Library badge live-verified; L3 authed card E2E_LIVE-gated. 2 Info observations (Profile SSR-computes rather than self-fetching /api/identity — intentional; L3 authed render gated). Analysis doc written.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Do] identity-cards --scope module-3",
+      "status": "completed",
+      "blockedBy": "[Do] identity-cards --scope module-2",
+      "scope": ["module-3"],
+      "milestone": "v9",
+      "result": "UI & surfacing: 4 components created, 5 files modified (4 surfaces + spec), no deps. IdentityCard (archetype + confidence chip + tagline + TraitBars + deep-linked why-trail + emerging sharpen checklist + disclaimer), TraitBars, StackArchetypeBadge, SupplementArchetypeBadge. Surfaced: Profile page (SSR loadIdentityContext+deriveUserIdentity → IdentityCard, no self-fetch), Stack Lab (per-stack deriveStackArchetype → StackList badges), Library detail (deriveSupplementArchetype SSR badge — deferred M2 wiring). Deep-links reuse v8 citationHref. Extended spec: L2 public Library badge + L3 authed Profile card. Verify: tsc clean; unit 311/311; next build OK (/library/[slug] SSG prerendered w/ badge); L1 401 + L2 badge runtime-verified LIVE; L3 gated on E2E_LIVE. Do phase COMPLETE (3/3 modules).",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Do] identity-cards --scope module-2",
+      "status": "completed",
+      "blockedBy": "[Do] identity-cards --scope module-1",
+      "scope": ["module-2"],
+      "milestone": "v9",
+      "result": "Context & API: 3 created, 0 modified, no deps. context.ts — loadIdentityContext reuses existing RLS repos (getProfile/listStacks/listItems/listLabMarkers), maps to IdentityContext, computes filledFieldCount over 6 core fields (PROFILE_FIELD_COUNT), hasLabs. route.ts — GET /api/identity: getUser 401 guard → handle() → deriveUserIdentity + per-stack deriveStackArchetype → ok({card, stackArchetypes}); no request body/client input trusted. L1 auth-guard spec + L3 authed (E2E_LIVE-gated). Verify: tsc clean; unit 311/311; next build OK (/api/identity dynamic, registered); L1 401 UNAUTHORIZED runtime-verified LIVE via playwright. Boundary refinement: Library SSR badge render deferred to M3 (inseparable from SupplementArchetypeBadge).",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Do] identity-cards --scope module-1",
+      "status": "completed",
+      "blockedBy": "[Design] identity-cards",
+      "scope": ["module-1"],
+      "milestone": "v9",
+      "result": "Pure engine & taxonomy: 8 source + 5 test files created, 0 modified, no deps. types/identity (5 trait axes, 7 archetype ids incl emerging, IdentityContext plain-data shape); lib/identity — archetypes (6 declarative targets + emerging fallback), traits (computeTraitVector over evidence/safety, PROFILE_FIELD_COUNT), classify (weighted-Euclidean nearest-profile, dataDepth weight 0, MIN_MATCH=0.35 guard, TOTAL), confidence (dataDepth thresholds 0.25/0.6 + sharpen tips), stack-archetypes (scoped reuse), supplement-archetypes (pure supplementArchetypeFromEffects + seed wrapper, 4 ids), index (deriveUserIdentity assembles card + deep-linkable trail via effect-grade Citations). Verify: tsc clean; full suite 311/311 (+29); classify integrity (every archetype reachable) + anti-over-claim guard + honesty sweep (0 banned) green.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Design] identity-cards",
+      "status": "completed",
+      "blockedBy": "[Plan] identity-cards",
+      "architecture": "option-c-pragmatic",
+      "milestone": "v9",
+      "result": "3 architecture options presented; selected C (data-driven declarative archetype taxonomy + single pure nearest-profile weighted-distance classifier + separate pure traits.ts/confidence.ts) via Checkpoint 3 — mirrors v5 evidence-grading shape. Design: 5 trait axes (evidenceRigor/riskAppetite/breadth/foundationalFocus/dataDepth ∈[0,1]), 6 user archetypes + Emerging total-fallback guard (anti-over-claim: dataDepth<0.25 or matchScore<0.35), integrity invariant (every archetype reachable). No DB/migration — derived on the fly. GET /api/identity auth+RLS via existing repos; supplement archetypes (4) computed Library SSR (no endpoint). Deep-link trail reuses v8 citationHref. Honesty sweep over all copy. 3-module session plan (M1 engine+taxonomy, M2 context+API, M3 UI+surfacing). Design doc written.",
+      "createdAt": "2026-07-01"
+    },
+    {
+      "title": "[Plan] identity-cards",
+      "status": "completed",
+      "method": "plan-plus",
+      "milestone": "v9",
+      "result": "plan-plus brainstorm: direction=gamification/identity-layer, purpose=reflect-identity/self-image, approach=A derived-archetype-engine (deterministic, no-LLM), YAGNI in=trait-breakdown+per-stack-archetypes+confidence-guard+supplement-archetypes (snapshot-history/share-image/literacy-score/standalone-quality-scores/badges/advisor-integration deferred). Architecture Option C additive: pure lib/identity, GET /api/identity authed, Library SSR supplement badge, 0 engine files, target 0 migration, no new deps. 10 SC. Plan doc written.",
+      "createdAt": "2026-07-01"
+    },
     {
       "title": "[Archive] evidence-grading",
       "status": "completed",
@@ -850,5 +1027,5 @@
       "createdAt": "2026-06-11"
     }
   ],
-  "updatedAt": "2026-06-16"
+  "updatedAt": "2026-07-01"
 }

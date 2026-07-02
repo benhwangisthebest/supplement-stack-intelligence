@@ -1,6 +1,9 @@
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { listStacks } from "@/lib/db/stack-repo";
+import { loadIdentityContext } from "@/lib/identity/context";
+import { deriveStackArchetype } from "@/lib/identity";
+import type { StackArchetype } from "@/types/identity";
 import { NewStackForm } from "@/components/stack/NewStackForm";
 import { StackList } from "@/components/stack/StackList";
 import { Disclaimer } from "@/components/ui/Disclaimer";
@@ -15,6 +18,14 @@ export default async function StackLabPage() {
   const supabase = await createClient();
   const stacks = await listStacks(supabase, user.id);
 
+  // v9 identity-cards (Design §5.4, Plan SC4) — per-stack archetype read, keyed by
+  // stack id so StackList can badge each card.
+  const identityCtx = await loadIdentityContext(supabase, user.id);
+  const archetypes: Record<string, StackArchetype> = {};
+  for (const s of identityCtx.stacks) {
+    archetypes[s.stackId] = deriveStackArchetype(s, identityCtx);
+  }
+
   return (
     <main className="container-page max-w-4xl py-12">
       <PageHeader
@@ -27,7 +38,7 @@ export default async function StackLabPage() {
       </div>
 
       <div className="mt-8">
-        <StackList stacks={stacks} />
+        <StackList stacks={stacks} archetypes={archetypes} />
       </div>
 
       <Disclaimer variant="evaluation" className="mt-10" />
