@@ -7,6 +7,8 @@ import { getProfile } from "@/lib/db/profile-repo";
 import { listStacks } from "@/lib/db/stack-repo";
 import { listItems } from "@/lib/db/stack-item-repo";
 import { listLabMarkers } from "@/lib/db/lab-marker-repo";
+import { listCheckins } from "@/lib/db/checkin-repo";
+import { computeConsistency } from "@/lib/checkin";
 import { PROFILE_FIELD_COUNT } from "./traits";
 import type { UserProfile } from "@/types/profile";
 import type { IdentityContext } from "@/types/identity";
@@ -37,10 +39,11 @@ export async function loadIdentityContext(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<IdentityContext> {
-  const [profile, stacks, labMarkers] = await Promise.all([
+  const [profile, stacks, labMarkers, checkins] = await Promise.all([
     getProfile(supabase, userId),
     listStacks(supabase, userId),
     listLabMarkers(supabase, userId),
+    listCheckins(supabase, userId),
   ]);
 
   const stacksWithItems = await Promise.all(
@@ -66,5 +69,7 @@ export async function loadIdentityContext(
       : null,
     stacks: stacksWithItems,
     hasLabs: labMarkers.length > 0,
+    // daily-checkin v10: consistency feeds dataDepth (Design §5, Plan SC8).
+    checkinConsistency: computeConsistency(checkins).checkinRate,
   };
 }

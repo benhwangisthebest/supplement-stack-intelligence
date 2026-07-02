@@ -129,4 +129,7 @@ export interface IdentityContext {
   } | null;
   stacks: IdentityStack[];
   hasLabs: boolean;
+  /** daily-checkin v10: [0,1] check-in consistency; contributes to dataDepth.
+   *  Optional/backward-compatible — absent ⇒ treated as 0 (no effect on v9 output). */
+  checkinConsistency?: number;
 }

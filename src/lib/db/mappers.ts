@@ -19,7 +19,9 @@ import type {
   UserProfile,
 } from "@/types";
 import type { LabPanel, LabMarkerTimelinePoint } from "@/types/lab";
+import type { DailyCheckin, GoalRating } from "@/types/checkin";
 import type {
+  CheckinRow,
   EvaluationFlagRow,
   LabMarkerRow,
   LabPanelRow,
@@ -27,6 +29,21 @@ import type {
   StackRow,
   UserProfileRow,
 } from "./types";
+
+export function toCheckin(row: CheckinRow): DailyCheckin {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    date: row.checkin_date,
+    ratings: (row.ratings ?? {}) as Partial<Record<OutcomeCategory, GoalRating>>,
+    taken: row.taken ?? [],
+    scheduled: row.scheduled ?? [],
+    note: row.note,
+    sideEffect: row.side_effect,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 export function toUserProfile(row: UserProfileRow): UserProfile {
   return {

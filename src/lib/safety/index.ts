@@ -335,3 +335,31 @@ export const safetyCopy = {
     };
   },
 } as const;
+
+// ---- Daily check-in copy (daily-checkin v10). CORRELATIONAL, non-diagnostic. ----
+// Every string here describes a SELF-REPORTED correlation, never a causal or
+// efficacy claim. Swept by lib/checkin/honesty.test.ts (Plan SC6/SC10).
+export const checkinCopy = {
+  /** A correlational outcome insight — describes association, not effect. */
+  outcomeInsight(
+    supplementName: string,
+    outcomeLabel: string,
+    takenAvg: number,
+    notTakenAvg: number,
+  ): { text: string; qualifier: string } {
+    const t = takenAvg.toFixed(1);
+    const n = notTakenAvg.toFixed(1);
+    return {
+      text: `You rated ${outcomeLabel} ${t} on days you took ${supplementName} vs ${n} on other days.`,
+      qualifier: "Correlational only — this reflects what you logged, not a measure of effectiveness.",
+    };
+  },
+
+  /** Shown near the optional side-effect / note field. */
+  sideEffectDisclaimer:
+    "Notes are for your own tracking. The app does not interpret them as medical information — discuss anything concerning with a clinician.",
+
+  /** Shown when a re-ranked suggestion was nudged by check-in feedback. */
+  feedbackNudgeNote:
+    "Adjusted slightly by your check-ins. Evidence still leads — this only refines the order.",
+} as const;

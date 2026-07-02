@@ -3,6 +3,114 @@
   "level": "Dynamic",
   "currentFeature": null,
   "features": {
+    "daily-checkin": {
+      "phase": "archived",
+      "milestone": "v10",
+      "archivedTo": "docs/archive/2026-07/daily-checkin/",
+      "archivedAt": "2026-07-02",
+      "reportDoc": "docs/archive/2026-07/daily-checkin/daily-checkin.report.md",
+      "qaStatus": "PASS",
+      "qaReportDoc": "docs/05-qa/daily-checkin.qa-report.md",
+      "qaResult": "L0 340/340 (29 v10 incl. feedback-regression SC5 + honesty) + L1 GET+POST 401 live + L2 /stack-lab redirect live; L3 authed 3 skipped (E2E_LIVE-gated); tsc clean; next build OK; 0 defects",
+      "matchRate": 99,
+      "matchRateMode": "static + runtime (unit 340/340, tsc clean, next build OK, L1 2/2 + L2 1/1 live; L3 authed round-trip gated on E2E_LIVE + 0006 applied)",
+      "analysisDoc": "docs/03-analysis/daily-checkin.analysis.md",
+      "successCriteriaResult": "10/10 met",
+      "gaps": "0 Critical, 0 Important (1 Info: L3 authed round-trip + capture render E2E_LIVE-gated, needs 0006 applied to live DB)",
+      "iterationCount": 0,
+      "doProgress": {
+        "module-1": "complete",
+        "module-2": "complete",
+        "module-3": "complete"
+      },
+      "doComplete": true,
+      "module3": {
+        "created": [
+          "src/components/checkin/DailyCheckinForm.tsx",
+          "src/components/checkin/ConsistencyHeatmap.tsx",
+          "src/components/checkin/InsightCards.tsx"
+        ],
+        "modified": [
+          "src/app/stack-lab/page.tsx (Daily Check-in section: SSR analyzeCheckins + active-stack items)",
+          "tests/e2e/daily-checkin.spec.ts (+L2 anonymous redirect + authed render)"
+        ],
+        "verification": "tsc clean; full unit suite 340/340; next build OK (/stack-lab dynamic 3.37kB); L1 GET+POST 401 + L2 /stack-lab anonymous→login redirect runtime-verified live; authed Daily-check-in render gated on E2E_LIVE. Premium heatmap (no points/badges); side-effect/note field display-only + disclaimer. No deps.",
+        "surfaces": "Stack Lab Daily Check-in section: DailyCheckinForm (adherence checkboxes + goal sliders + note/side-effect) + ConsistencyHeatmap + InsightCards",
+        "completedAt": "2026-07-02"
+      },
+      "module2": {
+        "created": [
+          "src/app/api/checkins/route.ts",
+          "src/lib/protocol-builder/feedback-regression.test.ts",
+          "tests/e2e/daily-checkin.spec.ts"
+        ],
+        "modified": [
+          "src/types/protocol.ts (+feedback?/feedbackNote?)",
+          "src/lib/protocol-builder/rules.ts (compareSuggestions: feedback key between grade↔composite)",
+          "src/lib/protocol-builder/index.ts (+feedbackSignal input, attach feedback+note)",
+          "src/app/api/protocol/generate/route.ts (load checkins → analyzeCheckins.feedback)",
+          "src/lib/validation/schemas.ts (+checkinInputSchema, ratings 1-5)",
+          "src/types/identity.ts (IdentityContext +checkinConsistency?)",
+          "src/lib/identity/context.ts (+listCheckins → checkinConsistency)",
+          "src/lib/identity/traits.ts (dataDepth += 0.15*checkinSignal, rebalanced additive)"
+        ],
+        "verification": "tsc clean; full unit suite 340/340 (+6 regression); SC5 PROVEN — feedback-regression.test: no-feedback output byte-identical + max feedback never lifts lower grade over higher (feedback strictly below grade) + lab still outranks feedback; ALL v9 identity tests still green (backward-compat held). next build OK (/api/checkins dynamic). L1 auth-guard 2/2 (GET+POST 401) runtime-verified live. Authed round-trip/validation L3 gated on E2E_LIVE. No deps.",
+        "completedAt": "2026-07-02"
+      },
+      "module1": {
+        "created": [
+          "supabase/migrations/0006_checkins.sql",
+          "src/types/checkin.ts",
+          "src/lib/db/checkin-repo.ts",
+          "src/lib/checkin/consistency.ts",
+          "src/lib/checkin/outcomes.ts",
+          "src/lib/checkin/feedback.ts",
+          "src/lib/checkin/insights.ts",
+          "src/lib/checkin/index.ts",
+          "src/lib/checkin/consistency.test.ts",
+          "src/lib/checkin/outcomes.test.ts",
+          "src/lib/checkin/feedback.test.ts",
+          "src/lib/checkin/insights.test.ts",
+          "src/lib/checkin/honesty.test.ts"
+        ],
+        "modified": [
+          "src/lib/db/types.ts (+CheckinRow)",
+          "src/lib/db/mappers.ts (+toCheckin)",
+          "src/lib/safety/index.ts (+checkinCopy: outcomeInsight/sideEffectDisclaimer/feedbackNudgeNote)"
+        ],
+        "verification": "tsc clean; full unit suite 334/334 (+23); feedback.test proves clamp to ±FEEDBACK_CAP(0.15) + min-sample suppression (MIN_TAKEN_DAYS=5/MIN_NOTTAKEN_DAYS=3); honesty sweep 0 banned. Pure engine over check-in rows (no stack join). 0006 additive migration (RLS own_checkins, unique user+date). No deps.",
+        "completedAt": "2026-07-02"
+      },
+      "method": "plan-plus",
+      "createdAt": "2026-07-02",
+      "planDoc": "docs/01-plan/features/daily-checkin.plan.md",
+      "designDoc": "docs/02-design/features/daily-checkin.design.md",
+      "rankingIntegration": "Option C — feedback as a NEW ranking key strictly below grade in compareSuggestions (labSignal→grade→feedback→composite→name); evidence-subordinate by construction, v3/v4/v5 order unchanged, no-feedback regression-safe",
+      "approach": "option-a-additive-engine-table-bounded-hook",
+      "architecture": "additive (0006 checkins table + pure lib/checkin + bounded generateProtocol/identity hooks)",
+      "engine": "pure-function-lib-checkin (consistency+outcomes+feedback+insights)",
+      "anchor": "feedback-loop / daily-checkin-adherence-outcome-tracking → bounded evidence-dominant re-ranking",
+      "scope": [
+        "0006_checkins migration (adherence + goal ratings, idempotent per day, RLS)",
+        "lib/checkin engine (consistency+outcomes+feedback+insights)",
+        "GET/POST /api/checkins",
+        "bounded generateProtocol feedbackSignal hook (evidence-dominant, min-sample-gated)",
+        "consistency heatmap + metric",
+        "correlational insight cards (non-diagnostic)",
+        "feeds v9 identity dataDepth",
+        "side-effect/note field (display-only)"
+      ],
+      "deferred": [
+        "proactive advisor change-proposals",
+        "side-effect engine (acting on symptoms)",
+        "reminders/notifications",
+        "wearable import",
+        "longitudinal trend charts beyond heatmap"
+      ],
+      "constraints": "correlational non-diagnostic (no causal/efficacy claims); evidence-dominant bounded feedback (no-feedback regression test); additive (1 migration, optional engine inputs); premium gamification (heatmap not points/badges); idempotent daily upsert",
+      "streakNote": "intentionally breaks 6-milestone no-migration streak (needs checkins table) and modifies 2 engine files (generateProtocol + lib/identity) — both additive/bounded/backward-compatible",
+      "successCriteria": "10 (SC1-SC10)"
+    },
     "identity-cards": {
       "phase": "archived",
       "milestone": "v9",
@@ -517,6 +625,85 @@
     }
   },
   "tasks": [
+    {
+      "title": "[Archive] daily-checkin",
+      "status": "completed",
+      "blockedBy": "[Report] daily-checkin",
+      "archivedTo": "docs/archive/2026-07/daily-checkin/",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Report] daily-checkin",
+      "status": "completed",
+      "blockedBy": "[QA] daily-checkin",
+      "milestone": "v10",
+      "result": "v10 completion report: 10/10 SC met, 99% match, QA PASS, 0 iterations, 0 defects. Closed the open recommendation loop: gamified daily check-in → bounded evidence-subordinate feedback re-ranking (Option C, SC5 proven) + consistency heatmap feeding v9 identity. 19 source + 6 test created, 12 modified, 1 additive migration (0006), 0 deps. First intentional no-migration/no-engine-edit streak break — kept additive+backward-compatible, all prior suites green. Deferred to v11: proactive advisor proposals, side-effect engine, reminders, wearables, trend charts, authed L3 provisioning. Report doc written.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[QA] daily-checkin",
+      "status": "completed",
+      "blockedBy": "[Check] daily-checkin",
+      "qaStatus": "PASS",
+      "milestone": "v10",
+      "result": "L0 340/340 (29 v10: consistency/outcomes/feedback/insights/honesty + feedback-regression SC5) + L1 GET+POST 401 live + L2 /stack-lab anon→login redirect live; L3 authed (round-trip idempotent + 400 validation + section render) 3 skipped E2E_LIVE-gated; tsc clean; next build OK. Security: auth 401 + RLS + non-diagnostic honesty + evidence-dominance. 0 defects. QA report written.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Check] daily-checkin",
+      "status": "completed",
+      "blockedBy": "[Do] daily-checkin --scope module-3",
+      "matchRate": 99,
+      "mode": "static + runtime",
+      "milestone": "v10",
+      "gaps": "0 Critical, 0 Important; SC 10/10",
+      "result": "Structural 100 / Functional 98 / Contract 100 / Runtime 98 → Overall 99%. 10/10 SC. SC5 evidence-dominance PROVEN (feedback-regression.test: no-feedback byte-identical + max feedback never lifts lower grade over higher + lab still outranks feedback). Additive held: 1 migration, optional engine inputs, all prior v3/v4/v5/v9 suites green. Runtime: unit 340/340, L1 2/2 + L2 1/1 live; L3 authed E2E_LIVE-gated. Contract 3-way clean (form↔schema↔route). Analysis doc written.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Do] daily-checkin --scope module-3",
+      "status": "completed",
+      "blockedBy": "[Do] daily-checkin --scope module-2",
+      "scope": ["module-3"],
+      "milestone": "v10",
+      "result": "UI & surfacing: 3 components created (DailyCheckinForm client adherence+goal-sliders+note/side-effect→POST; ConsistencyHeatmap premium calendar+%/streak; InsightCards correlational), 2 modified (stack-lab page Daily Check-in section SSR from analyzeCheckins + active-stack items; spec +L2). Verify: tsc clean; unit 340/340; next build OK; L1 GET+POST 401 + L2 /stack-lab anon→login redirect live; authed render E2E_LIVE-gated. Premium (no points/badges); side-effect display-only+disclaimer. Do phase COMPLETE (3/3). No deps.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Do] daily-checkin --scope module-2",
+      "status": "completed",
+      "blockedBy": "[Do] daily-checkin --scope module-1",
+      "scope": ["module-2"],
+      "milestone": "v10",
+      "result": "API & feedback hook: 3 created (api/checkins route GET+POST, feedback-regression.test SC5 proof, daily-checkin.spec L1), 8 modified. Option C ranking key: compareSuggestions now labSignal→grade→FEEDBACK→composite→name (feedback strictly below grade). generateProtocol +feedbackSignal input; protocol route loads checkins→analyzeCheckins.feedback server-side. checkinInputSchema (ratings 1-5). v9 identity dataDepth += 0.15*checkinRate (rebalanced, backward-compat). Verify: tsc clean; suite 340/340 (+6); SC5 PROVEN (no-feedback byte-identical + max feedback can't lift lower grade over higher + lab still outranks feedback); ALL v9 identity tests still green; next build OK; L1 GET+POST 401 live. No deps.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Do] daily-checkin --scope module-1",
+      "status": "completed",
+      "blockedBy": "[Design] daily-checkin",
+      "scope": ["module-1"],
+      "milestone": "v10",
+      "result": "Schema & pure engine: 13 created (0006 migration, types/checkin, checkin-repo, lib/checkin consistency/outcomes/feedback/insights/index + 5 tests), 3 modified (db/types +CheckinRow, db/mappers +toCheckin, safety +checkinCopy). Engine: consistency (rate+streak+adherence), outcomes (per supplement×goal taken-vs-not deltas), feedback (clamped ±0.15, gated MIN_TAKEN=5/MIN_NOTTAKEN=3, refuse-when-insufficient), insights (non-diagnostic, gated on sample+MIN_VISIBLE_DELTA). Verify: tsc clean; full suite 334/334 (+23); clamp+suppression+honesty proven. Additive migration (RLS own_checkins, unique user+date). No deps.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Design] daily-checkin",
+      "status": "completed",
+      "blockedBy": "[Plan] daily-checkin",
+      "architecture": "option-c-feedback-key-below-grade",
+      "milestone": "v10",
+      "result": "3 options presented; selected C via Checkpoint 3. KEY FINDING: existing compareSuggestions sorts labSignal→grade→composite (lab signal is PRIMARY, can outrank grade). Option C inserts feedback as a NEW key BETWEEN grade and composite → evidence-subordinate by construction (SC5), v3/v4/v5 order untouched (regression-safe), no-feedback test trivially holds. Design: 0006_checkins table (RLS own_checkins, unique user+date, jsonb ratings/taken/scheduled + note/side_effect), pure lib/checkin (consistency/outcomes/feedback[clamped ±CAP, min-sample-gated]/insights), GET/POST /api/checkins, protocol route loads checkins→feedback server-side, v9 identity dataDepth feed, Stack Lab check-in section (form+heatmap+insights), side-effect display-only. Modifies: protocol-builder rules+index, protocol route, identity context+traits, stack-lab page, types/protocol, safety. 3-module session plan. Design doc written.",
+      "createdAt": "2026-07-02"
+    },
+    {
+      "title": "[Plan] daily-checkin",
+      "status": "completed",
+      "method": "plan-plus",
+      "milestone": "v10",
+      "result": "plan-plus brainstorm: feature=gamified daily check-in + feedback loop. Q1 payload=adherence+goal outcome ratings; Q2 loop=bounded re-ranking (evidence-dominant); Q3 gamification=consistency streak/heatmap feeding v9 identity. Approach A (additive engine+table+bounded hook, mirrors v4 lab-timeline). YAGNI in=heatmap+identity-feed+insight-cards+side-effect/note(display-only); deferred=proactive proposals/side-effect-engine/reminders/wearables/trend-charts. Architecture: 0006_checkins table (RLS, unique user+date), pure lib/checkin (consistency+outcomes+feedback+insights), bounded generateProtocol feedbackSignal hook w/ no-feedback regression test, v9 identity dataDepth feed, Stack Lab check-in surface. Constraints: correlational non-diagnostic, evidence-dominant, additive. 10 SC. Plan doc written.",
+      "createdAt": "2026-07-02"
+    },
     {
       "title": "[Archive] identity-cards",
       "status": "completed",

@@ -35,6 +35,20 @@ export interface LabMarkerRow {
   canonical_unit: string | null;
 }
 
+// daily-checkin (migration 0006). One idempotent row per (user_id, checkin_date).
+export interface CheckinRow {
+  id: string;
+  user_id: string;
+  checkin_date: string;
+  ratings: Record<string, number>;
+  taken: string[];
+  scheduled: string[];
+  note: string | null;
+  side_effect: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // lab-timeline (migration 0002).
 export interface LabPanelRow {
   id: string;

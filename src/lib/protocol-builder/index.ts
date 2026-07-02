@@ -8,7 +8,8 @@ import {
   getSupplementById,
   type EvidenceLibrary,
 } from "@/lib/evidence";
-import { safetyCopy } from "@/lib/safety";
+import { safetyCopy, checkinCopy } from "@/lib/safety";
+import { feedbackFor } from "@/lib/checkin";
 import type {
   LabMarker,
   OutcomeCategory,
@@ -19,6 +20,7 @@ import type {
   UserProfile,
 } from "@/types";
 import type { TrendSignal } from "@/types/lab";
+import type { FeedbackSignal } from "@/types/checkin";
 import { labBoost } from "@/lib/biomarkers";
 import {
   compareSuggestions,
@@ -34,6 +36,9 @@ export interface GenerateProtocolInput {
   labMarkers?: LabMarker[];
   trends?: TrendSignal[];
   stackItems?: StackItem[]; // target stack (for alreadyInStack annotation)
+  // daily-checkin v10: optional bounded, evidence-subordinate ranking nudges.
+  // Absent ⇒ byte-for-byte prior behavior (Plan SC5, feedback-regression.test).
+  feedbackSignal?: FeedbackSignal[];
   library?: EvidenceLibrary;
 }
 
@@ -46,6 +51,7 @@ export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
   const labMarkers = input.labMarkers ?? [];
   const trends = input.trends ?? [];
   const library = input.library ?? defaultLibrary;
+  const feedbackSignal = input.feedbackSignal ?? [];
   const goals = profile?.goals ?? [];
   const allergies = profile?.allergies ?? [];
   const medications = profile?.medications ?? [];
@@ -80,6 +86,10 @@ export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
       const labRationale =
         [labSignal.rationale, trend.note].filter(Boolean).join(" ") || null;
       const labBoosted = labScore > 0; // derived — keeps the "✦ lab" badge
+      // daily-checkin v10: bounded, evidence-subordinate feedback nudge (Design §2.0
+      // Option C). Ranked BELOW grade in compareSuggestions — cannot override evidence.
+      const feedback = feedbackFor(feedbackSignal, supplementId, goal);
+      const feedbackNote = feedback !== 0 ? checkinCopy.feedbackNudgeNote : null;
       const tier = tierFor(best.grade, supp.tags);
 
       const confidenceReason = labBoosted
@@ -102,6 +112,8 @@ export function generateProtocol(input: GenerateProtocolInput): ProtocolResult {
         labBoosted,
         labSignal: labScore,
         labRationale,
+        feedback,
+        feedbackNote,
         composite: effectComposite(best) ?? undefined,
         medicationCaution: hasMedicationCaution(supplementId, medications),
         alreadyInStack: inStack.has(supplementId),

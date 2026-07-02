@@ -130,8 +130,15 @@ export function computeTraitVector(ctx: IdentityContext): TraitVector {
   const stackSignal = clamp01(ctx.stacks.length / 2);
   const itemSignal = clamp01(itemCount / 6);
   const labSignal = ctx.hasLabs ? 1 : 0;
+  // daily-checkin v10: consistency is strong invested signal. Additive + bounded —
+  // absent (undefined ⇒ 0) leaves the v9 value unchanged (backward-compatible).
+  const checkinSignal = clamp01(ctx.checkinConsistency ?? 0);
   const dataDepth = clamp01(
-    0.4 * profileCompleteness + 0.2 * stackSignal + 0.25 * itemSignal + 0.15 * labSignal,
+    0.35 * profileCompleteness +
+      0.2 * stackSignal +
+      0.2 * itemSignal +
+      0.1 * labSignal +
+      0.15 * checkinSignal,
   );
 
   return {
