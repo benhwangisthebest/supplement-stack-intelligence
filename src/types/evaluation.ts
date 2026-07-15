@@ -13,7 +13,9 @@ export type FlagCategory =
   | "lab-relevance"
   | "goal-alignment"
   | "cost-efficiency"
-  | "complexity";
+  | "complexity"
+  | "side-effect-caution" // reported↔curated side-effect correlation (side-effect-engine, v11)
+  | "food-pairing"; // supplement↔food absorption synergy/avoid (food-pairings, v12)
 
 // Design §3.1 — persisted (Supabase). Produced by the pure evaluator.
 export interface EvaluationFlag {

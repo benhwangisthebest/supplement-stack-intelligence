@@ -2,6 +2,7 @@
 import { z } from "zod";
 import {
   DRUG_CLASSES,
+  FOOD_DIRECTIONS,
   INTERACTION_KINDS,
   INTERACTION_SEVERITIES,
 } from "@/types/interaction";
@@ -24,38 +25,45 @@ export const interactionRuleSchema = z
     drugClass: drugClass.optional(),
     drugGeneric: z.string().min(1).optional(),
     otherSupplementId: z.string().min(1).optional(),
+    // supplement-food (v12)
+    direction: z.enum(FOOD_DIRECTIONS as [string, ...string[]]).optional(),
+    food: z.string().min(1).optional(),
+    timing: z.string().min(1).optional(),
     severity: z.enum(INTERACTION_SEVERITIES as [string, ...string[]]),
     mechanism: z.string().min(1),
     management: z.string().min(1),
     evidenceGrade: z.enum(EVIDENCE_GRADES as [string, ...string[]]),
   })
   .superRefine((rule, ctx) => {
+    const add = (message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+    // Fields that belong only to the food kind must be absent otherwise.
+    const hasFoodFields = Boolean(rule.direction || rule.food);
+
     if (rule.kind === "supplement-drug") {
       if (!rule.drugClass && !rule.drugGeneric) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "supplement-drug rule needs drugClass or drugGeneric",
-        });
+        add("supplement-drug rule needs drugClass or drugGeneric");
       }
       if (rule.otherSupplementId) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "supplement-drug rule must not set otherSupplementId",
-        });
+        add("supplement-drug rule must not set otherSupplementId");
       }
-    } else {
-      // supplement-supplement
+      if (hasFoodFields) add("supplement-drug rule must not set food fields");
+    } else if (rule.kind === "supplement-supplement") {
       if (!rule.otherSupplementId) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "supplement-supplement rule needs otherSupplementId",
-        });
+        add("supplement-supplement rule needs otherSupplementId");
       }
       if (rule.drugClass || rule.drugGeneric) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "supplement-supplement rule must not set drug fields",
-        });
+        add("supplement-supplement rule must not set drug fields");
+      }
+      if (hasFoodFields) {
+        add("supplement-supplement rule must not set food fields");
+      }
+    } else {
+      // supplement-food (v12)
+      if (!rule.direction) add("supplement-food rule needs direction");
+      if (!rule.food) add("supplement-food rule needs food");
+      if (rule.drugClass || rule.drugGeneric || rule.otherSupplementId) {
+        add("supplement-food rule must not set drug/other-supplement fields");
       }
     }
   });

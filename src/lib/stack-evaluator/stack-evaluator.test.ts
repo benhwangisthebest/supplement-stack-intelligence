@@ -313,10 +313,11 @@ describe("ruleInteractions", () => {
     const items = [makeItem({ supplementId: "berberine", dose: 1000 })];
     const profile = makeProfile({ medications: ["metformin"] }); // antidiabetic
     const flags = ruleInteractions(ctx({ items, profile }));
-    expect(flags).toHaveLength(1);
-    expect(flags[0].category).toBe("medication-caution");
-    expect(flags[0].severity).toBe("critical"); // drug-interaction warning escalates
-    expect(flags[0].stackItemId).toBe(items[0].id);
+    // v12: food-pairing guidance may also surface; assert the drug interaction specifically.
+    const drugFlag = flags.find((f) => f.category === "medication-caution");
+    expect(drugFlag).toBeDefined();
+    expect(drugFlag?.severity).toBe("critical"); // drug-interaction warning escalates
+    expect(drugFlag?.stackItemId).toBe(items[0].id);
   });
 
   it("flags a supplement↔supplement interaction within the stack", () => {
@@ -328,9 +329,17 @@ describe("ruleInteractions", () => {
     expect(flags.some((f) => f.category === "interaction-risk")).toBe(true);
   });
 
-  it("does not flag when there are no medications and no risky pairs", () => {
+  it("does not raise medication/interaction risk when there are no medications and no risky pairs", () => {
     const items = [makeItem({ supplementId: "berberine", dose: 1000 })];
-    expect(ruleInteractions(ctx({ items, profile: makeProfile() }))).toHaveLength(0);
+    const flags = ruleInteractions(ctx({ items, profile: makeProfile() }));
+    // v12: food-pairing info flags may appear, but no medication/interaction-risk flags.
+    expect(
+      flags.some(
+        (f) =>
+          f.category === "medication-caution" ||
+          f.category === "interaction-risk",
+      ),
+    ).toBe(false);
   });
 
   it("surfaces an unrecognized medication as an info flag (curation honesty)", () => {

@@ -27,8 +27,13 @@ function humanizeCounterpart(counterpart: string): string {
  *   info                          → info
  */
 function mapSeverity(finding: InteractionFinding): FlagSeverity {
+  // food-pairings (v12): synergy is helpful guidance — never escalate it.
+  if (finding.kind === "supplement-food" && finding.direction === "synergy") {
+    return "info";
+  }
   if (finding.severity === "serious") return "critical";
   if (finding.severity === "warning") {
+    // Only drug-safety warnings escalate to critical; food never does.
     return finding.kind === "supplement-drug" ? "critical" : "warning";
   }
   if (finding.severity === "caution") return "warning";
@@ -48,24 +53,40 @@ export function toInteractionFlags(
   return findings.map((finding) => {
     const name = supplementName(finding.supplementId);
     const isDrug = finding.kind === "supplement-drug";
-    const copy = isDrug
-      ? safetyCopy.interactionWithDrug(
-          name,
-          humanizeCounterpart(finding.counterpart),
-          finding.mechanism,
-          finding.management,
-        )
-      : safetyCopy.interactionBetweenSupplements(
-          name,
-          supplementName(finding.counterpart),
-          finding.mechanism,
-          finding.management,
-        );
+    const isFood = finding.kind === "supplement-food";
+
+    let copy;
+    let category: DraftFlag["category"];
+    if (isDrug) {
+      copy = safetyCopy.interactionWithDrug(
+        name,
+        humanizeCounterpart(finding.counterpart),
+        finding.mechanism,
+        finding.management,
+      );
+      category = "medication-caution";
+    } else if (isFood) {
+      // food-pairings (v12): synergy vs avoid get distinct, non-alarming copy.
+      const food = finding.food ?? finding.counterpart;
+      copy =
+        finding.direction === "synergy"
+          ? safetyCopy.foodSynergy(name, food, finding.mechanism, finding.timing)
+          : safetyCopy.foodAvoid(name, food, finding.mechanism, finding.management);
+      category = "food-pairing";
+    } else {
+      copy = safetyCopy.interactionBetweenSupplements(
+        name,
+        supplementName(finding.counterpart),
+        finding.mechanism,
+        finding.management,
+      );
+      category = "interaction-risk";
+    }
 
     return {
       stackItemId: options.supplementToItemId?.[finding.supplementId] ?? null,
       severity: mapSeverity(finding),
-      category: isDrug ? "medication-caution" : "interaction-risk",
+      category,
       title: copy.title,
       explanation: copy.explanation,
       recommendation: copy.recommendation,

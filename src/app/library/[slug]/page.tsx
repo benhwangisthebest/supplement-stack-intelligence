@@ -12,6 +12,7 @@ import {
 import { deriveSupplementArchetype } from "@/lib/identity";
 import { SupplementDetail } from "@/components/library/SupplementDetail";
 import { InteractionSection } from "@/components/library/InteractionSection";
+import { FoodPairingSection } from "@/components/library/FoodPairingSection";
 import { BiomarkerRelevanceSection } from "@/components/library/BiomarkerRelevanceSection";
 import { SupplementArchetypeBadge } from "@/components/identity/SupplementArchetypeBadge";
 import { AddToStackButton } from "@/components/stack/AddToStackButton";
@@ -91,6 +92,8 @@ export default async function SupplementDetailPage({
       </div>
 
       <InteractionSection supplementId={supplement.id} />
+
+      <FoodPairingSection supplementId={supplement.id} />
 
       <BiomarkerRelevanceSection supplementId={supplement.id} />
     </main>

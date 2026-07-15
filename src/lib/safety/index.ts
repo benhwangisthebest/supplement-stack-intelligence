@@ -21,6 +21,12 @@ export const DISCLAIMERS = {
   // medication-interactions (v2). Shown near interaction findings; escalates on high severity.
   interaction:
     "Interaction findings are educational and drawn from a limited curated dataset. The absence of a finding does not mean a combination is safe. For anything involving medications, review supplements with a clinician or pharmacist.",
+  // side-effect-engine (v11). Shown near "what to watch" + reported-effect surfaces.
+  sideEffect:
+    "These are effects people commonly report, drawn from a limited curated dataset — not predictions or diagnoses. The absence of a listed effect does not mean none can occur. Discuss anything concerning with a clinician.",
+  // food-pairings (v12). Shown near the "Food & absorption" surface.
+  food:
+    "Food-pairing notes are educational and drawn from a limited curated dataset. They describe general absorption and timing tendencies, not personal advice. The absence of a note does not mean a food has no effect.",
 } as const;
 
 /**
@@ -39,6 +45,11 @@ export const BANNED_PHRASES: readonly string[] = [
   "stop taking your medication",
   "replaces medication",
   "guaranteed",
+  // side-effect-engine (v11): forbid causal/directive side-effect claims.
+  "side effect of",
+  "because you took",
+  "will cause your",
+  "is caused by",
 ];
 
 /** True if text contains any banned (diagnostic/directive) phrase. */
@@ -168,6 +179,46 @@ export const safetyCopy = {
     };
   },
 
+  // ---- Side-effect copy (side-effect-engine v11). CORRELATIONAL, non-causal. ----
+  // Every string describes what people REPORT, never that a supplement caused an
+  // effect. Swept by lib/side-effects/side-effects.test.ts (Plan SC7).
+
+  /** A curated "what to watch" note for a stacked supplement (no user data). */
+  sideEffectWatch(
+    supplementName: string,
+    effect: string,
+    tier: "common" | "infrequent" | "rare",
+  ): FlagCopy {
+    const freq =
+      tier === "common" ? "commonly" : tier === "infrequent" ? "sometimes" : "rarely";
+    return {
+      title: "Commonly reported effect to watch",
+      explanation: `${effect} is ${freq} reported by people taking ${supplementName}, based on the current dataset.`,
+      recommendation:
+        "This is informational, not a prediction. If you notice it and it concerns you, discuss it with a clinician.",
+    };
+  },
+
+  /**
+   * Correlational match. Every number here MUST come from the engine's computed
+   * co-occurrence (Act-1 / gap G1): `reportedDays` = days the effect was logged
+   * AND the supplement was logged taken; `takenDays` = total days it was taken.
+   * Do not add any clause asserting a relationship the engine did not compute.
+   */
+  sideEffectCorrelation(
+    supplementName: string,
+    effect: string,
+    reportedDays: number,
+    takenDays: number,
+  ): FlagCopy {
+    return {
+      title: "Something you logged lines up with a commonly reported effect",
+      explanation: `You logged ${effect} on ${reportedDays} of the ${takenDays} days you logged taking ${supplementName} — an effect people commonly report while taking it.`,
+      recommendation:
+        "This is a correlation from your own logs, not a cause — it does not account for anything else going on those days. Track it over time and raise anything concerning with a clinician.",
+    };
+  },
+
   // ---- Protocol Builder copy (Design §11.4). Hedged, non-diagnostic. ----
 
   /** "Why it fits" rationale for a generated suggestion. */
@@ -244,6 +295,38 @@ export const safetyCopy = {
     return {
       title: `Possible interaction: ${nameA} + ${nameB}`,
       explanation: `${nameA} and ${nameB} may interact: ${mechanism}.`,
+      recommendation: management,
+    };
+  },
+
+  // ---- Food-pairing copy (food-pairings v12). Absorption-focused, hedged. ----
+
+  /** Supplement↔food synergy — helpful guidance, never phrased as a warning. */
+  foodSynergy(
+    supplementName: string,
+    food: string,
+    mechanism: string,
+    timing?: string,
+  ): FlagCopy {
+    return {
+      title: `${supplementName} pairs well with ${food}`,
+      explanation: `${supplementName} may be better absorbed with ${food}: ${mechanism}.`,
+      recommendation: timing
+        ? `Tip: ${timing}.`
+        : `Pairing it with ${food} may help.`,
+    };
+  },
+
+  /** Supplement↔food to avoid/space out — reduces benefit rather than a safety risk. */
+  foodAvoid(
+    supplementName: string,
+    food: string,
+    mechanism: string,
+    management: string,
+  ): FlagCopy {
+    return {
+      title: `${supplementName}: consider spacing from ${food}`,
+      explanation: `Taking ${supplementName} with ${food} may reduce its benefit: ${mechanism}.`,
       recommendation: management,
     };
   },

@@ -52,10 +52,14 @@ describe("lib/interactions — normalize", () => {
 
 describe("lib/interactions — findInteractions", () => {
   it("detects a supplement↔drug-class interaction", () => {
-    const findings = findInteractions({
-      medications: ["warfarin"],
-      stackItems: [item("fish-oil")],
-    });
+    // Scoped to drug/supplement rules; food pairings are covered in food-pairings.test.ts.
+    const findings = findInteractions(
+      {
+        medications: ["warfarin"],
+        stackItems: [item("fish-oil")],
+      },
+      SEED_INTERACTIONS,
+    );
     expect(findings).toHaveLength(1);
     expect(findings[0]).toMatchObject({
       ruleId: "fish-oil--anticoagulant",
@@ -65,17 +69,23 @@ describe("lib/interactions — findInteractions", () => {
   });
 
   it("detects a supplement↔supplement interaction within a stack", () => {
-    const findings = findInteractions({
-      medications: [],
-      stackItems: [item("magnesium"), item("zinc")],
-    });
+    const findings = findInteractions(
+      {
+        medications: [],
+        stackItems: [item("magnesium"), item("zinc")],
+      },
+      SEED_INTERACTIONS,
+    );
     expect(findings).toHaveLength(1);
     expect(findings[0].kind).toBe("supplement-supplement");
   });
 
   it("returns empty (not error) when there is nothing to flag", () => {
     expect(
-      findInteractions({ medications: [], stackItems: [item("creatine")] }),
+      findInteractions(
+        { medications: [], stackItems: [item("creatine")] },
+        SEED_INTERACTIONS,
+      ),
     ).toEqual([]);
     expect(
       findInteractions({ medications: ["aspirin"], stackItems: [] }),
@@ -116,10 +126,13 @@ describe("lib/interactions — to-flags mapping", () => {
   });
 
   it("maps a supplement-supplement finding to an interaction-risk flag", () => {
-    const findings = findInteractions({
-      medications: [],
-      stackItems: [item("magnesium"), item("zinc")],
-    });
+    const findings = findInteractions(
+      {
+        medications: [],
+        stackItems: [item("magnesium"), item("zinc")],
+      },
+      SEED_INTERACTIONS,
+    );
     const flags = toInteractionFlags(findings);
     expect(flags[0].category).toBe("interaction-risk");
   });

@@ -2,6 +2,7 @@
 // Plan SC: detect supplement↔drug + supplement↔supplement; same engine feeds
 // Stack Evaluation, Protocol Builder, and Library. No DB, no side effects.
 import { SEED_INTERACTIONS } from "@/data/seed-interactions";
+import { SEED_FOOD_PAIRINGS } from "@/data/seed-food-pairings";
 import type { StackItem } from "@/types/stack";
 import type {
   InteractionFinding,
@@ -13,6 +14,16 @@ import { drugClassesOf, normalizeMedications } from "./normalize";
 
 export { normalizeMedications } from "./normalize";
 export type { InteractionFinding } from "@/types/interaction";
+
+// food-pairings (v12): the engine's default rule set includes food pairings so
+// downstream callers (Stack Evaluation, advisor) pick up food guidance with no
+// changes. `interactionsForSupplement` keeps using SEED_INTERACTIONS only;
+// food has its own selector (`foodPairingsForSupplement`).
+// Design Ref: §4.3.
+export const ALL_INTERACTION_RULES: InteractionRule[] = [
+  ...SEED_INTERACTIONS,
+  ...SEED_FOOD_PAIRINGS,
+];
 
 const SEVERITY_ORDER: Record<InteractionSeverity, number> = {
   serious: 0,
@@ -41,6 +52,10 @@ function toFinding(rule: InteractionRule, counterpart: string): InteractionFindi
     severity: rule.severity,
     supplementId: rule.supplementId,
     counterpart,
+    // supplement-food (v12): carry direction/food/timing through to surfaces.
+    direction: rule.direction,
+    food: rule.food,
+    timing: rule.timing,
     mechanism: rule.mechanism,
     management: rule.management,
     evidenceGrade: rule.evidenceGrade,
@@ -54,7 +69,7 @@ function toFinding(rule: InteractionRule, counterpart: string): InteractionFindi
  */
 export function findInteractions(
   input: InteractionInput,
-  rules: InteractionRule[] = SEED_INTERACTIONS,
+  rules: InteractionRule[] = ALL_INTERACTION_RULES,
 ): InteractionFinding[] {
   const norm: NormalizationResult = normalizeMedications(input.medications);
   const drugClasses = drugClassesOf(norm);
@@ -74,8 +89,7 @@ export function findInteractions(
       if (seen.has(rule.id)) continue;
       seen.add(rule.id);
       findings.push(toFinding(rule, rule.drugGeneric ?? rule.drugClass ?? ""));
-    } else {
-      // supplement-supplement
+    } else if (rule.kind === "supplement-supplement") {
       if (
         !rule.otherSupplementId ||
         !suppIds.has(rule.supplementId) ||
@@ -86,6 +100,13 @@ export function findInteractions(
       if (seen.has(rule.id)) continue;
       seen.add(rule.id);
       findings.push(toFinding(rule, rule.otherSupplementId));
+    } else {
+      // supplement-food (v12): triggers whenever the supplement is in the stack;
+      // does not depend on the user's medications. Counterpart is the food label.
+      if (!rule.food || !suppIds.has(rule.supplementId)) continue;
+      if (seen.has(rule.id)) continue;
+      seen.add(rule.id);
+      findings.push(toFinding(rule, rule.food));
     }
   }
 
@@ -106,6 +127,23 @@ export function interactionsForSupplement(
     (r) =>
       r.supplementId === supplementId || r.otherSupplementId === supplementId,
   );
+}
+
+/**
+ * Library use (v12): every food-pairing rule for a supplement, synergy first
+ * then avoid, otherwise input order. Pure, order-stable.
+ * Design Ref: §4.1.
+ */
+export function foodPairingsForSupplement(
+  supplementId: string,
+  rules: InteractionRule[] = SEED_FOOD_PAIRINGS,
+): InteractionRule[] {
+  const rank = (r: InteractionRule) => (r.direction === "synergy" ? 0 : 1);
+  return rules
+    .filter(
+      (r) => r.kind === "supplement-food" && r.supplementId === supplementId,
+    )
+    .sort((a, b) => rank(a) - rank(b));
 }
 
 /**

@@ -12,11 +12,24 @@ export const INTERACTION_SEVERITIES: readonly InteractionSeverity[] = [
   "serious",
 ] as const;
 
-export type InteractionKind = "supplement-drug" | "supplement-supplement";
+export type InteractionKind =
+  | "supplement-drug"
+  | "supplement-supplement"
+  | "supplement-food"; // food-pairings (v12) — absorption synergy / avoid
 
 export const INTERACTION_KINDS: readonly InteractionKind[] = [
   "supplement-drug",
   "supplement-supplement",
+  "supplement-food",
+] as const;
+
+// food-pairings (v12). Direction of a supplement↔food relationship.
+// Design Ref: §3.1 — supplement-food data model.
+export type FoodDirection = "synergy" | "avoid";
+
+export const FOOD_DIRECTIONS: readonly FoodDirection[] = [
+  "synergy",
+  "avoid",
 ] as const;
 
 // Canonical drug classes. Closed set so alias data and rule data cannot drift
@@ -49,6 +62,10 @@ export interface InteractionRule {
   drugGeneric?: string;
   // supplement-supplement: the other supplement.
   otherSupplementId?: string;
+  // supplement-food (v12): direction + the food/food-class this rule concerns.
+  direction?: FoodDirection; // required when kind === "supplement-food"
+  food?: string; // e.g. "vitamin C–rich foods"; required for supplement-food
+  timing?: string; // optional, e.g. "take with a fat-containing meal"
   severity: InteractionSeverity;
   mechanism: string; // short, factual
   management: string; // hedged guidance
@@ -62,8 +79,13 @@ export interface InteractionFinding {
   severity: InteractionSeverity;
   supplementId: string;
   // The participant that triggered the match: a drug generic/class key
-  // (supplement-drug) or the other supplementId (supplement-supplement).
+  // (supplement-drug), the other supplementId (supplement-supplement), or
+  // the food label (supplement-food).
   counterpart: string;
+  // supplement-food (v12): carried through so surfaces can branch on direction.
+  direction?: FoodDirection;
+  food?: string;
+  timing?: string;
   mechanism: string;
   management: string;
   evidenceGrade: EvidenceGrade;
