@@ -6,7 +6,10 @@
 // carries a non-medical disclaimer. Idempotent: re-saving updates today's row.
 import { useState } from "react";
 import { checkinCopy } from "@/lib/safety";
+import { sideEffectLabel } from "@/lib/side-effects/vocab";
 import type { DailyCheckin, GoalRating } from "@/types/checkin";
+import type { CanonicalSideEffect, ReportedSideEffect } from "@/types/side-effect";
+import { SIDE_EFFECT_VOCAB } from "@/types/side-effect";
 import type { OutcomeCategory } from "@/types";
 
 interface TodayItem {
@@ -15,17 +18,20 @@ interface TodayItem {
 }
 
 const RATINGS: GoalRating[] = [1, 2, 3, 4, 5];
+const SEVERITIES = [1, 2, 3] as const;
 
 export function DailyCheckinForm({
   date,
   items,
   goals,
   initial,
+  initialSideEffects = [],
 }: {
   date: string;
   items: TodayItem[];
   goals: OutcomeCategory[];
   initial: DailyCheckin | null;
+  initialSideEffects?: ReportedSideEffect[];
 }) {
   const [taken, setTaken] = useState<Set<string>>(new Set(initial?.taken ?? []));
   const [ratings, setRatings] = useState<Partial<Record<OutcomeCategory, GoalRating>>>(
@@ -33,9 +39,32 @@ export function DailyCheckinForm({
   );
   const [note, setNote] = useState(initial?.note ?? "");
   const [sideEffect, setSideEffect] = useState(initial?.sideEffect ?? "");
+  const [reported, setReported] = useState<ReportedSideEffect[]>(initialSideEffects);
+  const [picker, setPicker] = useState<CanonicalSideEffect | "">("");
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function addReported() {
+    if (!picker) return;
+    setReported((prev) =>
+      prev.some((r) => r.effectLabel === picker) ? prev : [...prev, { effectLabel: picker }],
+    );
+    setPicker("");
+    setSaved(false);
+  }
+
+  function removeReported(label: CanonicalSideEffect) {
+    setReported((prev) => prev.filter((r) => r.effectLabel !== label));
+    setSaved(false);
+  }
+
+  function setSeverity(label: CanonicalSideEffect, severity: 1 | 2 | 3) {
+    setReported((prev) =>
+      prev.map((r) => (r.effectLabel === label ? { ...r, severity } : r)),
+    );
+    setSaved(false);
+  }
 
   function toggle(id: string) {
     setTaken((prev) => {
@@ -61,6 +90,7 @@ export function DailyCheckinForm({
           scheduled: items.map((i) => i.supplementId),
           note: note.trim() || null,
           sideEffect: sideEffect.trim() || null,
+          sideEffects: reported,
         }),
       });
       if (!res.ok) throw new Error("Could not save your check-in.");
@@ -157,6 +187,81 @@ export function DailyCheckinForm({
           placeholder="Side effect to note (optional)"
         />
         <p className="mt-1 text-xs text-muted">{checkinCopy.sideEffectDisclaimer}</p>
+      </div>
+
+      {/* side-effect-engine v11 — structured, canonical side-effect capture. */}
+      <div className="mt-5">
+        <p className="text-sm font-medium text-body">Log a side-effect (optional)</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <select
+            aria-label="Side-effect to log"
+            value={picker}
+            onChange={(e) => setPicker(e.target.value as CanonicalSideEffect | "")}
+            className="rounded-lg border border-hairline bg-white p-2 text-sm"
+          >
+            <option value="">Choose an effect…</option>
+            {SIDE_EFFECT_VOCAB.filter((v) => !reported.some((r) => r.effectLabel === v)).map(
+              (v) => (
+                <option key={v} value={v}>
+                  {sideEffectLabel(v)}
+                </option>
+              ),
+            )}
+          </select>
+          <button
+            type="button"
+            onClick={addReported}
+            disabled={!picker}
+            className="rounded-lg border border-hairline px-3 py-2 text-sm text-body hover:bg-surface-card disabled:opacity-50"
+          >
+            Add
+          </button>
+        </div>
+
+        {reported.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {reported.map((r) => (
+              <li
+                key={r.effectLabel}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-hairline p-2"
+              >
+                <span className="text-sm capitalize text-ink">
+                  {sideEffectLabel(r.effectLabel)}
+                </span>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="flex gap-1"
+                    role="radiogroup"
+                    aria-label={`${sideEffectLabel(r.effectLabel)} severity`}
+                  >
+                    {SEVERITIES.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        role="radio"
+                        aria-checked={r.severity === s}
+                        onClick={() => setSeverity(r.effectLabel, s)}
+                        className={`h-6 w-6 rounded-full text-xs ${
+                          r.severity === s ? "bg-ink text-white" : "bg-surface-card text-body"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${sideEffectLabel(r.effectLabel)}`}
+                    onClick={() => removeReported(r.effectLabel)}
+                    className="text-sm text-muted hover:text-error"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="mt-5 flex items-center gap-3">

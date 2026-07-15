@@ -34,7 +34,7 @@
           "src/app/stack-lab/page.tsx (Daily Check-in section: SSR analyzeCheckins + active-stack items)",
           "tests/e2e/daily-checkin.spec.ts (+L2 anonymous redirect + authed render)"
         ],
-        "verification": "tsc clean; full unit suite 340/340; next build OK (/stack-lab dynamic 3.37kB); L1 GET+POST 401 + L2 /stack-lab anonymous→login redirect runtime-verified live; authed Daily-check-in render gated on E2E_LIVE. Premium heatmap (no points/badges); side-effect/note field display-only + disclaimer. No deps.",
+        "verification": "tsc clean; full unit suite 340/340; next build OK (/stack-lab dynamic 3.37kB); L1 GET+POST 401 + L2 /stack-lab anonymous\u2192login redirect runtime-verified live; authed Daily-check-in render gated on E2E_LIVE. Premium heatmap (no points/badges); side-effect/note field display-only + disclaimer. No deps.",
         "surfaces": "Stack Lab Daily Check-in section: DailyCheckinForm (adherence checkboxes + goal sliders + note/side-effect) + ConsistencyHeatmap + InsightCards",
         "completedAt": "2026-07-02"
       },
@@ -46,15 +46,15 @@
         ],
         "modified": [
           "src/types/protocol.ts (+feedback?/feedbackNote?)",
-          "src/lib/protocol-builder/rules.ts (compareSuggestions: feedback key between grade↔composite)",
+          "src/lib/protocol-builder/rules.ts (compareSuggestions: feedback key between grade\u2194composite)",
           "src/lib/protocol-builder/index.ts (+feedbackSignal input, attach feedback+note)",
-          "src/app/api/protocol/generate/route.ts (load checkins → analyzeCheckins.feedback)",
+          "src/app/api/protocol/generate/route.ts (load checkins \u2192 analyzeCheckins.feedback)",
           "src/lib/validation/schemas.ts (+checkinInputSchema, ratings 1-5)",
           "src/types/identity.ts (IdentityContext +checkinConsistency?)",
-          "src/lib/identity/context.ts (+listCheckins → checkinConsistency)",
+          "src/lib/identity/context.ts (+listCheckins \u2192 checkinConsistency)",
           "src/lib/identity/traits.ts (dataDepth += 0.15*checkinSignal, rebalanced additive)"
         ],
-        "verification": "tsc clean; full unit suite 340/340 (+6 regression); SC5 PROVEN — feedback-regression.test: no-feedback output byte-identical + max feedback never lifts lower grade over higher (feedback strictly below grade) + lab still outranks feedback; ALL v9 identity tests still green (backward-compat held). next build OK (/api/checkins dynamic). L1 auth-guard 2/2 (GET+POST 401) runtime-verified live. Authed round-trip/validation L3 gated on E2E_LIVE. No deps.",
+        "verification": "tsc clean; full unit suite 340/340 (+6 regression); SC5 PROVEN \u2014 feedback-regression.test: no-feedback output byte-identical + max feedback never lifts lower grade over higher (feedback strictly below grade) + lab still outranks feedback; ALL v9 identity tests still green (backward-compat held). next build OK (/api/checkins dynamic). L1 auth-guard 2/2 (GET+POST 401) runtime-verified live. Authed round-trip/validation L3 gated on E2E_LIVE. No deps.",
         "completedAt": "2026-07-02"
       },
       "module1": {
@@ -78,18 +78,18 @@
           "src/lib/db/mappers.ts (+toCheckin)",
           "src/lib/safety/index.ts (+checkinCopy: outcomeInsight/sideEffectDisclaimer/feedbackNudgeNote)"
         ],
-        "verification": "tsc clean; full unit suite 334/334 (+23); feedback.test proves clamp to ±FEEDBACK_CAP(0.15) + min-sample suppression (MIN_TAKEN_DAYS=5/MIN_NOTTAKEN_DAYS=3); honesty sweep 0 banned. Pure engine over check-in rows (no stack join). 0006 additive migration (RLS own_checkins, unique user+date). No deps.",
+        "verification": "tsc clean; full unit suite 334/334 (+23); feedback.test proves clamp to \u00b1FEEDBACK_CAP(0.15) + min-sample suppression (MIN_TAKEN_DAYS=5/MIN_NOTTAKEN_DAYS=3); honesty sweep 0 banned. Pure engine over check-in rows (no stack join). 0006 additive migration (RLS own_checkins, unique user+date). No deps.",
         "completedAt": "2026-07-02"
       },
       "method": "plan-plus",
       "createdAt": "2026-07-02",
       "planDoc": "docs/01-plan/features/daily-checkin.plan.md",
       "designDoc": "docs/02-design/features/daily-checkin.design.md",
-      "rankingIntegration": "Option C — feedback as a NEW ranking key strictly below grade in compareSuggestions (labSignal→grade→feedback→composite→name); evidence-subordinate by construction, v3/v4/v5 order unchanged, no-feedback regression-safe",
+      "rankingIntegration": "Option C \u2014 feedback as a NEW ranking key strictly below grade in compareSuggestions (labSignal\u2192grade\u2192feedback\u2192composite\u2192name); evidence-subordinate by construction, v3/v4/v5 order unchanged, no-feedback regression-safe",
       "approach": "option-a-additive-engine-table-bounded-hook",
       "architecture": "additive (0006 checkins table + pure lib/checkin + bounded generateProtocol/identity hooks)",
       "engine": "pure-function-lib-checkin (consistency+outcomes+feedback+insights)",
-      "anchor": "feedback-loop / daily-checkin-adherence-outcome-tracking → bounded evidence-dominant re-ranking",
+      "anchor": "feedback-loop / daily-checkin-adherence-outcome-tracking \u2192 bounded evidence-dominant re-ranking",
       "scope": [
         "0006_checkins migration (adherence + goal ratings, idempotent per day, RLS)",
         "lib/checkin engine (consistency+outcomes+feedback+insights)",
@@ -108,7 +108,7 @@
         "longitudinal trend charts beyond heatmap"
       ],
       "constraints": "correlational non-diagnostic (no causal/efficacy claims); evidence-dominant bounded feedback (no-feedback regression test); additive (1 migration, optional engine inputs); premium gamification (heatmap not points/badges); idempotent daily upsert",
-      "streakNote": "intentionally breaks 6-milestone no-migration streak (needs checkins table) and modifies 2 engine files (generateProtocol + lib/identity) — both additive/bounded/backward-compatible",
+      "streakNote": "intentionally breaks 6-milestone no-migration streak (needs checkins table) and modifies 2 engine files (generateProtocol + lib/identity) \u2014 both additive/bounded/backward-compatible",
       "successCriteria": "10 (SC1-SC10)"
     },
     "identity-cards": {
@@ -147,7 +147,7 @@
           "tests/e2e/identity-cards.spec.ts"
         ],
         "verification": "tsc clean; full unit suite 311/311; next build OK (/library/[slug] SSG prerendered incl badge, /profile+/stack-lab dynamic); L1 auth-guard 401 + L2 public Library archetype badge runtime-verified LIVE via playwright. Profile IdentityCard + per-stack StackList badges surfaced SSR (no self-fetch); deep-link trail reuses v8 citationHref; emerging state shows sharpen checklist. Authed L3 (Profile card render) gated on E2E_LIVE. No new deps.",
-        "surfaces": "Profile (IdentityCard), Stack Lab (per-stack StackArchetypeBadge via StackList), Library detail (SupplementArchetypeBadge SSR — the deferred M2 wiring)",
+        "surfaces": "Profile (IdentityCard), Stack Lab (per-stack StackArchetypeBadge via StackList), Library detail (SupplementArchetypeBadge SSR \u2014 the deferred M2 wiring)",
         "completedAt": "2026-07-02"
       },
       "module2": {
@@ -158,7 +158,7 @@
         ],
         "modified": [],
         "boundaryRefinement": "Library SSR supplement-archetype RENDER moved from M2 to M3 (inseparable from its SupplementArchetypeBadge component); the pure deriveSupplementArchetype it needs already shipped in M1.",
-        "verification": "tsc clean; full unit suite 311/311; next build OK (/api/identity registered, dynamic); L1 auth-guard runtime-verified LIVE (GET /api/identity → 401 UNAUTHORIZED anonymous). Authed L3 gated on E2E_LIVE (needs seeded profile+stacks). 0 files modified, no deps.",
+        "verification": "tsc clean; full unit suite 311/311; next build OK (/api/identity registered, dynamic); L1 auth-guard runtime-verified LIVE (GET /api/identity \u2192 401 UNAUTHORIZED anonymous). Authed L3 gated on E2E_LIVE (needs seeded profile+stacks). 0 files modified, no deps.",
         "completedAt": "2026-07-02"
       },
       "module1": {
@@ -178,7 +178,7 @@
           "src/lib/identity/honesty.test.ts"
         ],
         "modified": [],
-        "verification": "tsc clean; full unit suite 311/311 (+29); integrity (every archetype unique nearest neighbour of its own target) + anti-over-claim guard (emerging when dataDepth<0.25 or matchScore<0.35) + honesty sweep (0 banned phrases) all green. Pure domain — 0 files modified, no deps, no build dependency.",
+        "verification": "tsc clean; full unit suite 311/311 (+29); integrity (every archetype unique nearest neighbour of its own target) + anti-over-claim guard (emerging when dataDepth<0.25 or matchScore<0.35) + honesty sweep (0 banned phrases) all green. Pure domain \u2014 0 files modified, no deps, no build dependency.",
         "completedAt": "2026-07-02"
       },
       "method": "plan-plus",
@@ -220,9 +220,9 @@
       "matchRate": 99,
       "matchRateMode": "static + runtime (unit 282/282, tsc clean, build OK, L1 auth-guards 2/2 + L2 deep-link 2/2 live incl. auto-open; authed batch/undo/streaming gated on E2E_LIVE + 0005)",
       "analysisDoc": "docs/03-analysis/advisor-experience.analysis.md",
-      "successCriteria": "10/10 met",
+      "successCriteria": "10 (SC1-SC10)",
       "iterations": 1,
-      "act1": "G1 resolved — Tabs anchorTabMap hash-sync auto-opens Library tab on #effect-/#paper- deep links; +1 L2 e2e (auto-open). Modified: src/components/ui/Tabs.tsx, src/components/library/SupplementDetail.tsx, tests/e2e/advisor-experience-actions.spec.ts",
+      "act1": "G1 resolved \u2014 Tabs anchorTabMap hash-sync auto-opens Library tab on #effect-/#paper- deep links; +1 L2 e2e (auto-open). Modified: src/components/ui/Tabs.tsx, src/components/library/SupplementDetail.tsx, tests/e2e/advisor-experience-actions.spec.ts",
       "milestone": "v8",
       "doProgress": {
         "module-1": "complete",
@@ -243,9 +243,11 @@
           "src/components/stack/StackItemRow.tsx",
           "src/components/library/SupplementDetail.tsx"
         ],
-        "created": ["tests/e2e/advisor-experience-actions.spec.ts"],
+        "created": [
+          "tests/e2e/advisor-experience-actions.spec.ts"
+        ],
         "verification": "tsc clean; 282/282 unit; next build OK (/advisor 4.99kB); L2 deep-link-target 1/1 live; progress+batch UI gated on E2E_LIVE",
-        "knownLimitation": "deep-link hash does not auto-open the Library Effects/Papers tab (lands on page, graceful) — minor polish deferred",
+        "knownLimitation": "deep-link hash does not auto-open the Library Effects/Papers tab (lands on page, graceful) \u2014 minor polish deferred",
         "completedAt": "2026-06-30"
       },
       "module2": {
@@ -256,7 +258,9 @@
           "src/app/api/advisor/actions/route.ts",
           "src/app/api/advisor/actions/[id]/undo/route.ts"
         ],
-        "created": ["tests/e2e/advisor-experience.spec.ts"],
+        "created": [
+          "tests/e2e/advisor-experience.spec.ts"
+        ],
         "verification": "tsc clean; 282/282 unit; next build OK; L1 auth-guards 2/2 live; batch/undo gated on E2E_LIVE (needs 0005 applied)",
         "completedAt": "2026-06-30"
       },
@@ -283,10 +287,9 @@
       "planDoc": "docs/01-plan/features/advisor-experience.plan.md",
       "designDoc": "docs/02-design/features/advisor-experience.design.md",
       "migration": "0005_advisor_batch.sql (additive nullable batch_id)",
-      "architecture": "Option C (Pragmatic) — Approach A: progress-stream + buffered-safe",
+      "architecture": "Option C (Pragmatic) \u2014 Approach A: progress-stream + buffered-safe",
       "scope": "true LLM token-streaming, batch multi-action proposals (selective confirm + configurable cap), provenance chip deep-linking, attached-product UI",
-      "deferred": "stream reconnect/resume; sentence-level final-token gating (Approach B); transaction RPC for batch atomicity",
-      "successCriteria": "10 (SC1-SC10)"
+      "deferred": "stream reconnect/resume; sentence-level final-token gating (Approach B); transaction RPC for batch atomicity"
     },
     "advisor-actions": {
       "phase": "archived",
@@ -298,7 +301,6 @@
       "analysisDoc": "docs/03-analysis/advisor-actions.analysis.md",
       "reportDoc": "docs/04-report/advisor-actions.report.md",
       "successCriteria": "8/8 met",
-      "milestone": "v7",
       "planDoc": "docs/01-plan/features/advisor-actions.plan.md",
       "designDoc": "docs/02-design/features/advisor-actions.design.md",
       "architecture": "Option C (Pragmatic)",
@@ -323,7 +325,7 @@
         "verification": "tsc clean; 268/268 unit; next build OK (/advisor 4.18kB); 7 e2e specs discovered (L1 always-on + L2/L3 E2E_LIVE-gated)",
         "completedAt": "2026-06-23"
       },
-      "safetyPolicy": "critical projected flag = HARD-BLOCK (409 SAFETY_BLOCK) — user-confirmed",
+      "safetyPolicy": "critical projected flag = HARD-BLOCK (409 SAFETY_BLOCK) \u2014 user-confirmed",
       "module2": {
         "created": [
           "supabase/migrations/0004_advisor_actions.sql",
@@ -338,7 +340,7 @@
           "src/app/api/advisor/route.ts"
         ],
         "decisions": [
-          "product attachment is a DB-ONLY column (product_id on stack_items) via setItemProduct/getItemProductId — StackItem domain type intentionally NOT changed (attachment affects no evaluation); avoided cascading churn",
+          "product attachment is a DB-ONLY column (product_id on stack_items) via setItemProduct/getItemProductId \u2014 StackItem domain type intentionally NOT changed (attachment affects no evaluation); avoided cascading churn",
           "critical projected flag hard-blocks confirm (409 SAFETY_BLOCK)"
         ],
         "verification": "tsc clean; 268/268 unit; next build OK (/api/advisor/actions + /[id]/undo registered); L1 auth-guards always-on, authed confirm/undo round-trip gated on E2E_LIVE (needs 0004 applied)",
@@ -363,7 +365,7 @@
         ],
         "verification": "tsc clean; 268/268 unit (+40 new); 0 engine/write-API/route files touched",
         "carryToModule2": [
-          "stack_items has NO product column — module-2 must add nullable product_id (additive migration) + setItemProduct repo for attach_product / set_item_product WriteIntent",
+          "stack_items has NO product column \u2014 module-2 must add nullable product_id (additive migration) + setItemProduct repo for attach_product / set_item_product WriteIntent",
           "critical-flag policy still open: hard-block vs warn-and-allow on confirm (route-level)"
         ],
         "completedAt": "2026-06-22"
@@ -401,7 +403,9 @@
           "src/components/advisor/ConversationRail.tsx",
           "tests/e2e/ai-advisor.spec.ts"
         ],
-        "modified": ["src/components/layout/TopNav.tsx"],
+        "modified": [
+          "src/components/layout/TopNav.tsx"
+        ],
         "verification": "tsc clean; next build OK (all advisor routes); 228/228 unit; e2e L1 401x2 + L2 redirect PASS live; L3 authed gated on E2E_LIVE",
         "streaming": "finalized safety-gated answer streamed token-by-token (true LLM token-stream deferred to v7)",
         "completedAt": "2026-06-17"
@@ -414,7 +418,9 @@
           "src/lib/advisor/repo.ts",
           "src/lib/advisor/context-loader.ts"
         ],
-        "modified": [".env.example"],
+        "modified": [
+          ".env.example"
+        ],
         "tests": "16 new (58 advisor; 228/228 full suite); tsc clean; live SDK + migration runtime-verified in Check/QA",
         "model": "claude-haiku-4-5-20251001 (overridable)",
         "completedAt": "2026-06-17"
@@ -491,7 +497,10 @@
         "composite-re-ranking",
         "per-dimension-citations"
       ],
-      "deferred": ["ai-assisted-dimension-drafting", "population-adjusted-grades"],
+      "deferred": [
+        "ai-assisted-dimension-drafting",
+        "population-adjusted-grades"
+      ],
       "planDoc": "docs/01-plan/features/evidence-grading.plan.md",
       "startedAt": "2026-06-16"
     },
@@ -622,6 +631,14 @@
       "archivedTo": "docs/archive/2026-06/mvp-core-loop/",
       "startedAt": "2026-06-11",
       "archivedAt": "2026-06-11"
+    },
+    "food-pairings": {
+      "phase": "archived",
+      "version": "v12",
+      "matchRate": 99.5,
+      "iterationCount": 0,
+      "archivedAt": "2026-07-15T12:42:15.033396+00:00",
+      "archivedTo": "docs/archive/2026-07/food-pairings/"
     }
   },
   "tasks": [
@@ -637,7 +654,7 @@
       "status": "completed",
       "blockedBy": "[QA] daily-checkin",
       "milestone": "v10",
-      "result": "v10 completion report: 10/10 SC met, 99% match, QA PASS, 0 iterations, 0 defects. Closed the open recommendation loop: gamified daily check-in → bounded evidence-subordinate feedback re-ranking (Option C, SC5 proven) + consistency heatmap feeding v9 identity. 19 source + 6 test created, 12 modified, 1 additive migration (0006), 0 deps. First intentional no-migration/no-engine-edit streak break — kept additive+backward-compatible, all prior suites green. Deferred to v11: proactive advisor proposals, side-effect engine, reminders, wearables, trend charts, authed L3 provisioning. Report doc written.",
+      "result": "v10 completion report: 10/10 SC met, 99% match, QA PASS, 0 iterations, 0 defects. Closed the open recommendation loop: gamified daily check-in \u2192 bounded evidence-subordinate feedback re-ranking (Option C, SC5 proven) + consistency heatmap feeding v9 identity. 19 source + 6 test created, 12 modified, 1 additive migration (0006), 0 deps. First intentional no-migration/no-engine-edit streak break \u2014 kept additive+backward-compatible, all prior suites green. Deferred to v11: proactive advisor proposals, side-effect engine, reminders, wearables, trend charts, authed L3 provisioning. Report doc written.",
       "createdAt": "2026-07-02"
     },
     {
@@ -646,7 +663,7 @@
       "blockedBy": "[Check] daily-checkin",
       "qaStatus": "PASS",
       "milestone": "v10",
-      "result": "L0 340/340 (29 v10: consistency/outcomes/feedback/insights/honesty + feedback-regression SC5) + L1 GET+POST 401 live + L2 /stack-lab anon→login redirect live; L3 authed (round-trip idempotent + 400 validation + section render) 3 skipped E2E_LIVE-gated; tsc clean; next build OK. Security: auth 401 + RLS + non-diagnostic honesty + evidence-dominance. 0 defects. QA report written.",
+      "result": "L0 340/340 (29 v10: consistency/outcomes/feedback/insights/honesty + feedback-regression SC5) + L1 GET+POST 401 live + L2 /stack-lab anon\u2192login redirect live; L3 authed (round-trip idempotent + 400 validation + section render) 3 skipped E2E_LIVE-gated; tsc clean; next build OK. Security: auth 401 + RLS + non-diagnostic honesty + evidence-dominance. 0 defects. QA report written.",
       "createdAt": "2026-07-02"
     },
     {
@@ -657,34 +674,40 @@
       "mode": "static + runtime",
       "milestone": "v10",
       "gaps": "0 Critical, 0 Important; SC 10/10",
-      "result": "Structural 100 / Functional 98 / Contract 100 / Runtime 98 → Overall 99%. 10/10 SC. SC5 evidence-dominance PROVEN (feedback-regression.test: no-feedback byte-identical + max feedback never lifts lower grade over higher + lab still outranks feedback). Additive held: 1 migration, optional engine inputs, all prior v3/v4/v5/v9 suites green. Runtime: unit 340/340, L1 2/2 + L2 1/1 live; L3 authed E2E_LIVE-gated. Contract 3-way clean (form↔schema↔route). Analysis doc written.",
+      "result": "Structural 100 / Functional 98 / Contract 100 / Runtime 98 \u2192 Overall 99%. 10/10 SC. SC5 evidence-dominance PROVEN (feedback-regression.test: no-feedback byte-identical + max feedback never lifts lower grade over higher + lab still outranks feedback). Additive held: 1 migration, optional engine inputs, all prior v3/v4/v5/v9 suites green. Runtime: unit 340/340, L1 2/2 + L2 1/1 live; L3 authed E2E_LIVE-gated. Contract 3-way clean (form\u2194schema\u2194route). Analysis doc written.",
       "createdAt": "2026-07-02"
     },
     {
       "title": "[Do] daily-checkin --scope module-3",
       "status": "completed",
       "blockedBy": "[Do] daily-checkin --scope module-2",
-      "scope": ["module-3"],
+      "scope": [
+        "module-3"
+      ],
       "milestone": "v10",
-      "result": "UI & surfacing: 3 components created (DailyCheckinForm client adherence+goal-sliders+note/side-effect→POST; ConsistencyHeatmap premium calendar+%/streak; InsightCards correlational), 2 modified (stack-lab page Daily Check-in section SSR from analyzeCheckins + active-stack items; spec +L2). Verify: tsc clean; unit 340/340; next build OK; L1 GET+POST 401 + L2 /stack-lab anon→login redirect live; authed render E2E_LIVE-gated. Premium (no points/badges); side-effect display-only+disclaimer. Do phase COMPLETE (3/3). No deps.",
+      "result": "UI & surfacing: 3 components created (DailyCheckinForm client adherence+goal-sliders+note/side-effect\u2192POST; ConsistencyHeatmap premium calendar+%/streak; InsightCards correlational), 2 modified (stack-lab page Daily Check-in section SSR from analyzeCheckins + active-stack items; spec +L2). Verify: tsc clean; unit 340/340; next build OK; L1 GET+POST 401 + L2 /stack-lab anon\u2192login redirect live; authed render E2E_LIVE-gated. Premium (no points/badges); side-effect display-only+disclaimer. Do phase COMPLETE (3/3). No deps.",
       "createdAt": "2026-07-02"
     },
     {
       "title": "[Do] daily-checkin --scope module-2",
       "status": "completed",
       "blockedBy": "[Do] daily-checkin --scope module-1",
-      "scope": ["module-2"],
+      "scope": [
+        "module-2"
+      ],
       "milestone": "v10",
-      "result": "API & feedback hook: 3 created (api/checkins route GET+POST, feedback-regression.test SC5 proof, daily-checkin.spec L1), 8 modified. Option C ranking key: compareSuggestions now labSignal→grade→FEEDBACK→composite→name (feedback strictly below grade). generateProtocol +feedbackSignal input; protocol route loads checkins→analyzeCheckins.feedback server-side. checkinInputSchema (ratings 1-5). v9 identity dataDepth += 0.15*checkinRate (rebalanced, backward-compat). Verify: tsc clean; suite 340/340 (+6); SC5 PROVEN (no-feedback byte-identical + max feedback can't lift lower grade over higher + lab still outranks feedback); ALL v9 identity tests still green; next build OK; L1 GET+POST 401 live. No deps.",
+      "result": "API & feedback hook: 3 created (api/checkins route GET+POST, feedback-regression.test SC5 proof, daily-checkin.spec L1), 8 modified. Option C ranking key: compareSuggestions now labSignal\u2192grade\u2192FEEDBACK\u2192composite\u2192name (feedback strictly below grade). generateProtocol +feedbackSignal input; protocol route loads checkins\u2192analyzeCheckins.feedback server-side. checkinInputSchema (ratings 1-5). v9 identity dataDepth += 0.15*checkinRate (rebalanced, backward-compat). Verify: tsc clean; suite 340/340 (+6); SC5 PROVEN (no-feedback byte-identical + max feedback can't lift lower grade over higher + lab still outranks feedback); ALL v9 identity tests still green; next build OK; L1 GET+POST 401 live. No deps.",
       "createdAt": "2026-07-02"
     },
     {
       "title": "[Do] daily-checkin --scope module-1",
       "status": "completed",
       "blockedBy": "[Design] daily-checkin",
-      "scope": ["module-1"],
+      "scope": [
+        "module-1"
+      ],
       "milestone": "v10",
-      "result": "Schema & pure engine: 13 created (0006 migration, types/checkin, checkin-repo, lib/checkin consistency/outcomes/feedback/insights/index + 5 tests), 3 modified (db/types +CheckinRow, db/mappers +toCheckin, safety +checkinCopy). Engine: consistency (rate+streak+adherence), outcomes (per supplement×goal taken-vs-not deltas), feedback (clamped ±0.15, gated MIN_TAKEN=5/MIN_NOTTAKEN=3, refuse-when-insufficient), insights (non-diagnostic, gated on sample+MIN_VISIBLE_DELTA). Verify: tsc clean; full suite 334/334 (+23); clamp+suppression+honesty proven. Additive migration (RLS own_checkins, unique user+date). No deps.",
+      "result": "Schema & pure engine: 13 created (0006 migration, types/checkin, checkin-repo, lib/checkin consistency/outcomes/feedback/insights/index + 5 tests), 3 modified (db/types +CheckinRow, db/mappers +toCheckin, safety +checkinCopy). Engine: consistency (rate+streak+adherence), outcomes (per supplement\u00d7goal taken-vs-not deltas), feedback (clamped \u00b10.15, gated MIN_TAKEN=5/MIN_NOTTAKEN=3, refuse-when-insufficient), insights (non-diagnostic, gated on sample+MIN_VISIBLE_DELTA). Verify: tsc clean; full suite 334/334 (+23); clamp+suppression+honesty proven. Additive migration (RLS own_checkins, unique user+date). No deps.",
       "createdAt": "2026-07-02"
     },
     {
@@ -693,7 +716,7 @@
       "blockedBy": "[Plan] daily-checkin",
       "architecture": "option-c-feedback-key-below-grade",
       "milestone": "v10",
-      "result": "3 options presented; selected C via Checkpoint 3. KEY FINDING: existing compareSuggestions sorts labSignal→grade→composite (lab signal is PRIMARY, can outrank grade). Option C inserts feedback as a NEW key BETWEEN grade and composite → evidence-subordinate by construction (SC5), v3/v4/v5 order untouched (regression-safe), no-feedback test trivially holds. Design: 0006_checkins table (RLS own_checkins, unique user+date, jsonb ratings/taken/scheduled + note/side_effect), pure lib/checkin (consistency/outcomes/feedback[clamped ±CAP, min-sample-gated]/insights), GET/POST /api/checkins, protocol route loads checkins→feedback server-side, v9 identity dataDepth feed, Stack Lab check-in section (form+heatmap+insights), side-effect display-only. Modifies: protocol-builder rules+index, protocol route, identity context+traits, stack-lab page, types/protocol, safety. 3-module session plan. Design doc written.",
+      "result": "3 options presented; selected C via Checkpoint 3. KEY FINDING: existing compareSuggestions sorts labSignal\u2192grade\u2192composite (lab signal is PRIMARY, can outrank grade). Option C inserts feedback as a NEW key BETWEEN grade and composite \u2192 evidence-subordinate by construction (SC5), v3/v4/v5 order untouched (regression-safe), no-feedback test trivially holds. Design: 0006_checkins table (RLS own_checkins, unique user+date, jsonb ratings/taken/scheduled + note/side_effect), pure lib/checkin (consistency/outcomes/feedback[clamped \u00b1CAP, min-sample-gated]/insights), GET/POST /api/checkins, protocol route loads checkins\u2192feedback server-side, v9 identity dataDepth feed, Stack Lab check-in section (form+heatmap+insights), side-effect display-only. Modifies: protocol-builder rules+index, protocol route, identity context+traits, stack-lab page, types/protocol, safety. 3-module session plan. Design doc written.",
       "createdAt": "2026-07-02"
     },
     {
@@ -736,34 +759,40 @@
       "mode": "static + runtime",
       "milestone": "v9",
       "gaps": "0 Critical, 0 Important; SC 10/10",
-      "result": "Structural 100 / Functional 98 / Contract 95 / Runtime 98 → Overall 98%. 10/10 success criteria met. Additive Option-C held: 0 engine/table files modified, no migration (still 0005), no new dep. Anti-over-claim emerging guard + taxonomy reachability integrity both unit-proven. Runtime: unit 311/311, tsc clean, next build OK, L1 401 + L2 public Library badge live-verified; L3 authed card E2E_LIVE-gated. 2 Info observations (Profile SSR-computes rather than self-fetching /api/identity — intentional; L3 authed render gated). Analysis doc written.",
+      "result": "Structural 100 / Functional 98 / Contract 95 / Runtime 98 \u2192 Overall 98%. 10/10 success criteria met. Additive Option-C held: 0 engine/table files modified, no migration (still 0005), no new dep. Anti-over-claim emerging guard + taxonomy reachability integrity both unit-proven. Runtime: unit 311/311, tsc clean, next build OK, L1 401 + L2 public Library badge live-verified; L3 authed card E2E_LIVE-gated. 2 Info observations (Profile SSR-computes rather than self-fetching /api/identity \u2014 intentional; L3 authed render gated). Analysis doc written.",
       "createdAt": "2026-07-02"
     },
     {
       "title": "[Do] identity-cards --scope module-3",
       "status": "completed",
       "blockedBy": "[Do] identity-cards --scope module-2",
-      "scope": ["module-3"],
+      "scope": [
+        "module-3"
+      ],
       "milestone": "v9",
-      "result": "UI & surfacing: 4 components created, 5 files modified (4 surfaces + spec), no deps. IdentityCard (archetype + confidence chip + tagline + TraitBars + deep-linked why-trail + emerging sharpen checklist + disclaimer), TraitBars, StackArchetypeBadge, SupplementArchetypeBadge. Surfaced: Profile page (SSR loadIdentityContext+deriveUserIdentity → IdentityCard, no self-fetch), Stack Lab (per-stack deriveStackArchetype → StackList badges), Library detail (deriveSupplementArchetype SSR badge — deferred M2 wiring). Deep-links reuse v8 citationHref. Extended spec: L2 public Library badge + L3 authed Profile card. Verify: tsc clean; unit 311/311; next build OK (/library/[slug] SSG prerendered w/ badge); L1 401 + L2 badge runtime-verified LIVE; L3 gated on E2E_LIVE. Do phase COMPLETE (3/3 modules).",
+      "result": "UI & surfacing: 4 components created, 5 files modified (4 surfaces + spec), no deps. IdentityCard (archetype + confidence chip + tagline + TraitBars + deep-linked why-trail + emerging sharpen checklist + disclaimer), TraitBars, StackArchetypeBadge, SupplementArchetypeBadge. Surfaced: Profile page (SSR loadIdentityContext+deriveUserIdentity \u2192 IdentityCard, no self-fetch), Stack Lab (per-stack deriveStackArchetype \u2192 StackList badges), Library detail (deriveSupplementArchetype SSR badge \u2014 deferred M2 wiring). Deep-links reuse v8 citationHref. Extended spec: L2 public Library badge + L3 authed Profile card. Verify: tsc clean; unit 311/311; next build OK (/library/[slug] SSG prerendered w/ badge); L1 401 + L2 badge runtime-verified LIVE; L3 gated on E2E_LIVE. Do phase COMPLETE (3/3 modules).",
       "createdAt": "2026-07-02"
     },
     {
       "title": "[Do] identity-cards --scope module-2",
       "status": "completed",
       "blockedBy": "[Do] identity-cards --scope module-1",
-      "scope": ["module-2"],
+      "scope": [
+        "module-2"
+      ],
       "milestone": "v9",
-      "result": "Context & API: 3 created, 0 modified, no deps. context.ts — loadIdentityContext reuses existing RLS repos (getProfile/listStacks/listItems/listLabMarkers), maps to IdentityContext, computes filledFieldCount over 6 core fields (PROFILE_FIELD_COUNT), hasLabs. route.ts — GET /api/identity: getUser 401 guard → handle() → deriveUserIdentity + per-stack deriveStackArchetype → ok({card, stackArchetypes}); no request body/client input trusted. L1 auth-guard spec + L3 authed (E2E_LIVE-gated). Verify: tsc clean; unit 311/311; next build OK (/api/identity dynamic, registered); L1 401 UNAUTHORIZED runtime-verified LIVE via playwright. Boundary refinement: Library SSR badge render deferred to M3 (inseparable from SupplementArchetypeBadge).",
+      "result": "Context & API: 3 created, 0 modified, no deps. context.ts \u2014 loadIdentityContext reuses existing RLS repos (getProfile/listStacks/listItems/listLabMarkers), maps to IdentityContext, computes filledFieldCount over 6 core fields (PROFILE_FIELD_COUNT), hasLabs. route.ts \u2014 GET /api/identity: getUser 401 guard \u2192 handle() \u2192 deriveUserIdentity + per-stack deriveStackArchetype \u2192 ok({card, stackArchetypes}); no request body/client input trusted. L1 auth-guard spec + L3 authed (E2E_LIVE-gated). Verify: tsc clean; unit 311/311; next build OK (/api/identity dynamic, registered); L1 401 UNAUTHORIZED runtime-verified LIVE via playwright. Boundary refinement: Library SSR badge render deferred to M3 (inseparable from SupplementArchetypeBadge).",
       "createdAt": "2026-07-02"
     },
     {
       "title": "[Do] identity-cards --scope module-1",
       "status": "completed",
       "blockedBy": "[Design] identity-cards",
-      "scope": ["module-1"],
+      "scope": [
+        "module-1"
+      ],
       "milestone": "v9",
-      "result": "Pure engine & taxonomy: 8 source + 5 test files created, 0 modified, no deps. types/identity (5 trait axes, 7 archetype ids incl emerging, IdentityContext plain-data shape); lib/identity — archetypes (6 declarative targets + emerging fallback), traits (computeTraitVector over evidence/safety, PROFILE_FIELD_COUNT), classify (weighted-Euclidean nearest-profile, dataDepth weight 0, MIN_MATCH=0.35 guard, TOTAL), confidence (dataDepth thresholds 0.25/0.6 + sharpen tips), stack-archetypes (scoped reuse), supplement-archetypes (pure supplementArchetypeFromEffects + seed wrapper, 4 ids), index (deriveUserIdentity assembles card + deep-linkable trail via effect-grade Citations). Verify: tsc clean; full suite 311/311 (+29); classify integrity (every archetype reachable) + anti-over-claim guard + honesty sweep (0 banned) green.",
+      "result": "Pure engine & taxonomy: 8 source + 5 test files created, 0 modified, no deps. types/identity (5 trait axes, 7 archetype ids incl emerging, IdentityContext plain-data shape); lib/identity \u2014 archetypes (6 declarative targets + emerging fallback), traits (computeTraitVector over evidence/safety, PROFILE_FIELD_COUNT), classify (weighted-Euclidean nearest-profile, dataDepth weight 0, MIN_MATCH=0.35 guard, TOTAL), confidence (dataDepth thresholds 0.25/0.6 + sharpen tips), stack-archetypes (scoped reuse), supplement-archetypes (pure supplementArchetypeFromEffects + seed wrapper, 4 ids), index (deriveUserIdentity assembles card + deep-linkable trail via effect-grade Citations). Verify: tsc clean; full suite 311/311 (+29); classify integrity (every archetype reachable) + anti-over-claim guard + honesty sweep (0 banned) green.",
       "createdAt": "2026-07-02"
     },
     {
@@ -772,7 +801,7 @@
       "blockedBy": "[Plan] identity-cards",
       "architecture": "option-c-pragmatic",
       "milestone": "v9",
-      "result": "3 architecture options presented; selected C (data-driven declarative archetype taxonomy + single pure nearest-profile weighted-distance classifier + separate pure traits.ts/confidence.ts) via Checkpoint 3 — mirrors v5 evidence-grading shape. Design: 5 trait axes (evidenceRigor/riskAppetite/breadth/foundationalFocus/dataDepth ∈[0,1]), 6 user archetypes + Emerging total-fallback guard (anti-over-claim: dataDepth<0.25 or matchScore<0.35), integrity invariant (every archetype reachable). No DB/migration — derived on the fly. GET /api/identity auth+RLS via existing repos; supplement archetypes (4) computed Library SSR (no endpoint). Deep-link trail reuses v8 citationHref. Honesty sweep over all copy. 3-module session plan (M1 engine+taxonomy, M2 context+API, M3 UI+surfacing). Design doc written.",
+      "result": "3 architecture options presented; selected C (data-driven declarative archetype taxonomy + single pure nearest-profile weighted-distance classifier + separate pure traits.ts/confidence.ts) via Checkpoint 3 \u2014 mirrors v5 evidence-grading shape. Design: 5 trait axes (evidenceRigor/riskAppetite/breadth/foundationalFocus/dataDepth \u2208[0,1]), 6 user archetypes + Emerging total-fallback guard (anti-over-claim: dataDepth<0.25 or matchScore<0.35), integrity invariant (every archetype reachable). No DB/migration \u2014 derived on the fly. GET /api/identity auth+RLS via existing repos; supplement archetypes (4) computed Library SSR (no endpoint). Deep-link trail reuses v8 citationHref. Honesty sweep over all copy. 3-module session plan (M1 engine+taxonomy, M2 context+API, M3 UI+surfacing). Design doc written.",
       "createdAt": "2026-07-01"
     },
     {
@@ -802,7 +831,7 @@
       "status": "completed",
       "blockedBy": "[Check] evidence-grading",
       "qaStatus": "PASS",
-      "result": "L0 170/170 unit + L2 2/2 live (public Library). L1/L3/L4/L5 N/A (pure domain + SSR, no endpoints, single-page). No env gating — fully runtime-verified. 0 defects.",
+      "result": "L0 170/170 unit + L2 2/2 live (public Library). L1/L3/L4/L5 N/A (pure domain + SSR, no endpoints, single-page). No env gating \u2014 fully runtime-verified. 0 defects.",
       "createdAt": "2026-06-16"
     },
     {
@@ -819,7 +848,9 @@
       "title": "[Do] evidence-grading --scope module-3",
       "status": "completed",
       "blockedBy": "[Do] evidence-grading --scope module-2",
-      "scope": ["module-3"],
+      "scope": [
+        "module-3"
+      ],
       "result": "Library UI: 2 created (EvidenceBreakdown.tsx pure/server component with <details> expand + per-dimension bars + citation links; evidence-grading-actions L2 spec), 1 modified (SupplementDetail EffectsTab renders breakdown for profiled effects, passes papers). 170/170 unit, tsc clean, next build green. L2 2/2 PASS live against public Library (breakdown shows+expands for creatine, absent for l-theanine). No new deps.",
       "createdAt": "2026-06-16"
     },
@@ -827,15 +858,19 @@
       "title": "[Do] evidence-grading --scope module-2",
       "status": "completed",
       "blockedBy": "[Do] evidence-grading --scope module-1",
-      "scope": ["module-2"],
-      "result": "Resolution + ranking: 6 modified (lib/evidence resolveEffect/pre-resolve defaultLibrary/effectComposite/getBestEffectForOutcome composite tiebreak; protocol-builder compareSuggestions +composite key; protocol index wires composite; types/protocol +composite?; evidence+protocol tests). No evaluator rewrite (reads resolved grade via getBestEffectForOutcome). 9 new tests; full suite 170/170 (was 161), tsc clean, next build green. Resolution is a no-op on current seeds (derived==literal) — zero output change, verified.",
+      "scope": [
+        "module-2"
+      ],
+      "result": "Resolution + ranking: 6 modified (lib/evidence resolveEffect/pre-resolve defaultLibrary/effectComposite/getBestEffectForOutcome composite tiebreak; protocol-builder compareSuggestions +composite key; protocol index wires composite; types/protocol +composite?; evidence+protocol tests). No evaluator rewrite (reads resolved grade via getBestEffectForOutcome). 9 new tests; full suite 170/170 (was 161), tsc clean, next build green. Resolution is a no-op on current seeds (derived==literal) \u2014 zero output change, verified.",
       "createdAt": "2026-06-16"
     },
     {
       "title": "[Do] evidence-grading --scope module-1",
       "status": "completed",
       "blockedBy": "[Design] evidence-grading",
-      "scope": ["module-1"],
+      "scope": [
+        "module-1"
+      ],
       "result": "Rubric engine + seed: 4 created (types/evidence-grading, lib/evidence-grading {weights,index,test}), 3 modified (types/index re-export, effect.ts +evidenceProfile?, seed-effects 8 profiles). 14 new tests incl. integrity (derived grade == curated for all 8 across 7 supplements, A/B/C; citations real; non-diagnostic). Full suite 161/161 (was 147), tsc clean, next build green. Pure functions, no new deps.",
       "createdAt": "2026-06-16"
     },
@@ -891,7 +926,7 @@
       "title": "[Act-1] lab-timeline",
       "status": "completed",
       "blockedBy": "[Check] lab-timeline",
-      "fix": "IMP-1 — added lib/safety Disclaimer banner inside LabReviewConfirm",
+      "fix": "IMP-1 \u2014 added lib/safety Disclaimer banner inside LabReviewConfirm",
       "matchRate": 99,
       "result": "Functional 100; tsc clean, next build green (no warnings); 147/147 unit",
       "createdAt": "2026-06-16"
@@ -900,15 +935,19 @@
       "title": "[Do] lab-timeline --scope module-3",
       "status": "completed",
       "blockedBy": "[Do] lab-timeline --scope module-2",
-      "scope": ["module-3"],
-      "result": "Surfaces & UI: 7 created (useLabImport hook, LabUpload, LabReviewConfirm, LabTimeline, TrendChart, L2+L3 specs), 8 modified (safety trajectory copy, stack-evaluator ruleLabTrend +trends ctx, protocol-builder bounded trendAdjustment ±0.2, evaluation service + protocol route compute/pass trends, profile page wires Upload+Timeline, 2 engine test files extended). Trajectory restricted to support-relation rules (avoids canceling low/high rules). 147/147 unit green (+7), tsc clean, next build green (no warnings, /profile 6.12kB). L2/L3 Playwright gated behind E2E_LIVE.",
+      "scope": [
+        "module-3"
+      ],
+      "result": "Surfaces & UI: 7 created (useLabImport hook, LabUpload, LabReviewConfirm, LabTimeline, TrendChart, L2+L3 specs), 8 modified (safety trajectory copy, stack-evaluator ruleLabTrend +trends ctx, protocol-builder bounded trendAdjustment \u00b10.2, evaluation service + protocol route compute/pass trends, profile page wires Upload+Timeline, 2 engine test files extended). Trajectory restricted to support-relation rules (avoids canceling low/high rules). 147/147 unit green (+7), tsc clean, next build green (no warnings, /profile 6.12kB). L2/L3 Playwright gated behind E2E_LIVE.",
       "createdAt": "2026-06-16"
     },
     {
       "title": "[Do] lab-timeline --scope module-2",
       "status": "completed",
       "blockedBy": "[Do] lab-timeline --scope module-1",
-      "scope": ["module-2"],
+      "scope": [
+        "module-2"
+      ],
       "result": "API & repo: 7 created (lab-panel-repo, extract/commit/lab-panels/lab-trends routes, L1 spec, labs-sample.csv fixture), 5 modified (db/types, db/mappers, biomarkers canonicalize()+getBiomarker(), pdf-adapter native-PDF extractFromPdf, package.json). Installed @anthropic-ai/sdk; switched adapter to static lazy import (warning gone). extract route is repo-free (no-write); commit recomputes canonical via repo. 140/140 unit green, tsc clean, next build green (32 pages, 6 lab routes). L1 Playwright deferred to Check (needs live server).",
       "createdAt": "2026-06-16"
     },
@@ -916,8 +955,10 @@
       "title": "[Do] lab-timeline --scope module-1",
       "status": "completed",
       "blockedBy": "[Design] lab-timeline",
-      "scope": ["module-1"],
-      "result": "Engines & schema: 9 created (types/lab.ts, 0002_lab_panels.sql, lib/lab-import {schema,csv,paste,pdf-adapter}, lib/lab-trends, 2 test files), 1 modified (.env.example). 30 new unit tests; full suite 140/140 green (was 110); tsc clean; next build green. Adapter SDK dynamic-imported via variable specifier — build dependency-free.",
+      "scope": [
+        "module-1"
+      ],
+      "result": "Engines & schema: 9 created (types/lab.ts, 0002_lab_panels.sql, lib/lab-import {schema,csv,paste,pdf-adapter}, lib/lab-trends, 2 test files), 1 modified (.env.example). 30 new unit tests; full suite 140/140 green (was 110); tsc clean; next build green. Adapter SDK dynamic-imported via variable specifier \u2014 build dependency-free.",
       "createdAt": "2026-06-16"
     },
     {
@@ -1212,7 +1253,59 @@
       "blockedBy": "[Report] product-match",
       "archivedTo": "docs/archive/2026-06/product-match/",
       "createdAt": "2026-06-11"
+    },
+    {
+      "title": "[Plan] food-pairings",
+      "status": "completed",
+      "blockedBy": [],
+      "archivedTo": null,
+      "createdAt": "2026-07-14T14:18:32.309342+00:00"
+    },
+    {
+      "title": "[Design] food-pairings",
+      "status": "completed",
+      "blockedBy": [
+        "[Plan] food-pairings"
+      ],
+      "archivedTo": null,
+      "createdAt": "2026-07-14T14:23:15.119242+00:00"
+    },
+    {
+      "title": "[Do] food-pairings",
+      "status": "completed",
+      "blockedBy": [
+        "[Design] food-pairings"
+      ],
+      "archivedTo": null,
+      "createdAt": "2026-07-14T14:35:54.289315+00:00"
+    },
+    {
+      "title": "[Check] food-pairings",
+      "status": "completed",
+      "blockedBy": [
+        "[Do] food-pairings"
+      ],
+      "archivedTo": null,
+      "createdAt": "2026-07-15T07:02:14.448127+00:00"
+    },
+    {
+      "title": "[Report] food-pairings",
+      "status": "completed",
+      "blockedBy": [
+        "[Check] food-pairings"
+      ],
+      "archivedTo": null,
+      "createdAt": "2026-07-15T07:32:27.737938+00:00"
+    },
+    {
+      "title": "[Archive] food-pairings",
+      "status": "completed",
+      "blockedBy": [
+        "[Report] food-pairings"
+      ],
+      "archivedTo": "docs/archive/2026-07/food-pairings/",
+      "createdAt": "2026-07-15T12:42:15.033396+00:00"
     }
   ],
-  "updatedAt": "2026-07-01"
+  "updatedAt": "2026-07-15T12:42:15.033396+00:00"
 }

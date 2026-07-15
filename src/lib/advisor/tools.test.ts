@@ -19,7 +19,7 @@ import { makeContext } from "./mock-adapter";
 const ctx = makeContext();
 
 describe("advisor tool registry", () => {
-  it("exposes exactly the 6 callable tools", () => {
+  it("exposes exactly the 7 callable tools", () => {
     expect(ADVISOR_TOOLS.map((t) => t.name).sort()).toEqual(
       [
         "biomarkerFindings",
@@ -28,6 +28,7 @@ describe("advisor tool registry", () => {
         "getSupplement",
         "labTrends",
         "searchLibrary",
+        "sideEffectWatch",
       ].sort(),
     );
   });

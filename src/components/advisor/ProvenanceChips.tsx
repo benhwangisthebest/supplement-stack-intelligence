@@ -13,6 +13,7 @@ const KIND_LABEL: Record<Citation["kind"], string> = {
   "lab-trend": "Lab trend",
   paper: "Paper",
   "stack-eval": "Stack",
+  "side-effect": "Side-effect",
 };
 
 export function ProvenanceChips({ citations }: { citations: Citation[] }) {

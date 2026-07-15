@@ -11,6 +11,8 @@ import { findInteractions, normalizeMedications } from "@/lib/interactions";
 import { toInteractionFlags } from "@/lib/interactions/to-flags";
 import { assessLabMarkers, biomarkersForSupplement, normalizeMarker } from "@/lib/biomarkers";
 import { toLabFlags } from "@/lib/biomarkers/to-flags";
+import { correlateReports } from "@/lib/side-effects";
+import { toSideEffectFlags } from "@/lib/side-effects/to-flags";
 import type {
   DraftFlag,
   Effect,
@@ -22,6 +24,8 @@ import type {
   UserProfile,
 } from "@/types";
 import type { TrendSignal } from "@/types/lab";
+import type { DatedSideEffectReport } from "@/types/side-effect";
+import type { DailyCheckin } from "@/types/checkin";
 
 // ---- Thresholds (Design §11.4). Tunable constants live here only. ----
 export const DOSE_LOW_RATIO = 0.5; // dose < 0.5x studied min -> info
@@ -36,6 +40,10 @@ export interface EvalContext {
   profile: UserProfile | null;
   labMarkers: LabMarker[];
   trends: TrendSignal[]; // lab-timeline v4 — per-biomarker trajectory (may be empty)
+  // side-effect-engine v11 — dated structured reports + v10 adherence. BOTH are
+  // required to claim a co-occurrence; absent either ⇒ no side-effect flags.
+  sideEffectReports?: DatedSideEffectReport[];
+  checkins?: DailyCheckin[];
   library: EvidenceLibrary;
 }
 
@@ -352,6 +360,29 @@ export function ruleLabTrend(ctx: EvalContext): DraftFlag[] {
   return flags;
 }
 
+// ---- Rule 10: side-effect correlation (side-effect-engine v11; Design §2.1, §11.4) ----
+// Correlational + non-diagnostic. Emits ONLY reported-match findings: an effect
+// the user reported on >= MIN_REPORTS of the days they logged TAKING a stacked
+// supplement (v10 adherence intersection — Act-1/G1). Curated-only "what to
+// watch" lives in the Library surface, not here. Absent reports OR adherence ⇒ []
+// (no perturbation of any other rule; proven by the no-signal test).
+export function ruleSideEffect(ctx: EvalContext): DraftFlag[] {
+  const reports = ctx.sideEffectReports ?? [];
+  const checkins = ctx.checkins ?? [];
+  // Both are load-bearing: without adherence there is no co-occurrence to claim.
+  if (reports.length === 0 || checkins.length === 0) return [];
+
+  const supplementToItemId: Record<string, string> = {};
+  for (const item of ctx.items) {
+    if (item.supplementId && !(item.supplementId in supplementToItemId)) {
+      supplementToItemId[item.supplementId] = item.id;
+    }
+  }
+
+  const findings = correlateReports({ reports, checkins, items: ctx.items });
+  return toSideEffectFlags(findings, { supplementToItemId });
+}
+
 // ---- Rule 8: complexity (Design §11.4) ----
 export function ruleComplexity(ctx: EvalContext): DraftFlag[] {
   if (ctx.items.length <= COMPLEXITY_WARN) return [];
@@ -376,5 +407,6 @@ export const ALL_RULES: ((ctx: EvalContext) => DraftFlag[])[] = [
   ruleLabRelevance,
   ruleLabTrend,
   ruleInteractions,
+  ruleSideEffect,
   ruleComplexity,
 ];

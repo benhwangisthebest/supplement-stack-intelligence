@@ -49,6 +49,17 @@ export interface CheckinRow {
   updated_at: string;
 }
 
+// side-effect-engine (migration 0007). One row per (user_id, report_date, effect_label).
+export interface SideEffectReportRow {
+  id: string;
+  user_id: string;
+  report_date: string;
+  effect_label: string;
+  severity: number | null;
+  note: string | null;
+  created_at: string;
+}
+
 // lab-timeline (migration 0002).
 export interface LabPanelRow {
   id: string;

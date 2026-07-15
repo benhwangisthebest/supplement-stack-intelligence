@@ -24,7 +24,7 @@ class MockAnthropic implements AnthropicLike {
 describe("pure mapping cores", () => {
   it("toAnthropicTools maps every tool to name/description/input_schema", () => {
     const mapped = toAnthropicTools(ADVISOR_TOOLS);
-    expect(mapped).toHaveLength(6);
+    expect(mapped).toHaveLength(ADVISOR_TOOLS.length);
     for (const m of mapped) {
       expect(m).toHaveProperty("name");
       expect(m).toHaveProperty("description");
@@ -104,7 +104,7 @@ describe("AdvisorClaudeAdapter — stateful threading across a turn", () => {
 
     // first request: just the seeded user message + system + tools
     expect(mock.requests[0].system).toBe("SYS");
-    expect(mock.requests[0].tools).toHaveLength(6);
+    expect(mock.requests[0].tools).toHaveLength(ADVISOR_TOOLS.length);
     expect(mock.requests[0].messages).toEqual([
       { role: "user", content: "is my stack safe?" },
     ]);

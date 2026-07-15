@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { listStacks } from "@/lib/db/stack-repo";
 import { listCheckins, getCheckin } from "@/lib/db/checkin-repo";
+import { listSideEffectReports } from "@/lib/db/side-effect-repo";
 import { getSupplementById } from "@/lib/evidence";
 import { loadIdentityContext } from "@/lib/identity/context";
 import { deriveStackArchetype } from "@/lib/identity";
@@ -42,11 +43,17 @@ export default async function StackLabPage() {
   const checkinItems = (activeIdentityStack?.itemSupplementIds ?? [])
     .filter((id): id is string => id !== null)
     .map((id) => ({ supplementId: id, name: getSupplementById(id)?.name ?? id }));
-  const [checkins, todayCheckin] = await Promise.all([
+  const [checkins, todayCheckin, recentReports] = await Promise.all([
     listCheckins(supabase, user.id),
     getCheckin(supabase, user.id, today),
+    listSideEffectReports(supabase, user.id, 1),
   ]);
   const analysis = analyzeCheckins(checkins);
+  // side-effect-engine v11 — prefill today's reports so re-saving the check-in
+  // (idempotent per-day replace) preserves what was already logged.
+  const todayReports = recentReports
+    .filter((r) => r.date === today)
+    .map((r) => ({ effectLabel: r.effectLabel, severity: r.severity, note: r.note }));
 
   return (
     <main className="container-page max-w-4xl py-12">
@@ -69,6 +76,7 @@ export default async function StackLabPage() {
           items={checkinItems}
           goals={identityCtx.profile?.goals ?? []}
           initial={todayCheckin}
+          initialSideEffects={todayReports}
         />
         <ConsistencyHeatmap
           dates={checkins.map((c) => c.date)}

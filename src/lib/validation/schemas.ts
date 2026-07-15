@@ -5,6 +5,8 @@ import {
   OUTCOME_CATEGORIES,
   SUPPLEMENT_FORMS,
 } from "@/types";
+import { normalizeSideEffect } from "@/lib/side-effects/vocab";
+import type { ReportedSideEffect } from "@/types/side-effect";
 
 const outcome = z.enum(OUTCOME_CATEGORIES as [string, ...string[]]);
 const intent = z.union([outcome, z.literal("experimental")]);
@@ -59,6 +61,32 @@ export const generateProtocolSchema = z.object({
 });
 export type GenerateProtocolInput = z.infer<typeof generateProtocolSchema>;
 
+// side-effect-engine v11 — a structured report; free text is normalized to the
+// canonical vocabulary server-side, and an unrecognized label is rejected (400)
+// so a non-canonical string can never fabricate a correlation (Design §4.2).
+export const reportedSideEffectSchema = z
+  .object({
+    effectLabel: z.string().min(1).max(80),
+    severity: z.number().int().min(1).max(3).optional(),
+    note: z.string().max(500).optional(),
+  })
+  .transform((r, ctx): ReportedSideEffect => {
+    const canonical = normalizeSideEffect(r.effectLabel);
+    if (!canonical) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["effectLabel"],
+        message: `Unrecognized side-effect: ${r.effectLabel}`,
+      });
+      return z.NEVER;
+    }
+    return {
+      effectLabel: canonical,
+      severity: r.severity as 1 | 2 | 3 | undefined,
+      note: r.note,
+    };
+  });
+
 // daily-checkin v10 — one idempotent check-in per day (Design §4.2).
 const goalRating = z.number().int().min(1).max(5);
 export const checkinInputSchema = z.object({
@@ -68,6 +96,8 @@ export const checkinInputSchema = z.object({
   scheduled: z.array(z.string().max(80)).default([]),
   note: z.string().max(1000).nullable().default(null),
   sideEffect: z.string().max(500).nullable().default(null),
+  // side-effect-engine v11 — structured, canonical reports (additive; defaults []).
+  sideEffects: z.array(reportedSideEffectSchema).max(20).default([]),
 });
 export type CheckinInputSchema = z.infer<typeof checkinInputSchema>;
 

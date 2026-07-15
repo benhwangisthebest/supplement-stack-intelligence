@@ -20,11 +20,13 @@ import type {
 } from "@/types";
 import type { LabPanel, LabMarkerTimelinePoint } from "@/types/lab";
 import type { DailyCheckin, GoalRating } from "@/types/checkin";
+import type { CanonicalSideEffect, SideEffectReport } from "@/types/side-effect";
 import type {
   CheckinRow,
   EvaluationFlagRow,
   LabMarkerRow,
   LabPanelRow,
+  SideEffectReportRow,
   StackItemRow,
   StackRow,
   UserProfileRow,
@@ -42,6 +44,19 @@ export function toCheckin(row: CheckinRow): DailyCheckin {
     sideEffect: row.side_effect,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+// side-effect-engine v11 — one structured report row → domain shape.
+export function toSideEffectReport(row: SideEffectReportRow): SideEffectReport {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    date: row.report_date,
+    effectLabel: row.effect_label as CanonicalSideEffect,
+    severity: (row.severity ?? undefined) as 1 | 2 | 3 | undefined,
+    note: row.note ?? undefined,
+    createdAt: row.created_at,
   };
 }
 

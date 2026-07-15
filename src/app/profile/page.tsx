@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/db/profile-repo";
 import { listLabMarkers } from "@/lib/db/lab-marker-repo";
 import { listTimelinePoints } from "@/lib/db/lab-panel-repo";
+import { listSideEffectReports } from "@/lib/db/side-effect-repo";
 import { computeTrends } from "@/lib/lab-trends";
 import { loadIdentityContext } from "@/lib/identity/context";
 import { deriveUserIdentity } from "@/lib/identity";
@@ -11,6 +12,7 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { LabMarkerTable } from "@/components/profile/LabMarkerTable";
 import { LabUpload } from "@/components/profile/LabUpload";
 import { LabTimeline } from "@/components/profile/LabTimeline";
+import { SideEffectTimeline } from "@/components/profile/SideEffectTimeline";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
@@ -21,11 +23,12 @@ export const dynamic = "force-dynamic"; // reads auth session + user data per re
 export default async function ProfilePage() {
   const user = await requireUser();
   const supabase = await createClient();
-  const [profile, markers, points, identityCtx] = await Promise.all([
+  const [profile, markers, points, identityCtx, sideEffectReports] = await Promise.all([
     getProfile(supabase, user.id),
     listLabMarkers(supabase, user.id),
     listTimelinePoints(supabase, user.id),
     loadIdentityContext(supabase, user.id),
+    listSideEffectReports(supabase, user.id),
   ]);
   const trends = computeTrends(points);
   // v9 identity-cards (Design §5.1) — derived server-side (no self-fetch); the
@@ -82,6 +85,18 @@ export default async function ProfilePage() {
           </div>
         </div>
         <Disclaimer variant="labs" className="mt-4" />
+      </section>
+
+      {/* side-effect-engine v11 — reported side-effects over time. */}
+      <section className="mt-12">
+        <h2 className="text-title-lg text-ink">Reported side-effects</h2>
+        <p className="mt-1 text-sm text-muted">
+          Effects you&apos;ve logged in your daily check-ins, over time. Correlational
+          and for your own tracking — not a diagnosis.
+        </p>
+        <div className="mt-4">
+          <SideEffectTimeline reports={sideEffectReports} />
+        </div>
       </section>
     </main>
   );

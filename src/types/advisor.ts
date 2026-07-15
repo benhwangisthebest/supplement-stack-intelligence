@@ -18,7 +18,8 @@ export type CitationKind =
   | "biomarker-rule"
   | "lab-trend"
   | "paper"
-  | "stack-eval";
+  | "stack-eval"
+  | "side-effect"; // side-effect-engine v11 — curated commonly-reported effect
 
 export interface Citation {
   kind: CitationKind;

@@ -14,6 +14,9 @@ import { evaluateStack } from "@/lib/stack-evaluator";
 import { findInteractions } from "@/lib/interactions";
 import { assessLabMarkers } from "@/lib/biomarkers";
 import { computeTrends } from "@/lib/lab-trends";
+import { curatedWatchList } from "@/lib/side-effects";
+import { sideEffectLabel } from "@/lib/side-effects/vocab";
+import type { SideEffectFinding } from "@/types/side-effect";
 import type {
   AdvisorContext,
   AdvisorTool,
@@ -296,6 +299,33 @@ export const labTrends: AdvisorTool<LabTrendsInput, TrendSignal[]> = {
   },
 };
 
+// 7) sideEffectWatch — curated commonly-reported effects for the user's stack.
+// side-effect-engine v11. Read-only, correlational, grounded in stackItems only.
+type SideEffectInput = Record<string, never>;
+export const sideEffectWatch: AdvisorTool<SideEffectInput, SideEffectFinding[]> = {
+  name: "sideEffectWatch",
+  description:
+    "List the commonly-reported side-effects to watch for the supplements in the user's stack, with how frequently they're reported. Use for 'what side effects should I watch for', 'any common side effects in my stack'. Educational + correlational — never a prediction or diagnosis.",
+  inputSchema: { type: "object", properties: {} },
+  handler: (_input, ctx) => {
+    if (ctx.stackItems.length === 0) {
+      return empty("The user has no stack items to check for reported side-effects.");
+    }
+    const findings = curatedWatchList(ctx.stackItems);
+    if (findings.length === 0) {
+      return empty(
+        "No curated side-effect profile matched the supplements in the current stack.",
+      );
+    }
+    const citations: Citation[] = findings.map((f) => ({
+      kind: "side-effect" as const,
+      refId: `${f.supplementId}:${f.label}`,
+      label: `${supplementName(f.supplementId)}: ${sideEffectLabel(f.label)} (${f.frequencyTier})`,
+    }));
+    return ok(findings, citations);
+  },
+};
+
 /** The model's callable surface (Design §3.2). Read-only profile/stack/labs are
  *  pre-loaded into AdvisorContext, NOT exposed here. */
 export const ADVISOR_TOOLS: AdvisorTool[] = [
@@ -307,6 +337,7 @@ export const ADVISOR_TOOLS: AdvisorTool[] = [
   checkInteractions as unknown as AdvisorTool,
   biomarkerFindings as unknown as AdvisorTool,
   labTrends as unknown as AdvisorTool,
+  sideEffectWatch as unknown as AdvisorTool,
 ];
 
 /** Lookup a tool by name (used by the agent loop to dispatch model tool calls). */

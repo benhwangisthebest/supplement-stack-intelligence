@@ -4,6 +4,7 @@ import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { EffectGradeBadge } from "@/components/evidence/EffectGradeBadge";
 import { EvidenceBreakdown } from "@/components/evidence/EvidenceBreakdown";
 import { PaperSummaryCard } from "@/components/evidence/PaperSummaryCard";
+import { WhatToWatch } from "@/components/library/WhatToWatch";
 
 interface SupplementDetailProps {
   supplement: Supplement;
@@ -84,6 +85,9 @@ function SummaryTab({ supplement }: { supplement: Supplement }) {
           </div>
         </section>
       )}
+
+      {/* side-effect-engine v11: curated commonly-reported effects (public). */}
+      <WhatToWatch supplementId={supplement.id} />
     </div>
   );
 }

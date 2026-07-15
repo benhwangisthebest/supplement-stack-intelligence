@@ -11,6 +11,8 @@ import type {
   UserProfile,
 } from "@/types";
 import type { TrendSignal } from "@/types/lab";
+import type { DatedSideEffectReport } from "@/types/side-effect";
+import type { DailyCheckin } from "@/types/checkin";
 import { ALL_RULES, type EvalContext } from "./rules";
 
 export interface EvaluateStackInput {
@@ -19,6 +21,9 @@ export interface EvaluateStackInput {
   profile?: UserProfile | null;
   labMarkers?: LabMarker[];
   trends?: TrendSignal[];
+  // side-effect-engine v11 (optional) — BOTH needed for a co-occurrence claim.
+  sideEffectReports?: DatedSideEffectReport[];
+  checkins?: DailyCheckin[];
   library?: EvidenceLibrary;
 }
 
@@ -44,6 +49,8 @@ export function evaluateStack(input: EvaluateStackInput): EvaluationResult {
     profile: input.profile ?? null,
     labMarkers: input.labMarkers ?? [],
     trends: input.trends ?? [],
+    sideEffectReports: input.sideEffectReports ?? [],
+    checkins: input.checkins ?? [],
     library: input.library ?? defaultLibrary,
   };
 

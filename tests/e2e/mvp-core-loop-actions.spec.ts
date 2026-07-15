@@ -6,7 +6,10 @@ import { LIVE, login } from "./helpers";
 test.describe("L2: public Library (no auth)", () => {
   test("search filters supplements by name", async ({ page }) => {
     await page.goto("/library");
-    await expect(page.getByRole("heading", { name: "Library" })).toBeVisible();
+    // Scoped to <main>: SiteFooter has a "Library" column heading too.
+    await expect(
+      page.getByRole("main").getByRole("heading", { name: "Library", level: 1 }),
+    ).toBeVisible();
 
     const search = page.getByPlaceholder(/Search supplements/i);
     await search.fill("magnesium");
