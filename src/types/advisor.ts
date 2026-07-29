@@ -1,7 +1,8 @@
 // Domain layer — ai-advisor entities (v6). PURE types, no I/O.
 // Design Ref: §3.1 — read-only, strictly tool-grounded advisor.
 // Plan SC: engines are the source of truth; the LLM only orchestrates + narrates.
-import type { LabMarker, Stack, StackItem, UserProfile } from "./index";
+import type { Stack, StackItem } from "./stack";
+import type { LabMarker, UserProfile } from "./profile";
 import type { LabMarkerTimelinePoint } from "./lab";
 
 /** Chat roles the advisor persists/renders. */

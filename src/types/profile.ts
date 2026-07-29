@@ -1,4 +1,4 @@
-import type { OutcomeCategory, SupplementForm } from "./index";
+import type { OutcomeCategory, SupplementForm } from "./primitives";
 
 export type RiskTolerance = "low" | "moderate" | "high";
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced";

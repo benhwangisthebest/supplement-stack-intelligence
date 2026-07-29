@@ -1,4 +1,4 @@
-import type { EvidenceGrade } from "./index";
+import type { EvidenceGrade } from "./primitives";
 
 // Domain layer — seed/interaction entities (read-only TS modules, no DB).
 // Design Ref: §3.1 — medication-interactions data model.

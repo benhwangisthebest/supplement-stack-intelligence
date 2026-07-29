@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import type { AuthActionState } from "./types";
 
-export interface AuthActionState {
-  error: string | null;
-}
+// NOTE: this module is "use server" — every VALUE export must be an async
+// function. AuthActionState therefore lives in ./types and is re-declared
+// nowhere else; AuthForm imports that same declaration.
 
 function readCredentials(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();

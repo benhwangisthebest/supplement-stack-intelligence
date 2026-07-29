@@ -206,6 +206,18 @@ Unit suites: evidence, safety, stack-evaluator, compare, seed-integrity — **47
 
 **Architecture Compliance: ~98%.** The pure engine remains DB-agnostic and fully unit-tested — the Plan's central NFR is upheld.
 
+> **Correction (2026-07-30, architecture-boundary-repair).** The ~98% figure above was
+> asserted, never measured, and the table missed three violation classes it did not check
+> for: a 13-file `src/types` barrel cycle, 2 upward `@/app` imports from `src/components`,
+> and 1 `src/types` → `src/lib/validation` edge. All are now repaired and **mechanically
+> enforced** on `npm test`.
+>
+> The active source of truth for boundary rules is now
+> [`docs/02-design/architecture-boundaries.md`](../02-design/architecture-boundaries.md)
+> (which promotes §9.1–§9.3 of the archived MVP design), with
+> [`src/architecture/boundaries.test.ts`](../../src/architecture/boundaries.test.ts) as the
+> executable spec. Cite those rather than "Design §9" going forward.
+
 ---
 
 ## 7. Convention Compliance

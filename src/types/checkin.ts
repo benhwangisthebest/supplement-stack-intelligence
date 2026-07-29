@@ -2,7 +2,7 @@
 // idempotent row per (userId, date): adherence + goal ratings (+ optional note /
 // side-effect). The engine derives consistency, correlational outcome aggregates,
 // and a BOUNDED, evidence-subordinate feedback signal from these rows alone.
-import type { OutcomeCategory } from "./index";
+import type { OutcomeCategory } from "./primitives";
 
 export type GoalRating = 1 | 2 | 3 | 4 | 5;
 

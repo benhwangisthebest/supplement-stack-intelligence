@@ -1,5 +1,5 @@
 import { AuthForm } from "@/components/auth/AuthForm";
-import { login } from "../actions";
+import { login } from "@/lib/auth/actions";
 
 export const metadata = { title: "Log in — Supplement Stack Intelligence" };
 

@@ -1,4 +1,4 @@
-import type { SupplementForm } from "./index";
+import type { SupplementForm } from "./primitives";
 
 // Design §3 — product-match types. Seeded catalog + computed match results.
 export interface Product {

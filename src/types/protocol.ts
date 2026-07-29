@@ -1,4 +1,5 @@
-import type { DoseRange, EvidenceGrade, ItemTiming, OutcomeCategory } from "./index";
+import type { DoseRange, EvidenceGrade, OutcomeCategory } from "./primitives";
+import type { ItemTiming } from "./stack";
 
 // Design §3 — ephemeral protocol generation types (no persisted table).
 export type ProtocolTier =

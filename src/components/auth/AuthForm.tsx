@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import type { AuthActionState } from "@/app/auth/actions";
+import type { AuthActionState } from "@/lib/auth/types";
 
 interface AuthFormProps {
   mode: "login" | "signup";

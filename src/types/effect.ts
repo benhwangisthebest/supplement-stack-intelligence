@@ -2,9 +2,9 @@ import type {
   Confidence,
   DoseRange,
   EvidenceGrade,
-  EvidenceProfile,
   OutcomeCategory,
-} from "./index";
+} from "./primitives";
+import type { EvidenceProfile } from "./evidence-grading";
 
 // Design §3.1 — EFFECT-LEVEL grading is core to the trust layer.
 export interface Effect {

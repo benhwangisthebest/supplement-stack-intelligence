@@ -21,6 +21,14 @@ Evidence-based supplement education, stack building, and product matching for he
 - All advisory copy flows through `lib/safety` — non-diagnostic, evidence-first language.
 - Trust over monetization: product ranking is provably independent of affiliate links.
 
+### Enforced module boundaries
+
+These are not conventions — they run on `npm test` via [`src/architecture/boundaries.test.ts`](src/architecture/boundaries.test.ts), and are specified in [`docs/02-design/architecture-boundaries.md`](docs/02-design/architecture-boundaries.md):
+
+- `src/types/` is a **dependency-free Domain leaf** — it imports no packages and nothing outside `src/types/`.
+- `src/types/index.ts` is a **pure barrel**; it declares nothing, and no sibling may import it (shared primitives live in `src/types/primitives.ts`).
+- `src/components/` and `src/lib/` **never import from `src/app/`** — reusable server actions belong in `src/lib/`.
+
 ## Getting started
 
 ```bash

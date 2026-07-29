@@ -1162,6 +1162,11 @@ Build in this order:
 8. Keep evidence and product monetization separate.
 9. Prefer modular logic that can later be upgraded with real research databases and APIs.
 10. Make the MVP useful with seeded data before adding complicated integrations.
+11. Never import `./index` or `@/types` from inside `src/types/`. Import the owning sibling module directly (`./primitives`, `./stack`, `./evidence-grading`). `src/types/index.ts` is a barrel only — never add a declaration to it.
+12. `src/types/*` may import **only** other `src/types/*` modules — no packages, no `@/lib`, no `@/app`. If a type is derived from an implementation (e.g. a Zod schema), hand-write the contract in `src/types/` and assert conformance in the implementing module instead.
+13. Never import `@/app/*` from `src/components/*` or `src/lib/*`. Reusable server actions go in `src/lib/` — a `"use server"` module may live there, but all of its value exports must be async functions, so keep shared types in a separate plain module.
+
+Rules 11-13 are enforced on `npm test` by `src/architecture/boundaries.test.ts` and specified in `docs/02-design/architecture-boundaries.md`. Read that doc before changing anything under `src/types/`.
 
 ---
 

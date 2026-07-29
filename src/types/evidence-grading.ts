@@ -1,4 +1,4 @@
-import type { EvidenceGrade } from "./index";
+import type { EvidenceGrade } from "./primitives";
 
 // Domain — effect-level, multi-dimensional evidence grading (Design §3.1).
 // Plan SC: replace an opaque single letter with a transparent, traceable,

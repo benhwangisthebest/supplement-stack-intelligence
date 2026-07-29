@@ -3,7 +3,7 @@
 // Plan SC-2: nothing here touches a DB; a proposal is data until the user confirms.
 import type { Citation } from "./advisor";
 import type { DraftFlag } from "./evaluation";
-import type { StackItemInput, StackInput } from "@/lib/validation/schemas";
+import type { StackItemInput, StackInput } from "./stack";
 
 /** The user-selected v7 action surface (Plan §3.1). */
 export type AdvisorActionType =

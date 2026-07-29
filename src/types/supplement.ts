@@ -1,4 +1,4 @@
-import type { DoseRange, SupplementForm } from "./index";
+import type { DoseRange, SupplementForm } from "./primitives";
 
 // Design §3.1 — seed entity (read-only TS module)
 export interface Supplement {

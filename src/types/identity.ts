@@ -2,7 +2,7 @@
 // identity layer. Design Ref: §3.1 — no DB, no migration; the card is DERIVED on
 // the fly from existing profile/stack/evidence signals, never stored.
 // Plan SC: identity describes supplement-THINKING style, never health status.
-import type { OutcomeCategory } from "./index";
+import type { OutcomeCategory } from "./primitives";
 import type { Citation } from "./advisor"; // reuse v6 provenance for deep-linking
 
 // ---- Trait axes (Design §3.1, §3.2) -----------------------------------------

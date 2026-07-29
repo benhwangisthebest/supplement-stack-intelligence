@@ -1,4 +1,4 @@
-import type { EvidenceGrade } from "./index";
+import type { EvidenceGrade } from "./primitives";
 
 // Domain layer — biomarker registry + relevance entities (seed-as-code, no DB).
 // Design Ref: §3.1 — biomarker-intelligence data model.

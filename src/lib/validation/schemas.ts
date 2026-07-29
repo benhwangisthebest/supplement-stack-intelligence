@@ -7,6 +7,10 @@ import {
 } from "@/types";
 import { normalizeSideEffect } from "@/lib/side-effects/vocab";
 import type { ReportedSideEffect } from "@/types/side-effect";
+import type {
+  StackInput as DomainStackInput,
+  StackItemInput as DomainStackItemInput,
+} from "@/types/stack";
 
 const outcome = z.enum(OUTCOME_CATEGORIES as [string, ...string[]]);
 const intent = z.union([outcome, z.literal("experimental")]);
@@ -128,3 +132,22 @@ export const stackItemInputSchema = z
     path: ["supplementId"],
   });
 export type StackItemInput = z.infer<typeof stackItemInputSchema>;
+
+// ---- Domain conformance (architecture-boundary-repair, Module 3) -------------
+// src/types owns these write contracts; the Zod schemas above must CONFORM to
+// them. This inverts the old direction, where src/types/advisor-action.ts
+// imported z.infer aliases from this file (Domain → Application).
+//
+// Equal<> is INVARIANT (the function-parameter-position trick). A naive
+// `A extends B ? B extends A` comparison is covariant and lets required↔optional
+// drift pass silently — exactly the drift a changed `.default()` would produce.
+// If either schema diverges, Expect<> fails its `extends true` constraint and
+// tsc reports TS2344 right here. Type-level only: zero runtime cost.
+type Equal<X, Y> =
+  (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
+type Expect<T extends true> = T;
+
+export type _StackInputConformsToDomain = Expect<Equal<StackInput, DomainStackInput>>;
+export type _StackItemInputConformsToDomain = Expect<
+  Equal<StackItemInput, DomainStackItemInput>
+>;

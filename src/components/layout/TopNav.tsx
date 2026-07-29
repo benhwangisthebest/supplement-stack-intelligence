@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getUser } from "@/lib/auth/session";
-import { signOut } from "@/app/auth/actions";
+import { signOut } from "@/lib/auth/actions";
 import { NavPills } from "./NavPills";
 
 // Clean three-pillar navigation (Design §5.1, Plan §4.1).

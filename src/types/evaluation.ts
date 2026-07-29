@@ -1,4 +1,4 @@
-import type { EvidenceGrade } from "./index";
+import type { EvidenceGrade } from "./primitives";
 
 export type FlagSeverity = "info" | "warning" | "critical";
 
