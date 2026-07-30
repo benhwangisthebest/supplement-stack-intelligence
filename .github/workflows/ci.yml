@@ -1,0 +1,90 @@
+name: CI
+
+# Phase 0 U5 — minimal verification workflow.
+# Spec: docs/01-plan/phase-0-integration-enforcement.plan.md (U5)
+# Review: docs/reviews/phase-0-plan-review.md (P-03, P-06, P-07, P-10, P-11)
+#
+# Deliberately minimal. Four blocking steps that mirror the local suite:
+#   npm ci -> typecheck -> unit+architecture tests -> production build
+#
+# NOT included, each for a verified reason:
+#   * lint            - `next lint` has zero eslint dependency and no config,
+#                       so it passes vacuously or fails spuriously (P-10).
+#   * boundary tests  - `src/architecture/boundaries.test.ts` already yields 16
+#                       tests under the standard `vitest run`; a separate step
+#                       would be pure duplication (P-06, verified).
+#   * coverage gate   - per-engine thresholds fail today (P-07); widening scope
+#                       does not imply a global floor is safe (P-08).
+#   * E2E             - 17/23 specs are E2E_LIVE-gated and the suite races a
+#                       single shared seeded user under fullyParallel (P-11).
+#   * secrets         - none required. getSupabaseEnv() reads process.env inside
+#                       the function body and throws at call time, and the only
+#                       generateStaticParams route imports no Supabase client,
+#                       so `next build` and the unit suite need no credentials.
+#                       The repository is PUBLIC: adding secrets would create an
+#                       exfiltration surface for zero benefit (P-03).
+
+on:
+  # Verification before integration into main.
+  pull_request:
+    branches: [main]
+  # Post-merge verification, plus feature branches so the first run can be
+  # observed before main is fast-forwarded (Phase 0 exit criterion 3).
+  push:
+    branches:
+      - main
+      - "feat/**"
+  # Manual re-run. Note: only selectable in the UI once this file exists on the
+  # default branch.
+  workflow_dispatch:
+
+# Least privilege. This workflow only reads the repo; it publishes nothing.
+# pull_request_target is deliberately NOT used - it would expose repository
+# scope to fork pull requests on a public repository.
+permissions:
+  contents: read
+
+# One run per ref. Supersede an in-flight run when new commits arrive.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck / test / build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # The repository declares no Node version (no engines field, no .nvmrc,
+      # no .node-version), so CI pins one explicitly. 20 LTS is the Phase 0
+      # approved choice and is fully supported by Next 15.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # `npm ci` (never `npm install`) - reproducible install from the
+      # lockfile (lockfileVersion 3). Fails if the lockfile is out of sync.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Includes the architecture-boundary suite - no separate step needed.
+      - name: Unit and architecture tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
