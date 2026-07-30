@@ -1,7 +1,9 @@
 import type { Product } from "@/types";
 
 // Design §8.5 — mock product catalog keyed by supplementId. Curated sample data,
-// not real listings; affiliate links are illustrative placeholders.
+// not real listings. v13 (evidence-disclosure): affiliateLink is null throughout —
+// placeholder URLs pointed at a domain that sells nothing, so the card now renders
+// no link rather than a dead one. Real listings need real URLs.
 // Doses use the same unit as each supplement's generalDose so dose-fit can compute.
 export const SEED_PRODUCTS: Product[] = [
   // ---- Magnesium (target ~200-400 mg) ----
@@ -18,7 +20,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: [],
     testingTags: ["NSF"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/mag-acme",
+    affiliateLink: null,
     qualityNotes: "Chelated glycinate, well absorbed; no fillers.",
   },
   {
@@ -52,7 +54,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: [],
     testingTags: ["Informed Sport"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/cre-purelab",
+    affiliateLink: null,
     qualityNotes: "Creapure-grade, third-party tested.",
   },
   {
@@ -86,7 +88,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: [],
     testingTags: ["USP"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/vitd-sunwell",
+    affiliateLink: null,
     qualityNotes: "D3 in olive oil; USP verified.",
   },
   {
@@ -120,7 +122,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: ["fish"],
     testingTags: ["IFOS"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/fish-nordic",
+    affiliateLink: null,
     qualityNotes: "IFOS 5-star, low oxidation.",
   },
   {
@@ -154,7 +156,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: [],
     testingTags: ["NSF"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/thea-calm",
+    affiliateLink: null,
     qualityNotes: "Suntheanine brand; tested.",
   },
 
@@ -190,7 +192,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: [],
     testingTags: ["USP"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/mela-night",
+    affiliateLink: null,
     qualityNotes: "Low-dose, USP verified.",
   },
   {
@@ -224,7 +226,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: ["nightshade"],
     testingTags: ["NSF"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/ashwa-root",
+    affiliateLink: null,
     qualityNotes: "KSM-66 standardized extract.",
   },
 
@@ -260,7 +262,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: [],
     testingTags: ["USP"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/zinc-immune",
+    affiliateLink: null,
     qualityNotes: "Picolinate form; USP verified.",
   },
 
@@ -332,7 +334,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: [],
     testingTags: ["NSF"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/nac-antiox",
+    affiliateLink: null,
     qualityNotes: "Tested NAC.",
   },
 
@@ -350,7 +352,7 @@ export const SEED_PRODUCTS: Product[] = [
     allergenTags: ["milk"],
     testingTags: ["Informed Sport"],
     additivesTags: [],
-    affiliateLink: "https://example.org/p/prot-purelab",
+    affiliateLink: null,
     qualityNotes: "Isolate, tested, minimal additives.",
   },
   {

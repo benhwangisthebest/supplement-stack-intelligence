@@ -130,7 +130,7 @@ interface SupplementDetail extends SearchHit {
   sideEffects: string[];
   contraindications: string[];
   allergenTags: string[];
-  papers: { id: string; title: string; year: number; studyType: string }[];
+  papers: { id: string; title: string }[];
 }
 
 export const getSupplement: AdvisorTool<GetSupplementInput, SupplementDetail> = {
@@ -151,7 +151,10 @@ export const getSupplement: AdvisorTool<GetSupplementInput, SupplementDetail> = 
     const papers = effects
       .flatMap((e) => getPapersForEffect(e))
       .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i)
-      .map((p) => ({ id: p.id, title: p.title, year: p.year, studyType: p.studyType }));
+      // v13 (evidence-disclosure): year/studyType removed. A grounded tool's output is
+      // restated by the model as sourced fact, so recalled citation metadata was the
+      // most damaging place fabricated provenance could surface. Plan SC: SC-5
+      .map((p) => ({ id: p.id, title: p.title }));
     const detail: SupplementDetail = {
       ...hitFor(supp),
       aliases: supp.aliases,
@@ -170,8 +173,8 @@ export const getSupplement: AdvisorTool<GetSupplementInput, SupplementDetail> = 
       ...papers.map((p) => ({
         kind: "paper" as const,
         refId: p.id,
-        label: `${p.title} (${p.year})`,
-        detail: p.studyType,
+        label: p.title,
+        detail: "Illustrative evidence summary",
       })),
     ];
     return ok(detail, citations);

@@ -3,6 +3,7 @@ import type { Effect, Paper, Supplement } from "@/types";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { EffectGradeBadge } from "@/components/evidence/EffectGradeBadge";
 import { EvidenceBreakdown } from "@/components/evidence/EvidenceBreakdown";
+import { IllustrativeDatasetNotice } from "@/components/evidence/IllustrativeDatasetNotice";
 import { PaperSummaryCard } from "@/components/evidence/PaperSummaryCard";
 import { WhatToWatch } from "@/components/library/WhatToWatch";
 
@@ -25,8 +26,10 @@ export function SupplementDetail({
     { id: "dose", label: "Dose", content: <DoseTab supplement={supplement} effects={effects} /> },
     { id: "effects", label: "Effects", content: <EffectsTab effects={effects} papers={papers} /> },
     {
+      // v13: label only — the id stays "papers" so v8's anchorTabMap and the
+      // #paper-{id} deep-link targets keep working.
       id: "papers",
-      label: `Papers${papers.length ? ` (${papers.length})` : ""}`,
+      label: `Evidence summaries${papers.length ? ` (${papers.length})` : ""}`,
       content: <PapersTab papers={papers} />,
     },
     { id: "related", label: "Related", content: <RelatedTab related={related} /> },
@@ -133,6 +136,8 @@ function DoseTab({ supplement, effects }: { supplement: Supplement; effects: Eff
 function EffectsTab({ effects, papers }: { effects: Effect[]; papers: Paper[] }) {
   return (
     <div className="space-y-4">
+      {/* Plan SC: SC-4 — evidence-derived content requires the disclosure. */}
+      <IllustrativeDatasetNotice />
       {effects.map((e) => (
         // v8: anchor target for advisor provenance chips (citationHref → #effect-{id}).
         <article
@@ -160,10 +165,12 @@ function EffectsTab({ effects, papers }: { effects: Effect[]; papers: Paper[] })
 
 function PapersTab({ papers }: { papers: Paper[] }) {
   if (papers.length === 0) {
-    return <p className="text-sm text-muted">No study summaries seeded yet.</p>;
+    return <p className="text-sm text-muted">No evidence summaries seeded yet.</p>;
   }
   return (
     <div className="space-y-3">
+      {/* Plan SC: SC-4 — evidence-derived content requires the disclosure. */}
+      <IllustrativeDatasetNotice />
       {papers.map((p) => (
         // v8: anchor target for advisor 'paper' provenance chips (#paper-{id}).
         <div key={p.id} id={`paper-${p.id}`} className="scroll-mt-24">

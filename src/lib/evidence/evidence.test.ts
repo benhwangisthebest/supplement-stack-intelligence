@@ -49,7 +49,9 @@ describe("lib/evidence lookups", () => {
     expect(best).toBeDefined();
     const papers = getPapersForEffect(best!);
     expect(papers.length).toBeGreaterThan(0);
-    expect(papers[0]?.studyType).toBeDefined();
+    // v13: asserted studyType — a fabricated provenance field, now deleted. The
+    // resolution contract is the id→summary link, so assert on content instead.
+    expect(papers[0]?.summary).toBeTruthy();
   });
 
   it("resolves related supplements", () => {

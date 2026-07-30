@@ -1,22 +1,17 @@
 // Design §3.1 — seed entity (read-only TS module)
-export type StudyType =
-  | "meta-analysis"
-  | "RCT"
-  | "cohort"
-  | "observational"
-  | "animal"
-  | "in-vitro";
-
+//
+// v13 (evidence-disclosure): this is an ILLUSTRATIVE EVIDENCE SUMMARY, not a citable
+// study. The provenance fields (authors/journal/year/link/studyType/sampleSize) are
+// deliberately ABSENT, not optional: `link: string` being REQUIRED is what compelled
+// 20 fabricated placeholder URLs in the first place. With no field to hold provenance,
+// fabricating it is a type error rather than a judgement call.
+//
+// Plan SC: SC-1 — provenance is unauthorable by construction.
+// Re-adding any of these fields requires real, verified DOI/PMID data. Never invent it.
 export interface Paper {
   id: string;
   title: string;
-  authors: string;
-  year: number;
-  journal: string;
-  link: string;
-  studyType: StudyType;
   population: string;
-  sampleSize: number;
   intervention: string;
   dose: string;
   duration: string;

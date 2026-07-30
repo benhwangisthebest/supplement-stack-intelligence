@@ -47,23 +47,16 @@ export const effectSchema = z.object({
   paperIds: z.array(z.string()),
 });
 
+// v13 (evidence-disclosure): provenance fields removed. This schema was the SECOND
+// mechanism compelling fabrication — `link: z.string().url()` demanded a well-formed
+// URL, so with no real source, a placeholder was the only way to pass validation.
+// TypeScript could not catch this one: a Zod schema is a runtime structure the
+// compiler cannot cross-check against the Paper type. Keep the two in step by hand.
+// Plan SC: SC-1
 export const paperSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
-  authors: z.string().min(1),
-  year: z.number().int(),
-  journal: z.string().min(1),
-  link: z.string().url(),
-  studyType: z.enum([
-    "meta-analysis",
-    "RCT",
-    "cohort",
-    "observational",
-    "animal",
-    "in-vitro",
-  ]),
   population: z.string(),
-  sampleSize: z.number().int().nonnegative(),
   intervention: z.string(),
   dose: z.string(),
   duration: z.string(),

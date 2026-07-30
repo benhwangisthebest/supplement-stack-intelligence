@@ -47,22 +47,24 @@ export function EvidenceBreakdown({
               <span className="text-xs text-muted">{r.ratingLabel}</span>
             </div>
             <p className="mt-0.5 pl-[9.5rem] text-xs text-body">{r.rationale}</p>
+            {/* v13 (evidence-disclosure): inert tags, not anchors. These pointed at
+                fabricated placeholder URLs and were labelled with recalled, unverified
+                author/year metadata. Same idiom as ProvenanceChips: a non-linkable
+                source renders as a tag, never as a dead link.
+                Plan SC: SC-3 */}
             {r.paperIds.length > 0 && (
               <p className="mt-0.5 pl-[9.5rem] text-xs">
                 {r.paperIds.map((id) => {
                   const paper = paperById.get(id);
                   if (!paper) return null;
                   return (
-                    <a
+                    <span
                       key={id}
-                      href={paper.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mr-2 inline-block rounded bg-white px-1.5 py-0.5 text-[11px] text-brand ring-1 ring-brand/20 hover:ring-brand/40"
+                      className="mr-2 mt-1 inline-block max-w-[16rem] truncate align-bottom rounded bg-white px-1.5 py-0.5 text-[11px] text-body ring-1 ring-hairline"
                       title={paper.title}
                     >
-                      {paper.authors.split(",")[0]} {paper.year}
-                    </a>
+                      {paper.title}
+                    </span>
                   );
                 })}
               </p>

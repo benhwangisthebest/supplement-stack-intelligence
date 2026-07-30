@@ -11,7 +11,7 @@ const KIND_LABEL: Record<Citation["kind"], string> = {
   "interaction-rule": "Interaction",
   "biomarker-rule": "Biomarker",
   "lab-trend": "Lab trend",
-  paper: "Paper",
+  paper: "Evidence summary", // v13: not a citable paper — see types/paper.ts
   "stack-eval": "Stack",
   "side-effect": "Side-effect",
 };

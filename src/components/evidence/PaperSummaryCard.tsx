@@ -1,20 +1,25 @@
 import type { Paper } from "@/types";
 
-// Design §5.3, §5.4 — seeded study summary card (title, type, dose, outcomes, limitations).
+// Design Ref: §5.1 — illustrative evidence summary card.
+//
+// v13 (evidence-disclosure): the provenance line (authors · journal (year) · n=…), the
+// study-type pill, and the "View source ↗" anchor are gone. They presented recalled,
+// unverified citation metadata as a real, checkable source. What remains is what the
+// summary can honestly support: who it concerns, what was taken, how much, for how
+// long, what was seen, and what the limits are.
+//
+// Plan SC: SC-3 (no seed-derived external link), SC-6 (educational content preserved)
 export function PaperSummaryCard({ paper }: { paper: Paper }) {
   return (
     <article className="rounded-lg border border-hairline p-4">
-      <div className="flex items-start justify-between gap-3">
-        <h4 className="text-sm font-medium text-ink">{paper.title}</h4>
-        <span className="shrink-0 rounded-full bg-surface-card px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-body">
-          {paper.studyType}
-        </span>
-      </div>
-      <p className="mt-1 text-xs text-muted">
-        {paper.authors} · {paper.journal} ({paper.year}) · n={paper.sampleSize}
-      </p>
+      <h4 className="text-sm font-medium text-ink">{paper.title}</h4>
+      <p className="mt-1 text-xs text-muted">{paper.population}</p>
 
       <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+        <div>
+          <dt className="font-medium text-body">Intervention</dt>
+          <dd className="text-body">{paper.intervention}</dd>
+        </div>
         <div>
           <dt className="font-medium text-body">Dose</dt>
           <dd className="text-body">{paper.dose}</dd>
@@ -38,15 +43,6 @@ export function PaperSummaryCard({ paper }: { paper: Paper }) {
           <span className="font-medium">Limitations:</span> {paper.limitations}
         </p>
       </details>
-
-      <a
-        href={paper.link}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-3 inline-block text-xs font-medium text-brand underline"
-      >
-        View source ↗
-      </a>
     </article>
   );
 }
