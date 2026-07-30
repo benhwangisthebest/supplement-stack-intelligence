@@ -50,13 +50,23 @@ npm run dev                  # http://localhost:3000
 
 ## Project status
 
-MVP + two extensions complete and runtime-verified:
+**Current maturity: post-MVP, in transition to functional beta.**
 
-| Feature | Status |
-|---------|--------|
-| Core loop (Library / Profile / Stack Lab / evaluate / compare) | ✅ |
-| Protocol Builder | ✅ |
-| Product Match | ✅ |
+The three pillars plus thirteen further milestones (v2–v13) are implemented — including the AI advisor,
+medication/food interactions, biomarkers, lab timeline, daily check-ins, the side-effect engine, and the
+identity layer. Verified 2026-07-30: `tsc --noEmit` clean, **408/408** unit tests passing, production build
+succeeding, and RLS enabled with a matching policy on every table.
+
+Production-readiness gaps remain, and they are tracked rather than unknown:
+
+- **Evidence grounding** — 19 of 27 effect grades are hand-authored rather than derived from verified literature.
+- **Observability** — no logging, error reporting, or request correlation exists yet.
+- **Release enforcement** — no CI; `main` is not yet current with the feature work.
+- **Selected trust boundaries** — the advisor write path and the DB mapper layer lack unit coverage.
+
+Do not treat this as production-ready. See [`docs/project-status.md`](docs/project-status.md) for the
+per-subsystem classification, [`docs/roadmap.md`](docs/roadmap.md) for the phased plan, and
+[`CLAUDE.md`](CLAUDE.md) for the operating rules.
 
 Built with the bkit PDCA workflow; per-feature Plan/Design/Analysis/Report docs live under `docs/archive/`.
 

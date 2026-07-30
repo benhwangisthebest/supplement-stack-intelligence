@@ -1,3 +1,27 @@
+> ## ⚠️ SUPERSEDED — HISTORICAL MVP BRIEF (reference only)
+>
+> **The active instruction file is the repository-root `CLAUDE.md`.** Read that first.
+>
+> This document is the **original MVP brief**. Its permanent product, safety, and engineering rules have
+> been promoted into the root `CLAUDE.md`. Its **MVP scope caps are retired** — specifically the
+> `MVP Scope`, `Out of Scope for MVP`, and `Development Priorities` sections below, plus Development
+> Rules 3 and 10. Six subsystems that "Out of Scope for MVP" prohibits are already built and shipping
+> (lab import, medication interactions, biomarkers, check-ins, identity/gamification, AI advisor).
+>
+> **Precedence: rank 8 — the lowest.** This file may never override the non-negotiable rules, the user's
+> current instruction, the repository-root `CLAUDE.md`, `docs/product-direction.md`, an approved plan, or
+> `docs/roadmap.md`. It also never overrides the existing implementation as evidence of current state.
+> See the authoritative hierarchy in the repository-root `CLAUDE.md` §6.
+>
+> - Why each constraint existed, and whether its underlying risk still needs controlling:
+>   `docs/archive/original-mvp-instructions.md`
+> - Current state of the codebase: `docs/project-status.md`
+> - What to do next: `docs/roadmap.md`
+>
+> Retained here unmodified for historical rationale. Do not cite it for present-day scope decisions.
+
+---
+
 # Claude.me
 
 ## Project Name
