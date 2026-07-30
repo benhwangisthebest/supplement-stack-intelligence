@@ -29,3 +29,39 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ---------------------------------------------------------------------------
+# Phase 0 U1 — repository ignore hygiene
+# (docs/01-plan/phase-0-integration-enforcement.plan.md)
+# The remote is PUBLIC. These are generated, local, or potentially sensitive
+# artifacts that must never be swept into a commit.
+# NOTE: these rules prevent FUTURE accidents only. Files already tracked before
+# this change stay tracked — see the plan for the separate, approved cleanup.
+# ---------------------------------------------------------------------------
+
+# Playwright output — traces, screenshots, videos, and failure artifacts that
+# land in the default outputDir (playwright.config.ts sets trace:
+# "on-first-retry"). The glob also covers the stray "test-results 2/" duplicate.
+/test-results*/
+/playwright-report/
+/blob-report/
+/.playwright/
+
+# Playwright authentication state — never commit a saved session
+storageState*.json
+*.auth.json
+/.auth/
+
+# bkit local audit + runtime ledgers (per-session, machine-local)
+.bkit/audit/
+.bkit/runtime/token-ledger.ndjson
+.bkit/runtime/first-run-seen.json
+
+# graphify generated knowledge graph — 29 MB / 223 files, regenerable via
+# `graphify update .` (AST-only, no API cost). Ignored for the same reason as
+# .next/ and coverage/. Resolved by plan review finding P-18.
+/graphify-out/
+
+# Editor temporary files
+*.swp
+*.swo
