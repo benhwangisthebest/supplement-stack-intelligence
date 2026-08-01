@@ -24,6 +24,7 @@ import { describe, expect, it } from "vitest";
 import { SEED_SUPPLEMENTS } from "@/data/seed-supplements";
 import { SEED_PRODUCTS } from "@/data/seed-products";
 import { SEED_BIOMARKERS } from "@/data/seed-biomarkers";
+import { SEED_BIOMARKER_RELEVANCE } from "@/data/seed-biomarker-relevance";
 import { SEED_EFFECTS } from "@/data/seed-effects";
 import { SEED_PAPERS } from "@/data/seed-papers";
 import { SEED_INTERACTIONS } from "@/data/seed-interactions";
@@ -67,6 +68,12 @@ const LIVE: Record<string, readonly string[]> = {
   supplements: SEED_SUPPLEMENTS.map((s) => s.id),
   products: SEED_PRODUCTS.map((p) => p.id),
   biomarkers: SEED_BIOMARKERS.map((b) => b.id),
+  // R2 / closeout C-7. A SEPARATE namespace from `biomarkers`: this is the
+  // rule's own id, not the biomarker it triggers on. It reaches persistence via
+  // LabFinding.ruleId (= rule.id, src/lib/biomarkers/index.ts) → Citation.refId
+  // with kind='biomarker-rule' (src/lib/advisor/tools.ts). Merging the two
+  // because they share the same jsonb column would leave 15 rule ids ungoverned.
+  biomarkerRelevanceRules: SEED_BIOMARKER_RELEVANCE.map((r) => r.id),
   effects: SEED_EFFECTS.map((e) => e.id),
   papers: SEED_PAPERS.map((p) => p.id),
   // Both rule sets flow through InteractionFlag.ruleId, so they share one
@@ -226,5 +233,74 @@ describe("U8 — tombstones express an explicit migration decision", () => {
       )
       .map(({ name, t }) => `${name}: "${t.id}" -> "${t.supersededBy}", which is itself retired`);
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("U8 — a citation refId site belongs to exactly one namespace", () => {
+  // Closeout finding C-7. `advisor_messages.citations[].refId` is ONE jsonb
+  // field carrying several unrelated id spaces, told apart only by `kind`. The
+  // manifest used to record kind='biomarker-rule' under `biomarkers`, which
+  // reads as "biomarker ids are persisted there" — they are not; the stored
+  // value is a BiomarkerRelevanceRule.id. That mis-attribution is precisely
+  // what left 15 rule ids ungoverned while the namespace looked covered.
+  //
+  // kind='stack-eval' is deliberately absent: its refId is a runtime composite
+  // (`${category}:${stackItemId}`), not reference data, so freezing it would be
+  // the over-reach FREE_TEXT_COLUMNS exists to prevent.
+  const CITATION_KIND_OWNER: Record<string, string> = {
+    "effect-grade": "effects",
+    paper: "papers",
+    "interaction-rule": "interactionRules",
+    "biomarker-rule": "biomarkerRelevanceRules",
+    "lab-trend": "biomarkers",
+    "side-effect": "sideEffectLabels",
+  };
+
+  for (const [kind, owner] of Object.entries(CITATION_KIND_OWNER)) {
+    it(`kind='${kind}' is claimed by ${owner} and by no other namespace`, () => {
+      const claimants = Object.entries(manifest.namespaces)
+        .filter(([, ns]) => ns.persistedAt.some((site) => site.includes(`kind='${kind}'`)))
+        .map(([name]) => name)
+        .sort();
+      expect(
+        claimants,
+        `advisor_messages.citations[].refId where kind='${kind}' must be declared by exactly ` +
+          `["${owner}"], but is declared by [${claimants.join(", ")}]. Two namespaces claiming one ` +
+          `citation kind — or the wrong one claiming it — hides an entire id space from this guard.`,
+      ).toEqual([owner]);
+    });
+  }
+});
+
+describe("U8 — biomarker ids and biomarker-relevance rule ids are distinct contracts", () => {
+  // Both spaces live in the same column and are discriminated ONLY by
+  // Citation.kind. If a rule id ever equalled a biomarker id, a stored citation
+  // whose kind was mis-set would silently resolve against the wrong dataset
+  // instead of failing loudly.
+  it("no BiomarkerRelevanceRule.id collides with a Biomarker.id", () => {
+    const biomarkerIds = new Set(LIVE.biomarkers);
+    const collisions = LIVE.biomarkerRelevanceRules.filter((id) => biomarkerIds.has(id));
+    expect(
+      collisions,
+      `${collisions.length} id(s) exist in BOTH the biomarkers and biomarkerRelevanceRules ` +
+        `namespaces: ${collisions.join(", ")}. They share advisor_messages.citations[].refId and ` +
+        `are told apart only by kind, so an overlap makes a mis-kinded citation resolvable against ` +
+        `the wrong dataset.`,
+    ).toEqual([]);
+  });
+
+  it("every relevance rule's biomarkerId resolves to a registered biomarker id", () => {
+    // The two namespaces are independent, but the rule's FK-like biomarkerId
+    // field must still point into the biomarkers namespace — otherwise a
+    // biomarker rename would strand a rule while both namespaces individually
+    // still looked healthy.
+    const biomarkerIds = new Set(LIVE.biomarkers);
+    const dangling = SEED_BIOMARKER_RELEVANCE.filter(
+      (r) => !biomarkerIds.has(r.biomarkerId),
+    ).map((r) => `${r.id} -> biomarkerId "${r.biomarkerId}"`);
+    expect(
+      dangling,
+      `${dangling.length} relevance rule(s) reference an unknown biomarker: ${dangling.join(", ")}`,
+    ).toEqual([]);
   });
 });

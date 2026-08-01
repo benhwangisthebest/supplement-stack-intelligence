@@ -74,7 +74,7 @@
       "source": "SEED_BIOMARKERS[].id",
       "persistedAt": [
         "lab_markers.biomarker_id (0002, text, no FK, indexed)",
-        "advisor_messages.citations[].refId where kind='biomarker-rule' (0003, jsonb)"
+        "advisor_messages.citations[].refId where kind='lab-trend' (0003, jsonb) — TrendSignal.biomarkerId, set in src/lib/advisor/tools.ts labTrends"
       ],
       "dereferenced": true,
       "ids": [
@@ -91,6 +91,32 @@
         "cortisol-am",
         "alt",
         "calcium-serum"
+      ],
+      "tombstones": []
+    },
+    "biomarkerRelevanceRules": {
+      "source": "SEED_BIOMARKER_RELEVANCE[].id (src/data/seed-biomarker-relevance.ts)",
+      "persistedAt": [
+        "advisor_messages.citations[].refId where kind='biomarker-rule' (0003, jsonb) — LabFinding.ruleId, assigned rule.id in src/lib/biomarkers/index.ts and set as refId in src/lib/advisor/tools.ts biomarkerFindings"
+      ],
+      "dereferenced": false,
+      "dereferencedBy": "NOT a Biomarker.id. This is the BiomarkerRelevanceRule's own id — a (biomarker, trigger, supplement) rule identity that happens to be persisted in the same jsonb column as other citation refIds, discriminated only by kind. citationHref() returns null for this kind, so a rename breaks no link, but refId IS the stability key for citation de-duplication (citationKey in src/lib/advisor/citations.ts, and the `${kind}:${refId}` key in src/lib/advisor/agent.ts), so a rename silently splits or merges the identity of already-stored citations. Same shape as interactionRules.",
+      "ids": [
+        "vitamin-d-25oh-low--vitamin-d",
+        "magnesium-serum-low--magnesium",
+        "zinc-serum-low--zinc",
+        "vitamin-b12-serum-low--vitamin-b12",
+        "homocysteine-high--vitamin-b12",
+        "hba1c-high--berberine",
+        "fasting-glucose-high--berberine",
+        "ldl-cholesterol-high--berberine",
+        "ldl-cholesterol-high--fish-oil",
+        "triglycerides-high--fish-oil",
+        "hs-crp-high--fish-oil",
+        "cortisol-am-high--ashwagandha",
+        "alt-high--nac",
+        "vitamin-d-25oh-high--vitamin-d",
+        "calcium-serum-high--vitamin-d"
       ],
       "tombstones": []
     },
