@@ -18,6 +18,7 @@
 // glob rather than the old lib-only `include`.
 
 import { describe, expect, it } from "vitest";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -96,23 +97,84 @@ const DOC = "docs/02-design/architecture-boundaries.md";
 
 // ---------------------------------------------------------------- discovery --
 
-function walk(dirAbs: string, acc: string[] = []): string[] {
-  if (!fs.existsSync(dirAbs)) return acc;
-  for (const entry of fs.readdirSync(dirAbs, { withFileTypes: true })) {
-    const abs = path.join(dirAbs, entry.name);
-    if (entry.isDirectory()) walk(abs, acc);
-    else if (
-      /\.tsx?$/.test(entry.name) &&
-      !/\.(test|spec)\.tsx?$/.test(entry.name) &&
-      !entry.name.endsWith(".d.ts")
-    ) {
-      acc.push(path.relative(REPO_ROOT, abs).split(path.sep).join("/"));
-    }
+/**
+ * The repository inventory is Git's tracked-file set, NOT the filesystem.
+ *
+ * Phase 0 R1. This previously walked `src/` with `fs.readdirSync`, so the
+ * verdict was a property of one developer's working directory rather than of
+ * the repository. A macOS/iCloud sync duplicate — `src/data/id-stability.test
+ * 2.ts` — ends in `" 2.ts"`, not `".test.ts"`, so the old basename-suffix test
+ * exemption did not match it and it was linted as product data, failing B4b
+ * against a file that is not in Git, not in the build, and not in the clean CI
+ * checkout. Widening that regex would have hidden the symptom and left the
+ * filesystem dependence in place; the defect is the *source of truth*, not the
+ * pattern.
+ *
+ * `--cached` is what makes this correct: it yields tracked paths only, so
+ * untracked pollution and ignored generated output are both structurally
+ * incapable of reaching a rule. A file only earns architectural scrutiny by
+ * being committed — which is also exactly what CI reviews.
+ *
+ * Robustness notes:
+ *  - `execFileSync` takes an argv array, so no filename is ever interpolated
+ *    into a shell string.
+ *  - `-z` emits NUL-delimited paths, which survives spaces, newlines, and
+ *    non-ASCII bytes, and bypasses git's `core.quotePath` escaping entirely.
+ *  - `-C REPO_ROOT` makes the result independent of the process cwd.
+ *  - git always reports repo-relative POSIX paths, on every platform, so the
+ *    strings below need no separator normalization and stay comparable to the
+ *    `src/...` literals in SCANNED_LAYERS on Windows as well.
+ */
+function trackedPathsUnderSrc(): string[] {
+  let stdout: string;
+  try {
+    stdout = execFileSync("git", ["-C", REPO_ROOT, "ls-files", "-z", "--cached", "--", "src"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 64 * 1024 * 1024,
+    });
+  } catch (cause) {
+    throw new Error(
+      "Architecture boundary guardrail could not read the tracked file set.\n" +
+        `Ran: git -C ${REPO_ROOT} ls-files -z --cached -- src\n` +
+        "This suite defines the repository as Git's tracked files, so it cannot run outside a\n" +
+        "Git worktree or without `git` on PATH. If you are running from a source archive rather\n" +
+        "than a clone, initialise a repository or run the suite from the clone.\n" +
+        `Underlying error: ${cause instanceof Error ? cause.message : String(cause)}`,
+    );
   }
-  return acc;
+
+  const paths = stdout.split("\0").filter((p) => p.length > 0);
+  if (paths.length === 0) {
+    throw new Error(
+      "Architecture boundary guardrail found zero tracked files under src/.\n" +
+        "A guardrail that scans nothing passes vacuously, so this is a hard failure rather\n" +
+        "than a silent green. Check that the working directory is the repository clone.",
+    );
+  }
+  return paths;
 }
 
-const ALL_FILES = SCANNED_LAYERS.flatMap((l) => walk(path.join(REPO_ROOT, l))).sort();
+/** Every tracked path under src/, any extension — the partition rule needs non-.ts files too. */
+const TRACKED_SRC_PATHS = trackedPathsUnderSrc();
+
+/**
+ * Test files are excluded by the repository's own naming convention — the same
+ * `*.test.*` / `*.spec.*` contract that `vitest.config.ts` and
+ * `playwright.config.ts` use to decide what is a test. They are tracked, and
+ * they are legitimately allowed to import `vitest`, `node:fs` and friends,
+ * which product code under src/types and src/data may not.
+ *
+ * This regex no longer has to be defensive: the pathological inputs that
+ * defeated it were untracked, and untracked paths can no longer get here.
+ */
+const isTestPath = (p: string) => /\.(test|spec)\.tsx?$/.test(p);
+const isSourcePath = (p: string) =>
+  /\.tsx?$/.test(p) && !isTestPath(p) && !p.endsWith(".d.ts");
+
+const ALL_FILES = TRACKED_SRC_PATHS.filter(
+  (p) => isSourcePath(p) && SCANNED_LAYERS.some((l) => inLayer(p, l)),
+).sort();
 const TYPES_FILES = ALL_FILES.filter((f) => f.startsWith("src/types/"));
 
 // ------------------------------------------------------------------ parsing --
@@ -328,11 +390,18 @@ describe("architecture boundaries — harness sanity", () => {
   // scanned set covered src/. A new top-level layer must now be a conscious
   // decision — scanned, or exempted with a written reason.
   it("partitions every top-level src/ directory into scanned or exempt", () => {
-    const actual = fs
-      .readdirSync(path.join(REPO_ROOT, "src"), { withFileTypes: true })
-      .filter((e) => e.isDirectory())
-      .map((e) => `src/${e.name}`)
-      .sort();
+    // Derived from the tracked set, not readdir, for the same reason as
+    // ALL_FILES: an untracked scratch directory is not a layer of this
+    // repository, and must not be able to fail — or pass — this rule. A layer
+    // becomes real when a file in it is committed, which is precisely when it
+    // starts needing governance.
+    const actual = [
+      ...new Set(
+        TRACKED_SRC_PATHS.map((p) => p.split("/"))
+          .filter((seg) => seg.length > 2)
+          .map((seg) => `${seg[0]}/${seg[1]}`),
+      ),
+    ].sort();
 
     expect(actual).toEqual([...SCANNED_LAYERS, ...Object.keys(EXEMPT_LAYERS)].sort());
 
