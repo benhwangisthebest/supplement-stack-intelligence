@@ -12,8 +12,10 @@
 // /^import\s+\{/ pattern matches NONE of them. See the parser self-test below.
 //
 // Placement note: this file lives in src/architecture/ (not src/lib/) so it
-// stays outside the coverage `include: ["src/lib/**/*.ts"]` glob and cannot
-// perturb the src/lib/stack-evaluator/** thresholds.
+// cannot perturb the src/lib/stack-evaluator/** coverage thresholds. Since
+// Phase 0 U6 widened coverage `include` to all of `src/`, the property that
+// keeps it out of the report is now the `exclude: ["src/**/*.test.{ts,tsx}"]`
+// glob rather than the old lib-only `include`.
 
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
@@ -24,7 +26,57 @@ import ts from "typescript";
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 /** Layers that are scanned. src/app is a target of rules, never a source. */
-const SCANNED_LAYERS = ["src/types", "src/components", "src/lib"] as const;
+const SCANNED_LAYERS = [
+  "src/types",
+  "src/components",
+  "src/lib",
+  // Phase 0 U7 — previously ungoverned. Nothing stopped either from importing
+  // upward into src/app; that is exactly how src/services came to exist
+  // outside enforcement. CLAUDE.md §4.6.
+  "src/services",
+  "src/data",
+] as const;
+
+/**
+ * Every top-level `src/*` directory NOT in SCANNED_LAYERS, each with the reason
+ * it is exempt. The tree-partition spec below asserts this map plus
+ * SCANNED_LAYERS covers the whole of `src/`, so a new layer cannot appear
+ * silently ungoverned — it must be scanned or consciously exempted here.
+ */
+const EXEMPT_LAYERS: Readonly<Record<string, string>> = {
+  "src/app":
+    "Composition root and top layer. It may legitimately import from every layer below, so it is a target of rules (NO_UPWARD_APP_IMPORT), never a source of them.",
+  "src/architecture":
+    "This guardrail itself. Contains only *.test.ts, which walk() excludes by design, so scanning it would contribute zero files and zero constraints.",
+};
+
+/**
+ * Minimum non-test files each scanned layer must contribute. A single global
+ * floor is not enough: it stays satisfied while an individual layer silently
+ * collapses to zero (a renamed directory, a walk() regression), which would let
+ * every rule pass vacuously for that layer. Floors sit below current counts so
+ * ordinary deletion is not blocked, but far above zero.
+ */
+const LAYER_FLOORS: Readonly<Record<(typeof SCANNED_LAYERS)[number], number>> = {
+  "src/types": 15, // 19 today
+  "src/components": 40, // 56 today
+  "src/lib": 60, // 80 today
+  "src/services": 1, // 1 today
+  "src/data": 8, // 10 today
+};
+
+/**
+ * Layers forbidden from importing src/app. src/types is deliberately absent:
+ * TYPES_IS_A_LEAF is stricter and fires first, giving a better message.
+ */
+const NO_APP_IMPORT_FROM = ["src/components", "src/lib", "src/services", "src/data"] as const;
+
+/**
+ * Layers forbidden from importing src/components. Business and persistence code
+ * must not reach into the UI layer. src/types and src/data are absent because
+ * their own leaf rules are stricter and already forbid it.
+ */
+const NO_UI_IMPORT_FROM = ["src/lib", "src/services"] as const;
 
 /**
  * Bare package specifiers src/types/** is allowed to import. Deliberately empty:
@@ -32,6 +84,13 @@ const SCANNED_LAYERS = ["src/types", "src/components", "src/lib"] as const;
  * reviewable decision — not a silently deleted rule.
  */
 const TYPES_ALLOWED_EXTERNALS: readonly string[] = [];
+
+/**
+ * Bare package specifiers src/data/** is allowed to import. Deliberately empty
+ * for the same reason as TYPES_ALLOWED_EXTERNALS: reference data is inert data,
+ * and every non-test seed file today imports nothing but src/types.
+ */
+const DATA_ALLOWED_EXTERNALS: readonly string[] = [];
 
 const DOC = "docs/02-design/architecture-boundaries.md";
 
@@ -147,6 +206,7 @@ export interface Violation {
 export function classify(fromFileRel: string, spec: string, line = 0): Violation | null {
   const resolved = resolveSpecifier(fromFileRel, spec);
   const fromTypes = inLayer(fromFileRel, "src/types");
+  const fromData = inLayer(fromFileRel, "src/data");
   const isBarrel = fromFileRel === "src/types/index.ts";
   const base = { file: fromFileRel, line, specifier: spec, resolved };
 
@@ -158,6 +218,18 @@ export function classify(fromFileRel: string, spec: string, line = 0): Violation
       fix: "src/types/ is a pure Domain leaf and must not depend on any package. Move the dependency into src/lib/.",
     };
   }
+
+  // Mirrors TYPES_NO_EXTERNAL_DEPS. Bare specifiers must be judged before the
+  // `resolved === null` early return below, or they escape every rule.
+  if (fromData && resolved === null) {
+    if (DATA_ALLOWED_EXTERNALS.includes(spec)) return null;
+    return {
+      ...base,
+      rule: "DATA_NO_EXTERNAL_DEPS",
+      fix: "src/data/ is reference data, not runtime code, and must not depend on any package. Parsing, validation, and I/O belong in src/lib/.",
+    };
+  }
+
   if (resolved === null) return null;
 
   if (fromTypes && !isBarrel && resolved === "src/types") {
@@ -176,14 +248,31 @@ export function classify(fromFileRel: string, spec: string, line = 0): Violation
     };
   }
 
-  if (
-    (inLayer(fromFileRel, "src/components") || inLayer(fromFileRel, "src/lib")) &&
-    inLayer(resolved, "src/app")
-  ) {
+  if (NO_APP_IMPORT_FROM.some((l) => inLayer(fromFileRel, l)) && inLayer(resolved, "src/app")) {
     return {
       ...base,
       rule: "NO_UPWARD_APP_IMPORT",
-      fix: "src/components and src/lib must not import from src/app. Move the shared code down into src/lib/.",
+      fix: `${NO_APP_IMPORT_FROM.join(", ")} must not import from src/app. Move the shared code down into src/lib/.`,
+    };
+  }
+
+  // Reference data is a leaf: it may describe the domain (src/types) and
+  // compose with itself, nothing else. Keeps the future codegen path open —
+  // a seed file that reaches into an engine cannot be regenerated from source
+  // data alone. CLAUDE.md §4.4.
+  if (fromData && !inLayer(resolved, "src/types") && !inLayer(resolved, "src/data")) {
+    return {
+      ...base,
+      rule: "DATA_IS_A_LEAF",
+      fix: "src/data/ may import only src/types/ and other src/data/ modules. Reference data must not depend on engines, persistence, or UI — move the logic into src/lib/ and pass the data in.",
+    };
+  }
+
+  if (NO_UI_IMPORT_FROM.some((l) => inLayer(fromFileRel, l)) && inLayer(resolved, "src/components")) {
+    return {
+      ...base,
+      rule: "NO_UI_IMPORT",
+      fix: `${NO_UI_IMPORT_FROM.join(", ")} must not import from src/components. Dependencies point inward: UI consumes business logic, never the reverse.`,
     };
   }
 
@@ -213,6 +302,50 @@ describe("architecture boundaries — harness sanity", () => {
   it("discovers the source tree", () => {
     expect(ALL_FILES.length).toBeGreaterThan(50);
     expect(TYPES_FILES.length).toBeGreaterThanOrEqual(15);
+  });
+
+  // A global floor stays green while one layer silently collapses to zero, so
+  // assert every scanned layer individually. This is what stops the suite from
+  // "passing" on a subset of the tree.
+  it("scans every layer to its own floor, not just the tree as a whole", () => {
+    const counts = Object.fromEntries(
+      SCANNED_LAYERS.map((l) => [l, ALL_FILES.filter((f) => inLayer(f, l)).length]),
+    ) as Record<(typeof SCANNED_LAYERS)[number], number>;
+
+    for (const layer of SCANNED_LAYERS) {
+      expect(
+        Object.prototype.hasOwnProperty.call(LAYER_FLOORS, layer),
+        `${layer} is scanned but has no floor in LAYER_FLOORS`,
+      ).toBe(true);
+      expect(counts[layer], `${layer} contributed ${counts[layer]} files, floor ${LAYER_FLOORS[layer]}`).toBeGreaterThanOrEqual(LAYER_FLOORS[layer]);
+    }
+
+    // No floor may exist for a layer that is not actually scanned.
+    expect(Object.keys(LAYER_FLOORS).sort()).toEqual([...SCANNED_LAYERS].sort());
+  });
+
+  // The gap that let src/services exist ungoverned: nothing asserted that the
+  // scanned set covered src/. A new top-level layer must now be a conscious
+  // decision — scanned, or exempted with a written reason.
+  it("partitions every top-level src/ directory into scanned or exempt", () => {
+    const actual = fs
+      .readdirSync(path.join(REPO_ROOT, "src"), { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => `src/${e.name}`)
+      .sort();
+
+    expect(actual).toEqual([...SCANNED_LAYERS, ...Object.keys(EXEMPT_LAYERS)].sort());
+
+    // An exemption without a real justification is an ungoverned layer wearing
+    // a label, so require substantive prose rather than a placeholder.
+    for (const [layer, reason] of Object.entries(EXEMPT_LAYERS)) {
+      expect(reason.length, `${layer} exemption reason is too thin`).toBeGreaterThan(40);
+    }
+
+    // Scanned and exempt must be disjoint.
+    for (const layer of SCANNED_LAYERS) {
+      expect(Object.keys(EXEMPT_LAYERS)).not.toContain(layer);
+    }
   });
 
   it("governs every path alias declared in tsconfig", () => {
@@ -312,6 +445,42 @@ describe("architecture boundaries — rules fire (negative controls)", () => {
     );
     expect(classify("src/lib/auth/actions.ts", "@/app/anything")?.rule).toBe("NO_UPWARD_APP_IMPORT");
   });
+
+  it("NO_UPWARD_APP_IMPORT covers the newly scanned services and data layers", () => {
+    expect(classify("src/services/evaluation.ts", "@/app/api/stacks/route")?.rule).toBe(
+      "NO_UPWARD_APP_IMPORT",
+    );
+    expect(classify("src/data/seed-effects.ts", "@/app/library/page")?.rule).toBe(
+      "NO_UPWARD_APP_IMPORT",
+    );
+  });
+
+  it("DATA_IS_A_LEAF fires on reference data reaching into engines, services, or UI", () => {
+    expect(classify("src/data/seed-effects.ts", "@/lib/evidence")?.rule).toBe("DATA_IS_A_LEAF");
+    expect(classify("src/data/seed-effects.ts", "@/services/evaluation")?.rule).toBe(
+      "DATA_IS_A_LEAF",
+    );
+    expect(classify("src/data/seed-effects.ts", "@/components/ui/Tabs")?.rule).toBe(
+      "DATA_IS_A_LEAF",
+    );
+    // Relative spelling must not be an escape hatch.
+    expect(classify("src/data/seed-effects.ts", "../lib/evidence")?.rule).toBe("DATA_IS_A_LEAF");
+  });
+
+  it("DATA_NO_EXTERNAL_DEPS fires on reference data importing a package", () => {
+    expect(classify("src/data/seed-papers.ts", "zod")?.rule).toBe("DATA_NO_EXTERNAL_DEPS");
+    expect(classify("src/data/seed-papers.ts", "node:fs")?.rule).toBe("DATA_NO_EXTERNAL_DEPS");
+  });
+
+  it("NO_UI_IMPORT fires on lib or services reaching into the UI layer", () => {
+    expect(classify("src/lib/evidence/index.ts", "@/components/ui/Tabs")?.rule).toBe("NO_UI_IMPORT");
+    expect(classify("src/services/evaluation.ts", "@/components/stack/FlagCard")?.rule).toBe(
+      "NO_UI_IMPORT",
+    );
+    expect(classify("src/lib/evidence/index.ts", "../../components/ui/Tabs")?.rule).toBe(
+      "NO_UI_IMPORT",
+    );
+  });
 });
 
 describe("architecture boundaries — legal edges stay silent (positive controls)", () => {
@@ -338,6 +507,38 @@ describe("architecture boundaries — legal edges stay silent (positive controls
     expect(classify("src/lib/validation/schemas.ts", "zod")).toBeNull();
     expect(classify("src/components/layout/TopNav.tsx", "next/link")).toBeNull();
   });
+
+  it("allows the real edges src/services depends on today", () => {
+    for (const spec of [
+      "@supabase/supabase-js",
+      "@/types",
+      "@/lib/db/stack-repo",
+      "@/lib/lab-trends",
+      "@/lib/stack-evaluator",
+    ]) {
+      expect(classify("src/services/evaluation.ts", spec), spec).toBeNull();
+    }
+  });
+
+  it("allows the real edges src/data depends on today", () => {
+    for (const [from, spec] of [
+      ["src/data/seed-supplements.ts", "@/types"],
+      ["src/data/seed-biomarkers.ts", "@/types/biomarker"],
+      ["src/data/medication-aliases.ts", "@/types/interaction"],
+      // Intra-layer composition stays legal.
+      ["src/data/seed-effects.ts", "@/data/seed-papers"],
+      ["src/data/seed-effects.ts", "./seed-papers"],
+    ] as const) {
+      expect(classify(from, spec), `${from} -> ${spec}`).toBeNull();
+    }
+  });
+
+  it("allows src/components to keep importing lib and data", () => {
+    // NO_UI_IMPORT is one-directional: the UI layer consuming business logic
+    // is the intended dependency direction, and must stay silent.
+    expect(classify("src/components/stack/FlagCard.tsx", "@/lib/safety")).toBeNull();
+    expect(classify("src/components/library/SupplementCard.tsx", "@/data/seed-supplements")).toBeNull();
+  });
 });
 
 describe("architecture boundaries — the real source tree", () => {
@@ -353,7 +554,19 @@ describe("architecture boundaries — the real source tree", () => {
     expect(violationsFor("TYPES_NO_EXTERNAL_DEPS")).toEqual([]);
   });
 
-  it("B3: no file in src/components or src/lib imports from src/app", () => {
+  it("B3: no scanned layer imports from src/app", () => {
     expect(violationsFor("NO_UPWARD_APP_IMPORT")).toEqual([]);
+  });
+
+  it("B4: src/data is a leaf over src/types", () => {
+    expect(violationsFor("DATA_IS_A_LEAF")).toEqual([]);
+  });
+
+  it("B4b: src/data depends on no external package", () => {
+    expect(violationsFor("DATA_NO_EXTERNAL_DEPS")).toEqual([]);
+  });
+
+  it("B5: no business or persistence module imports src/components", () => {
+    expect(violationsFor("NO_UI_IMPORT")).toEqual([]);
   });
 });
