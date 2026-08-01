@@ -57,6 +57,21 @@ storageState*.json
 .bkit/runtime/token-ledger.ndjson
 .bkit/runtime/first-run-seen.json
 
+# bkit machine-local runtime caches and per-session state. All regenerated on
+# demand: cc-version/otel-env/session-ctx-fp are caches, memory-directives is
+# derived from CLAUDE.md, and pdca-status/session-history are session telemetry.
+# CLAUDE.md §9: the authoritative status record is docs/archive/*/_INDEX.md, not
+# bkit tooling state. Directory-level so new bkit runtime files (e.g.
+# hook-reachability.json) cannot reintroduce working-tree churn.
+# The two explicit rules above are now redundant but retained as documentation.
+.bkit/runtime/
+.bkit/state/
+
+# bkit PDCA feature ledger — mutated every session and a known concurrent-write
+# contention point. Its durable content is mirrored in docs/archive/*/_INDEX.md,
+# which CLAUDE.md §9 designates as the reliable record.
+/.bkit-memory.json
+
 # graphify generated knowledge graph — 29 MB / 223 files, regenerable via
 # `graphify update .` (AST-only, no API cost). Ignored for the same reason as
 # .next/ and coverage/. Resolved by plan review finding P-18.
