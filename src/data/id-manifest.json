@@ -1,0 +1,256 @@
+{
+  "version": 1,
+  "purpose": "Append-only ledger of reference-data IDs that are PERSISTED in user rows with no foreign key (CLAUDE.md 2.16). Renaming or deleting an entry here silently orphans user data, so removal requires a tombstone with a migration note. This file is the INDEPENDENT baseline: id-stability.test.ts reads it from disk and never regenerates it from the seed arrays it checks.",
+  "policy": {
+    "add": "New seed ID -> append to the namespace's `ids`. Always allowed; the test fails until it is registered.",
+    "remove": "Move the ID from `ids` into `tombstones` with a `migration` note. The test fails while an ID is simply deleted.",
+    "rename": "NOT a delete plus an add. Tombstone the old ID with `supersededBy` set to the new ID, and append the new ID to `ids`.",
+    "merge": "Tombstone every retired ID with `supersededBy` pointing at the surviving ID.",
+    "split": "Tombstone the original with `supersededBy` set to the primary successor, and describe the rest in `migration`.",
+    "resurrect": "A tombstoned ID must never reappear in live seed data — it would silently re-point existing user rows at a new meaning."
+  },
+  "namespaces": {
+    "supplements": {
+      "source": "SEED_SUPPLEMENTS[].id",
+      "persistedAt": [
+        "stack_items.supplement_id (0001, text, no FK)",
+        "checkins.taken[] (0006, jsonb array of supplementId)",
+        "checkins.scheduled[] (0006, jsonb array of supplementId)",
+        "advisor_actions.payload/inverse (0004, jsonb StackItemInput.supplementId)"
+      ],
+      "dereferenced": true,
+      "ids": [
+        "magnesium",
+        "creatine",
+        "vitamin-d",
+        "fish-oil",
+        "l-theanine",
+        "glycine",
+        "melatonin",
+        "ashwagandha",
+        "berberine",
+        "zinc",
+        "vitamin-b12",
+        "caffeine",
+        "taurine",
+        "nac",
+        "protein-powder"
+      ],
+      "tombstones": []
+    },
+    "products": {
+      "source": "SEED_PRODUCTS[].id",
+      "persistedAt": [
+        "stack_items.product_id (0004, text, no FK)",
+        "advisor_actions.payload/inverse (0004, jsonb set_item_product.productId)"
+      ],
+      "dereferenced": true,
+      "ids": [
+        "mag-acme-glycinate",
+        "mag-valuline-oxide",
+        "cre-purelab-mono",
+        "cre-budget-mono",
+        "vitd-sunwell-d3",
+        "vitd-gummyco-d3",
+        "fish-nordic-omega",
+        "fish-value-omega",
+        "thea-calm-200",
+        "gly-pure-powder",
+        "mela-night-1mg",
+        "mela-mega-10mg",
+        "ashwa-ksm-600",
+        "berb-meta-500",
+        "zinc-immune-15",
+        "b12-methyl-1000",
+        "caf-focus-100",
+        "tau-pure-1000",
+        "nac-anti-600",
+        "prot-whey-iso",
+        "prot-budget-conc"
+      ],
+      "tombstones": []
+    },
+    "biomarkers": {
+      "source": "SEED_BIOMARKERS[].id",
+      "persistedAt": [
+        "lab_markers.biomarker_id (0002, text, no FK, indexed)",
+        "advisor_messages.citations[].refId where kind='biomarker-rule' (0003, jsonb)"
+      ],
+      "dereferenced": true,
+      "ids": [
+        "vitamin-d-25oh",
+        "magnesium-serum",
+        "zinc-serum",
+        "vitamin-b12-serum",
+        "homocysteine",
+        "hba1c",
+        "fasting-glucose",
+        "ldl-cholesterol",
+        "triglycerides",
+        "hs-crp",
+        "cortisol-am",
+        "alt",
+        "calcium-serum"
+      ],
+      "tombstones": []
+    },
+    "effects": {
+      "source": "SEED_EFFECTS[].id",
+      "persistedAt": [
+        "advisor_messages.citations[].refId where kind='effect-grade' (0003, jsonb)"
+      ],
+      "dereferenced": true,
+      "dereferencedBy": "citationHref() resolves effect refIds to /library/{slug}#effect-{id}; a rename silently degrades a stored citation to an inert tag.",
+      "ids": [
+        "magnesium-sleep",
+        "magnesium-stress",
+        "magnesium-metabolic",
+        "creatine-strength",
+        "creatine-cognition",
+        "creatine-recovery",
+        "vitamin-d-deficiency",
+        "vitamin-d-immune",
+        "fish-oil-cardiovascular",
+        "fish-oil-mood",
+        "fish-oil-longevity",
+        "l-theanine-focus",
+        "l-theanine-stress",
+        "glycine-sleep",
+        "melatonin-sleep",
+        "ashwagandha-stress",
+        "ashwagandha-sleep",
+        "berberine-metabolic",
+        "zinc-immune",
+        "zinc-deficiency",
+        "vitamin-b12-deficiency",
+        "caffeine-focus",
+        "caffeine-training",
+        "taurine-training",
+        "nac-antioxidant",
+        "protein-powder-training",
+        "protein-powder-recovery"
+      ],
+      "tombstones": []
+    },
+    "papers": {
+      "source": "SEED_PAPERS[].id",
+      "persistedAt": ["advisor_messages.citations[].refId where kind='paper' (0003, jsonb)"],
+      "dereferenced": true,
+      "dereferencedBy": "citationHref() resolves paper refIds to /library/{slug}#paper-{id}.",
+      "ids": [
+        "p-creatine-strength",
+        "p-creatine-cognition",
+        "p-melatonin-sleep",
+        "p-magnesium-sleep",
+        "p-vitamin-d-deficiency",
+        "p-fish-oil-cv",
+        "p-fish-oil-mood",
+        "p-ltheanine-focus",
+        "p-ltheanine-stress",
+        "p-glycine-sleep",
+        "p-ashwagandha-stress",
+        "p-berberine-metabolic",
+        "p-zinc-immune",
+        "p-zinc-deficiency",
+        "p-b12-deficiency",
+        "p-caffeine-focus",
+        "p-caffeine-training",
+        "p-protein-mps",
+        "p-taurine-training",
+        "p-nac-antioxidant"
+      ],
+      "tombstones": []
+    },
+    "interactionRules": {
+      "source": "SEED_INTERACTIONS[].id + SEED_FOOD_PAIRINGS[].id (one namespace: both flow through InteractionFlag.ruleId)",
+      "persistedAt": [
+        "advisor_messages.citations[].refId where kind='interaction-rule' (0003, jsonb)"
+      ],
+      "dereferenced": false,
+      "note": "Archival only — citationHref() returns null for this kind, so a rename does not break a link. It does make a stored citation unresolvable, which is why the namespace is registered.",
+      "ids": [
+        "fish-oil--anticoagulant",
+        "fish-oil--antiplatelet",
+        "berberine--antidiabetic",
+        "magnesium--quinolone-antibiotic",
+        "magnesium--tetracycline-antibiotic",
+        "magnesium--thyroid-medication",
+        "zinc--quinolone-antibiotic",
+        "zinc--thyroid-medication",
+        "vitamin-d--thiazide-diuretic",
+        "ashwagandha--sedative",
+        "ashwagandha--thyroid-medication",
+        "ashwagandha--immunosuppressant",
+        "melatonin--sedative",
+        "melatonin--anticoagulant",
+        "nac--nitrate-vasodilator",
+        "l-theanine--antihypertensive",
+        "caffeine--stimulant",
+        "magnesium--zinc",
+        "melatonin--ashwagandha",
+        "melatonin--glycine",
+        "vitamin-d--fat-meal",
+        "fish-oil--meal",
+        "creatine--carbohydrates",
+        "berberine--meals",
+        "ashwagandha--meal",
+        "magnesium--food",
+        "zinc--phytates",
+        "zinc--calcium-foods",
+        "caffeine--caffeinated-drinks",
+        "melatonin--heavy-meal"
+      ],
+      "tombstones": []
+    },
+    "sideEffectLabels": {
+      "source": "SIDE_EFFECT_VOCAB (src/types/side-effect.ts)",
+      "persistedAt": [
+        "side_effect_reports.effect_label (0007, text, part of the UNIQUE key)",
+        "advisor_messages.citations[].refId where kind='side-effect' (composite `${supplementId}:${label}`)"
+      ],
+      "dereferenced": true,
+      "note": "The JOIN KEY between user-reported and curated side effects. Also participates in UNIQUE (user_id, report_date, effect_label), so a rename can additionally collide with an existing row.",
+      "ids": [
+        "nausea",
+        "gi-upset",
+        "diarrhea",
+        "constipation",
+        "headache",
+        "drowsiness",
+        "insomnia",
+        "jitteriness",
+        "anxiety",
+        "dizziness",
+        "dry-mouth",
+        "flushing",
+        "water-retention",
+        "vivid-dreams",
+        "heartburn",
+        "fatigue",
+        "rash",
+        "metallic-taste"
+      ],
+      "tombstones": []
+    },
+    "outcomeCategories": {
+      "source": "OUTCOME_CATEGORIES (src/types/primitives.ts)",
+      "persistedAt": ["checkins.ratings (0006, jsonb object KEYED BY outcomeCategory)"],
+      "dereferenced": true,
+      "note": "Persisted as jsonb object keys, not as a column value. A rename silently strands every historical rating under the old key.",
+      "ids": [
+        "sleep",
+        "focus",
+        "training",
+        "recovery",
+        "stress",
+        "gut",
+        "metabolic",
+        "longevity",
+        "foundational",
+        "mood",
+        "deficiency"
+      ],
+      "tombstones": []
+    }
+  }
+}
