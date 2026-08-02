@@ -176,7 +176,10 @@ passing, a clean typecheck, and a successful build.
    `L1/L2/L3` prefix to signal gating — it does not.
 10. Before declaring work done: `npx tsc --noEmit`, `npx vitest run`, and `npx next build` must all pass.
 
-Current measured baseline (2026-07-30): typecheck clean · 408/408 unit tests · build succeeds · **no CI**.
+Current measured baseline (2026-08-02, `main` @ `1792f9f`): typecheck clean · **524/524 unit tests across
+42 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
+`vitest run` → `next build`, on push to `main`/`feat/**`, PRs to `main`, and `workflow_dispatch`). CI is
+**not** yet a required status and `main` has no branch protection — see `docs/roadmap.md`.
 
 ---
 
@@ -313,6 +316,7 @@ If the directory is absent after a fresh clone, that is expected: run `graphify 
 | `docs/project-status.md` | Actual current condition per subsystem, with classifications |
 | `docs/roadmap.md` | Phased transition plan; sequencing authority |
 | `docs/reviews/mvp-transition-check.md` | The 2026-07-30 independent review findings (T-01…T-24) |
+| `docs/reviews/phase-0-closeout-check.md` | The 2026-08-01 independent Phase 0 closeout review (C-1…C-13), with its 2026-08-02 resolution addendum |
 | `docs/02-design/architecture-boundaries.md` | Layer specification behind §4 |
 | `docs/archive/original-mvp-instructions.md` | Retired MVP constraints + why each existed (reference only) |
 | `docs/archive/2026-06/`, `2026-07/` | Per-feature history; `_INDEX.md` is the real status record |

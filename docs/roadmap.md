@@ -18,9 +18,19 @@
 > functional beta → production readiness" sequence does not fit a codebase whose domain logic is already
 > production-grade but whose *content* and *operations* are not.
 
-**Phase status (updated 2026-07-30):** Phase 0 — **in progress**: U1 complete (commit `4337a24`,
-ignore hygiene), U2 in progress (documentation baseline). U3–U9 not started. Phases 1–4 — not started.
-See `docs/01-plan/phase-0-integration-enforcement.plan.md` for per-unit detail.
+**Phase status (updated 2026-08-02, `main` @ `1792f9f`):** Phase 0 — **complete with follow-up**. All
+nine units (U1–U9) shipped and are public, plus four post-review remediations: R1 `a338370`, R2 `ea5b270`,
+R3 `9e9e15d`, R3b `1792f9f`. CI is green on `main`
+([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)).
+Phases 1–4 — not started.
+
+"Complete with follow-up" is deliberate: **four exit criteria below remain unmet** and are annotated
+in place. The independent final Check has not yet been run — it is scaffolded at
+`docs/05-qa/phase-0-final-check.md`.
+
+See `docs/01-plan/phase-0-integration-enforcement.plan.md` for per-unit detail,
+`docs/04-report/phase-0-integration-enforcement.report.md` for the completion report, and
+`docs/reviews/phase-0-closeout-check.md` for the independent closeout review and its resolution addendum.
 
 ---
 
@@ -61,32 +71,50 @@ pass against the current tree, locking in existing good behavior rather than dem
 **not** rebase, squash, or cherry-pick the chain — there is nothing to reconcile, and rebasing would
 discard the only validated integrated state.
 
-**Testing requirements.** Suite stays green through the merge: `tsc --noEmit` clean, 408/408 unit tests,
-`next build` succeeding. Every new boundary rule must be **mutation-checked** — shown to go red against
-a deliberately introduced violation before it is trusted.
+**Testing requirements.** Suite stays green through the merge: `tsc --noEmit` clean, all unit tests
+passing, `next build` succeeding. Every new boundary rule must be **mutation-checked** — shown to go red
+against a deliberately introduced violation before it is trusted. *(Written against a 408-test baseline;
+measured **524/524 across 42 files** at Phase 0 close. The requirement is "green", not a fixed count —
+every guard added in U7, U8, R1, R2, R3 and R3b was mutation-checked as required.)*
 
 **Security requirements.** Confirm no secret was ever committed, now that history is pushed (the review
 could not check history). *(Verified 2026-07-30: `.gitignore` correctly excludes `.env` / `.env*.local`;
 zero `.DS_Store` tracked.)*
 
-**Exit criteria (measurable)**
-- [ ] `git log main..HEAD` empty; `main` contains `boundaries.test.ts` and the v13 anti-fabrication guards.
-- [ ] `git status` clean; local and `origin` refs for `main` identical.
-- [ ] Tags `v2`…`v13` on origin; zero `feat/*` branches remain.
-- [ ] CI workflow exists, runs on every PR, is a required status on `main`, and is green.
-- [ ] `boundaries.test.ts` scans ≥ 5 top-level layers; each new rule verified red-then-green.
-- [ ] A `.tsx` test placed anywhere under `src/` is collected and executed.
-- [ ] Coverage report lists `src/app`, `src/services`, `src/components`, `src/lib/db`.
+**Exit criteria (measurable)** — assessed 2026-08-02 against `main` @ `1792f9f`.
+
+- [x] `git log main..HEAD` empty; `main` contains `boundaries.test.ts` and the v13 anti-fabrication guards.
+- [x] `git status` clean; local and `origin` refs for `main` identical.
+- [ ] **Unmet — deliberately deferred (U-DEFER-1).** Tags `v2`…`v13` on origin; zero `feat/*` branches
+      remain. Today: **0 tags**, **9 remote `feat/*` branches**. The plan's own criterion 11 requires
+      `git tag` stay empty, and U-DEFER-1 records why the chain cannot support honest tags — v12
+      (`51d2134`) precedes v11 (`d89cf1c`) in history. Per line 8 of this document, a phase requiring an
+      exception to an approved plan is a defect in *this* roadmap, not in the plan.
+- [ ] **Partly met — deferred (U-DEFER-3, closeout finding C-6).** CI workflow exists, runs on every PR
+      into `main` and every push to `main`/`feat/**`, and is green. It is **not** a required status and
+      `main` has **no branch protection** — that needs a repository-settings change and separate approval.
+- [x] `boundaries.test.ts` scans ≥ 5 top-level layers (**5**: `src/types`, `src/components`, `src/lib`,
+      `src/services`, `src/data`); each new rule verified red-then-green.
+- [ ] **Unmet — deliberately deferred (U-DEFER-4, closeout finding C-12).** A `.tsx` test placed anywhere
+      under `src/` is collected and executed. `vitest.config.ts` collects only `src/**/*.test.ts`. Zero
+      `.test.tsx` files exist today, so this is latent rather than active.
+- [x] Coverage report lists `src/app`, `src/services`, `src/components`, `src/lib/db` — `include` is
+      `src/**/*.{ts,tsx}` since `8b1bd16`.
+
+> **On the four unmet criteria.** Each is annotated above with the U-DEFER item that deferred it, so a
+> deliberate deferral is distinguishable from an omission (`CLAUDE.md` §7). Phase 0 is therefore
+> **complete with follow-up**, not unconditionally complete.
 
 ---
 
 ## Phase 1 — Verification integrity
 
 **Objective.** Make a green test run mean something. Close the gap between "408 tests pass" and "the
-product's critical paths are verified."
+product's critical paths are verified." (The figure in that gap was 408 when this phase was written;
+the current baseline is **524 tests across 42 files**, which does not change the argument.)
 
 **Included work**
-1. **Route-handler tests** for all ~22 routes: unauthenticated → 401, invalid body → 400 with the
+1. **Route-handler tests** for all **23** routes (measured 2026-08-02; the figure was ~22 when written): unauthenticated → 401, invalid body → 400 with the
    correct envelope, happy path with a mocked Supabase client. Call exported handlers directly; no live server.
 2. **Mapper + schema-contract tests.** Unit-test every `mappers.ts` function with representative row
    fixtures. Add a conformance check binding `supabase/migrations/*.sql` to `src/lib/db/types.ts`
@@ -258,6 +286,13 @@ operable, and grounded.
 1. **Context-adjusted evidence** — resume `docs/01-plan/features/context-adjusted-evidence.plan.md`. The
    plan must be revised first: it was halted at design and assumed a `populationRelevance` seam that
    exists for only 8 of 27 effects. Phase 3 removes that blocker.
+   > **[2026-08-02] That file is not in this repository.** It, and
+   > `docs/02-design/features/evidence-grading.design.md`, were untracked when Phase 0 began — the plan
+   > listed both as "pre-existing untracked docs (NOT part of Phase 0)" and forbade changing them
+   > (`docs/01-plan/phase-0-integration-enforcement.plan.md:78-79,178`), so neither was ever committed,
+   > and the move off the old Desktop tree left both behind. They exist **only** in the pre-relocation
+   > Desktop working copy. Recover them there before resuming this item — do not assume the path
+   > resolves. `docs/product-direction.md:109` carries the same stale pointer.
 2. **Real product catalog** replacing the seeded 21 products, with ranking independence still test-proven.
 3. **Component tests + accessibility** for every component rendering a safety flag, evidence grade, or citation.
 4. **Longitudinal intelligence** across labs, adherence, and outcomes.

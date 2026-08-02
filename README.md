@@ -23,11 +23,18 @@ Evidence-based supplement education, stack building, and product matching for he
 
 ### Enforced module boundaries
 
-These are not conventions — they run on `npm test` via [`src/architecture/boundaries.test.ts`](src/architecture/boundaries.test.ts), and are specified in [`docs/02-design/architecture-boundaries.md`](docs/02-design/architecture-boundaries.md):
+These are not conventions — they run on `npm test` via [`src/architecture/boundaries.test.ts`](src/architecture/boundaries.test.ts) (28 tests) and [`src/architecture/error-disclosure.test.ts`](src/architecture/error-disclosure.test.ts) (29 tests), and are specified in [`docs/02-design/architecture-boundaries.md`](docs/02-design/architecture-boundaries.md):
 
 - `src/types/` is a **dependency-free Domain leaf** — it imports no packages and nothing outside `src/types/`.
 - `src/types/index.ts` is a **pure barrel**; it declares nothing, and no sibling may import it (shared primitives live in `src/types/primitives.ts`).
 - `src/components/` and `src/lib/` **never import from `src/app/`** — reusable server actions belong in `src/lib/`.
+- `src/data/` is a leaf over `src/types/`, `src/services/` is governed, and every top-level `src/*`
+  directory must be either scanned or explicitly exempted with a written reason.
+- **No API route returns a caught exception's text** — internal errors go to the server log under a
+  correlation ID and the client receives a fixed generic message.
+
+The inventory both guards scan comes from `git ls-files`, so the verdict is a property of the repository
+rather than of one machine's working tree.
 
 ## Getting started
 
@@ -44,6 +51,7 @@ npm run dev                  # http://localhost:3000
 |---------|---------|
 | `npm run dev` | Dev server |
 | `npm run build` | Production build |
+| `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest unit suite |
 | `npm run test:e2e` | Playwright (set `E2E_LIVE=1` for authed flows) |
 | `npm run db:seed` | Seed demo data (needs Supabase env) |
@@ -54,14 +62,19 @@ npm run dev                  # http://localhost:3000
 
 The three pillars plus thirteen further milestones (v2–v13) are implemented — including the AI advisor,
 medication/food interactions, biomarkers, lab timeline, daily check-ins, the side-effect engine, and the
-identity layer. Verified 2026-07-30: `tsc --noEmit` clean, **408/408** unit tests passing, production build
+identity layer. Verified 2026-08-02 on `main` @ `1792f9f`: `npm run typecheck` clean, **524/524** unit
+tests passing across 42 files, production build
 succeeding, and RLS enabled with a matching policy on every table.
 
 Production-readiness gaps remain, and they are tracked rather than unknown:
 
 - **Evidence grounding** — 19 of 27 effect grades are hand-authored rather than derived from verified literature.
-- **Observability** — no logging, error reporting, or request correlation exists yet.
-- **Release enforcement** — no CI; `main` is not yet current with the feature work.
+- **Observability** — partial. Unexpected API exceptions are logged server-side with a correlation ID
+  that is returned to the client, but there is no logging elsewhere, no error-reporting service, and no
+  UI surface for a user to quote the correlation ID.
+- **Release enforcement** — CI runs on every push to `main` and every PR into it (typecheck, unit tests,
+  production build) and is green; `main` is current with all feature work. Not yet enforced: CI is not a
+  *required* status and `main` has no branch protection.
 - **Selected trust boundaries** — the advisor write path and the DB mapper layer lack unit coverage.
 
 Do not treat this as production-ready. See [`docs/project-status.md`](docs/project-status.md) for the

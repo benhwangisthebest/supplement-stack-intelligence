@@ -1,8 +1,35 @@
 # Phase 0 — Integration & Enforcement Recovery (Plan)
 
-> **Status: DRAFT — awaiting user approval.** Per `CLAUDE.md` §6, a Draft plan outranks nothing.
-> **Created:** 2026-07-30 · **Planning only — nothing in this document has been executed.**
+> **Status: COMPLETED 2026-08-02.** Approved per-gate during execution (gates G1–G3 each required it) and
+> completed in full. This header previously read "DRAFT — awaiting user approval … nothing in this document
+> has been executed", which was false from the moment the first unit shipped and was raised as **C-3** by
+> `docs/reviews/phase-0-closeout-check.md`. The original wording is recorded here rather than erased, per
+> `CLAUDE.md` §7.
+>
+> **Created:** 2026-07-30 · **Completed:** 2026-08-02 · **Final SHA:** `main` @ `1792f9f`
 > **Companion review:** `docs/reviews/phase-0-plan-review.md`
+> **Closeout review:** `docs/reviews/phase-0-closeout-check.md` (with its 2026-08-02 resolution addendum)
+> **Completion report:** `docs/04-report/phase-0-integration-enforcement.report.md`
+>
+> **Units as shipped** (each SHA verified an ancestor of `main`):
+>
+> | Unit | Subject | Commit |
+> |---|---|---|
+> | U1 | Repository-ignore hygiene | `4337a24` |
+> | U2 | Documentation baseline | `110715d` |
+> | U3 | v13 evidence disclosure | `c75b044`, `917e183` |
+> | U4 | Feature-branch backup | no commit — push-only (`origin/feat/food-pairings-v12`) |
+> | U5 | Continuous integration | `374d7c9` |
+> | U6 | Coverage visibility | `8b1bd16` |
+> | U7 | Architecture enforcement | `0adf331` |
+> | U8 | Reference-ID stability | `77b3c36` |
+> | U9 | Integration & hygiene cleanup | `bf7ff2e` |
+>
+> Four post-review remediations followed: **R1** `a338370` (C-1), **R2** `ea5b270` (C-7),
+> **R3** `9e9e15d` (C-8), **R3b** `1792f9f` (route-level disclosure gaps).
+>
+> Phase 0 is **complete with follow-up** — not unconditionally complete. Deferred and carried items are
+> listed in the completion report; the independent final Check has not yet been run.
 >
 > This plan adds **no user-facing scope**. It converts the repository's current, verified-but-unbacked
 > state into a versioned, reproducible, automatically verified foundation.

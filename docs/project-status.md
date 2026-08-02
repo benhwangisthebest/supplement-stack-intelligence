@@ -2,6 +2,9 @@
 
 > **Status:** Active. Describes the repository's *actual* condition, not its intended design.
 > **Assessed:** 2026-07-30, by an independent five-reviewer MVP-transition review.
+> **Refreshed:** 2026-08-02 at Phase 0 close, against `main` @ `1792f9f`. Sections §0, §1.1, §2.6, §2.8,
+> §2.9 and §7 carry measured updates; the 2026-07-30 findings are retained beside them rather than
+> deleted (`CLAUDE.md` §7). Where a row is superseded it is marked **[2026-08-02]**.
 > **Rule:** Existing code is evidence of current state, **not** automatically the intended final design.
 > Nothing below is labelled production-ready without stated evidence.
 
@@ -12,12 +15,19 @@
 | Check | Command | Result |
 |---|---|---|
 | Type check | `npx tsc --noEmit` | **Clean**, exit 0 |
-| Unit tests | `npx vitest run` | **408 passed / 408**, 39 files |
+| Unit tests | `npx vitest run` | ~~**408 passed / 408**, 39 files~~ → **[2026-08-02] 524 passed / 524, 42 files** |
 | Production build | `npx next build` | **Succeeds**; 15 Library pages prerendered (SSG) |
 | Migrations | `supabase/migrations/` | 7 files, `0001`–`0007` |
 | E2E (default run) | `npx playwright test` | ~33 of 89 tests execute; the rest are `E2E_LIVE`-gated |
-| CI | — | **None.** No workflow files anywhere |
+| CI | — | ~~**None.** No workflow files anywhere~~ → **[2026-08-02] GitHub Actions `CI` exists and is green** on `main` @ `1792f9f` ([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)): `npm ci` → typecheck → `vitest run` → `next build`. **Not** a required status; `main` has no branch protection. |
 | Lint | `npm run lint` | **Enforces nothing** — no ESLint dependency, no config |
+
+**[2026-08-02] Coverage scope was widened** in `8b1bd16`: `include` is now `src/**/*.{ts,tsx}`. Measured
+at `1792f9f`: **200 files, 47.68 % statements · 81.23 % branches · 69.85 % functions** repo-wide. Six of
+the **seven** top-level `src` directories appear in the report — `src/architecture` holds only `*.test.ts`,
+which `coverage.exclude` drops; it is still a governed layer under §4.6, which counts all seven.
+Visibility only — the sole threshold remains `src/lib/stack-evaluator/**`. The paragraph below described
+the pre-`8b1bd16` state and its central warning still stands: a green suite is not a verified product.
 
 **Read the green suite carefully.** 408/408 does *not* mean the product is verified. Coverage is
 configured to measure `src/lib/**` only, so `src/app/api/**`, `src/services/**`, and
@@ -40,6 +50,14 @@ configured to measure `src/lib/**` only, so `src/app/api/**`, `src/services/**`,
 - No import cycles (independently confirmed via `graphify-out/GRAPH_REPORT.md`).
 
 ### 1.1 Git state — the most urgent non-code risk
+
+> **[2026-08-02] RESOLVED IN FULL by Phase 0.** Every row in the table below is now false, and that is the
+> point of Phase 0. Measured: `main` @ `1792f9f` == `origin/main`, **0 ahead / 0 behind**; history linear
+> with **zero merge commits**; the layering guardrail and the v13 anti-fabrication guards are committed
+> **and pushed**; working tree clean. The four `fix/*` remediation branches and nine `feat/*` branches are
+> all intact on `origin` — no branch was deleted, no tag created, no history rewritten.
+>
+> The table is retained unedited as the record of what Phase 0 was called into existence to fix.
 
 | Fact | Evidence |
 |---|---|
@@ -143,6 +161,12 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
 - **Classification: B.**
 
 ### 2.6 API layer (`src/app/api/**`) — **B**
+
+> **[2026-08-02]** Raw internal error disclosure is **resolved**. `handle()` now returns a fixed generic
+> message plus an opaque correlation ID and logs the full exception server-side under that ID (`9e9e15d`,
+> **R3**); four further handlers that bypassed `handle()` were fixed in `1792f9f` (**R3b**), and
+> `src/architecture/error-disclosure.test.ts` enforces the rule across every tracked route. Route count is
+> **23**, of which 20 use `handle()` at 28 call sites.
 - **Works:** **all 22–23 routes call `getUser()` and return 401** — verified exhaustively. Zod
   validation on all mutation routes. Consistent `{data, error}` envelope.
 - **Incomplete:** **zero tests**; the directory is excluded from coverage measurement entirely. Raw
@@ -163,14 +187,33 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
 - **Classification: B.**
 
 ### 2.8 Observability & operations — **X (absent)**
-- **Implementation: none.** No logging library, no error reporting, no request IDs. A repo-wide grep
-  for `console.` in non-test source matches exactly one dev seed script. `handle()` catches every
-  server error and converts it to an HTTP response **without recording anything**.
+- **[2026-08-02] Partly addressed.** `handle()` no longer discards the exception: every unexpected error
+  is written to the server log as a structured record carrying a correlation ID, the public error code,
+  and the error's name/message/stack/cause, with the same ID returned to the client. Non-`Error` throws
+  and arbitrary `cause` values are reduced to type metadata so a thrown payload cannot be serialized into
+  a log line. That is the whole of it: still **no logging library, no error-reporting service, no request
+  IDs outside the error path, no log aggregation**, and no UI surface where a user can read or quote the
+  correlation ID (follow-up **F5**).
+- **Original finding (2026-07-30), retained:** No logging library, no error reporting, no request IDs. A
+  repo-wide grep for `console.` in non-test source matches exactly one dev seed script. `handle()` catches
+  every server error and converts it to an HTTP response **without recording anything**.
 - **Risk:** a production incident involving a partial write or swallowed rollback would be
   undiagnosable after the fact.
 - **Classification: X.** The largest operational gap.
 
 ### 2.9 Testing infrastructure — **B**
+- **[2026-08-02] Updated:** **524 unit tests across 42 files.** Two executable architecture specs, not
+  one: `boundaries.test.ts` (**28** tests) and `error-disclosure.test.ts` (**29** tests). Both derive
+  their inventory from `git ls-files`, so a verdict is a property of the repository rather than of one
+  working tree (`a338370`, **R1**). `src/services` and `src/data` are now scanned layers, and every
+  top-level `src/*` directory must be scanned or explicitly exempted with a written reason. Reference-ID
+  stability is enforced across **9** manifest namespaces (`77b3c36`, plus `ea5b270` **R2** which added
+  `biomarkerRelevanceRules`). Every guard added in U7, U8, R1, R2, R3 and R3b was mutation-checked —
+  shown red against the defect it targets — as `CLAUDE.md` §5.2 requires.
+- **Still true:** coverage thresholds exist for `stack-evaluator` only; vitest collects `*.test.ts` only,
+  so a `.test.tsx` file is silently never run; `environment: "node"` with no jsdom means component tests
+  cannot run; the E2E gaps below are unchanged and E2E remains excluded from CI.
+- **Original findings (2026-07-30), retained:**
 - **Works:** 408 unit tests. Architecture boundaries enforced by a real compiler-API test (16 tests). A
   reachability-guard test exists (`services/evaluation.test.ts`), created in response to the v11 dead-code
   bug. `src/lib/validation/schemas.ts:146-153` makes Zod↔domain drift a *compile error* — the single
@@ -279,16 +322,18 @@ Plus two content/process issues:
 ## 7. Known risks, ranked
 
 1. **Evidence grades are ungrounded** (19/27 hand-typed) in a product whose Library is the declared trust layer.
-2. **Single-machine loss risk** — the layering guardrail is committed-but-unpushed (`d9fc1ef`); the v13
-   anti-fabrication guards are uncommitted and untracked.
-3. **`main` is a stale two-commit MVP** — the default branch misrepresents the product to any new reader or agent.
-4. **No observability** — production failures would be invisible.
-5. **No CI** — every quality property in §0 is developer-discretionary and can regress silently.
+2. ~~**Single-machine loss risk**~~ — **[2026-08-02] closed.** All guardrails are committed and pushed.
+3. ~~**`main` is a stale two-commit MVP**~~ — **[2026-08-02] closed.** `main` is the working tip.
+4. **Partial observability** — **[2026-08-02]** unexpected API errors are now logged with a correlation
+   ID, but nothing else is instrumented and no UI surfaces the ID (**F5**).
+5. ~~**No CI**~~ — **[2026-08-02] closed for existence, open for enforcement.** CI runs and is green, but
+   it is not a required status and `main` has no branch protection (closeout finding **C-6**).
 6. **Core-loop E2E does not run by default**, and the one live-run artifact on disk shows a login failure.
 7. **`execute.ts` (LLM-driven write path) has 0% unit coverage.**
 8. **No schema↔type contract test; `supplement_id` has no ID-stability contract** — silent data corruption class.
 9. **No rate limiting** on the paid LLM endpoint; budget check non-atomic; no abort on client disconnect.
-10. **Raw error messages returned to clients** — internal schema disclosure.
+10. ~~**Raw error messages returned to clients**~~ — **[2026-08-02] closed** by `9e9e15d` (R3) and
+    `1792f9f` (R3b), and enforced by `src/architecture/error-disclosure.test.ts`.
 11. **`.tsx` tests silently never run** — a developer writing one gets silence, not an error.
 12. **No self-service data export/deletion** for stored health data.
 
