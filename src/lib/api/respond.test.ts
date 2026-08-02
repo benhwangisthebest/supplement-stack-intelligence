@@ -3,7 +3,8 @@
 // `handle()` is the single trust boundary between an unexpected server exception
 // and the HTTP response. It used to return `err.message` verbatim on a 500, so a
 // Postgres connection string, a filesystem path, or a provider error reached the
-// client — and 17 UI components render `error.message` straight into the page.
+// client — and 17 call sites across 15 files (14 components plus the useLabImport
+// hook) render `error.message` straight into the page.
 // CLAUDE.md §2.3 rule 13 (rank 1) forbids exactly that.
 //
 // These tests assert on the *serialized* body, not on an intermediate object,
@@ -19,6 +20,7 @@ import {
   handle,
   internalError,
   notFound,
+  reportInternalError,
   unauthorized,
   validationError,
   type ApiEnvelope,
@@ -197,6 +199,105 @@ describe("T3 — a non-Error throw is handled without stringifying it to the cli
     const spy = captureLog();
     await handle(throwing({ password: "do-not-return" }));
     expect(loggedText(spy)).toContain("object");
+  });
+});
+
+// ------------------------------------- R3b: routes that never reach handle() --
+//
+// Three catch sites — two in advisor/actions `POST`, one in undo — returned
+// `err.message` in a 500, and a fourth streamed it into an SSE `error` event:
+// four sites across three handler functions. All bypass `handle()`, so R3's fix
+// did not reach them. They keep their public codes — the shared boundary now
+// supplies the safe message and the id.
+
+describe("R3b — internalError serves callers that own their error mapping", () => {
+  it("keeps a caller's public code and details while hiding the exception", async () => {
+    const spy = captureLog();
+
+    const res = internalError(new Error(SECRET_MESSAGE), {
+      code: "ACTION_ERROR",
+      details: { rolledBack: true },
+    });
+    const { text, json } = await readBody(res);
+
+    expect(res.status).toBe(500);
+    expect(json.error?.code).toBe("ACTION_ERROR");
+    expect(json.error?.message).toBe(INTERNAL_ERROR_MESSAGE);
+    expect(json.error?.correlationId).toBeTruthy();
+    // `rolledBack` is a computed fact the client acts on, not error text.
+    expect(json.error?.details).toEqual({ rolledBack: true });
+    for (const fragment of SECRET_FRAGMENTS) {
+      expect(text, `response leaked ${fragment}`).not.toContain(fragment);
+    }
+    // The caller's code is what gets logged, so a log line maps to a call site.
+    expect(loggedText(spy)).toContain("ACTION_ERROR");
+  });
+
+  it("defaults to INTERNAL_ERROR with no details", async () => {
+    captureLog();
+    const { json } = await readBody(internalError(new Error("boom")));
+    expect(json.error?.code).toBe("INTERNAL_ERROR");
+    expect(json.error?.details).toBeUndefined();
+  });
+
+  it("reportInternalError logs and returns an id for already-streaming responses", async () => {
+    const spy = captureLog();
+
+    const id = reportInternalError(new Error(SECRET_MESSAGE), "ADVISOR_ERROR");
+
+    expect(id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+    const log = loggedText(spy);
+    expect(log).toContain(id);
+    expect(log).toContain("ADVISOR_ERROR");
+    expect(log).toContain(SECRET_MESSAGE); // the log is where it belongs
+  });
+
+  it("ignores a caller-supplied message option instead of honouring it", async () => {
+    captureLog();
+
+    // Behavioural, not structural. An earlier version of this test asserted
+    // `internalError.length === 1` under the claim "the signature is the guard".
+    // `Function.length` stops counting at the first defaulted parameter, so
+    // adding `options.message` — the exact reintroduction — leaves it at 1: the
+    // assertion could not go red against the defect it named (CLAUDE.md §5.2).
+    // This smuggles the option in through the type system and checks the wire.
+    const SMUGGLED = "SMUGGLED_INTERNAL_TEXT";
+    const res = internalError(new Error(SECRET_MESSAGE), {
+      code: "UNDO_ERROR",
+      message: SMUGGLED,
+    } as unknown as { code?: string; details?: unknown });
+    const { text, json } = await readBody(res);
+
+    expect(json.error?.code).toBe("UNDO_ERROR");
+    expect(json.error?.message).toBe(INTERNAL_ERROR_MESSAGE);
+    expect(text).not.toContain(SMUGGLED);
+    for (const fragment of SECRET_FRAGMENTS) {
+      expect(text, `response leaked ${fragment}`).not.toContain(fragment);
+    }
+  });
+
+  it("ignores a smuggled message on reportInternalError too", async () => {
+    const spy = captureLog();
+
+    const SMUGGLED = "SMUGGLED_STREAM_TEXT";
+    // reportInternalError returns only an id, so the sole way a message could
+    // reach a client is if the helper grew a third parameter that a caller then
+    // rendered. Pin the return contract: an id, and nothing else.
+    const id = (reportInternalError as unknown as (e: unknown, c?: string, m?: string) => unknown)(
+      new Error(SECRET_MESSAGE),
+      "ADVISOR_ERROR",
+      SMUGGLED,
+    );
+
+    expect(typeof id).toBe("string");
+    expect(id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+    expect(id).not.toContain(SMUGGLED);
+    // The smuggled text must not become part of the record's public code either.
+    expect(loggedText(spy)).not.toContain(SMUGGLED);
   });
 });
 

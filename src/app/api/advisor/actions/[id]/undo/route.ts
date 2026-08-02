@@ -13,7 +13,7 @@ import {
   markUndone,
 } from "@/lib/db/advisor-action-repo";
 import { executeIntent } from "@/lib/advisor/actions/execute";
-import { fail, ok, notFound, unauthorized } from "@/lib/api/respond";
+import { fail, internalError, ok, notFound, unauthorized } from "@/lib/api/respond";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +49,6 @@ export async function POST(
 
     return ok({ id, undone: true, batchId: action.batchId, count: rows.length });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Undo failed.";
-    return fail("UNDO_ERROR", message, 500);
+    return internalError(err, { code: "UNDO_ERROR" });
   }
 }

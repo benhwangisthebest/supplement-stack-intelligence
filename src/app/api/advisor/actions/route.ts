@@ -24,7 +24,7 @@ import {
 } from "@/lib/advisor/actions/schema";
 import { stackItemInputSchema } from "@/lib/validation/schemas";
 import { recordBatch, type NewAction } from "@/lib/db/advisor-action-repo";
-import { fail, ok, unauthorized, validationError } from "@/lib/api/respond";
+import { fail, internalError, ok, unauthorized, validationError } from "@/lib/api/respond";
 import type { ActionProposal, EditableProposalFields } from "@/types/advisor-action";
 import type { AdvisorContext } from "@/types/advisor";
 import type { StackItem } from "@/types";
@@ -188,8 +188,10 @@ export async function POST(request: NextRequest) {
     try {
       results = await executeBatch(supabase, user.id, actions, priorItems);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Action failed.";
-      return fail("ACTION_ERROR", message, 500, { rolledBack: true });
+      // The batch was rolled back, so `rolledBack` stays — it is a computed fact
+      // the client acts on. The exception itself goes to the log under a
+      // correlation id (CLAUDE.md §2.3 rule 13); it used to be returned verbatim.
+      return internalError(err, { code: "ACTION_ERROR", details: { rolledBack: true } });
     }
 
     // Audit all applied actions under one batch_id → grouped one-click undo (SC-7).
@@ -223,7 +225,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (err) {
     if (err instanceof ZodError) return validationError(err);
-    const message = err instanceof Error ? err.message : "Action failed.";
-    return fail("ACTION_ERROR", message, 500);
+    return internalError(err, { code: "ACTION_ERROR" });
   }
 }

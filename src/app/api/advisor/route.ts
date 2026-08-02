@@ -21,7 +21,13 @@ import {
   recordUsage,
 } from "@/lib/advisor/repo";
 import { advisorRequestSchema } from "@/lib/advisor/schema";
-import { fail, unauthorized, validationError } from "@/lib/api/respond";
+import {
+  INTERNAL_ERROR_MESSAGE,
+  fail,
+  reportInternalError,
+  unauthorized,
+  validationError,
+} from "@/lib/api/respond";
 import type { AdapterMessage, ProgressEvent } from "@/types/advisor";
 import { ZodError } from "zod";
 
@@ -120,9 +126,14 @@ export async function POST(request: NextRequest) {
           }),
         );
       } catch (err) {
-        // We're already committed to the SSE response → surface a typed error event.
-        const msg = err instanceof Error ? err.message : "Advisor failed.";
-        controller.enqueue(sse("error", { message: msg }));
+        // We're already committed to the SSE response → surface a typed error
+        // event. The status code is long gone, but the disclosure rule is not:
+        // the raw message used to be streamed straight into a role="alert" in
+        // AdvisorPanel. Generic text + a correlation id, same as every 500.
+        const correlationId = reportInternalError(err, "ADVISOR_ERROR");
+        controller.enqueue(
+          sse("error", { message: INTERNAL_ERROR_MESSAGE, correlationId }),
+        );
       } finally {
         controller.close();
       }

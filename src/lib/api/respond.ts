@@ -136,7 +136,7 @@ function safeRead<T>(read: () => T): T | undefined {
  * This is not an observability framework. It is the one place the real error is
  * allowed to exist, paired with the id the client was given.
  */
-function logInternalError(correlationId: string, err: unknown): void {
+function logInternalError(correlationId: string, err: unknown, code: string): void {
   // Reading the exception is guarded, not just the write: `err` is an arbitrary
   // thrown value and a getter on `stack` or `cause` can itself throw. Extracting
   // unguarded would let that escape and take down the very response this
@@ -178,10 +178,10 @@ function logInternalError(correlationId: string, err: unknown): void {
   try {
     // The id appears in the plain-text prefix as well as the structured record,
     // so it is greppable in aggregators that do not parse the object argument.
-    console.error(`[api] INTERNAL_ERROR ${correlationId}`, {
+    console.error(`[api] ${code} ${correlationId}`, {
       event: "api.internal_error",
       correlationId,
-      code: "INTERNAL_ERROR",
+      code,
       ...detail,
     });
   } catch {
@@ -198,10 +198,34 @@ function logInternalError(correlationId: string, err: unknown): void {
  * runtimes, so it needs no dependency and no runtime-specific branch. Every
  * route reaching this code runs on the default Node runtime today.
  */
-export function internalError(err: unknown): NextResponse<ApiEnvelope<never>> {
+export function internalError(
+  err: unknown,
+  options: { code?: string; details?: unknown } = {},
+): NextResponse<ApiEnvelope<never>> {
+  const code = options.code ?? "INTERNAL_ERROR";
+  return fail(
+    code,
+    INTERNAL_ERROR_MESSAGE,
+    500,
+    options.details,
+    reportInternalError(err, code),
+  );
+}
+
+/**
+ * Logs an unexpected exception and returns the correlation id to hand the client.
+ *
+ * Split out of `internalError` for callers that are already committed to a
+ * response body a `NextResponse` cannot express — today that is the advisor's SSE
+ * stream, which must emit an `error` event rather than a status code. There is
+ * deliberately no way to supply the client message: it is always
+ * INTERNAL_ERROR_MESSAGE, so no call site can reopen the disclosure by passing
+ * `err.message` through.
+ */
+export function reportInternalError(err: unknown, code = "INTERNAL_ERROR"): string {
   const correlationId = crypto.randomUUID();
-  logInternalError(correlationId, err);
-  return fail("INTERNAL_ERROR", INTERNAL_ERROR_MESSAGE, 500, undefined, correlationId);
+  logInternalError(correlationId, err, code);
+  return correlationId;
 }
 
 /**
@@ -210,8 +234,8 @@ export function internalError(err: unknown): NextResponse<ApiEnvelope<never>> {
  *
  * The catch-all deliberately does NOT read `err.message`. It previously returned
  * it verbatim, so any driver, filesystem, or provider error text reached the
- * client — and 17 UI components render `error.message` directly. See Phase 0
- * closeout finding C-8.
+ * client — and 17 call sites across 15 files (14 components plus the
+ * useLabImport hook) render `error.message` directly. See Phase 0 finding C-8.
  */
 export async function handle<T>(
   fn: () => Promise<NextResponse<ApiEnvelope<T>>>,
