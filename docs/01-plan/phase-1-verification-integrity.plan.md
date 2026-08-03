@@ -149,6 +149,7 @@ tests · **L** = a refactor plus its tests.
 | **U18** | `DOMAIN_IS_PURE` ratchet per ruling 2 — enforce purity on true engine directories; register `src/lib/{auth,api,supabase}` as named exemptions with written reasons. Closes **D-4** and `CLAUDE.md` §4 rule 5. | M `src/architecture/boundaries.test.ts`, M `docs/02-design/architecture-boundaries.md`, M `CLAUDE.md` §4 table | S | ~4 | U15 |
 | **U19** | Route-level ownership check on `/api/stacks/:id/items/:itemId` — verify the item belongs to the **verified parent stack**; 404 on mismatch. Added 2026-08-04 from a U3 finding. | M `src/app/api/stacks/[id]/items/[itemId]/route.ts`, M its `route.test.ts`, possibly M `src/lib/db/stack-item-repo.ts` | S | +2 | U3 |
 | **U20** | `executeBatch`'s inner rollback `catch` calls `reportInternalError(err, "ROLLBACK_FAILED")` — a **log-only** addition; the response contract is untouched. Added 2026-08-04 per FU-2's U11 assessment. | M `src/lib/advisor/actions/execute.ts`, M its `.test.ts` | S | +2 | U11 |
+| **U21** | Route-level ownership on `GET /api/advisor/conversations/:id` — **the U19 shape applied to conversation reads**. Today the handler passes the path id to `getMessages(supabase, id)` and never passes the caller's id; the route's own comment says it relies on migration 0003's RLS. Pass the caller id, or add an equivalent membership check; **404 on a foreign conversation**. Added 2026-08-04 from U4 follow-up 1. | M `src/app/api/advisor/conversations/[id]/route.ts`, M its `route.test.ts`, possibly M `src/lib/advisor/repo.ts` | S | ~4 | U4 |
 | **U16** | E2E honesty — `[LIVE]` tags (**C-9**), kill the shared-user race, build-then-start `webServer`. | M `playwright.config.ts`, M 17 specs, N tag guard | M | ~4 | — |
 | **U17** | Dated live-E2E baseline; investigate the `fetch failed` login artifact. | N `docs/05-qa/phase-1-live-e2e-baseline.md`, M `project-status.md` | M | 0 | U16 |
 
@@ -214,6 +215,18 @@ test and header** — leaving them would make the file assert the old behaviour 
 **Mutation proof for U19:** restore the pass-through (drop the new item↔stack check) and the mismatch case
 must go red on the 404. A bypass-with-identity probe is *not* the right mutation here — the auth check is
 not what changed.
+
+**DELIVERED 2026-08-04, with one ruling.** U19 landed the check as a local `belongsToStack` over the
+existing `listItems` — no new repo function, so no new mapper fixture test (§5.6). Mutation M1 (restore the
+pass-through) turned **five** tests red; M2 (check membership against a body-supplied stack id) turned one.
+
+**Ruling — the 400 → 404 ordering is RATIFIED.** Placing the membership check *before*
+`stackItemInputSchema.parse` changes a second observable: a malformed body aimed at an item outside the
+verified stack now answers **404, not 400**. That is broader than "404 on mismatch" as written above, so it
+was raised rather than absorbed, and the user ratified it on 2026-08-04. The reason it is right: a 400
+there would confirm to an outsider that the item exists, and an ownership-class check preceding validation
+is exactly what U3 already pinned on the sibling `PUT /api/stacks/:id` ("checks ownership BEFORE parsing
+the body"). Consistency between the two routes is the point.
 
 ### 6.2 Mutation proofs
 
@@ -361,11 +374,21 @@ Group B              U2 · U3 · U8   → U19
               created (§6.1.1), so it cannot run in parallel with it. This is the
               plan's dependency logic, not the topical grouping — U19 resembles
               U5's security work but depends on U3's file.
-Group C              U11 → U4 · U20
+Group C              U11 → U4 · U20 · U21          [U11, U4 DONE 2026-08-04]
    ├ GATE C1  Differential response pins captured and green BEFORE any line
    │          moves. Extraction lands only if all 8 outcome triples are identical.
+   │          PASSED — 18 pins over 9 outcomes (see §6.2.1's count note),
+   │          re-run UNEDITED after the move, plus four differential mutations.
    └ GATE C2  error-disclosure proven red against a planted `err.message` in
-              src/services/** — see §6.1.
+              src/services/** — see §6.1. PASSED — red naming
+              src/services/advisor-actions.ts:160, AND shown green with the
+              same leak when the inventory extension was reverted, which is
+              what proves the extension is doing the work.
+              U20 and U21 remain open in this group.
+
+ROUTE-TEST PROGRAMME COMPLETE 2026-08-04 — 23 route files, 23 route test files
+   (`git ls-files --cached -- src/app/api | grep -c 'route.test.ts$'` = 23).
+   U1 · U2 · U3 · U4 all integrated. Gate A1's re-planning clause never fired.
 Group D              U13
    └ GATE D1  Groups B and C green. Thresholds set from MEASURED per-directory
               coverage, ≥10 pp below observed, `branches` omitted where D-2
@@ -412,8 +435,9 @@ remaining ~100 lines per file are tests and commentary, which no shared harness 
 absorbed by U11: Gate C1 required the confirm-and-apply responses pinned *before* any line moved, so that
 route test already exists (406 lines, 18 pins). U19 is an edit to an existing file, not a new one.
 
-**Delivered:** U1, U2, U3 — 18 route-test files, 88 tests. Suite **612 across 60 files**, measured at
-`3069651`, up from the 524/42 baseline recorded in §2.
+**Delivered:** U1 · U2 · U3 · U4 (route tests, **23/23 files**) · U5 · U6 · U10 (guards) · U11 (the
+refactor) · U19 (the behaviour change). Suite **718 across 68 files**, measured at `3417cfb`, up from the
+524/42 baseline recorded in §2. Route tests alone account for 23 files.
 
 The realistic risk is not that a unit fails. It is that **U11 lands, looks green, and has quietly turned one
 409 into a 400, or moved the error boundary outside its guard.** Gates C1 and C2 exist for that and should
@@ -632,7 +656,7 @@ scope, stated in its header so no one "helpfully" extends it: counts of any kind
 
 The roadmap's seven, plus this plan's own. Countable and drift-proof — each states its command.
 
-- [ ] Every route file has ≥ 1 test asserting 401, the happy path, and 400 **where the file validates input**; the non-validating files are enumerated in a written-reason exemption list. (`git ls-files 'src/app/api/**/*.test.ts' | wc -l` = 23)
+- [ ] Every route file has ≥ 1 test asserting 401, the happy path, and 400 **where the file validates input**; the non-validating files are enumerated in a written-reason exemption list. (`git ls-files 'src/app/api/**/*.test.ts' | wc -l` = 23) — **PARTIAL 2026-08-04:** the count is met (23/23, U1–U4 integrated) and every file asserts 401 + happy path. Still open: the **written-reason exemption list** enumerating the non-validating files. Deliberately left unticked; a criterion is met or it is not.
 - [ ] `mappers.ts` ≥ 90 % statements; `execute.ts` ≥ 80 %; `validation/schemas.ts` ≥ 80 %.
 - [ ] A schema↔type drift check exists and is **shown red** against a deliberately renamed column.
 - [ ] Reachability guard covers **7 / 7** `evaluateStack` context fields.
@@ -672,4 +696,7 @@ right home for Phase 1 findings.)*
 | **FU-5** | U6 | `RLS_COVERAGE` does not model `drop policy`, `disable row level security`, `alter policy`, or a later migration weakening an earlier one. | **Deferred.** No migration uses any of these today; this is the guard's most likely route to going stale, so it is recorded rather than closed. |
 | **FU-6** | U6 | The guard checks a policy *exists*, never that its `using` clause is correct — `own_stack_items`' parent-stack subquery and a hypothetical `using (true)` are indistinguishable to it. Policy-logic review stays human. | **Deferred**, with a named dependant: **§6.1.1** — U19's whole current-state argument rests on `own_stack_items` being correct, so U19 must read that policy directly rather than trust this guard. |
 | **FU-7** | U11 | `error-disclosure` now scans `src/app/api/**/route.ts` **and** `src/services/**/*.ts`, but still **not `src/lib/**`**. A catch block extracted into `src/lib` would reproduce the §6.1 hazard exactly, with no guard — and `src/lib` is where `executeBatch`'s swallowing `catch` already lives. | **Deferred**, condition-bound: in scope for whichever unit next moves error handling into `src/lib`. Note **U20** edits a `src/lib` catch and is the near-term trigger to re-read this row. |
+| **FU-9** | U4 | The SSE `error`-event pin is the only test that reads streamed bytes, so its `events()` SSE-parsing helper is duplicated-in-waiting. It has **no legal home**: §6.3's ruling means a shared module cannot live in `src/testing/` without a new `EXEMPT_LAYERS` entry, and cannot be named `*.test.ts`. | **Deferred — no action while there is one SSE route.** Revisit only if a second appears; the ruling, not an oversight, is why it stays inline. |
+| **FU-10** | U4 | **F6** ("route-level reachability, 4 fixed handlers") is recorded closed on the strength of §5's disposition row — *"closed as a by-product of the advisor route tests"* — and all 5 advisor handlers now have tests. The **original finding text was not located**, so what was verified is the disposition row, not the underlying finding. | **Deferred, flagged honestly.** If F6's source text surfaces (mvp-transition-check or the closeout review), re-read it against U4's coverage before treating F6 as closed. |
+| **FU-11** | U19 | `belongsToStack` costs one extra `listItems` round-trip per PUT/DELETE. Correct and cheap at current stack sizes, but it re-reads a whole list to answer a membership question. | **Deferred, upgrade-bound:** switch to a `getItem` repo function if one ever exists (U7 territory). Not worth creating one for this alone — it would need its own row-fixture test (§5.6) for no behavioural gain. |
 | **FU-8** | U11 | `src/services` has a `LAYER_FLOORS` entry of **1** while holding 2 files. The floor exists to catch a layer silently collapsing to zero; at 1 it now has no headroom to detect the loss of one of the two. | **Deferred.** Raise it when the layer grows again; noted rather than tightened now, because a floor at today's exact count blocks ordinary deletion (the stated reason floors sit below current counts). |
