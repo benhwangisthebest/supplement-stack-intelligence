@@ -66,6 +66,10 @@ storageState*.json
 # The two explicit rules above are now redundant but retained as documentation.
 .bkit/runtime/
 .bkit/state/
+# Per-session conversation snapshots written by the compaction hook. Same class
+# as the caches above — machine-local, regenerated, and one appears on every
+# compaction, so leaving it untracked dirties `git status` before every unit.
+.bkit/snapshots/
 
 # bkit PDCA feature ledger — mutated every session and a known concurrent-write
 # contention point. Its durable content is mirrored in docs/archive/*/_INDEX.md,
