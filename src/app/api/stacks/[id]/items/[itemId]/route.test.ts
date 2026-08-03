@@ -1,25 +1,32 @@
 // Application — route-handler tests for /api/stacks/:id/items/:itemId (Phase 1 U3).
 //
-// FINDING pinned here rather than fixed (out of U3's scope): both handlers
-// verify ownership of the STACK (`getStack(supabase, user.id, id)`) and then
-// act on `itemId` WITHOUT checking that the item belongs to that stack. The
-// route layer alone would therefore let a caller pass any item id under a
-// stack they own.
+// HISTORY, kept because it explains the shape of the tests below.
 //
-// Cross-user exploitation is blocked one layer down: migration 0001's
-// `own_stack_items` policy derives ownership from the parent stack via
-// `auth.uid()`, so a write to another user's item fails the RLS check. What
-// remains reachable is same-user cross-stack editing, which is harmless today.
+// U3 found that both handlers verified ownership of the STACK
+// (`getStack(supabase, user.id, id)`) and then acted on `itemId` WITHOUT
+// checking that the item belonged to that stack. It pinned that behaviour
+// rather than changing it — a finding recorded, not absorbed — noting that
+// migration 0001's `own_stack_items` policy blocked cross-USER writes via
+// `auth.uid()`, leaving only same-user cross-STACK editing reachable.
 //
-// The tests below pin the CURRENT behaviour — the stack-level check happening
-// and the item id being passed through verbatim — so that if the route ever
-// stops relying on RLS, the change is visible rather than silent.
+// **U19 closed it (2026-08-04).** The route now checks item→stack membership
+// itself and answers 404 on mismatch. The old pass-through pin is REPLACED
+// below by its inverse: `updateItem`/`deleteItem` must NOT be reached for an
+// item that is not in the verified stack.
+//
+// The policy was re-read directly for U19 rather than trusted via
+// RLS_COVERAGE, which checks only that a policy exists (plan FU-6): it is
+// `for all` with both `using` and `with check` derived from
+// `exists (select 1 from public.stacks s where s.id = stack_items.stack_id and
+// s.user_id = auth.uid())`. So RLS remains the second layer; U19 adds the
+// first, per CLAUDE.md §4 rule 8.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
 import type { StackItem } from "@/types/stack";
 
 const getUser = vi.fn();
 const getStack = vi.fn();
+const listItems = vi.fn();
 const updateItem = vi.fn();
 const deleteItem = vi.fn();
 
@@ -27,6 +34,7 @@ vi.mock("@/lib/auth/session", () => ({ getUser: () => getUser() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({}) }));
 vi.mock("@/lib/db/stack-repo", () => ({ getStack: (...a: unknown[]) => getStack(...a) }));
 vi.mock("@/lib/db/stack-item-repo", () => ({
+  listItems: (...a: unknown[]) => listItems(...a),
   updateItem: (...a: unknown[]) => updateItem(...a),
   deleteItem: (...a: unknown[]) => deleteItem(...a),
 }));
@@ -88,6 +96,7 @@ describe("PUT /api/stacks/:id/items/:itemId", () => {
   it("returns 400 for an invalid body and writes nothing", async () => {
     getUser.mockResolvedValue(USER);
     getStack.mockResolvedValue({ id: "s1" });
+    listItems.mockResolvedValue([ITEM]);
     updateItem.mockResolvedValue(ITEM);
 
     const res = await PUT(req({ dose: -1, unit: "mg" }), ctx());
@@ -98,20 +107,59 @@ describe("PUT /api/stacks/:id/items/:itemId", () => {
     expect(updateItem).not.toHaveBeenCalled();
   });
 
-  it("returns 200 and passes the item id straight through (see file header)", async () => {
+  it("checks membership BEFORE parsing the body (U19)", async () => {
+    // Same ordering property the sibling stacks/[id] PUT pins: an
+    // ownership-class check must precede validation, or a 400 confirms to an
+    // outsider that the item exists. A malformed body against a foreign item
+    // must still be 404, never 400.
     getUser.mockResolvedValue(USER);
     getStack.mockResolvedValue({ id: "s1" });
+    listItems.mockResolvedValue([ITEM]);
+
+    const res = await PUT(req({ dose: -1, unit: "mg" }), ctx("s1", "i-from-another-stack"));
+    const body = await res.json();
+
+    expect(res.status).toBe(404);
+    expect(body.error.code).toBe("NOT_FOUND");
+    expect(updateItem).not.toHaveBeenCalled();
+  });
+
+  it("returns 200 for an item that IS in the verified stack", async () => {
+    getUser.mockResolvedValue(USER);
+    getStack.mockResolvedValue({ id: "s1" });
+    listItems.mockResolvedValue([ITEM]);
     updateItem.mockResolvedValue(ITEM);
 
-    const res = await PUT(req(VALID_INPUT), ctx("s1", "i-from-another-stack"));
+    const res = await PUT(req(VALID_INPUT), ctx("s1", "i1"));
 
     expect(res.status).toBe(200);
-    // Documented, not endorsed: the item id is NOT re-checked against the stack.
-    expect(updateItem).toHaveBeenCalledWith(
-      {},
-      "i-from-another-stack",
-      expect.objectContaining({ dose: 400 }),
-    );
+    expect(updateItem).toHaveBeenCalledWith({}, "i1", expect.objectContaining({ dose: 400 }));
+  });
+
+  it("404s — writing nothing — for an item that is NOT in the verified stack (U19)", async () => {
+    // The behaviour change. Before U19 this returned 200 and updated the
+    // foreign item; RLS stopped it only when the item's owner differed.
+    getUser.mockResolvedValue(USER);
+    getStack.mockResolvedValue({ id: "s1" });
+    listItems.mockResolvedValue([ITEM]); // the stack contains i1, not the target
+
+    const res = await PUT(req(VALID_INPUT), ctx("s1", "i-from-another-stack"));
+    const body = await res.json();
+
+    expect(res.status).toBe(404);
+    expect(body.error.code).toBe("NOT_FOUND");
+    expect(updateItem).not.toHaveBeenCalled();
+  });
+
+  it("checks membership against the stack from the PATH, not one from the body", async () => {
+    getUser.mockResolvedValue(USER);
+    getStack.mockResolvedValue({ id: "s1" });
+    listItems.mockResolvedValue([ITEM]);
+    updateItem.mockResolvedValue(ITEM);
+
+    await PUT(req({ ...VALID_INPUT, stackId: "s-other" }), ctx("s1", "i1"));
+
+    expect(listItems).toHaveBeenCalledWith({}, "s1");
   });
 });
 
@@ -141,6 +189,7 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
   it("returns 200 with the removed item id", async () => {
     getUser.mockResolvedValue(USER);
     getStack.mockResolvedValue({ id: "s1" });
+    listItems.mockResolvedValue([ITEM]);
     deleteItem.mockResolvedValue(undefined);
 
     const res = await DELETE(new Request("http://localhost"), ctx());
@@ -149,5 +198,38 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
     expect(res.status).toBe(200);
     expect(body.data).toEqual({ id: "i1" });
     expect(deleteItem).toHaveBeenCalledWith({}, "i1");
+  });
+
+  it("404s — deleting nothing — for an item that is NOT in the verified stack (U19)", async () => {
+    // The more dangerous half of the behaviour change: before U19 this deleted
+    // the foreign item outright, and a delete has no inverse to offer the user.
+    getUser.mockResolvedValue(USER);
+    getStack.mockResolvedValue({ id: "s1" });
+    listItems.mockResolvedValue([ITEM]);
+    deleteItem.mockResolvedValue(undefined);
+
+    const res = await DELETE(new Request("http://localhost"), ctx("s1", "i-from-another-stack"));
+    const body = await res.json();
+
+    expect(res.status).toBe(404);
+    expect(body.error.code).toBe("NOT_FOUND");
+    expect(deleteItem).not.toHaveBeenCalled();
+  });
+
+  it("reports NOT_FOUND identically for a foreign stack and a foreign item", async () => {
+    // Both answer 404 with the same code, so neither response distinguishes
+    // "that stack isn't yours" from "that item isn't in it" — no existence
+    // oracle either way.
+    getUser.mockResolvedValue(USER);
+    listItems.mockResolvedValue([ITEM]);
+
+    getStack.mockResolvedValue(null);
+    const foreignStack = await DELETE(new Request("http://localhost"), ctx("s-not-mine", "i1"));
+
+    getStack.mockResolvedValue({ id: "s1" });
+    const foreignItem = await DELETE(new Request("http://localhost"), ctx("s1", "i-nope"));
+
+    expect(foreignStack.status).toBe(foreignItem.status);
+    expect((await foreignStack.json()).error.code).toBe((await foreignItem.json()).error.code);
   });
 });
