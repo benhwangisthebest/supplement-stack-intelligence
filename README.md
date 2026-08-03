@@ -68,9 +68,10 @@ written permission.
 
 The three pillars plus thirteen further milestones (v2–v13) are implemented — including the AI advisor,
 medication/food interactions, biomarkers, lab timeline, daily check-ins, the side-effect engine, and the
-identity layer. Verified 2026-08-02 on `main` @ `1792f9f`: `npm run typecheck` clean, **524/524** unit
-tests passing across 42 files, production build
-succeeding, and RLS enabled with a matching policy on every table.
+identity layer. Re-verified 2026-08-03 at Phase 0 close: `npm run typecheck` clean, **524/524** unit
+tests passing across 42 files, production build succeeding, and RLS enabled with a matching policy on
+every table. These figures are a dated snapshot — CI re-measures them on every push, and that run is the
+authoritative result for a given commit.
 
 Production-readiness gaps remain, and they are tracked rather than unknown:
 

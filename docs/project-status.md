@@ -2,9 +2,11 @@
 
 > **Status:** Active. Describes the repository's *actual* condition, not its intended design.
 > **Assessed:** 2026-07-30, by an independent five-reviewer MVP-transition review.
-> **Refreshed:** 2026-08-02 at Phase 0 close, against `main` @ `1792f9f`. Sections §0, §1.1, §2.6, §2.8,
-> §2.9 and §7 carry measured updates; the 2026-07-30 findings are retained beside them rather than
-> deleted (`CLAUDE.md` §7). Where a row is superseded it is marked **[2026-08-02]**.
+> **Refreshed:** 2026-08-02 at Phase 0 close, and again 2026-08-03 when the closeout record was
+> converged. Sections §0, §1.1, §2.6, §2.8, §2.9 and §7 carry measured updates; the 2026-07-30 findings
+> are retained beside them rather than deleted (`CLAUDE.md` §7). Where a row is superseded it is marked
+> **[2026-08-02]**. Measurements are dated where they appear rather than pinned to a tip SHA here — a
+> single pinned baseline in this header went stale twice.
 > **Rule:** Existing code is evidence of current state, **not** automatically the intended final design.
 > Nothing below is labelled production-ready without stated evidence.
 
@@ -23,7 +25,13 @@
 | Lint | `npm run lint` | **Enforces nothing** — no ESLint dependency, no config |
 
 **[2026-08-02] Coverage scope was widened** in `8b1bd16`: `include` is now `src/**/*.{ts,tsx}`. Measured
-at `1792f9f`: **200 files, 47.68 % statements · 81.23 % branches · 69.85 % functions** repo-wide. Six of
+at `1792f9f` and re-measured at Phase 0 close with `npx vitest run --coverage` (read the `All files`
+row): **200 files, 47.68 % statements · ≈ 81.2 % branches · 69.85 % functions** repo-wide. Statements,
+functions, lines and the file count are stable run to run; **branch coverage is not** — it varies about
+±0.02 pp (observed 81.23–81.27) because v8 attributes branches in
+`src/lib/protocol-builder/rules.ts` differently depending on worker scheduling. The suite is 524/524
+green on every run; this is a measurement artifact, not a flaky test. Cite the range, not a decimal.
+Six of
 the **seven** top-level `src` directories appear in the report — `src/architecture` holds only `*.test.ts`,
 which `coverage.exclude` drops; it is still a governed layer under §4.6, which counts all seven.
 Visibility only — the sole threshold remains `src/lib/stack-evaluator/**`. The paragraph below described
@@ -55,14 +63,21 @@ known to be harmless. Recorded here so the choice is visible rather than implici
 
 ## 1. Repository shape
 
-- The git repository root **is** the application directory (`…/Supplement-Advisor/RETIRED-v1.0 (renamed 2026-08-02; was `v1.0`)`). It holds the
+- The git repository root **is** the application directory, at
+  `/Users/<redacted>/Developer/supplement-stack-intelligence`. It holds the
   authoritative `CLAUDE.md`, `docs/`, `src/`, `supabase/`, `tests/`, and `.bkit/`. The `graphify-out/`
   knowledge graph lives at `graphify-out/` **inside** the repository root but is **gitignored** as a
   generated artifact (U1, commit `4337a24`) — so it is absent from a fresh clone until regenerated.
+- **The legacy clone is retired, not active.** `…/Supplement-Advisor/RETIRED-v1.0` (renamed from `v1.0`
+  on 2026-08-02) is the pre-relocation copy. Its git remote was removed, so it can no longer push
+  anywhere; its files were left untouched. It is **not** this repository and holds no authoritative
+  content. Background: closeout finding **C-2** and `docs/04-report/phase-0-integration-enforcement.report.md` §2.
 - Stack: Next.js 15 (App Router), React 19, TypeScript 5.7, Tailwind, Supabase (Postgres + Auth),
   Anthropic SDK, Zod. Vitest + Playwright. No ORM (deliberate — hand-written repos so RLS does tenant
   isolation). No linter, no formatter. **[2026-08-02]** CI now exists (typecheck + unit tests + build).
-- ~12,958 LOC `src/lib`, 5,518 `src/components`, 2,275 `src/data`, 1,786 `src/app`, 1,308 `src/types`.
+- **Measured 2026-08-03** (tracked files, `git ls-files | xargs wc -l`): 13,831 LOC `src/lib`, 5,518
+  `src/components`, 2,863 `src/data`, 1,906 `src/app`, 1,308 `src/types`. A point-in-time measurement —
+  expect drift.
 - Exactly **one** `TODO` in the whole source tree (`src/types/stack.ts:56`).
 - No import cycles (independently confirmed via `graphify-out/GRAPH_REPORT.md`).
 
@@ -71,8 +86,11 @@ known to be harmless. Recorded here so the choice is visible rather than implici
 > **[2026-08-02] RESOLVED IN FULL by Phase 0.** Every row in the table below is now false, and that is the
 > point of Phase 0. Measured: `main` @ `1792f9f` == `origin/main`, **0 ahead / 0 behind**; history linear
 > with **zero merge commits**; the layering guardrail and the v13 anti-fabrication guards are committed
-> **and pushed**; working tree clean. The four `fix/*` remediation branches and nine `feat/*` branches are
-> all intact on `origin` — no branch was deleted, no tag created, no history rewritten.
+> **and pushed**; working tree clean. **As measured on 2026-08-02**, the four `fix/*` remediation branches
+> and nine `feat/*` branches were all intact on `origin`, and no branch had been deleted, no tag created,
+> no history rewritten. (Deleting *merged* branches at Phase 0 close is a separate approved step under
+> `CLAUDE.md` §10.1; it removes labels only and rewrites no history. The end state is recorded in
+> `docs/05-qa/phase-0-final-check.md`.)
 >
 > The table is retained unedited as the record of what Phase 0 was called into existence to fix.
 
@@ -231,8 +249,13 @@ test" part does not.
   working tree (`a338370`, **R1**). `src/services` and `src/data` are now scanned layers, and every
   top-level `src/*` directory must be scanned or explicitly exempted with a written reason. Reference-ID
   stability is enforced across **9** manifest namespaces (`77b3c36`, plus `ea5b270` **R2** which added
-  `biomarkerRelevanceRules`). Every guard added in U7, U8, R1, R2, R3 and R3b was mutation-checked —
-  shown red against the defect it targets — as `CLAUDE.md` §5.2 requires.
+  `biomarkerRelevanceRules`). Every guard added in U7, U8, R1, R2, R3 and R3b was mutation-checked at
+  execution time — shown red against the defect it targets, as `CLAUDE.md` §5.2 requires. **What is
+  durably evidenced in `docs/` differs by unit:** U7/U8's matrices are tabulated by an independent
+  reviewer in `docs/reviews/phase-0-closeout-check.md` §4; R1–R3b's were self-reported in-unit and are
+  independently re-proved only by the final Check's re-execution
+  (`docs/05-qa/phase-0-final-check.md`, reviewer R-A). See
+  `docs/04-report/phase-0-integration-enforcement.report.md` §6.
 - **Still true:** coverage thresholds exist for `stack-evaluator` only; vitest collects `*.test.ts` only,
   so a `.test.tsx` file is silently never run; `environment: "node"` with no jsdom means component tests
   cannot run; the E2E gaps below are unchanged and E2E remains excluded from CI.

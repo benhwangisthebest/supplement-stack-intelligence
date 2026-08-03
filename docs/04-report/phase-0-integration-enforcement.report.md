@@ -1,17 +1,21 @@
 # Phase 0 — Integration & Enforcement Recovery (Completion Report)
 
-> **Status: COMPLETE WITH FOLLOW-UP** · **Date:** 2026-08-02
-> **Final state:** `main` @ `1792f9f984d506340aced37a4dd2cf4adee6cfe9` (= `origin/main`, 0 ahead / 0 behind)
-> **CI:** [run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)
+> **Status: COMPLETE WITH FOLLOW-UP** · **Date:** 2026-08-02; record converged 2026-08-03
+> **Final state:** `main` == `origin/main`, 0 ahead / 0 behind. **This header deliberately pins no tip
+> SHA** — `main` advanced past the unit chain with the documentation, correction and certification commits
+> that followed, and a pinned SHA here has gone stale twice already. The authoritative CI result for any
+> commit is the `push`/`main` run carrying that commit's SHA.
+> **CI at the close of the unit chain:** [run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)
 > — `push` / `main` / head SHA `1792f9f`, conclusion **`success`**
 > **Plan:** `docs/01-plan/phase-0-integration-enforcement.plan.md` (Completed 2026-08-02)
 > **Independent closeout review:** `docs/reviews/phase-0-closeout-check.md` (2026-08-01, + resolution addendum)
-> **Final independent Check:** **not yet run** — scaffolded at `docs/05-qa/phase-0-final-check.md`
+> **Final independent Check:** **run 2026-08-02.** First pass, the re-check of every finding, and the
+> final certification are recorded in `docs/05-qa/phase-0-final-check.md`, which is the authority on it.
 
 **"Complete with follow-up", not "complete".** Every unit shipped and every blocking closeout finding is
-resolved, but four roadmap exit criteria remain unmet by deliberate deferral, seven findings are carried
-into Phase 1, and the independent final Check has not been performed. Calling this unconditionally
-complete would be the exact failure mode `CLAUDE.md` §5.1 names.
+resolved, but **three** roadmap exit criteria remain unmet by deliberate deferral and the findings in §5
+are carried into Phase 1. Calling this unconditionally complete would be the exact failure mode
+`CLAUDE.md` §5.1 names.
 
 ---
 
@@ -23,7 +27,9 @@ one machine.
 
 **Outcome.** `main` is the working tip, publicly pushed, with a green CI run on the exact SHA. Two
 executable architecture specs and a reference-ID stability contract now re-verify on every run, and each
-was mutation-checked. A rank-1 error-disclosure violation that predated Phase 0 was found and closed.
+was mutation-checked at execution time — §6 states precisely which of those checks are *durably
+evidenced* and which were self-reported. A rank-1 error-disclosure violation that predated Phase 0 was
+found and closed.
 
 ---
 
@@ -146,7 +152,7 @@ the 2026-08-02 Check (finding M-4).
 
 | Item | Status | Why |
 |---|---|---|
-| Tags `v2`…`v13`; zero `feat/*` branches | **Unmet** (U-DEFER-1) | The chain cannot support honest tags — v12 `51d2134` precedes v11 `d89cf1c`. 0 tags, 9 remote `feat/*`. |
+| Tags `v2`…`v13`; zero `feat/*` branches | **Unmet** (U-DEFER-1) | The chain cannot support honest tags — v12 `51d2134` precedes v11 `d89cf1c`. 0 tags. **As measured 2026-08-02**, 9 remote `feat/*` branches remained; merged-branch cleanup at Phase 0 close is a separate approved step (`CLAUDE.md` §10.1) — see `docs/05-qa/phase-0-final-check.md` for the end state. |
 | **Branch protection / CI as required status** (**C-6**) | **Unmet** (U-DEFER-3) | Needs a repository-settings change and separate explicit approval. `main` is force-pushable today. |
 | A `.tsx` test collected under `src/` (**C-12**) | **Unmet** (U-DEFER-4) | `vitest.config.ts` collects `*.test.ts` only. Zero `.test.tsx` exist; latent. |
 
@@ -168,7 +174,7 @@ CI-verified by manual `workflow_dispatch` before integration.
 | **F6** | No route-level reachability test covers the four fixed handlers (`CLAUDE.md` §5.3). |
 | **F7** | The error-disclosure guard documents two detection gaps it does not close: destructured-handler *bodies*, and two-argument `.then(onFulfilled, onRejected)`. No route uses either form. |
 | — | **`fix/**` and `docs/**` are absent from the CI push triggers** (`.github/workflows/ci.yml`: `push` covers `main` and `feat/**` only). Every `fix/*` and `docs/*` branch therefore needed a manual `workflow_dispatch` before integration. A follow-up, **not** a Phase 0 exit criterion. |
-| — | **The developer's personal email address is public — a known, accepted exposure.** It appears in **52** tracked files (47 of them under `docs/archive/2026-06/**`, the per-feature PDCA documents), has been in tracked content since the initial commit `910d773`, and is the author email on **2 of 30** commits. The repository is public, so the address is already published. The configured author email is now the GitHub noreply form. Removing it would require rewriting the v2–v13 chain, which `CLAUDE.md` §10.4 forbids. Deliberately not reproduced here, so this row does not itself become a 53rd occurrence. **Decision 2026-08-03: accepted as-is — no redaction, no rewrite.** |
+| — | **The developer's personal email address is public — a known, accepted exposure.** It appears in **52** tracked files (47 of them under `docs/archive/2026-06/**`, the per-feature PDCA documents), has been in tracked content since the initial commit `910d773`, and is the author email on exactly **2 commits, both ancestors of `1792f9f`** (no later commit uses it). The repository is public, so the address is already published. The configured author email is now the GitHub noreply form. Removing it would require rewriting the v2–v13 chain, which `CLAUDE.md` §10.4 forbids. Deliberately not reproduced here, so this row does not itself become a 53rd occurrence. **Decision 2026-08-03: accepted as-is — no redaction, no rewrite.** |
 | — | **Supplement slug policy** — the relationship between seed IDs and public `/library/[slug]` URLs is unstated; a rename would break both persisted references and inbound links. |
 | — | **`boundaries.test.ts` claim→observed pass** (recommended small unit). Three of R3b's blockers were *comment* defects, not code defects. Running each header claim against the implementation caught them in one pass; `boundaries.test.ts`'s header has never had that treatment. |
 
@@ -188,14 +194,14 @@ defect at execution time, but that evidence was preserved unevenly:
 - **R1 / R2 / R3 / R3b** — mutations were run and their red output reported in each unit's own report at
   execution time, but **were not independently preserved in `docs/`**. Treat those in-unit claims as
   self-reported.
-- **Independent re-execution — performed, not yet published.** The 2026-08-02 final Check ran four fresh
-  mutations in a disposable worktree and all four went red naming the offending site. **That result
-  document is not in the repository yet**: `docs/05-qa/phase-0-final-check.md` on `main` is still the
-  scaffold and reads "Status: NOT RUN". Until the Check's result is published, **no durable independent
-  mutation evidence for R1–R3b exists in `docs/`**, and this report does not claim otherwise.
+- **Independent re-execution — performed and published.** The 2026-08-02 final Check ran four fresh
+  mutations in a disposable worktree and all four went red naming the offending site. That result is
+  recorded in `docs/05-qa/phase-0-final-check.md` (reviewer **R-A**), which also carries the re-checks
+  of every finding and the final certification. It is therefore the **durable independent** mutation
+  evidence for R1–R3b, and the only one — the in-unit claims remain self-reported.
 
 No mutation evidence has been reconstructed retroactively, and none is cited from a document that does
-not yet contain it.
+not contain it.
 
 **Not established.** A green suite still does not mean a verified product — that is Phase 1's objective,
 and the §0 warning in `docs/project-status.md` stands unchanged. Coverage remains visibility-only outside

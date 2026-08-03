@@ -10,9 +10,11 @@ name: CI
 # NOT included, each for a verified reason:
 #   * lint            - `next lint` has zero eslint dependency and no config,
 #                       so it passes vacuously or fails spuriously (P-10).
-#   * boundary tests  - `src/architecture/boundaries.test.ts` already yields 16
-#                       tests under the standard `vitest run`; a separate step
-#                       would be pure duplication (P-06, verified).
+#   * boundary tests  - `src/architecture/boundaries.test.ts` is already collected
+#                       and executed by the standard `vitest run` in the `npm test`
+#                       step below; a separate step would be pure duplication
+#                       (P-06, verified). Its test count is not pinned here - it
+#                       grows as rules are added.
 #   * coverage gate   - per-engine thresholds fail today (P-07); widening scope
 #                       does not imply a global floor is safe (P-08).
 #   * E2E             - 17/23 specs are E2E_LIVE-gated and the suite races a

@@ -18,15 +18,17 @@
 > functional beta → production readiness" sequence does not fit a codebase whose domain logic is already
 > production-grade but whose *content* and *operations* are not.
 
-**Phase status (updated 2026-08-02, `main` @ `1792f9f`):** Phase 0 — **complete with follow-up**. All
-nine units (U1–U9) shipped and are public, plus four post-review remediations: R1 `a338370`, R2 `ea5b270`,
-R3 `9e9e15d`, R3b `1792f9f`. CI is green on `main`
-([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)).
-Phases 1–4 — not started.
+**Phase status (updated 2026-08-03):** Phase 0 — **complete with follow-up**. All nine units (U1–U9)
+shipped and are public, plus four post-review remediations — R1 `a338370`, R2 `ea5b270`, R3 `9e9e15d`,
+R3b `1792f9f` — and the documentation and record-correction commits that followed them. CI is green on
+`main`; the authoritative run for any commit is the GitHub Actions `CI` run whose head SHA is that
+commit. Phases 1–4 — not started.
 
-"Complete with follow-up" is deliberate: **four exit criteria below remain unmet** and are annotated
-in place. The independent final Check has not yet been run — it is scaffolded at
-`docs/05-qa/phase-0-final-check.md`.
+"Complete with follow-up" is deliberate: **three exit criteria below remain unmet** and are annotated
+in place. The independent final Check **ran 2026-08-02** — first-pass verdict **NOT CLOSED** against
+`0d9e008`. Its findings, the re-check of each after remediation, and the final certification are
+recorded in `docs/05-qa/phase-0-final-check.md`; that document is the authority on the Check, and this
+line deliberately does not restate its verdict.
 
 See `docs/01-plan/phase-0-integration-enforcement.plan.md` for per-unit detail,
 `docs/04-report/phase-0-integration-enforcement.report.md` for the completion report, and
@@ -50,7 +52,9 @@ the enforcement work every later phase depends on. It changes no product behavio
 3. **[U-DEFER-1 — deferred, NOT delivered]** Tag `v2`…`v13` retrospectively at their commits; push tags;
    delete the ten stale branch labels locally and on origin. Tags are immutable and push; branch labels
    are neither. *Deferred: the chain cannot support honest tags — v12 `51d2134` precedes v11 `d89cf1c`.
-   0 tags exist; 9 remote `feat/*` branches remain.*
+   0 tags exist. As measured 2026-08-02, 9 remote `feat/*` branches remained; merged-branch cleanup at
+   Phase 0 close is a separate approved step (`CLAUDE.md` §10.1) — see `docs/05-qa/phase-0-final-check.md`
+   for the end state.*
 4. Add CI: `npm ci && npm run typecheck && npm test && npm run build`. **[Delivered `374d7c9`;
    "required on `main`" is U-DEFER-3 / C-6 — NOT delivered, `main` has no branch protection.]**
 5. Extend `src/architecture/boundaries.test.ts`: add `src/services` and `src/data` to the scanned
@@ -80,8 +84,11 @@ discard the only validated integrated state.
 **Testing requirements.** Suite stays green through the merge: `tsc --noEmit` clean, all unit tests
 passing, `next build` succeeding. Every new boundary rule must be **mutation-checked** — shown to go red
 against a deliberately introduced violation before it is trusted. *(Written against a 408-test baseline;
-measured **524/524 across 42 files** at Phase 0 close. The requirement is "green", not a fixed count —
-every guard added in U7, U8, R1, R2, R3 and R3b was mutation-checked as required.)*
+measured **524/524 across 42 files** at Phase 0 close. The requirement is "green", not a fixed count.
+Every guard added in U7, U8, R1, R2, R3 and R3b was mutation-checked at execution time; what is
+**durably evidenced in `docs/`** differs by unit — see
+`docs/04-report/phase-0-integration-enforcement.report.md` §6 for the distinction, and
+`docs/05-qa/phase-0-final-check.md` (reviewer R-A) for the independent re-execution.)*
 
 **Security requirements.** Confirm no secret was ever committed, now that history is pushed (the review
 could not check history). *(Verified 2026-07-30: `.gitignore` correctly excludes `.env` / `.env*.local`;
@@ -301,7 +308,8 @@ operable, and grounded.
    > the move off the Desktop tree left both behind. Recovered 2026-08-02:
    >
    > - `docs/01-plan/features/context-adjusted-evidence.plan.md` — **imported byte-identical** (399
-   >   lines, sha `c5ec657f…`). Public-repo screen: no absolute paths, no usernames, no secret-shaped
+   >   lines, **SHA-1** of file content `c5ec657f…`, i.e. `shasum -a 1` — not the git blob hash).
+   >   Public-repo screen: no absolute paths, no usernames, no secret-shaped
    >   values, no emails, no machine identifiers. **Zero redactions.**
    > - `docs/02-design/features/evidence-grading.design.md` — **deliberately not imported.** The Desktop
    >   copy is **byte-identical** to `docs/archive/2026-06/evidence-grading/evidence-grading.design.md`,

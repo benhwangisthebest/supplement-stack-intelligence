@@ -496,13 +496,17 @@ Verified against `main` @ `1792f9f984d506340aced37a4dd2cf4adee6cfe9`
 (CI run [30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782),
 `push`/`main`, conclusion `success`).
 
-Every remediation below was mutation-checked — each guard was shown red against the defect it targets
-before being accepted (CLAUDE.md §5.2).
+Every remediation below was mutation-checked at execution time — each guard was shown red against the
+defect it targets before being accepted (CLAUDE.md §5.2). **That evidence was preserved unevenly:** the
+U7/U8 matrices are tabulated in §4 of this document by an independent reviewer, whereas R1–R3b's
+mutations were self-reported in-unit. They were independently re-proved on 2026-08-02 — see
+`docs/05-qa/phase-0-final-check.md` (reviewer R-A) and
+`docs/04-report/phase-0-integration-enforcement.report.md` §6.
 
 | Finding | Status | Resolved by |
 |---|---|---|
 | **C-1** — architecture guard measured the filesystem, not the repository | **Resolved** | **R1** — `a338370` `test(architecture): derive boundary inventory from tracked files`. Discovery now runs `git ls-files --cached`, so untracked and ignored files are structurally incapable of reaching a rule. |
-| **C-2** — 111 untracked `* N.*` duplicates on a public repo | **Partly resolved — see the 2026-08-02 correction below** | Active copy relocated 2026-08-01 to `/Users/<redacted>/Developer/supplement-stack-intelligence`, outside the synced tree. R1 additionally makes the guard immune to the class. **This row originally read "Resolved", which the 2026-08-02 independent Check falsified** — the source clone was still live on the same public remote with 141 duplicates. Neutralized 2026-08-02: the clone's remote was removed and the folder renamed `RETIRED-v1.0`; its 1031 files and `HEAD` were not modified, and the 141 duplicates remain in place pending manual deletion. Full detail: `docs/04-report/phase-0-integration-enforcement.report.md` §2. |
+| **C-2** — 111 untracked `* N.*` duplicates on a public repo | **Partly resolved — see the 2026-08-02 correction below** | Active copy relocated 2026-08-01 to `/Users/<redacted>/Developer/supplement-stack-intelligence`, outside the synced tree. R1 additionally makes the guard immune to the class. **This row originally read "Resolved", which the 2026-08-02 independent Check falsified** — the source clone was still live on the same public remote with 141 duplicates. Neutralized 2026-08-02: the clone's remote was removed and the folder renamed `RETIRED-v1.0`; its files and `HEAD` were left untouched, and the 141 duplicates remain in place pending manual deletion. (No tracked-file count is stated: verifying one would require running git in that directory, which is now deliberately avoided.) Full detail: `docs/04-report/phase-0-integration-enforcement.report.md` §2. |
 | **C-3** — the plan under which nine commits shipped was still marked `DRAFT` | **Resolved** | This unit — `docs/01-plan/phase-0-integration-enforcement.plan.md` marked **Completed 2026-08-02**, with the per-unit commit list replacing the "nothing has been executed" line. |
 | **C-4** — governing documents stale; roadmap/plan exit criteria conflict | **Resolved** | This unit — `README.md`, `docs/project-status.md`, `docs/roadmap.md`, `docs/02-design/architecture-boundaries.md`, and the `CLAUDE.md` §5 baseline line all refreshed against measured values. |
 | **C-5** — `NO_UI_IMPORT` enforced without plan authorization | **Open (documented)** | Now documented in `docs/02-design/architecture-boundaries.md` as enforced-and-ratified rather than deferred. The ratchet holds today. |
@@ -531,6 +535,11 @@ These were discovered during R3/R3b and are not in the original numbering:
 
 ### What this addendum does not claim
 
-Phase 0's **final independent Check has not been run.** This addendum records what the remediation units
-did; it is not itself an independent verification of closure. That Check is the next unit, scaffolded at
-`docs/05-qa/phase-0-final-check.md`.
+**This addendum is not an independent verification of closure.** It records what the remediation units
+did, written by the party that did them. The independent Check is a separate exercise — it **ran
+2026-08-02**, and its first pass, the re-check of every finding, and the final certification are recorded
+in `docs/05-qa/phase-0-final-check.md`. That document, not this addendum, is the authority on whether
+Phase 0 closed.
+
+*(This section previously read "the final independent Check has not been run", which was true when the
+addendum was written on 2026-08-02 and false once the Check ran later that day. Corrected 2026-08-03.)*

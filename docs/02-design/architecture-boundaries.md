@@ -169,7 +169,11 @@ detector on a fixture per claim — 33 claims, all matching.
   passes — none of those three imports persistence. Under §4.5's broader "pure engine directories"
   wording it **would fail today** at `src/lib/identity/context.ts`,
   `src/lib/advisor/context-loader.ts`, and `src/lib/advisor/actions/execute.ts`, which are the only
-  `src/lib` engine files importing `@/lib/db`. Settling that scope is a precondition for enforcing it.
+  `src/lib` engine files importing `@/lib/db`. **That list covers `@/lib/db` only.** Other `src/lib`
+  modules — `auth/actions.ts`, `auth/session.ts`, `api/respond.ts`, `supabase/server.ts`,
+  `supabase/middleware.ts` — import `@/lib/supabase` or `next/*`, also named by §4.5; they are excluded
+  here as infrastructure rather than engine directories, which is precisely the scope question that must
+  be settled first. Settling that scope is a precondition for enforcing it.
 - **Deferred:** the client-component rule (would fail on 7 of the 31 `"use client"` modules under
   `src/components` — those importing `@/lib/*` or `@/data`); the `NO_PERSISTENCE_FROM_UI` ratchet (free
   today); and full cycle detection.

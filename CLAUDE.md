@@ -155,7 +155,7 @@ Layering: `src/types` → pure engines in `src/lib` → `src/services` / `src/li
 |---|---|---|
 | 1, 2, 3 | **Enforced** | `boundaries.test.ts` — B1, B2, B2b, B3 |
 | **4** (`src/data` is a leaf) | **Enforced** | `boundaries.test.ts` — B4, B4b |
-| 5 (domain purity) | Not enforced | `DOMAIN_IS_PURE` deferred; would fail today at three `src/lib` files — see `docs/02-design/architecture-boundaries.md` |
+| 5 (domain purity) | Not enforced | `DOMAIN_IS_PURE` deferred; would fail today at **three** `src/lib` files under the narrow `@/lib/db` reading, or **eight** under §4.5's literal wording — the scope is unsettled, which is why it is deferred. See `docs/02-design/architecture-boundaries.md` |
 | **6** (every top-level `src/*` registered) | **Enforced** | `boundaries.test.ts` — tree-partition, with a written-reason assertion |
 | 7 (client components take props) | Not enforced | Would fail today on 7 of 31 client components |
 | 8 (trust boundaries in testable modules) | Not enforced generally | The API error boundary is enforced by `error-disclosure.test.ts`; there is no general mechanical rule |
@@ -190,10 +190,12 @@ passing, a clean typecheck, and a successful build.
    `L1/L2/L3` prefix to signal gating — it does not.
 10. Before declaring work done: `npx tsc --noEmit`, `npx vitest run`, and `npx next build` must all pass.
 
-Current measured baseline (2026-08-02, `main` @ `1792f9f`): typecheck clean · **524/524 unit tests across
+Measured baseline (re-measured 2026-08-03 at Phase 0 close): typecheck clean · **524/524 unit tests across
 42 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
-`vitest run` → `next build`, on push to `main`/`feat/**`, PRs to `main`, and `workflow_dispatch`). CI is
-**not** yet a required status and `main` has no branch protection — see `docs/roadmap.md`.
+`vitest run` → `next build`, on push to `main`/`feat/**`, PRs to `main`, and `workflow_dispatch`). These
+figures are re-measured by every CI run — the authoritative result for any commit is its `push`/`main`
+run, not this line, which is a snapshot and will drift. CI is **not** yet a required status and `main`
+has no branch protection — see `docs/roadmap.md`.
 
 ---
 
@@ -308,7 +310,8 @@ retire it — do not half-use it.
 ## 11. graphify
 
 This project has a knowledge graph at `graphify-out/` — **inside the repository root, but gitignored**
-(generated, ~29 MB, regenerable). It holds god nodes, community structure, and cross-file relationships.
+(generated, regenerable — size varies with the tree, order tens of MB). It holds god nodes, community
+structure, and cross-file relationships.
 If the directory is absent after a fresh clone, that is expected: run `graphify update .` to build it.
 
 - For codebase questions, run `graphify query "<question>"` **before** grepping or browsing raw source. Use
