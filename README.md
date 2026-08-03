@@ -56,6 +56,12 @@ npm run dev                  # http://localhost:3000
 | `npm run test:e2e` | Playwright (set `E2E_LIVE=1` for authed flows) |
 | `npm run db:seed` | Seed demo data (needs Supabase env) |
 
+## Licence
+
+**Source-visible, not open source.** Copyright (c) 2026 Ben Hwang, all rights reserved — see
+[LICENSE](LICENSE). You may read this code; you may not use, copy, modify, or redistribute it without
+written permission.
+
 ## Project status
 
 **Current maturity: post-MVP, in transition to functional beta.**

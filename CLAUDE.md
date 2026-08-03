@@ -149,8 +149,22 @@ Layering: `src/types` → pure engines in `src/lib` → `src/services` / `src/li
 9. **Any endpoint calling a paid external API** needs an atomic per-user budget reservation and a request
    rate limit.
 
-Rules 1–3 are enforced today. Rules 4–9 were added in the 2026-07-30 transition review and are **not yet
-implemented** — see `docs/roadmap.md` Phases 0–2. **Do not introduce new violations of them in the meantime.**
+**Enforcement status, measured 2026-08-02 against `src/architecture/`:**
+
+| Rule | Status | Enforced by |
+|---|---|---|
+| 1, 2, 3 | **Enforced** | `boundaries.test.ts` — B1, B2, B2b, B3 |
+| **4** (`src/data` is a leaf) | **Enforced** | `boundaries.test.ts` — B4, B4b |
+| 5 (domain purity) | Not enforced | `DOMAIN_IS_PURE` deferred; would fail today at three `src/lib` files — see `docs/02-design/architecture-boundaries.md` |
+| **6** (every top-level `src/*` registered) | **Enforced** | `boundaries.test.ts` — tree-partition, with a written-reason assertion |
+| 7 (client components take props) | Not enforced | Would fail today on 7 of 31 client components |
+| 8 (trust boundaries in testable modules) | Not enforced generally | The API error boundary is enforced by `error-disclosure.test.ts`; there is no general mechanical rule |
+| 9 (budget + rate limit on paid APIs) | Not enforced | No mechanical check exists |
+
+A further rule **B5** (`src/lib`/`src/services` must not import `src/components`) is enforced but is not
+one of the numbered rules above — see closeout finding C-5.
+
+**Do not introduce new violations of the unenforced rules.** Sequencing: `docs/roadmap.md` Phases 0–2.
 
 ---
 

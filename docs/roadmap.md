@@ -47,17 +47,23 @@ the enforcement work every later phase depends on. It changes no product behavio
 2. `git checkout main && git merge --ff-only feat/food-pairings-v12 && git push`. Conflict-free **by
    construction** — the ten feature branches form a single linear chain with no divergent merge base,
    and the integrated tip is already the validated state.
-3. Tag `v2`…`v13` retrospectively at their commits; push tags; delete the ten stale branch labels
-   locally and on origin. Tags are immutable and push; branch labels are neither.
-4. Add CI: `npm ci && npm run typecheck && npm test && npm run build`. Make it required on `main`.
+3. **[U-DEFER-1 — deferred, NOT delivered]** Tag `v2`…`v13` retrospectively at their commits; push tags;
+   delete the ten stale branch labels locally and on origin. Tags are immutable and push; branch labels
+   are neither. *Deferred: the chain cannot support honest tags — v12 `51d2134` precedes v11 `d89cf1c`.
+   0 tags exist; 9 remote `feat/*` branches remain.*
+4. Add CI: `npm ci && npm run typecheck && npm test && npm run build`. **[Delivered `374d7c9`;
+   "required on `main`" is U-DEFER-3 / C-6 — NOT delivered, `main` has no branch protection.]**
 5. Extend `src/architecture/boundaries.test.ts`: add `src/services` and `src/data` to the scanned
    layers; add a `DATA_IS_A_LEAF` rule (`src/data/**` may import only `src/types/**`); add a
    tree-partition sanity test asserting every top-level `src/*` directory is either scanned or in an
    explicitly-justified exemption list.
-6. Promote the currently-deferred **domain-purity** rule to enforced: listed engine directories may not
-   import `@/lib/db`, `@/lib/supabase`, `@/services`, `@/app`, or `next/*`.
-7. One-line fix: change Vitest `include` to `src/**/*.test.{ts,tsx}` so `.tsx` tests stop being silently
-   ignored, and add a jsdom environment path for component tests.
+6. **[U-DEFER-6 — deferred, NOT delivered]** Promote the currently-deferred **domain-purity** rule to
+   enforced: listed engine directories may not import `@/lib/db`, `@/lib/supabase`, `@/services`,
+   `@/app`, or `next/*`. *Would fail today at three `src/lib` files — see
+   `docs/02-design/architecture-boundaries.md`.*
+7. **[U-DEFER-4 — deferred, NOT delivered]** One-line fix: change Vitest `include` to
+   `src/**/*.test.{ts,tsx}` so `.tsx` tests stop being silently ignored, and add a jsdom environment path
+   for component tests. *Zero `.test.tsx` files exist today, so this is latent.*
 8. Expand coverage `include` to the full `src/` tree so gaps become visible rather than invisible.
 
 **Excluded work.** No product features. No content work. No refactoring beyond items 5–8. Explicitly
@@ -101,9 +107,12 @@ zero `.DS_Store` tracked.)*
 - [x] Coverage report lists `src/app`, `src/services`, `src/components`, `src/lib/db` — `include` is
       `src/**/*.{ts,tsx}` since `8b1bd16`.
 
-> **On the four unmet criteria.** Each is annotated above with the U-DEFER item that deferred it, so a
+> **On the three unmet criteria.** Each is annotated above with the U-DEFER item that deferred it, so a
 > deliberate deferral is distinguishable from an omission (`CLAUDE.md` §7). Phase 0 is therefore
 > **complete with follow-up**, not unconditionally complete.
+>
+> The `fix/**` / `docs/**` CI-trigger gap is **not** one of these — it is a follow-up, recorded in
+> `docs/04-report/phase-0-integration-enforcement.report.md` §5, not an exit criterion.
 
 ---
 
@@ -286,13 +295,20 @@ operable, and grounded.
 1. **Context-adjusted evidence** — resume `docs/01-plan/features/context-adjusted-evidence.plan.md`. The
    plan must be revised first: it was halted at design and assumed a `populationRelevance` seam that
    exists for only 8 of 27 effects. Phase 3 removes that blocker.
-   > **[2026-08-02] That file is not in this repository.** It, and
-   > `docs/02-design/features/evidence-grading.design.md`, were untracked when Phase 0 began — the plan
-   > listed both as "pre-existing untracked docs (NOT part of Phase 0)" and forbade changing them
-   > (`docs/01-plan/phase-0-integration-enforcement.plan.md:78-79,178`), so neither was ever committed,
-   > and the move off the old Desktop tree left both behind. They exist **only** in the pre-relocation
-   > Desktop working copy. Recover them there before resuming this item — do not assume the path
-   > resolves. `docs/product-direction.md:109` carries the same stale pointer.
+   > **[2026-08-02] Imported — the path now resolves.** Both files were untracked when Phase 0 began
+   > (`docs/01-plan/phase-0-integration-enforcement.plan.md:78-79,178` listed them as "pre-existing
+   > untracked docs (NOT part of Phase 0)" and forbade changing them), so neither was ever committed and
+   > the move off the Desktop tree left both behind. Recovered 2026-08-02:
+   >
+   > - `docs/01-plan/features/context-adjusted-evidence.plan.md` — **imported byte-identical** (399
+   >   lines, sha `c5ec657f…`). Public-repo screen: no absolute paths, no usernames, no secret-shaped
+   >   values, no emails, no machine identifiers. **Zero redactions.**
+   > - `docs/02-design/features/evidence-grading.design.md` — **deliberately not imported.** The Desktop
+   >   copy is **byte-identical** to `docs/archive/2026-06/evidence-grading/evidence-grading.design.md`,
+   >   which is already tracked here. Importing it would duplicate tracked content at a second path.
+   >   Read the archived copy instead.
+   >
+   > `docs/product-direction.md:109` points at the plan path, which now resolves.
 2. **Real product catalog** replacing the seeded 21 products, with ranking independence still test-proven.
 3. **Component tests + accessibility** for every component rendering a safety flag, evidence grade, or citation.
 4. **Longitudinal intelligence** across labs, adherence, and outcomes.

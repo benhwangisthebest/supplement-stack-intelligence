@@ -170,9 +170,9 @@ detector on a fixture per claim — 33 claims, all matching.
   wording it **would fail today** at `src/lib/identity/context.ts`,
   `src/lib/advisor/context-loader.ts`, and `src/lib/advisor/actions/execute.ts`, which are the only
   `src/lib` engine files importing `@/lib/db`. Settling that scope is a precondition for enforcing it.
-- **Deferred:** the client-component rule (would fail on 7 of the 30 `"use client"` components — those
-  importing `@/lib/*` or `@/data`); the `NO_PERSISTENCE_FROM_UI` ratchet (free today); and full cycle
-  detection.
+- **Deferred:** the client-component rule (would fail on 7 of the 31 `"use client"` modules under
+  `src/components` — those importing `@/lib/*` or `@/data`); the `NO_PERSISTENCE_FROM_UI` ratchet (free
+  today); and full cycle detection.
 - **Tree-partition ignores loose files and symlinks** (closeout finding C-11). A loose
   `src/middleware.ts` — a standard Next.js location — would be neither scanned nor exempt. None exists
   today; latent.

@@ -80,3 +80,11 @@ storageState*.json
 # Editor temporary files
 *.swp
 *.swo
+
+# Editor / IDE local state. Machine-local, never part of the repository.
+# Added 2026-08-02 (Phase 0 Check finding CK-1): an untracked, un-ignored
+# .obsidian/ would have been staged by a single `git add -A` onto a PUBLIC
+# default branch — the same defect class as closeout finding C-2.
+/.obsidian/
+/.idea/
+/.vscode/

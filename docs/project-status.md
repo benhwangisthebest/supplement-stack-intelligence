@@ -36,15 +36,32 @@ configured to measure `src/lib/**` only, so `src/app/api/**`, `src/services/**`,
 
 ---
 
+### 0.1 Public-history caveat — **[2026-08-02]**
+
+**Untracking is not removal.** `30f74e1` is an ancestor of `origin/main` and still contains
+`.bkit-memory.json`, `.bkit/audit/*`, `.bkit/state/*`, and `test-results/.last-run.json`. Untracking those
+paths at `bf7ff2e` did not delete them from history — they remain **permanently fetchable** from the
+public remote by anyone who clones.
+
+The decision not to rewrite history is deliberate. An independent full-history scan of every commit found
+**no secret values on any ref**; `.env`, `.env*.local`, `storageState*.json` and `*.auth.json` were never
+tracked. The reconstructed artifacts hold PDCA metadata, tool audit logs and session bookkeeping — no
+credentials, no health data. **No rotation is required.** `CLAUDE.md` §10.4 forbids rewriting the
+validated v2–v13 chain, and a rewrite would discard the only integrated state to remove content already
+known to be harmless. Recorded here so the choice is visible rather than implicit. Full detail:
+`docs/04-report/phase-0-integration-enforcement.report.md` §4.
+
+---
+
 ## 1. Repository shape
 
-- The git repository root **is** the application directory (`…/Supplement-Advisor/v1.0`). It holds the
+- The git repository root **is** the application directory (`…/Supplement-Advisor/RETIRED-v1.0 (renamed 2026-08-02; was `v1.0`)`). It holds the
   authoritative `CLAUDE.md`, `docs/`, `src/`, `supabase/`, `tests/`, and `.bkit/`. The `graphify-out/`
   knowledge graph lives at `graphify-out/` **inside** the repository root but is **gitignored** as a
   generated artifact (U1, commit `4337a24`) — so it is absent from a fresh clone until regenerated.
 - Stack: Next.js 15 (App Router), React 19, TypeScript 5.7, Tailwind, Supabase (Postgres + Auth),
   Anthropic SDK, Zod. Vitest + Playwright. No ORM (deliberate — hand-written repos so RLS does tenant
-  isolation). No linter, no formatter, no CI.
+  isolation). No linter, no formatter. **[2026-08-02]** CI now exists (typecheck + unit tests + build).
 - ~12,958 LOC `src/lib`, 5,518 `src/components`, 2,275 `src/data`, 1,786 `src/app`, 1,308 `src/types`.
 - Exactly **one** `TODO` in the whole source tree (`src/types/stack.ts:56`).
 - No import cycles (independently confirmed via `graphify-out/GRAPH_REPORT.md`).
@@ -156,6 +173,12 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   against plain `text` columns with no CHECK constraint, so drift is silent. `replaceFlags()` is a
   non-atomic delete-then-insert — a failed insert leaves zero flags. No migration tooling, no `down`
   migrations, no record of what is deployed; migrations are applied by hand.
+- **[2026-08-02] Detection now exists.** `src/data/id-stability.test.ts` (43 tests, 9 namespaces) is
+exactly the missing contract: it fails if a persisted reference ID vanishes from seed data, naming the
+orphaned columns, and it fails on an unregistered new ID. The FK itself is still absent by design (seed
+data is code, not a table), so the *soft-reference* description below stands — the "no detection, no
+test" part does not.
+
 - **`stack_items.supplement_id` is a soft reference with no FK.** Renaming a seed ID silently orphans
   every persisted row referencing it — a blank, unevaluable stack item. No detection, no test.
 - **Classification: B.**
@@ -309,13 +332,19 @@ Nothing in current evidence justifies step 3.
 **Yes — the shape is right and no rewrite is justified.** `src/types` → pure engines → repos/services →
 routes → components is correct, cycle-free, and three of four boundary rules are executable.
 
+> **[2026-08-02]** The three enforcement gaps named in this paragraph are closed: `src/services` and
+> `src/data` are scanned layers, and CI runs `npm test` on every push to `main` and every PR into it.
+> Domain purity (`DOMAIN_IS_PURE`) remains unenforced. The paragraph is retained as written to preserve
+> the 2026-07-30 reasoning.
+
 What compounds debt is not the shape but **the coverage of enforcement**: two layers are ungoverned,
 purity is unenforced, the presentation layer is untestable-by-config, and none of it runs automatically.
 Plus two content/process issues:
 
 1. **Content debt compounds fastest** — every feature built on ungrounded grades enlarges the surface a
    future grounding cycle must revalidate.
-2. **Process debt compounds silently** — with no CI and nothing merged to `main`, any fix can regress invisibly.
+2. ~~**Process debt compounds silently** — with no CI and nothing merged to `main`~~ — **[2026-08-02]
+   closed**: CI is green on `main`, and `main` is the working tip. It is not yet a *required* status.
 
 ---
 

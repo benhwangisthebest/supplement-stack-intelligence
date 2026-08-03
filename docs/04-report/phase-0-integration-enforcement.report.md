@@ -55,9 +55,23 @@ units followed, each on its own branch, each CI-verified before a fast-forward-o
 | **R3** | C-8 | `9e9e15d` | The shared API boundary returns a fixed generic message plus an opaque correlation ID; the full exception goes to the server log under the same ID. |
 | **R3b** | — | `1792f9f` | Four further disclosure sites that bypass `handle()` entirely — two in `advisor/actions` `POST`, one in undo, one streaming into an SSE `error` event. Added `src/architecture/error-disclosure.test.ts`. |
 
-C-2 (111 untracked sync-conflict duplicates on a public repo) was resolved by **relocation**: the
-repository moved off the synced Desktop tree to `/Users/<redacted>/Developer/supplement-stack-intelligence`.
-C-3 and C-4 (stale governing documents) are resolved by this documentation unit.
+**C-2** (untracked sync-conflict duplicates on a public repo) took two steps, and the first was
+initially over-reported as a full resolution:
+
+1. **2026-08-01 — active copy relocated** off the synced Desktop tree to
+   `/Users/<redacted>/Developer/supplement-stack-intelligence`. This stopped *new* conflict copies in the
+   working repository, and R1 made the architecture guard structurally immune to the class.
+2. **2026-08-02 — source clone neutralized.** The 2026-08-02 independent Check found the original clone
+   still live, still pointed at the same **public** remote, and holding **141** `* N.*` duplicates (up
+   from the 111 the closeout review recorded) — so a single `git add -A` there could still have published
+   them. Two operations were performed on it: `git remote remove origin` (verified: no remotes) and a
+   rename to `RETIRED-v1.0` (verified). Its 1031 files and its `HEAD` (`bf7ff2e`) were **not** modified.
+
+**The 141 duplicate files still exist** in `RETIRED-v1.0` and are left in place pending manual deletion.
+What has changed is that the clone can no longer push anywhere. This is neutralization, not deletion —
+stated precisely because the earlier "Resolved by relocation" claim was not.
+
+C-3 and C-4 (stale governing documents) are resolved by the documentation unit and its corrections.
 
 ---
 
@@ -124,14 +138,21 @@ choice is visible rather than implicit.
 
 Nothing here is resolved. Each is deliberate, with the reason stated.
 
-### Unmet Phase 0 exit criteria (annotated in `docs/roadmap.md`)
+### Unmet Phase 0 exit criteria — **three**, each annotated in `docs/roadmap.md`
+
+The roadmap's Phase 0 list has seven criteria; four are met and **three** are not. An earlier version of
+this table said "four" and included a fourth row that is *not* an exit criterion — corrected below after
+the 2026-08-02 Check (finding M-4).
 
 | Item | Status | Why |
 |---|---|---|
 | Tags `v2`…`v13`; zero `feat/*` branches | **Unmet** (U-DEFER-1) | The chain cannot support honest tags — v12 `51d2134` precedes v11 `d89cf1c`. 0 tags, 9 remote `feat/*`. |
 | **Branch protection / CI as required status** (**C-6**) | **Unmet** (U-DEFER-3) | Needs a repository-settings change and separate explicit approval. `main` is force-pushable today. |
 | A `.tsx` test collected under `src/` (**C-12**) | **Unmet** (U-DEFER-4) | `vitest.config.ts` collects `*.test.ts` only. Zero `.test.tsx` exist; latent. |
-| `fix/**` absent from the CI trigger list | **Unmet** | Every `fix/*` branch in Phase 0 needed a manual `workflow_dispatch`. A trigger-list addition would close it. |
+
+The **`fix/**` / `docs/**` CI trigger gap is a follow-up, not an exit criterion** — it is recorded in the
+follow-up register below and deliberately not here. Every `fix/*` and `docs/*` branch in Phase 0 was
+CI-verified by manual `workflow_dispatch` before integration.
 
 ### Findings carried into Phase 1
 
@@ -141,11 +162,13 @@ Nothing here is resolved. Each is deliberate, with the reason stated.
 | **C-9** | No `E2E_LIVE`-gated Playwright block carries the `[LIVE]` tag (`CLAUDE.md` §5.9). Must close before any Phase 1 E2E-in-CI work. |
 | **C-10** | `docs/archive/2026-07/evidence-disclosure/**` was committed despite exclusion; content correct, staging decision unrecorded. |
 | **C-11** | Tree-partition ignores loose files and symlinks. Latent — none exists today. |
-| **C-13** | No `LICENSE` on a public repository. Default copyright applies. **Needs a user decision.** |
+| ~~**C-13**~~ | ~~No `LICENSE` on a public repository.~~ **Closed 2026-08-02** — `LICENSE` added: copyright 2026 Ben Hwang, all rights reserved; source-visible, not open source. README §Licence records it. |
 | **F3** | `handle()` classifies operational errors by substring (`err.message.includes("not configured")`). Safe against every throw site today, structurally fragile — a typed error class is the fix. |
 | **F5** | The correlation ID is emitted but no UI surfaces it, so `ApiError`'s "quote in a support ticket" is unrealized. |
 | **F6** | No route-level reachability test covers the four fixed handlers (`CLAUDE.md` §5.3). |
 | **F7** | The error-disclosure guard documents two detection gaps it does not close: destructured-handler *bodies*, and two-argument `.then(onFulfilled, onRejected)`. No route uses either form. |
+| — | **`fix/**` and `docs/**` are absent from the CI push triggers** (`.github/workflows/ci.yml`: `push` covers `main` and `feat/**` only). Every `fix/*` and `docs/*` branch therefore needed a manual `workflow_dispatch` before integration. A follow-up, **not** a Phase 0 exit criterion. |
+| — | **The developer's personal email address is public — a known, accepted exposure.** It appears in **52** tracked files (47 of them under `docs/archive/2026-06/**`, the per-feature PDCA documents), has been in tracked content since the initial commit `910d773`, and is the author email on **2 of 30** commits. The repository is public, so the address is already published. The configured author email is now the GitHub noreply form. Removing it would require rewriting the v2–v13 chain, which `CLAUDE.md` §10.4 forbids. Deliberately not reproduced here, so this row does not itself become a 53rd occurrence. **Decision 2026-08-03: accepted as-is — no redaction, no rewrite.** |
 | — | **Supplement slug policy** — the relationship between seed IDs and public `/library/[slug]` URLs is unstated; a rename would break both persisted references and inbound links. |
 | — | **`boundaries.test.ts` claim→observed pass** (recommended small unit). Three of R3b's blockers were *comment* defects, not code defects. Running each header claim against the implementation caught them in one pass; `boundaries.test.ts`'s header has never had that treatment. |
 
@@ -155,8 +178,24 @@ Nothing here is resolved. Each is deliberate, with the reason stated.
 
 **Established.** The repository now re-verifies itself: two architecture specs, an ID-stability contract,
 and an error-boundary suite run on every `npm test` and on every push to `main`. Their inventory comes
-from Git, so they measure the repository. Every one was shown red against the defect it targets before
-being trusted.
+from Git, so they measure the repository.
+
+**On "mutation-checked" — what is actually evidenced.** Every guard was shown red against its target
+defect at execution time, but that evidence was preserved unevenly:
+
+- **U7 / U8** — mutation matrices M1–M4 are tabulated in `docs/reviews/phase-0-closeout-check.md` §4,
+  with the exact red assertion text, by an independent reviewer.
+- **R1 / R2 / R3 / R3b** — mutations were run and their red output reported in each unit's own report at
+  execution time, but **were not independently preserved in `docs/`**. Treat those in-unit claims as
+  self-reported.
+- **Independent re-execution — performed, not yet published.** The 2026-08-02 final Check ran four fresh
+  mutations in a disposable worktree and all four went red naming the offending site. **That result
+  document is not in the repository yet**: `docs/05-qa/phase-0-final-check.md` on `main` is still the
+  scaffold and reads "Status: NOT RUN". Until the Check's result is published, **no durable independent
+  mutation evidence for R1–R3b exists in `docs/`**, and this report does not claim otherwise.
+
+No mutation evidence has been reconstructed retroactively, and none is cited from a document that does
+not yet contain it.
 
 **Not established.** A green suite still does not mean a verified product — that is Phase 1's objective,
 and the §0 warning in `docs/project-status.md` stands unchanged. Coverage remains visibility-only outside

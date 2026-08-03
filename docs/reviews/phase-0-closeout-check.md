@@ -502,7 +502,7 @@ before being accepted (CLAUDE.md §5.2).
 | Finding | Status | Resolved by |
 |---|---|---|
 | **C-1** — architecture guard measured the filesystem, not the repository | **Resolved** | **R1** — `a338370` `test(architecture): derive boundary inventory from tracked files`. Discovery now runs `git ls-files --cached`, so untracked and ignored files are structurally incapable of reaching a rule. |
-| **C-2** — 111 untracked `* N.*` duplicates on a public repo | **Resolved** | Relocation. The repository now lives at `/Users/<redacted>/Developer/supplement-stack-intelligence`, outside the synced Desktop tree, so the sync client no longer writes conflict copies. R1 additionally makes the guard immune to the class. |
+| **C-2** — 111 untracked `* N.*` duplicates on a public repo | **Partly resolved — see the 2026-08-02 correction below** | Active copy relocated 2026-08-01 to `/Users/<redacted>/Developer/supplement-stack-intelligence`, outside the synced tree. R1 additionally makes the guard immune to the class. **This row originally read "Resolved", which the 2026-08-02 independent Check falsified** — the source clone was still live on the same public remote with 141 duplicates. Neutralized 2026-08-02: the clone's remote was removed and the folder renamed `RETIRED-v1.0`; its 1031 files and `HEAD` were not modified, and the 141 duplicates remain in place pending manual deletion. Full detail: `docs/04-report/phase-0-integration-enforcement.report.md` §2. |
 | **C-3** — the plan under which nine commits shipped was still marked `DRAFT` | **Resolved** | This unit — `docs/01-plan/phase-0-integration-enforcement.plan.md` marked **Completed 2026-08-02**, with the per-unit commit list replacing the "nothing has been executed" line. |
 | **C-4** — governing documents stale; roadmap/plan exit criteria conflict | **Resolved** | This unit — `README.md`, `docs/project-status.md`, `docs/roadmap.md`, `docs/02-design/architecture-boundaries.md`, and the `CLAUDE.md` §5 baseline line all refreshed against measured values. |
 | **C-5** — `NO_UI_IMPORT` enforced without plan authorization | **Open (documented)** | Now documented in `docs/02-design/architecture-boundaries.md` as enforced-and-ratified rather than deferred. The ratchet holds today. |
@@ -514,7 +514,7 @@ before being accepted (CLAUDE.md §5.2).
 | **C-10** — `docs/archive/2026-07/evidence-disclosure/**` committed despite exclusion | **Open** | Content verified correct; the unrecorded staging decision remains unrecorded. Carried to Phase 1. |
 | **C-11** — tree-partition ignores loose files and symlinks | **Open (latent)** | Neither exists today. Carried to Phase 1. |
 | **C-12** — `walk()` and vitest disagree on `.tsx` | **Open (latent)** | Zero `.test.tsx` files exist. Also roadmap exit criterion, deferred as U-DEFER-4. |
-| **C-13** — LICENSE absent; public-history caveat unstated; misc. observations | **Partly resolved** | The public-history caveat is now stated in `docs/04-report/phase-0-integration-enforcement.report.md` and `docs/project-status.md`. The licensing question still needs a user decision. |
+| **C-13** — LICENSE absent; public-history caveat unstated; misc. observations | **Resolved 2026-08-02** | The public-history caveat is stated in `docs/04-report/phase-0-integration-enforcement.report.md` §4 and `docs/project-status.md` §0.1. The licensing question is decided: `LICENSE` adds copyright 2026 Ben Hwang, all rights reserved — source-visible, not open source. |
 
 ### Findings raised *after* this review, carried forward
 
