@@ -132,9 +132,9 @@ tests · **L** = a refactor plus its tests.
 | ID | Goal | Files | Size | ≈ tests | Deps |
 |---|---|---|---|---|---|
 | **U1** | Establish the route-test pattern on one route; settle the harness question. | N `src/app/api/checkins/route.test.ts` | S | 6 | — |
-| **U2** | Route tests for the 9 read-only / no-body route files. | N 9 × `route.test.ts` | M | ~24 | U1 |
-| **U3** | Route tests for the 10 Zod-validated mutation route files (excl. advisor). | N 10 × `route.test.ts` | M | ~35 | U1 |
-| **U4** | Route tests for the 4 advisor route files; closes **F6**. | N 4 × `route.test.ts` | M | ~18 | U1, U11 |
+| **U2** | Route tests for the **6** read-only / no-body route files. | N 6 × `route.test.ts` | M | 24 (delivered) | U1 |
+| **U3** | Route tests for the **12** Zod-validated mutation route files (excl. advisor) — 11 new here; `checkins` is U1's. | N 11 × `route.test.ts` | M | 58 (delivered) | U1 |
+| **U4** | Route tests for the **5** advisor route files; closes **F6**. | N 5 × `route.test.ts` | M | ~25 | U1, U11 |
 | **U5** | `AUTH_COVERAGE` guard — every tracked route handler calls `getUser()` before any I/O. | N `src/architecture/auth-coverage.test.ts` | M | ~8 | — |
 | **U6** | `RLS_COVERAGE` guard — every `create table` has a matching RLS enable + policy. | N `src/architecture/rls-coverage.test.ts` | M | ~8 | — |
 | **U7** | Row-fixture tests for all `mappers.ts` functions. | N `src/lib/db/mappers.test.ts` | M | ~28 | — |
@@ -147,8 +147,26 @@ tests · **L** = a refactor plus its tests.
 | **U14** | Doc-truth guard — bind `CLAUDE.md` §4's enforcement table and §5's CI-trigger sentence. | N `src/architecture/doc-truth.test.ts` | S | ~6 | — |
 | **U15** | Claim→observed pass over `boundaries.test.ts`'s header; close **C-11**. | M `boundaries.test.ts`, M design doc | S | +3 | — |
 | **U18** | `DOMAIN_IS_PURE` ratchet per ruling 2 — enforce purity on true engine directories; register `src/lib/{auth,api,supabase}` as named exemptions with written reasons. Closes **D-4** and `CLAUDE.md` §4 rule 5. | M `src/architecture/boundaries.test.ts`, M `docs/02-design/architecture-boundaries.md`, M `CLAUDE.md` §4 table | S | ~4 | U15 |
+| **U19** | Route-level ownership check on `/api/stacks/:id/items/:itemId` — verify the item belongs to the **verified parent stack**; 404 on mismatch. Added 2026-08-04 from a U3 finding. | M `src/app/api/stacks/[id]/items/[itemId]/route.ts`, M its `route.test.ts`, possibly M `src/lib/db/stack-item-repo.ts` | S | +2 | U3 |
 | **U16** | E2E honesty — `[LIVE]` tags (**C-9**), kill the shared-user race, build-then-start `webServer`. | M `playwright.config.ts`, M 17 specs, N tag guard | M | ~4 | — |
 | **U17** | Dated live-E2E baseline; investigate the `fetch failed` login artifact. | N `docs/05-qa/phase-1-live-e2e-baseline.md`, M `project-status.md` | M | 0 | U16 |
+
+#### Correction to the U2 / U3 / U4 file counts (2026-08-04)
+
+The rows above originally read **9 / 10 / 4**. Recounted from `git ls-files --cached` and each file's
+handlers, the buckets are **6 / 12 / 5** — 23 route files in total, which is unchanged.
+
+**Where the error came from, so it is not repeated.** §2's baseline says *"Route files performing `.parse(`
+— 14 (so **9** take no validated body)"*. Both figures are correct, but they count **all 23 routes,
+advisor included**. U2 then took the 9 verbatim while U3 said "excl. advisor" and U4 claimed the advisor
+files separately — so the three advisor routes with no validated body (`advisor/conversations`,
+`advisor/conversations/[id]`, `advisor/actions/[id]/undo`) were counted **twice**, once in U2's 9 and once
+inside U4's bucket. The remaining drift (U3's 10, U4's 4) has no derivation and was an estimate.
+
+**The criteria were never ambiguous** — "read-only / no-body", "Zod-validated mutation, excl. advisor",
+"advisor" partition the 23 files exactly once each, which is why U2 and U3 could be delivered against the
+criteria while the counts were wrong. Sizing numbers derived from a baseline table must state whether they
+are scoped the same way as the unit that consumes them.
 
 ### 6.1 The U11 hazard — stated explicitly because it is invisible
 
@@ -164,6 +182,37 @@ disguised as a behaviour-preserving refactor, that no test would report. Extendi
 that proves it landed.
 
 *(Verified independently by the plan's author against the guard source, 2026-08-03.)*
+
+### 6.1.1 U19 — the stack-item ownership gap, as measured (2026-08-04)
+
+Found while writing U3's route tests. Recorded here with its **current-state facts**, so the unit is
+scoped against what is true rather than against an alarm.
+
+**What the route does today.** `PUT` and `DELETE` on `/api/stacks/:id/items/:itemId` verify ownership of
+the **parent stack** — `getStack(supabase, user.id, id)` — and then call `updateItem(supabase, itemId, …)`
+/ `deleteItem(supabase, itemId)`. The item id is never checked against the stack that was verified.
+
+**What actually protects it.** Migration `0001_init.sql`'s `own_stack_items` policy derives ownership from
+the parent stack via `auth.uid()`, so a write to an item under **another user's** stack fails the RLS
+check. **This is not a live cross-user vulnerability**, and the unit must not be written up as if it were.
+
+**What remains reachable.** Same-user cross-stack editing: a caller who owns both stacks A and B can pass
+A in the path and an item id belonging to B, and the write lands on B. Harmless today — it is the caller's
+own data either way — but it means the route's stated contract ("an item of *this* stack") is not enforced
+by the route.
+
+**Why it is worth closing anyway.** The route currently has no ownership property of its own; it borrows
+one from the database. Anything that later reads these rows through a path where RLS does not apply — a
+service-role client, a background job, a future admin surface — inherits no protection at all. This is
+CLAUDE.md §4 rule 8 in miniature: the trust boundary should live in a testable module.
+
+**Current state is pinned, not silent.** `src/app/api/stacks/[id]/items/[itemId]/route.test.ts` carries a
+header stating the gap and a test asserting the item id is passed through verbatim. **U19 must update that
+test and header** — leaving them would make the file assert the old behaviour against the new code.
+
+**Mutation proof for U19:** restore the pass-through (drop the new item↔stack check) and the mismatch case
+must go red on the 404. A bypass-with-identity probe is *not* the right mutation here — the auth check is
+not what changed.
 
 ### 6.2 Mutation proofs
 
@@ -213,6 +262,58 @@ string as universal.
 *Evidence: U1, `src/app/api/checkins/route.test.ts`; four mutations run in a disposable worktree,
 mutation M1 (deletion) → `expected 500 to be 401`, M2/M3 (bypass) → `expected 200 to be 401`.*
 
+#### 6.2.2 Mutations must target observable behaviour, not the line you think is load-bearing (2026-08-04, U3)
+
+A mutation that leaves behaviour unchanged proves nothing, and it is easy to write one by accident.
+
+**The case that produced this rule.** `/api/stacks/:id/items` passes the ownership-verified path id to
+`addItem`. To prove that mattered, U3 mutated the route to prefer a body-supplied `stackId`:
+
+```ts
+addItem(supabase, (input as { stackId?: string }).stackId ?? id, input)
+```
+
+**All four tests stayed green.** `stackItemInputSchema` strips unknown keys, so `input.stackId` is
+`undefined` and the fallback silently restored the original behaviour. The mutation was a no-op.
+
+**So the protection came from Zod's strip, not from the route line under test.** Substituting a
+concretely wrong value instead — `addItem(supabase, "s-other", input)` — went red immediately:
+`expected "spy" to be called with arguments: [ {}, 's1', …(1) ]`.
+
+**Rules that follow:**
+
+1. **Prefer wrong-value probes over plausible-attack probes.** A mutation should change what the code
+   *does*, not merely add a path an upstream layer neutralises. If a mutation survives, that is a
+   finding to report — never a test to quietly rewrite until it fails.
+2. **Do not reason about safety from a route line alone.** Several route-level properties in this
+   repository are actually enforced by Zod's unknown-key strip or by RLS. `U5`'s `AUTH_COVERAGE` design
+   must state which layer it is asserting about and must not infer a behavioural guarantee from the
+   presence or absence of a line in a handler.
+3. **A surviving mutation is evidence about the *system*, not only about the test.** The M4 survival is
+   how §6.1.1's ownership finding and this rule were both discovered.
+
+#### 6.2.3 Two auth-placement shapes coexist — U5 must handle both (2026-08-03, U2)
+
+Route handlers in this repository check authentication in **two structurally different places**, and both
+are correct because `handle()` passes a returned `NextResponse` straight through:
+
+| Shape | Count (of 23) | Routes |
+|---|---|---|
+| Guard **before** `handle(...)` | **6** | `checkins`, `identity`, `side-effects`, `advisor`, `advisor/actions`, `advisor/actions/[id]/undo` |
+| Guard **inside** the `handle(...)` callback | **17** | everything else, incl. all `stacks/*`, all `lab-*`, `profile`, `products/match`, `protocol/generate`, `advisor/conversations`, `advisor/conversations/[id]` |
+
+*(Measured 2026-08-04 by indentation of the `if (!user) return unauthorized();` line across the 23 tracked
+route files — 6 + 17 = 23, and the split cuts across the advisor set rather than aligning with it.)*
+
+The difference is invisible in behaviour and visible only under mutation: deleting the guard yields an
+*uncaught* crash in the first shape and a *caught* 500 in the second.
+
+**Consequence for U5:** a guard that looks for `getUser()` at a fixed position, or that assumes a single
+statement order, silently misses whichever shape it was not written against — 6 routes or 17, depending
+which way it is wrong. `AUTH_COVERAGE` must recognise both — and its own anti-vacuity check must prove it,
+by planting a violation in **each** shape and showing the guard goes red for both. A single planted
+violation is not sufficient evidence here.
+
 ### 6.3 Harness decision (settled in U1)
 
 House style is inline `vi.mock` per file (as `src/services/evaluation.test.ts` does). A shared harness
@@ -252,9 +353,13 @@ Group A (parallel)   U1 · U5 · U6 · U7 · U9 · U10 · U12 · U14 · U15
               pasted into the unit report. No unit advances on a self-reported
               claim — report §6 records that R1–R3b's claims were self-reported
               and had to be re-proved later.
-Group B              U2 · U3 · U8
-   └ GATE B1  U8's binding map asserted total in both directions; any real
-              mismatch is triaged as a FINDING, never silenced by an exemption.
+Group B              U2 · U3 · U8   → U19
+   ├ GATE B1  U8's binding map asserted total in both directions; any real
+   │          mismatch is triaged as a FINDING, never silenced by an exemption.
+   └ U19 follows U3 rather than joining Group A: it EDITS the route test U3
+              created (§6.1.1), so it cannot run in parallel with it. This is the
+              plan's dependency logic, not the topical grouping — U19 resembles
+              U5's security work but depends on U3's file.
 Group C              U11 → U4
    ├ GATE C1  Differential response pins captured and green BEFORE any line
    │          moves. Extraction lands only if all 8 outcome triples are identical.
@@ -272,16 +377,48 @@ Group E (cuttable)   U16 → U17
 ### 6.5 Sizing, honestly
 
 ~40 new test files, ~25 modified, **~205–230 new tests** (suite 524 → roughly **730–760**), one refactor,
-zero behaviour changes. **3–5× Phase 0** by unit and test count, and it contains the repository's only
-rank-1 refactor.
+and **one deliberate behaviour change** — U19's 404 on an item/stack mismatch, added 2026-08-04 (§6.1.1).
+Everything else is behaviour-preserving. **3–5× Phase 0** by unit and test count, and it contains the
+repository's only rank-1 refactor.
+
+#### Measured route-test cost (U1–U3, 2026-08-04) — use this to size U4 and U19
+
+The estimates above were made before any route test existed. Eighteen now do, so the remaining route work
+can be sized from measurement rather than guess:
+
+| | Files | Tests | Lines | Lines/test | Lines/file |
+|---|---|---|---|---|---|
+| U1 (pattern-setting) | 1 | 6 | 187 | 31 | 187 |
+| U2 | 6 | 24 | 546 | 23 | 91 |
+| U3 | 11 | 58 | 1,335 | 23 | 121 |
+| **Route tests, total** | **18** | **88** | **2,068** | **23** | **115** |
+
+*Counts verified against the working tree at `3069651`: `wc -l` per file summing to 2,068, and per-file
+test counts read from a `vitest run src/app/api` listing.*
+
+Cost settled at **~23 lines per test and ~100–120 lines per file**, flat across both units and largely
+independent of route complexity. U1 was the outlier by design: its header carries the rationale the other
+files cite rather than repeat.
+
+**This confirms §6.3's harness ruling on measurement.** The "~15 duplicated lines × 23 files" figure was
+about mock boilerplate specifically, and that part held: measured across the 18 files, the inline mock
+blocks run **7–25 lines, mean 10** — the 25 being `protocol/generate`, which mocks six repositories. The
+remaining ~100 lines per file are tests and commentary, which no shared harness would have removed.
+
+**Projection for the route work left:** U4 at 5 files ≈ **600 lines, ~25 tests**; U19 is an edit to an
+existing file, not a new one.
+
+**Delivered:** U1, U2, U3 — 18 route-test files, 88 tests. Suite **612 across 60 files**, measured at
+`3069651`, up from the 524/42 baseline recorded in §2.
 
 The realistic risk is not that a unit fails. It is that **U11 lands, looks green, and has quietly turned one
 409 into a 400, or moved the error boundary outside its guard.** Gates C1 and C2 exist for that and should
 not be relaxed.
 
-**Cut order** (first cut at the top): U17 · U16 down to tags-only · U14 · U8's nullability half · U2/U3
-scoped to one handler per *file* rather than all 31 · U15 last (cheapest unit here, and the technique
-caught three real defects — cutting it is a false economy).
+**Cut order** (first cut at the top): U17 · U16 down to tags-only · U14 · U8's nullability half · U15 last
+(cheapest unit here, and the technique caught three real defects — cutting it is a false economy).
+*(U2/U3 were on this list, scoped down to one handler per file. They are delivered in full and no longer
+cuttable; U4 is the remaining route unit and inherits that option if the phase needs trimming.)*
 **Never cut:** U5, U6 (the stated security requirements), U10, U11 (the sole write path), U12 and U13
 (named exit criteria).
 
