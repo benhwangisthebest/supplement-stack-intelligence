@@ -404,3 +404,78 @@ describe("PIN 201 — applied", () => {
     expect(executeBatch).not.toHaveBeenCalled();
   });
 });
+
+// ---------------------------------------------------------------------------
+// U4 EXTENSION (2026-08-04)
+//
+// Everything above is U11's Gate C1 pin set: it maps every distinct (status,
+// code) outcome and MUST NOT be weakened or rewritten. U4's remit is route
+// coverage, and the pins deliberately never asserted REACHABILITY — that the
+// caller-supplied inputs actually arrive where they are used. A refactor could
+// drop `edits` or `conversationId` on the floor and every pin above would stay
+// green, because neither changes a status code.
+//
+// CLAUDE.md §5.3: an orchestration function wiring inputs to repos needs a test
+// proving every field it passes reaches an observable output.
+// ---------------------------------------------------------------------------
+describe("U4 — confirm-card inputs reach their destination", () => {
+  beforeEach(() => getUser.mockResolvedValue(USER));
+
+  it("threads the confirm card's edits through to executeBatch", async () => {
+    await POST(
+      req({
+        actions: [
+          {
+            proposal: { type: "add_item", stackId: "s1", payload: ADD_PAYLOAD },
+            edits: { dose: 10, unit: "g" },
+          },
+        ],
+      }),
+    );
+
+    expect(executeBatch).toHaveBeenCalledWith(
+      {},
+      "u1",
+      [expect.objectContaining({ edits: { dose: 10, unit: "g" } })],
+      [null],
+    );
+  });
+
+  it("rejects an edits object carrying fields outside the editable subset", async () => {
+    // editableFieldsSchema is `.strict()` (SC-5): the card may change dose,
+    // unit, timing and frequency — nothing else. A supplementId smuggled in
+    // here would change WHAT is added, not just how much.
+    const res = await POST(
+      req({
+        actions: [
+          {
+            proposal: { type: "add_item", stackId: "s1", payload: ADD_PAYLOAD },
+            edits: { dose: 10, supplementId: "something-else" },
+          },
+        ],
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(executeBatch).not.toHaveBeenCalled();
+  });
+
+  it("threads conversationId through to the audit record", async () => {
+    await POST(
+      req({
+        conversationId: "c-42",
+        actions: [{ proposal: { type: "add_item", stackId: "s1", payload: ADD_PAYLOAD } }],
+      }),
+    );
+
+    const [, , , newActions] = recordBatch.mock.calls[0];
+    expect(newActions[0].conversationId).toBe("c-42");
+  });
+
+  it("records a null conversationId when the confirm arrives without one", async () => {
+    await POST(req(body(ADD_PAYLOAD)));
+
+    const [, , , newActions] = recordBatch.mock.calls[0];
+    expect(newActions[0].conversationId).toBeNull();
+  });
+});
