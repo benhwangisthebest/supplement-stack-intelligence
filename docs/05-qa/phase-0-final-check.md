@@ -250,7 +250,9 @@ from the logs matching **exactly in both runs**: 32 / 29 / 28 / 43, 42 files, 52
 
 Branch protection: `404 Branch not protected`, `rulesets: []`, `"protected": false` — **the record's claim
 verified**. CI push triggers are `main` and `feat/**` only; `fix/**` and `docs/**` absent — verified, and
-confirmed in practice by five `workflow_dispatch` runs.
+confirmed in practice by five `workflow_dispatch` runs. *(Clerk annotation, 2026-08-03: true as measured
+here; **superseded by `7fbcd7a`**, which changed the push trigger to `branches: ["**"]` so CI now runs on
+every branch. Recorded, not rewritten, per `CLAUDE.md` §7.)*
 
 Secret scan of 381 tracked files: **zero real secret values**; `.env`, `.env*.local`, `storageState*.json`,
 `*.auth.json` not tracked and actively ignored; `.env.example` values all empty. **Zero `* N.*` files in
@@ -287,7 +289,7 @@ Carried forward, unchanged unless noted.
 | — | Supplement slug policy unstated | Open |
 | — | `boundaries.test.ts` header claim→observed pass | Recommended |
 | — | Two unimported Desktop feature docs (`context-adjusted-evidence.plan.md`, `evidence-grading.design.md`) | Open, annotated in `roadmap.md` |
-| — | `fix/**` and `docs/**` absent from CI push triggers | Open — **not** an exit criterion, and not annotated in `roadmap.md` (R-B M-4) |
+| — | `fix/**` and `docs/**` absent from CI push triggers | Open — **not** an exit criterion, and not annotated in `roadmap.md` (R-B M-4). *(Clerk annotation, 2026-08-03: **closed by `7fbcd7a`** — push trigger is now `branches: ["**"]`.)* |
 | — | Mutation evidence for R1–R3b not durably recorded in `docs/` | **New** (R-B M-5) |
 | — | Roadmap "Included work" items 3, 6, 7 still listed as Phase 0 scope despite U-DEFER-1/-4/-6 | **New** (R-B M-6) |
 | — | Cosmetic doc corrections: coverage 81.23→81.25; "30" client components→31; graphify-out size; `ci.yml:15` "16 tests"→28 | **New** (R-C M-2/3/4/7) |

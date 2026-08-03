@@ -13,7 +13,7 @@
 > final certification are recorded in `docs/05-qa/phase-0-final-check.md`, which is the authority on it.
 
 **"Complete with follow-up", not "complete".** Every unit shipped and every blocking closeout finding is
-resolved, but **three** roadmap exit criteria remain unmet by deliberate deferral and the findings in §5
+resolved, but **two** roadmap exit criteria remain unmet by deliberate deferral and the findings in §5
 are carried into Phase 1. Calling this unconditionally complete would be the exact failure mode
 `CLAUDE.md` §5.1 names.
 
@@ -144,15 +144,18 @@ choice is visible rather than implicit.
 
 Nothing here is resolved. Each is deliberate, with the reason stated.
 
-### Unmet Phase 0 exit criteria — **three**, each annotated in `docs/roadmap.md`
+### Unmet Phase 0 exit criteria — **two**, each annotated in `docs/roadmap.md`
 
-The roadmap's Phase 0 list has seven criteria; four are met and **three** are not. An earlier version of
-this table said "four" and included a fourth row that is *not* an exit criterion — corrected below after
-the 2026-08-02 Check (finding M-4).
+The roadmap's Phase 0 list has seven criteria; five are now met-or-retired and **two** are not. This count
+has been corrected twice and the history is kept rather than overwritten: an early version said "four" and
+included a row that is *not* an exit criterion (corrected after the 2026-08-02 Check, finding **M-4**);
+the count then stood at **three** until 2026-08-03, when the tags criterion (**U-DEFER-1**) was **retired
+by user ruling** — see `docs/01-plan/phase-1-verification-integrity.plan.md` §7 decision 4 and the
+rationale recorded in `docs/roadmap.md`.
 
 | Item | Status | Why |
 |---|---|---|
-| Tags `v2`…`v13`; zero `feat/*` branches | **Unmet** (U-DEFER-1) | The chain cannot support honest tags — v12 `51d2134` precedes v11 `d89cf1c`. 0 tags. **As measured 2026-08-02**, 9 remote `feat/*` branches remained; merged-branch cleanup at Phase 0 close is a separate approved step (`CLAUDE.md` §10.1) — see `docs/05-qa/phase-0-final-check.md` for the end state. |
+| ~~Tags `v2`…`v13`; zero `feat/*` branches~~ | ~~**Unmet** (U-DEFER-1)~~ → **Branch half met 2026-08-03; tag half RETIRED 2026-08-03** | Branch half: all merged branches were deleted at Phase 0 close, so `main` is the only branch. Tag half: retired by ruling — the chain cannot support honest *ordered* tags (v12 `51d2134` precedes v11 `d89cf1c`), §10.4 forbids rewriting it, and milestone identity already lives in `docs/archive/*/_INDEX.md`. Rationale recorded in `docs/roadmap.md`, not deleted. |
 | **Branch protection / CI as required status** (**C-6**) | **Unmet** (U-DEFER-3) | Needs a repository-settings change and separate explicit approval. `main` is force-pushable today. |
 | A `.tsx` test collected under `src/` (**C-12**) | **Unmet** (U-DEFER-4) | `vitest.config.ts` collects `*.test.ts` only. Zero `.test.tsx` exist; latent. |
 
@@ -173,7 +176,7 @@ CI-verified by manual `workflow_dispatch` before integration.
 | **F5** | The correlation ID is emitted but no UI surfaces it, so `ApiError`'s "quote in a support ticket" is unrealized. |
 | **F6** | No route-level reachability test covers the four fixed handlers (`CLAUDE.md` §5.3). |
 | **F7** | The error-disclosure guard documents two detection gaps it does not close: destructured-handler *bodies*, and two-argument `.then(onFulfilled, onRejected)`. No route uses either form. |
-| — | **`fix/**` and `docs/**` are absent from the CI push triggers** (`.github/workflows/ci.yml`: `push` covers `main` and `feat/**` only). Every `fix/*` and `docs/*` branch therefore needed a manual `workflow_dispatch` before integration. A follow-up, **not** a Phase 0 exit criterion. |
+| ~~—~~ | ~~**`fix/**` and `docs/**` are absent from the CI push triggers.**~~ **Closed 2026-08-03** (`7fbcd7a`) — the push trigger is now `branches: ["**"]`, so CI runs automatically on **every branch**, not an enumerated prefix list. Throughout Phase 0 the list covered `main` and `feat/**` only, so every `fix/*` and `docs/*` branch needed a manual `workflow_dispatch` before integration; that is history, not current behaviour. Was a follow-up, **not** a Phase 0 exit criterion. |
 | — | **The developer's personal email address is public — a known, accepted exposure.** It appears in **52** tracked files (47 of them under `docs/archive/2026-06/**`, the per-feature PDCA documents), has been in tracked content since the initial commit `910d773`, and is the author email on exactly **2 commits, both ancestors of `1792f9f`** (no later commit uses it). The repository is public, so the address is already published. The configured author email is now the GitHub noreply form. Removing it would require rewriting the v2–v13 chain, which `CLAUDE.md` §10.4 forbids. Deliberately not reproduced here, so this row does not itself become a 53rd occurrence. **Decision 2026-08-03: accepted as-is — no redaction, no rewrite.** |
 | — | **Supplement slug policy** — the relationship between seed IDs and public `/library/[slug]` URLs is unstated; a rename would break both persisted references and inbound links. |
 | — | **`boundaries.test.ts` claim→observed pass** (recommended small unit). Three of R3b's blockers were *comment* defects, not code defects. Running each header claim against the implementation caught them in one pass; `boundaries.test.ts`'s header has never had that treatment. |

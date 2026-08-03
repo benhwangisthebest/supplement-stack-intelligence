@@ -22,9 +22,11 @@
 shipped and are public, plus four post-review remediations — R1 `a338370`, R2 `ea5b270`, R3 `9e9e15d`,
 R3b `1792f9f` — and the documentation and record-correction commits that followed them. CI is green on
 `main`; the authoritative run for any commit is the GitHub Actions `CI` run whose head SHA is that
-commit. Phases 1–4 — not started.
+commit. **Phase 1 — planning** (2026-08-03): a plan exists at
+`docs/01-plan/phase-1-verification-integrity.plan.md`, status **DRAFT**, awaiting approval; no Phase 1
+unit has been executed. Phases 2–4 — not started.
 
-"Complete with follow-up" is deliberate: **three exit criteria below remain unmet** and are annotated
+"Complete with follow-up" is deliberate: **two exit criteria below remain unmet** and are annotated
 in place. The independent final Check **ran 2026-08-02** — first-pass verdict **NOT CLOSED** against
 `0d9e008`. Its findings, the re-check of each after remediation, and the final certification are
 recorded in `docs/05-qa/phase-0-final-check.md`; that document is the authority on the Check, and this
@@ -98,13 +100,20 @@ zero `.DS_Store` tracked.)*
 
 - [x] `git log main..HEAD` empty; `main` contains `boundaries.test.ts` and the v13 anti-fabrication guards.
 - [x] `git status` clean; local and `origin` refs for `main` identical.
-- [ ] **Unmet — deliberately deferred (U-DEFER-1).** Tags `v2`…`v13` on origin; zero `feat/*` branches
-      remain. Today: **0 tags**, **9 remote `feat/*` branches**. The plan's own criterion 11 requires
-      `git tag` stay empty, and U-DEFER-1 records why the chain cannot support honest tags — v12
-      (`51d2134`) precedes v11 (`d89cf1c`) in history. Per line 8 of this document, a phase requiring an
-      exception to an approved plan is a defect in *this* roadmap, not in the plan.
+- [x] ~~Tags `v2`…`v13` on origin;~~ zero `feat/*` branches remain. **Branch half: MET** — all merged
+      branches were deleted at Phase 0 close on 2026-08-03; `main` is now the only branch, local and
+      remote. **Tag half: RETIRED 2026-08-03 by user ruling** (`docs/01-plan/phase-1-verification-integrity.plan.md`
+      §7 decision 4), not quietly dropped. **Why it was retired, recorded per `CLAUDE.md` §7:** the chain
+      cannot support honest *ordered* tags — v12 (`51d2134`) precedes v11 (`d89cf1c`) in history — and
+      `CLAUDE.md` §10.4 forbids rewriting the chain to fix it. Tagging anyway would publish immutable
+      labels that misdescribe the order of the work. **Milestone identity already exists** and is more
+      accurate: the per-feature records under `docs/archive/2026-06/` and `docs/archive/2026-07/`, whose
+      `_INDEX.md` files are the project's real status record (`CLAUDE.md` §9). A tag would add a second,
+      worse identity for the same thing. **The underlying risk this criterion controlled — that milestone
+      boundaries become unrecoverable — is therefore already controlled elsewhere.** `git tag` stays
+      empty, which also keeps the Phase 0 plan's own criterion 11 satisfied.
 - [ ] **Partly met — deferred (U-DEFER-3, closeout finding C-6).** CI workflow exists, runs on every PR
-      into `main` and every push to `main`/`feat/**`, and is green. It is **not** a required status and
+      into `main` and on **every branch push**, and is green. It is **not** a required status and
       `main` has **no branch protection** — that needs a repository-settings change and separate approval.
 - [x] `boundaries.test.ts` scans ≥ 5 top-level layers (**5**: `src/types`, `src/components`, `src/lib`,
       `src/services`, `src/data`); each new rule verified red-then-green.
@@ -114,7 +123,9 @@ zero `.DS_Store` tracked.)*
 - [x] Coverage report lists `src/app`, `src/services`, `src/components`, `src/lib/db` — `include` is
       `src/**/*.{ts,tsx}` since `8b1bd16`.
 
-> **On the three unmet criteria.** Each is annotated above with the U-DEFER item that deferred it, so a
+> **On the two unmet criteria** (U-DEFER-3 branch protection, U-DEFER-4 `.tsx` collection; the third,
+> U-DEFER-1 tags, was **retired** by ruling on 2026-08-03 with its rationale recorded in place).
+> Each is annotated above with the U-DEFER item that deferred it, so a
 > deliberate deferral is distinguishable from an omission (`CLAUDE.md` §7). Phase 0 is therefore
 > **complete with follow-up**, not unconditionally complete.
 >
