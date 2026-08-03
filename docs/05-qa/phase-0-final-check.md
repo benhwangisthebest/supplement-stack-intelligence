@@ -277,7 +277,7 @@ Carried forward, unchanged unless noted.
 | **C-2** | The pre-relocation Desktop clone is still live, points at the same public remote, and now holds **141** `* N.*` duplicates. C-2's steps 2–3 were never performed | **Re-opened** by this Check (R-B M-1) |
 | **C-4** | `CLAUDE.md:152` and `project-status.md` §2.5/§6 still carry stale present-tense claims C-4 named by line | **Re-opened** (R-B M-3, R-C M-1) |
 | **C-5** | `NO_UI_IMPORT` enforced without plan authorization — documented and ratified | Open (documented) |
-| **C-6** | No branch protection; CI not a required status. Verified 404 | Deferred (U-DEFER-3) |
+| **C-6** | No branch protection; CI not a required status. Verified 404 | Deferred (U-DEFER-3). *(Clerk annotation, 2026-08-03: true as measured here; **closed 2026-08-03** — ruleset `main-integrity` plus a required `typecheck / test / build` check, with the "require PR" clause retired by amendment. See `docs/01-plan/phase-1-verification-integrity.plan.md` §8.5–8.6.)* |
 | **C-9** | No `[LIVE]` tag on `E2E_LIVE`-gated Playwright blocks — verified 0 occurrences | Open |
 | **C-10** | Unrecorded staging decision for `docs/archive/2026-07/evidence-disclosure/**` | Open |
 | **C-11** | Tree-partition ignores loose files and symlinks | Open (latent) |

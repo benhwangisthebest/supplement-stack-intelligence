@@ -295,6 +295,15 @@ Tagging would encode a false ordering into an immutable, pushed artifact. Defer;
 
 **U-DEFER-3 — Branch protection on `main`.** Must follow at least one green CI run so the required-check name is registered; otherwise merges block with no passing path. Minimum ruleset when done: require PR, require the CI check, forbid force-push, forbid deletion.
 
+> *(Annotation, 2026-08-03 — this line is **historical**; it is left unrewritten because this is a completed
+> plan. U-DEFER-3 was **executed** during Phase 1 unit `PHASE1-PLAN-PUB`: the CI check, force-push and
+> deletion clauses are all in force on `main`, plus `required_linear_history`. The **"require PR" clause was
+> retired** by user ruling, recorded with its two reasons in
+> `docs/01-plan/phase-1-verification-integrity.plan.md` §8.6 — in summary, it predates the
+> `push: branches: ["**"]` trigger that made PR-based CI coverage redundant, and a PR flow's rebase/squash
+> would rewrite the very SHA the required check validated. So the four-clause minimum above is superseded by
+> a three-clause one; treat §8.6 of the Phase 1 plan, not this line, as the current specification.)*
+
 **U-DEFER-4 — `.tsx`/jsdom test discovery** · **U-DEFER-5 — per-engine coverage thresholds** · **U-DEFER-6 — `DOMAIN_IS_PURE` (file-level allowlist)** · **U-DEFER-7 — client-component import rule** · **U-DEFER-8 — E2E in CI.** All rejected for Phase 0 per §4; each belongs in Phase 1.
 
 ---

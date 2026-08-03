@@ -13,7 +13,7 @@
 > final certification are recorded in `docs/05-qa/phase-0-final-check.md`, which is the authority on it.
 
 **"Complete with follow-up", not "complete".** Every unit shipped and every blocking closeout finding is
-resolved, but **two** roadmap exit criteria remain unmet by deliberate deferral and the findings in §5
+resolved, but **one** roadmap exit criterion remains unmet by deliberate deferral and the findings in §5
 are carried into Phase 1. Calling this unconditionally complete would be the exact failure mode
 `CLAUDE.md` §5.1 names.
 
@@ -144,7 +144,7 @@ choice is visible rather than implicit.
 
 Nothing here is resolved. Each is deliberate, with the reason stated.
 
-### Unmet Phase 0 exit criteria — **two**, each annotated in `docs/roadmap.md`
+### Unmet Phase 0 exit criteria — **one**, annotated in `docs/roadmap.md`
 
 The roadmap's Phase 0 list has seven criteria; five are now met-or-retired and **two** are not. This count
 has been corrected twice and the history is kept rather than overwritten: an early version said "four" and
@@ -156,7 +156,7 @@ rationale recorded in `docs/roadmap.md`.
 | Item | Status | Why |
 |---|---|---|
 | ~~Tags `v2`…`v13`; zero `feat/*` branches~~ | ~~**Unmet** (U-DEFER-1)~~ → **Branch half met 2026-08-03; tag half RETIRED 2026-08-03** | Branch half: all merged branches were deleted at Phase 0 close, so `main` is the only branch. Tag half: retired by ruling — the chain cannot support honest *ordered* tags (v12 `51d2134` precedes v11 `d89cf1c`), §10.4 forbids rewriting it, and milestone identity already lives in `docs/archive/*/_INDEX.md`. Rationale recorded in `docs/roadmap.md`, not deleted. |
-| **Branch protection / CI as required status** (**C-6**) | **Unmet** (U-DEFER-3) | Needs a repository-settings change and separate explicit approval. `main` is force-pushable today. |
+| ~~**Branch protection / CI as required status** (**C-6**)~~ | ~~**Unmet** (U-DEFER-3)~~ → **CLOSED 2026-08-03** | Ruleset `main-integrity` (no bypass actor) forbids deletion and non-fast-forward; branch protection requires the `typecheck / test / build` check on the pushed SHA. The spec's fourth clause, "require PR", was **retired by recorded amendment** (`docs/01-plan/phase-1-verification-integrity.plan.md` §8.6). `main` is no longer force-pushable. Limitation stated, not claimed away: `enforce_admins: false`. |
 | A `.tsx` test collected under `src/` (**C-12**) | **Unmet** (U-DEFER-4) | `vitest.config.ts` collects `*.test.ts` only. Zero `.test.tsx` exist; latent. |
 
 The **`fix/**` / `docs/**` CI trigger gap is a follow-up, not an exit criterion** — it is recorded in the

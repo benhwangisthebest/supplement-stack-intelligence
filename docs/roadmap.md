@@ -22,11 +22,11 @@
 shipped and are public, plus four post-review remediations — R1 `a338370`, R2 `ea5b270`, R3 `9e9e15d`,
 R3b `1792f9f` — and the documentation and record-correction commits that followed them. CI is green on
 `main`; the authoritative run for any commit is the GitHub Actions `CI` run whose head SHA is that
-commit. **Phase 1 — planning** (2026-08-03): a plan exists at
-`docs/01-plan/phase-1-verification-integrity.plan.md`, status **DRAFT**, awaiting approval; no Phase 1
-unit has been executed. Phases 2–4 — not started.
+commit. **Phase 1 — in progress** (2026-08-03): the plan at
+`docs/01-plan/phase-1-verification-integrity.plan.md` is **APPROVED**, and its Group A has begun.
+Phases 2–4 — not started.
 
-"Complete with follow-up" is deliberate: **two exit criteria below remain unmet** and are annotated
+"Complete with follow-up" is deliberate: **one exit criterion below remains unmet** and is annotated
 in place. The independent final Check **ran 2026-08-02** — first-pass verdict **NOT CLOSED** against
 `0d9e008`. Its findings, the re-check of each after remediation, and the final certification are
 recorded in `docs/05-qa/phase-0-final-check.md`; that document is the authority on the Check, and this
@@ -58,7 +58,7 @@ the enforcement work every later phase depends on. It changes no product behavio
    Phase 0 close is a separate approved step (`CLAUDE.md` §10.1) — see `docs/05-qa/phase-0-final-check.md`
    for the end state.*
 4. Add CI: `npm ci && npm run typecheck && npm test && npm run build`. **[Delivered `374d7c9`;
-   "required on `main`" is U-DEFER-3 / C-6 — NOT delivered, `main` has no branch protection.]**
+   "required on `main`" delivered 2026-08-03 — U-DEFER-3 / C-6 closed, see the exit criteria below.]**
 5. Extend `src/architecture/boundaries.test.ts`: add `src/services` and `src/data` to the scanned
    layers; add a `DATA_IS_A_LEAF` rule (`src/data/**` may import only `src/types/**`); add a
    tree-partition sanity test asserting every top-level `src/*` directory is either scanned or in an
@@ -112,9 +112,16 @@ zero `.DS_Store` tracked.)*
       worse identity for the same thing. **The underlying risk this criterion controlled — that milestone
       boundaries become unrecoverable — is therefore already controlled elsewhere.** `git tag` stays
       empty, which also keeps the Phase 0 plan's own criterion 11 satisfied.
-- [ ] **Partly met — deferred (U-DEFER-3, closeout finding C-6).** CI workflow exists, runs on every PR
-      into `main` and on **every branch push**, and is green. It is **not** a required status and
-      `main` has **no branch protection** — that needs a repository-settings change and separate approval.
+- [x] **MET 2026-08-03 (U-DEFER-3, closeout finding C-6).** CI runs on every PR into `main` and on **every
+      branch push**, and is green. `main` is now protected: ruleset `main-integrity` forbids deletion and
+      non-fast-forward updates with **no bypass actor**, and branch protection **requires the
+      `typecheck / test / build` check** on the pushed SHA (`strict: true`). The Phase 0 spec's fourth
+      sub-requirement, "require PR", was **retired by recorded amendment** — see
+      `docs/01-plan/phase-1-verification-integrity.plan.md` §8.6: it predates the `branches: ["**"]`
+      trigger that made PR-based CI coverage redundant, and a PR flow would rewrite SHAs and so weaken the
+      very property the ff-only flow guarantees. **Stated limitation, not claimed closed:**
+      `enforce_admins: false`, so the required check is a guardrail against accident, not a control
+      against a determined admin.
 - [x] `boundaries.test.ts` scans ≥ 5 top-level layers (**5**: `src/types`, `src/components`, `src/lib`,
       `src/services`, `src/data`); each new rule verified red-then-green.
 - [ ] **Unmet — deliberately deferred (U-DEFER-4, closeout finding C-12).** A `.tsx` test placed anywhere
@@ -123,9 +130,9 @@ zero `.DS_Store` tracked.)*
 - [x] Coverage report lists `src/app`, `src/services`, `src/components`, `src/lib/db` — `include` is
       `src/**/*.{ts,tsx}` since `8b1bd16`.
 
-> **On the two unmet criteria** (U-DEFER-3 branch protection, U-DEFER-4 `.tsx` collection; the third,
-> U-DEFER-1 tags, was **retired** by ruling on 2026-08-03 with its rationale recorded in place).
-> Each is annotated above with the U-DEFER item that deferred it, so a
+> **On the one unmet criterion** (U-DEFER-4, `.tsx` collection). Of the original three: U-DEFER-1 (tags)
+> was **retired** by ruling on 2026-08-03 with its rationale recorded in place, and U-DEFER-3 (branch
+> protection) was **met** on 2026-08-03. It is annotated above with the U-DEFER item that deferred it, so a
 > deliberate deferral is distinguishable from an omission (`CLAUDE.md` §7). Phase 0 is therefore
 > **complete with follow-up**, not unconditionally complete.
 >

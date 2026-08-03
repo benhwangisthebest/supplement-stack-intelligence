@@ -79,9 +79,11 @@ Production-readiness gaps remain, and they are tracked rather than unknown:
 - **Observability** — partial. Unexpected API exceptions are logged server-side with a correlation ID
   that is returned to the client, but there is no logging elsewhere, no error-reporting service, and no
   UI surface for a user to quote the correlation ID.
-- **Release enforcement** — CI runs on every push to `main` and every PR into it (typecheck, unit tests,
-  production build) and is green; `main` is current with all feature work. Not yet enforced: CI is not a
-  *required* status and `main` has no branch protection.
+- **Release enforcement** — CI runs on **every branch push** and every PR into `main` (typecheck, unit
+  tests, production build) and is green; `main` is current with all feature work. Since 2026-08-03 `main`
+  is protected: the `typecheck / test / build` check is **required** on the pushed SHA, and force-pushes
+  and deletion are forbidden with no bypass actor. Residual limitation: `enforce_admins: false`, so the
+  required check can be bypassed by the repository admin.
 - **Selected trust boundaries** — the advisor write path and the DB mapper layer lack unit coverage.
 
 Do not treat this as production-ready. See [`docs/project-status.md`](docs/project-status.md) for the

@@ -194,8 +194,10 @@ Measured baseline (re-measured 2026-08-03 at Phase 0 close): typecheck clean · 
 42 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
 `vitest run` → `next build`, on **every branch push**, on PRs into `main`, and on `workflow_dispatch`). These
 figures are re-measured by every CI run — the authoritative result for any commit is its `push`/`main`
-run, not this line, which is a snapshot and will drift. CI is **not** yet a required status and `main`
-has no branch protection — see `docs/roadmap.md`.
+run, not this line, which is a snapshot and will drift. **[2026-08-03]** CI **is** now a required status:
+`main` requires the `typecheck / test / build` check on the pushed SHA, and ruleset `main-integrity`
+forbids deletion and non-fast-forward updates with no bypass actor. `enforce_admins: false`, so the check
+is a guardrail against accident rather than a control against a determined admin — see `docs/roadmap.md`.
 
 ---
 

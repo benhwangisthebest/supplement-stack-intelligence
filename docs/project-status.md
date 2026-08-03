@@ -21,7 +21,7 @@
 | Production build | `npx next build` | **Succeeds**; 15 Library pages prerendered (SSG) |
 | Migrations | `supabase/migrations/` | 7 files, `0001`–`0007` |
 | E2E (default run) | `npx playwright test` | ~33 of 89 tests execute; the rest are `E2E_LIVE`-gated |
-| CI | — | ~~**None.** No workflow files anywhere~~ → **[2026-08-02] GitHub Actions `CI` exists and is green** on `main` @ `1792f9f` ([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)): `npm ci` → typecheck → `vitest run` → `next build`. **Not** a required status; `main` has no branch protection. |
+| CI | — | ~~**None.** No workflow files anywhere~~ → **[2026-08-02] GitHub Actions `CI` exists and is green** on `main` @ `1792f9f` ([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)): `npm ci` → typecheck → `vitest run` → `next build`. **[2026-08-03]** now a **required** status on `main` (`typecheck / test / build`), with force-push and deletion forbidden by ruleset `main-integrity`; `enforce_admins: false`. |
 | Lint | `npm run lint` | **Enforces nothing** — no ESLint dependency, no config |
 
 **[2026-08-02] Coverage scope was widened** in `8b1bd16`: `include` is now `src/**/*.{ts,tsx}`. Measured
@@ -378,8 +378,10 @@ Plus two content/process issues:
 3. ~~**`main` is a stale two-commit MVP**~~ — **[2026-08-02] closed.** `main` is the working tip.
 4. **Partial observability** — **[2026-08-02]** unexpected API errors are now logged with a correlation
    ID, but nothing else is instrumented and no UI surfaces the ID (**F5**).
-5. ~~**No CI**~~ — **[2026-08-02] closed for existence, open for enforcement.** CI runs and is green, but
-   it is not a required status and `main` has no branch protection (closeout finding **C-6**).
+5. ~~**No CI**~~ — **[2026-08-02] closed for existence; [2026-08-03] closed for enforcement.** CI runs on
+   every branch push and is green, and is now a **required** status on `main` with force-push and deletion
+   forbidden (closeout finding **C-6**, closed — see `docs/01-plan/phase-1-verification-integrity.plan.md`
+   §8.5–8.6). Residual: `enforce_admins: false`.
 6. **Core-loop E2E does not run by default**, and the one live-run artifact on disk shows a login failure.
 7. **`execute.ts` (LLM-driven write path) has 0% unit coverage.**
 8. **No schema↔type contract test; `supplement_id` has no ID-stability contract** — silent data corruption class.

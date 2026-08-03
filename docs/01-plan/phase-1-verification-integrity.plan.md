@@ -172,7 +172,7 @@ expected red text, is specified in full in the unit-decomposition analysis and s
 
 | ID | Deliberate defect | Expected red |
 |---|---|---|
-| U1–U4 | Delete `if (!user) return unauthorized();` from a GET | `expected 200 to be 401`, plus envelope mismatch on `error.code: "UNAUTHORIZED"` |
+| U1–U4 | **Preferred — bypass with an identity:** `const user = (await getUser()) ?? { id: "u1" };` | `expected 200 to be 401`, plus envelope mismatch on `error.code: "UNAUTHORIZED"`. *Deleting* the guard outright is the weaker variant — see §6.2.1 |
 | U5 | Delete the auth lines from one route; **and** `git add -N` a new route lacking `getUser()`; **and** break the glob | site-naming failure; plus `found 0 tracked route files; a guard that scans nothing passes vacuously` |
 | U6 | Delete `enable row level security` from `0007`; then delete its policy | names table + migration file; second: `RLS enabled but no policy — denies all access, a silent outage, not a safe default` |
 | U7 | In `toStack`, map `created_at` → `updated_at` | field-level value mismatch naming the mapper |
@@ -188,12 +188,58 @@ expected red text, is specified in full in the unit-decomposition analysis and s
 | U16 | Remove `[LIVE]` from a gated describe | `LIVE_TAGGING: … gated on E2E_LIVE but its title carries no "[LIVE]" tag` |
 | U17 | Not a guard — a dated measurement. Integrity control: record exact commands, env-var **names** (never values), timestamps, per-spec results; strike through the superseded "61/71"/"79/10" figures rather than deleting them (§7). | — |
 
+#### 6.2.1 Correction to the U1–U4 row (2026-08-03, proven by U1)
+
+The row above originally specified *deleting* `if (!user) return unauthorized();` and predicted
+`expected 200 to be 401`. **That prediction cannot hold on any route that dereferences `user`.** With the
+guard deleted, `user` is `null` and the handler crashes on `user.id` before it can respond, so the test
+fails with:
+
+```
+AssertionError: expected 500 to be 401
+```
+
+Red, but for the wrong reason: it proves the handler *crashed*, not that data *leaked*. A route that 500s
+on anonymous callers is still failing closed. Substituting an identity instead —
+`const user = (await getUser()) ?? { id: "u1" };` — lets the handler run to completion, so the test fails
+with `expected 200 to be 401`: unambiguous evidence of a **leak**, which is the defect these guards exist
+to catch.
+
+**Rule for U2–U4:** prefer the bypass-with-identity variant. Where the deletion variant is also run, accept
+either red form and state in the unit report which one was produced and why. Whether a given route 500s or
+200s under deletion depends on whether it dereferences `user` before responding — do not treat one expected
+string as universal.
+
+*Evidence: U1, `src/app/api/checkins/route.test.ts`; four mutations run in a disposable worktree,
+mutation M1 (deletion) → `expected 500 to be 401`, M2/M3 (bypass) → `expected 200 to be 401`.*
+
 ### 6.3 Harness decision (settled in U1)
 
 House style is inline `vi.mock` per file (as `src/services/evaluation.test.ts` does). A shared harness
 module cannot live in `src/testing/` without a new `EXEMPT_LAYERS` entry (rule 6), and cannot be named
 `*.test.ts` (vitest would collect it and fail with no suite). **Recommendation: inline mocks, no shared
 module** — ~15 duplicated lines × 23 files is cheaper than a new governed layer (§3 principle 4).
+
+**Confirmed in U1 (2026-08-03):** inline mocks were sufficient; no shared module was needed. Gate A1 is
+green — a route handler is importable and assertable under `environment: "node"`, asserted as `res.status`
+plus `await res.json()`, with no Next runtime and no live server.
+
+#### 6.3.1 Normative harness rule — 401 tests must mock the happy path to **succeed**
+
+**Every route test in Phase 1 must follow this. It is not stylistic.**
+
+In a test asserting 401 for an unauthenticated caller, all downstream mocks — repositories, Supabase
+client, any collaborator the handler reaches after the auth check — **MUST be configured to succeed**, as
+if the request were going to be served normally. Authentication must be the only thing standing between an
+anonymous caller and real data.
+
+Leaving those mocks unconfigured makes the test pass for the wrong reason and, worse, go *red* for the
+wrong reason: remove the auth check and the assertion fails because the handler threw, not because it
+served. The evidence a reviewer reads is then indistinguishable from a crash. This is not hypothetical —
+it is exactly what the first draft of U1 produced (§6.2.1).
+
+Corollary: `expect(<repo mock>).not.toHaveBeenCalled()` belongs in the 401 test. It asserts the handler
+stopped *before* touching data, which the status code alone does not establish.
 
 ### 6.4 Sequence and gates
 
@@ -364,6 +410,48 @@ permitting exactly the ff updates this workflow performs. **Zero workflow change
    4**. The "require PR" clause should be **re-litigated, not blindly satisfied** — it was authored before
    `push: branches: ["**"]` existed, which is precisely what makes a PR unnecessary for CI coverage. That is
    a plan amendment to be written up, not an exception to be taken silently.
+
+### 8.5 Outcome — executed 2026-08-03 (unit PHASE1-PLAN-PUB)
+
+**Option C applied.** Ruleset `main-integrity` (id `20291684`): `deletion`, `non_fast_forward`,
+`required_linear_history`, on `~DEFAULT_BRANCH`, `bypass_actors: []`, `current_user_can_bypass: "never"` —
+it binds the admin.
+
+**The probe passed in both directions**, settling §8.1 and §8.4's first two flags:
+
+- CI-green SHA `b685c3c` → protected probe ref: **pushed successfully**.
+- Never-tested commit `70ecff1` → same ref: **rejected**, `Required status check "typecheck / test / build" is expected.`
+
+So SHA-keyed evaluation holds for the **rulesets** engine (previously medium confidence), and
+`strict: true` is satisfied by a ff-push of a pre-tested SHA. **Option B applied to `main`**: required check
+`typecheck / test / build` (`app_id` 15368), `strict: true`, `enforce_admins: false`,
+`required_linear_history: true`, force-pushes and deletions forbidden. Probe ruleset and branch deleted.
+
+### 8.6 Amendment — the "require PR" clause is **retired** (2026-08-03)
+
+**Ruled by the user; recorded here rather than left as a silent 3-of-4.**
+
+The Phase 0 plan's U-DEFER-3 spec (`docs/01-plan/phase-0-integration-enforcement.plan.md:296`) named four
+sub-requirements, one of which was "require PR". That clause is **retired**, for two stated reasons:
+
+1. **It predates the trigger that made it redundant.** It was written when CI's push trigger covered
+   `main` and `feat/**` only, so a PR was the only way to guarantee CI ran before integration. Since
+   `7fbcd7a`, `push: branches: ["**"]` runs CI on **every** branch, and Option B's required check binds the
+   SHA. PR-based CI coverage is now strictly redundant with what is already enforced.
+2. **A PR flow would actively weaken SHA integrity** — §8.2 Option A: `rebase` and `squash` both rewrite
+   commit SHAs, so the commit landing on `main` would no longer be the commit CI validated. The ff-only
+   flow is the only one that puts the byte-identical, CI-validated SHA on `main`. Adopting PRs to satisfy a
+   clause whose purpose is already met would trade a real property for a procedural one, and the review
+   gate itself is unreal on a single-maintainer repository (GitHub forbids approving your own PR, so the
+   count must be 0).
+
+**The underlying risk the clause controlled — untested code reaching `main` — is controlled by the required
+status check, which is strictly stronger:** it binds every push, including ones no PR would have covered.
+
+**C-6 / U-DEFER-3 therefore records as CLOSED**, on three implemented sub-requirements plus one retired by
+this amendment. What remains true and is *not* claimed closed: `enforce_admins: false` means the required
+check is bypassable by the repository admin, so it is a guardrail against accident, not a control against
+intent — stated in §8.2 and unchanged by this amendment.
 
 ### 8.4 Flagged as inferred, not verified
 
