@@ -30,12 +30,17 @@ on:
   # Verification before integration into main.
   pull_request:
     branches: [main]
-  # Post-merge verification, plus feature branches so the first run can be
-  # observed before main is fast-forwarded (Phase 0 exit criterion 3).
+  # Post-merge verification on `main`, and pre-integration verification on every
+  # other branch: any branch push runs the same four steps, so work is verified
+  # before it is fast-forwarded into `main`.
+  #
+  # No branch-prefix list here, deliberately. An enumerated list (`main` +
+  # `feat/**`) silently excluded every `fix/*`, `docs/*`, `chore/*` and `qa/*`
+  # branch for the whole of Phase 0, each of which then needed a manual
+  # `workflow_dispatch` before integration. A prefix list goes stale the first
+  # time someone picks a new prefix; `**` cannot.
   push:
-    branches:
-      - main
-      - "feat/**"
+    branches: ["**"]
   # Manual re-run. Note: only selectable in the UI once this file exists on the
   # default branch.
   workflow_dispatch:
