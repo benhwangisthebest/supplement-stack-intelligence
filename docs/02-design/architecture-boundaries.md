@@ -129,9 +129,16 @@ ratified** rather than deferred.
 
 ## The error-disclosure guard
 
-`src/architecture/error-disclosure.test.ts` (29 tests) is a second executable spec, enforcing
+`src/architecture/error-disclosure.test.ts` (30 tests) is a second executable spec, enforcing
 `CLAUDE.md` §2.3 rule 13 — *internal error text never crosses the API boundary* — across every tracked
-`src/app/api/**/route.ts`.
+`src/app/api/**/route.ts` **and, since Phase 1 U11, every tracked `src/services/**/*.ts`**.
+
+The second half of that inventory is not precautionary. U11 moved the advisor's confirm-and-apply catch
+blocks out of a route handler and into `src/services/advisor-actions.ts`; without extending the scanned
+set, that move would have taken the repository's most safety-critical error boundary out of its own guard
+— a net reduction in enforcement disguised as a behaviour-preserving refactor. Proven both ways: a planted
+`err.message` in the new location goes red naming `src/services/advisor-actions.ts`, and the *same* planted
+leak stays green when the inventory extension is reverted.
 
 > Within a route handler's `catch` clause or `.catch(handler)` callback, the caught binding's error text
 > must not be read. Pass the whole value to the shared boundary instead.
@@ -153,11 +160,46 @@ it. Neither exists in a route today; if one is genuinely needed, that is a consc
 handler (`catch ({ cause }) { send(cause.message) }`), and two-argument
 `.then(onFulfilled, onRejected)` rejection handlers. No route uses either form today. Also undetected:
 derivations through properties other than `cause`, taint escaping the handler into another module,
-reflection, and any file outside `src/app/api/**/route.ts`. It is a regression guard for the forms this
-defect actually took, not a taint-analysis engine.
+reflection, and any file outside the scanned inventory. `src/lib/**` in particular is **not** scanned, so
+a helper reading `err.message` one import away from a route is missed — plan follow-up FU-7. It is a
+regression guard for the forms this defect actually took, not a taint-analysis engine.
 
 Every claim in that guard's header block has been verified against its own implementation by running the
 detector on a fixture per claim — 33 claims, all matching.
+
+## Reachability guards — the pattern (Phase 1 U12)
+
+A pure engine can be exhaustively unit-tested and still be **dead code in production**, because nothing
+proves the orchestration layer actually hands it the data. This repository has already paid for that:
+`ruleSideEffect` shipped fully unit-tested while `services/evaluation.ts` never passed
+`sideEffectReports`/`checkins` into `evaluateStack`, so the rule returned `[]` for every real user while
+385 tests stayed green — every one of them calling the engine directly.
+
+Optional context fields are what make it invisible. `evaluateStack`'s input marks five of its seven
+fields optional with `?? null` / `?? []` defaults, so omitting one from the call site is **silently legal
+at compile time**. `tsc` catches only the two required fields.
+
+**The pattern, as implemented in `src/services/evaluation.test.ts`:**
+
+1. Mock every repository the orchestrator reads, and capture what the engine produced (here by echoing
+   `replaceFlags`' argument back).
+2. For each context field, run the orchestrator **twice** — once with the field carrying data, once with
+   it empty — and assert the produced output **changes**.
+3. Compare a *signature* of the output, not a named category. A rule rename then cannot make the
+   assertion silently vacuous.
+4. For required fields, vary the value instead of removing it (removal is a compile error).
+5. Add an anti-drift test that reads the call site's field list **from the source** and asserts it equals
+   the set of covered fields. An eighth field cannot be added without a row.
+
+**Why differential rather than "assert flag X appears".** Asserting a specific flag couples the guard to
+one rule's behaviour and passes vacuously if that rule changes. Asserting that the output *differs* tests
+the property actually at stake: this input reaches an observable output.
+
+**A field that cannot change the output is a FINDING, not a test to relax.** It means the orchestrator is
+loading and passing data no rule consumes — dead work, and a signal that either the wiring or the rule set
+is wrong. Report it; do not weaken the assertion.
+
+Status: **7/7** of `evaluateStack`'s context fields covered (was 2/7). No dead context found.
 
 ## Known limitations
 
@@ -190,7 +232,10 @@ detector on a fixture per claim — 33 claims, all matching.
 ```bash
 npm test                                              # includes both executable specs
 npx vitest run src/architecture/boundaries.test.ts     # layer boundaries only (28)
-npx vitest run src/architecture/error-disclosure.test.ts # error disclosure only (29)
+npx vitest run src/architecture/error-disclosure.test.ts # error disclosure only (30)
+npx vitest run src/architecture/auth-coverage.test.ts     # AUTH_COVERAGE only (13)
+npx vitest run src/architecture/rls-coverage.test.ts      # RLS_COVERAGE only (14)
+npx vitest run src/services/evaluation.test.ts            # reachability only (11)
 ```
 
 A failure lists **every** offending `file:line` in one run, with the raw specifier, its
