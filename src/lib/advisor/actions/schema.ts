@@ -3,6 +3,7 @@
 // SAME field rules as stackItemInputSchema so the confirm route can re-parse with
 // the existing item schema before any write. Plan SC-3 (grounding), SC-6 (re-validate).
 import { z } from "zod";
+import type { ActionProposal, EditableProposalFields } from "@/types/advisor-action";
 
 const timing = z
   .enum(["morning", "midday", "evening", "pre-workout", "with-meal", "bedtime"])
@@ -61,6 +62,77 @@ export const editableFieldsSchema = z
     frequency: frequency.optional(),
   })
   .strict();
+
+// ---- confirm request body (moved here from the route by U11) ----------------
+// These describe the POST /api/advisor/actions body. They live beside the
+// payload schemas they compose rather than in a route file, so the route is
+// left with transport concerns only. Behaviour is unchanged by the move: the
+// same shapes, in the same order, with the same union.
+
+export const ACTION_TYPES = [
+  "add_item",
+  "remove_item",
+  "edit_item",
+  "generate_protocol",
+  "attach_product",
+] as const;
+
+export const proposalSchema = z.object({
+  type: z.enum(ACTION_TYPES),
+  stackId: z.string(),
+  payload: z.record(z.unknown()),
+  diff: z.array(z.unknown()).optional(),
+  editable: z.unknown().optional(),
+  rationaleCitations: z.array(z.unknown()).optional(),
+});
+
+/**
+ * v8 advisor-experience: the confirm body is a SELECTED SUBSET of proposals
+ * (selective confirm, Design §5.1). A legacy single `{ proposal, edits }` body
+ * is coerced into a length-1 batch for back-compat with the v7 client.
+ */
+export const confirmSchema = z.union([
+  z.object({
+    conversationId: z.string().nullish(),
+    actions: z
+      .array(
+        z.object({
+          proposal: proposalSchema,
+          edits: editableFieldsSchema.optional(),
+        }),
+      )
+      .min(1),
+  }),
+  z.object({
+    conversationId: z.string().nullish(),
+    proposal: proposalSchema,
+    edits: editableFieldsSchema.optional(),
+  }),
+]);
+
+export type ConfirmBody = z.infer<typeof confirmSchema>;
+
+/** One selected action: a proposal plus the confirm card's optional edits. */
+export interface SelectedAction {
+  proposal: ActionProposal;
+  edits?: EditableProposalFields;
+}
+
+/** Normalize either body shape to a list of {proposal, edits}. */
+export function toActions(body: ConfirmBody): SelectedAction[] {
+  if ("actions" in body) {
+    return body.actions.map((a) => ({
+      proposal: a.proposal as unknown as ActionProposal,
+      edits: a.edits as EditableProposalFields | undefined,
+    }));
+  }
+  return [
+    {
+      proposal: body.proposal as unknown as ActionProposal,
+      edits: body.edits as EditableProposalFields | undefined,
+    },
+  ];
+}
 
 export type AddItemPayloadParsed = z.infer<typeof addItemPayloadSchema>;
 export type EditItemPayloadParsed = z.infer<typeof editItemPayloadSchema>;

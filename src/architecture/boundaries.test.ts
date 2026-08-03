@@ -62,7 +62,7 @@ const LAYER_FLOORS: Readonly<Record<(typeof SCANNED_LAYERS)[number], number>> = 
   "src/types": 15, // 19 today
   "src/components": 40, // 56 today
   "src/lib": 60, // 80 today
-  "src/services": 1, // 1 today
+  "src/services": 1, // 2 today (U11 added advisor-actions.ts)
   "src/data": 8, // 10 today
 };
 

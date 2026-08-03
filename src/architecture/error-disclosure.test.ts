@@ -9,6 +9,11 @@
 // rank-1 violations, in a repository whose CLAUDE.md §3.5 records that "16
 // boundary violations accumulated while the rule lived only in prose".
 //
+// (That paragraph is history, and one detail of it has since moved: Phase 1 U11
+// extracted advisor/actions' confirm-and-apply path, so the two sites it names
+// now live in `src/services/advisor-actions.ts`. They are still scanned — that
+// is precisely what the SERVICE_MODULES inventory below is for.)
+//
 // ---------------------------------------------------------------------------
 // WHAT THIS DETECTOR ACTUALLY COMPUTES — read before trusting it (§2.2 rule 7)
 // ---------------------------------------------------------------------------
@@ -58,7 +63,11 @@
 //   * a name inside the handler that shadows the caught binding — it stays
 //     tainted, so `catch (err) { rows.forEach((err) => f(err.message)) }` is a
 //     false positive;
-//   * anything in a file outside `src/app/api/**/route.ts`.
+//   * anything in a file outside the scanned inventory. That inventory is
+//     `src/app/api/**/route.ts` PLUS `src/services/**/*.ts` (non-test) as of
+//     Phase 1 U11 — see SERVICE_MODULES below for why the second half exists.
+//     Everything else is still unscanned: `src/lib/**` in particular, so a
+//     helper that reads `err.message` one import away from a route is missed.
 // It is a regression guard for the forms this defect actually took and the
 // obvious ways to re-spell them — not a taint-analysis engine.
 
@@ -83,40 +92,67 @@ const TEXT_PROPS = new Set(["message", "stack"]);
 const TAINT_CARRIERS = new Set(["cause"]);
 
 /**
- * Tracked `route.ts` files under src/app/api. Tracked-file discovery mirrors
- * boundaries.test.ts (Phase 0 R1): the repository is Git's index, not one
- * developer's working directory, so untracked scratch files and iCloud sync
+ * Tracked files under `pathspec`, filtered by `keep`. Tracked-file discovery
+ * mirrors boundaries.test.ts (Phase 0 R1): the repository is Git's index, not
+ * one developer's working directory, so untracked scratch files and iCloud sync
  * duplicates cannot reach a rule or hide one.
+ *
+ * A `label` is required because an empty result is a HARD failure, and the
+ * message has to say which inventory came back empty.
  */
-function trackedApiRoutes(): string[] {
+function trackedFiles(
+  pathspec: string,
+  keep: (file: string) => boolean,
+  label: string,
+): string[] {
   let stdout: string;
   try {
     stdout = execFileSync(
       "git",
-      ["-C", REPO_ROOT, "ls-files", "-z", "--cached", "--", "src/app/api"],
+      ["-C", REPO_ROOT, "ls-files", "-z", "--cached", "--", pathspec],
       { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 },
     );
   } catch (cause) {
     throw new Error(
       "Error-disclosure guardrail could not read the tracked file set.\n" +
-        `Ran: git -C ${REPO_ROOT} ls-files -z --cached -- src/app/api\n` +
+        `Ran: git -C ${REPO_ROOT} ls-files -z --cached -- ${pathspec}\n` +
         "This suite defines the repository as Git's tracked files, so it cannot run\n" +
         "outside a Git worktree or without `git` on PATH.\n" +
         `Underlying error: ${cause instanceof Error ? cause.message : String(cause)}`,
     );
   }
-  const routes = stdout.split("\0").filter((p) => p.endsWith("/route.ts"));
-  if (routes.length === 0) {
+  const files = stdout.split("\0").filter((p) => p.length > 0 && keep(p));
+  if (files.length === 0) {
     throw new Error(
-      "Error-disclosure guardrail found zero tracked route files.\n" +
+      `Error-disclosure guardrail found zero tracked ${label}.\n` +
         "A guardrail that scans nothing passes vacuously, so this is a hard failure\n" +
         "rather than a silent green.",
     );
   }
-  return routes;
+  return files.sort();
 }
 
-const API_ROUTES = trackedApiRoutes();
+const API_ROUTES = trackedFiles("src/app/api", (p) => p.endsWith("/route.ts"), "route files");
+
+/**
+ * Application-service modules (Phase 1 U11). These are scanned for the same
+ * rule as routes, and the reason is specific rather than precautionary: U11
+ * moved the advisor's confirm-and-apply catch blocks out of a route handler and
+ * into `src/services/advisor-actions.ts`. Without this inventory, that move
+ * would have taken the repository's most safety-critical error boundary out of
+ * its own guard — a net REDUCTION in enforcement wearing the clothes of a
+ * behaviour-preserving refactor, which nothing would have reported.
+ *
+ * Test files are excluded: they assert about error text on purpose.
+ */
+const SERVICE_MODULES = trackedFiles(
+  "src/services",
+  (p) => p.endsWith(".ts") && !p.endsWith(".test.ts"),
+  "service modules",
+);
+
+/** Everything this rule applies to. */
+const SCANNED_FILES = [...API_ROUTES, ...SERVICE_MODULES];
 
 interface Violation {
   file: string;
@@ -311,8 +347,22 @@ describe("API error disclosure — CLAUDE.md §2.3 rule 13", () => {
     }
   });
 
-  it("no API route reads a caught exception's error text", () => {
-    const violations = API_ROUTES.flatMap(violationsInFile);
+  it("finds service modules to scan, including the extracted advisor boundary", () => {
+    // Phase 1 U11 gate C2. `advisor-actions.ts` holds the two `internalError`
+    // call sites that used to live in the route above; if this assertion ever
+    // fails, the confirm-and-apply boundary has left this guard's inventory and
+    // the rule below is green about a file it no longer reads.
+    expect(SERVICE_MODULES.length).toBeGreaterThanOrEqual(1);
+    expect(
+      SERVICE_MODULES,
+      "src/services/advisor-actions.ts is not being scanned",
+    ).toContain("src/services/advisor-actions.ts");
+    // Test files must not be in the inventory: they discuss error text on purpose.
+    expect(SERVICE_MODULES.filter((f) => f.endsWith(".test.ts"))).toEqual([]);
+  });
+
+  it("no API route or service module reads a caught exception's error text", () => {
+    const violations = SCANNED_FILES.flatMap(violationsInFile);
 
     expect(
       violations,

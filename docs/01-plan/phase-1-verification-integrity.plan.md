@@ -134,7 +134,7 @@ tests · **L** = a refactor plus its tests.
 | **U1** | Establish the route-test pattern on one route; settle the harness question. | N `src/app/api/checkins/route.test.ts` | S | 6 | — |
 | **U2** | Route tests for the **6** read-only / no-body route files. | N 6 × `route.test.ts` | M | 24 (delivered) | U1 |
 | **U3** | Route tests for the **12** Zod-validated mutation route files (excl. advisor) — 11 new here; `checkins` is U1's. | N 11 × `route.test.ts` | M | 58 (delivered) | U1 |
-| **U4** | Route tests for the **5** advisor route files; closes **F6**. | N 5 × `route.test.ts` | M | ~25 | U1, U11 |
+| **U4** | Route tests for the advisor route files; closes **F6**. **4 new files** — the fifth, `advisor/actions/route.test.ts`, already exists as U11's Gate C1 pins, which U4 EXTENDS and must not weaken or rewrite. | N 4 × `route.test.ts`, M `advisor/actions/route.test.ts` | M | ~20 | U1, U11 |
 | **U5** | `AUTH_COVERAGE` guard — every tracked route handler calls `getUser()` before any I/O. | N `src/architecture/auth-coverage.test.ts` | M | ~8 | — |
 | **U6** | `RLS_COVERAGE` guard — every `create table` has a matching RLS enable + policy. | N `src/architecture/rls-coverage.test.ts` | M | ~8 | — |
 | **U7** | Row-fixture tests for all `mappers.ts` functions. | N `src/lib/db/mappers.test.ts` | M | ~28 | — |
@@ -148,6 +148,7 @@ tests · **L** = a refactor plus its tests.
 | **U15** | Claim→observed pass over `boundaries.test.ts`'s header; close **C-11**. | M `boundaries.test.ts`, M design doc | S | +3 | — |
 | **U18** | `DOMAIN_IS_PURE` ratchet per ruling 2 — enforce purity on true engine directories; register `src/lib/{auth,api,supabase}` as named exemptions with written reasons. Closes **D-4** and `CLAUDE.md` §4 rule 5. | M `src/architecture/boundaries.test.ts`, M `docs/02-design/architecture-boundaries.md`, M `CLAUDE.md` §4 table | S | ~4 | U15 |
 | **U19** | Route-level ownership check on `/api/stacks/:id/items/:itemId` — verify the item belongs to the **verified parent stack**; 404 on mismatch. Added 2026-08-04 from a U3 finding. | M `src/app/api/stacks/[id]/items/[itemId]/route.ts`, M its `route.test.ts`, possibly M `src/lib/db/stack-item-repo.ts` | S | +2 | U3 |
+| **U20** | `executeBatch`'s inner rollback `catch` calls `reportInternalError(err, "ROLLBACK_FAILED")` — a **log-only** addition; the response contract is untouched. Added 2026-08-04 per FU-2's U11 assessment. | M `src/lib/advisor/actions/execute.ts`, M its `.test.ts` | S | +2 | U11 |
 | **U16** | E2E honesty — `[LIVE]` tags (**C-9**), kill the shared-user race, build-then-start `webServer`. | M `playwright.config.ts`, M 17 specs, N tag guard | M | ~4 | — |
 | **U17** | Dated live-E2E baseline; investigate the `fetch failed` login artifact. | N `docs/05-qa/phase-1-live-e2e-baseline.md`, M `project-status.md` | M | 0 | U16 |
 
@@ -360,7 +361,7 @@ Group B              U2 · U3 · U8   → U19
               created (§6.1.1), so it cannot run in parallel with it. This is the
               plan's dependency logic, not the topical grouping — U19 resembles
               U5's security work but depends on U3's file.
-Group C              U11 → U4
+Group C              U11 → U4 · U20
    ├ GATE C1  Differential response pins captured and green BEFORE any line
    │          moves. Extraction lands only if all 8 outcome triples are identical.
    └ GATE C2  error-disclosure proven red against a planted `err.message` in
@@ -378,7 +379,8 @@ Group E (cuttable)   U16 → U17
 
 ~40 new test files, ~25 modified, **~205–230 new tests** (suite 524 → roughly **730–760**), one refactor,
 and **one deliberate behaviour change** — U19's 404 on an item/stack mismatch, added 2026-08-04 (§6.1.1).
-Everything else is behaviour-preserving. **3–5× Phase 0** by unit and test count, and it contains the
+Everything else is behaviour-preserving. U20 is not a second exception: it adds a log line and leaves every
+response byte identical. **3–5× Phase 0** by unit and test count, and it contains the
 repository's only rank-1 refactor.
 
 #### Measured route-test cost (U1–U3, 2026-08-04) — use this to size U4 and U19
@@ -405,8 +407,10 @@ about mock boilerplate specifically, and that part held: measured across the 18 
 blocks run **7–25 lines, mean 10** — the 25 being `protocol/generate`, which mocks six repositories. The
 remaining ~100 lines per file are tests and commentary, which no shared harness would have removed.
 
-**Projection for the route work left:** U4 at 5 files ≈ **600 lines, ~25 tests**; U19 is an edit to an
-existing file, not a new one.
+**Projection for the route work left, revised 2026-08-04 after U11:** U4 at **4 new files ≈ 480 lines,
+~20 tests**, plus an extension to the existing `advisor/actions/route.test.ts`. The fifth advisor file was
+absorbed by U11: Gate C1 required the confirm-and-apply responses pinned *before* any line moved, so that
+route test already exists (406 lines, 18 pins). U19 is an edit to an existing file, not a new one.
 
 **Delivered:** U1, U2, U3 — 18 route-test files, 88 tests. Suite **612 across 60 files**, measured at
 `3069651`, up from the 524/42 baseline recorded in §2.
@@ -661,9 +665,11 @@ right home for Phase 1 findings.)*
 
 | # | Found by | Finding | Owner |
 |---|---|---|---|
-| **FU-1** | U10 | `executeProposal`'s `attach_product` reads pre-write state (`getItemProductId`) with no transaction or optimistic lock, so two concurrent confirms can persist an inverse restoring a value that was never current. Ordering alone is the correctness property. | **U11 — ASSESS** (does the extraction change the risk, and where would a fix land afterwards?). Not to be fixed in U11: it is a behaviour change. |
-| **FU-2** | U10 | `executeBatch`'s compensating rollback swallows rollback failures silently — no log, no correlation id — so a failed rollback leaves the stack half-applied with no trace. `respond.ts`'s `reportInternalError` exists for exactly this. | **U11 — ASSESS** only. The fix is a behaviour change and needs its own unit after U11, if recommended. |
-| **FU-3** | U5 | `AUTH_COVERAGE` cannot see indirection: a handler doing I/O through a helper in another module reads as clean. U11 moves advisor logic into `src/services/**`, which is on the guard's I/O prefix list — so the guard's answer for the advisor routes must be re-checked after the move. | **U11 — Gate C2 check.** A vacuous result for those routes is a blocking finding for U11, not a footnote. |
+| **FU-1** | U10 | `executeProposal`'s `attach_product` reads pre-write state (`getItemProductId`) with no transaction or optimistic lock, so two concurrent confirms can persist an inverse restoring a value that was never current. Ordering alone is the correctness property. | **ASSESSED by U11 2026-08-04 → still open, unowned.** Risk unchanged: `executeProposal` was moved verbatim and still lives in `src/lib/advisor/actions/execute.ts`, which U11 did not touch. A fix belongs there, or in a compare-and-set on `stack_items.product_id` — **not** in the new service. No unit scheduled. |
+| **FU-2** | U10 | `executeBatch`'s compensating rollback swallows rollback failures silently — no log, no correlation id — so a failed rollback leaves the stack half-applied with no trace. `respond.ts`'s `reportInternalError` exists for exactly this. | **ASSESSED by U11 2026-08-04 → now owned by U20.** U11 moved no part of `executeBatch`, so the risk is unchanged; what changed is that the fix got cheaper, since `src/services/advisor-actions.ts` already imports `@/lib/api/respond`. Recommended and scheduled as **U20** (log-only; the response contract is untouched). |
+| **FU-3** | U5 | `AUTH_COVERAGE` cannot see indirection: a handler doing I/O through a helper in another module reads as clean. U11 moves advisor logic into `src/services/**`, which is on the guard's I/O prefix list — so the guard's answer for the advisor routes must be re-checked after the move. | **CLOSED 2026-08-04 by U11, non-blocking.** Post-move the guard reports `advisor/actions → POST` as `authPos 1382 < firstIo 1676 (createClient)` — still doing work. And on the counterfactual where the service call is the route's ONLY I/O, it reports `firstIo: confirmAndApply`, because `@/services/` is on `IO_MODULE_PREFIXES`. The answer stays meaningful even if all remaining I/O moves behind the service. |
 | **FU-4** | U5 | `getUser` is matched by identifier; an aliased import would be invisible to the guard. Declared in the guard's header limitation list. | **Deferred.** No route aliases it; closing now is speculative (§8-style condition: revisit if one ever does). |
 | **FU-5** | U6 | `RLS_COVERAGE` does not model `drop policy`, `disable row level security`, `alter policy`, or a later migration weakening an earlier one. | **Deferred.** No migration uses any of these today; this is the guard's most likely route to going stale, so it is recorded rather than closed. |
 | **FU-6** | U6 | The guard checks a policy *exists*, never that its `using` clause is correct — `own_stack_items`' parent-stack subquery and a hypothetical `using (true)` are indistinguishable to it. Policy-logic review stays human. | **Deferred**, with a named dependant: **§6.1.1** — U19's whole current-state argument rests on `own_stack_items` being correct, so U19 must read that policy directly rather than trust this guard. |
+| **FU-7** | U11 | `error-disclosure` now scans `src/app/api/**/route.ts` **and** `src/services/**/*.ts`, but still **not `src/lib/**`**. A catch block extracted into `src/lib` would reproduce the §6.1 hazard exactly, with no guard — and `src/lib` is where `executeBatch`'s swallowing `catch` already lives. | **Deferred**, condition-bound: in scope for whichever unit next moves error handling into `src/lib`. Note **U20** edits a `src/lib` catch and is the near-term trigger to re-read this row. |
+| **FU-8** | U11 | `src/services` has a `LAYER_FLOORS` entry of **1** while holding 2 files. The floor exists to catch a layer silently collapsing to zero; at 1 it now has no headroom to detect the loss of one of the two. | **Deferred.** Raise it when the layer grows again; noted rather than tightened now, because a floor at today's exact count blocks ordinary deletion (the stated reason floors sit below current counts). |
