@@ -646,3 +646,24 @@ The roadmap's seven, plus this plan's own. Countable and drift-proof — each st
 
 Phase 0 complete — CI exists on every branch push (`7fbcd7a`), or these tests can silently stop running.
 Satisfied.
+
+---
+
+## 12. Follow-up register
+
+Findings surfaced *by* a unit that fall outside that unit's scope. CLAUDE.md §8.1: name it, do not absorb
+it. Each row carries an **owner** — the unit expected to act, or an explicit deferral. A row is closed by
+the owning unit's report, not by this table.
+
+*(Section added 2026-08-04. The plan had no follow-up section before this; the Phase 0 register in
+`docs/05-qa/phase-0-final-check.md` §"Follow-up register" belongs to that phase's Check and is not the
+right home for Phase 1 findings.)*
+
+| # | Found by | Finding | Owner |
+|---|---|---|---|
+| **FU-1** | U10 | `executeProposal`'s `attach_product` reads pre-write state (`getItemProductId`) with no transaction or optimistic lock, so two concurrent confirms can persist an inverse restoring a value that was never current. Ordering alone is the correctness property. | **U11 — ASSESS** (does the extraction change the risk, and where would a fix land afterwards?). Not to be fixed in U11: it is a behaviour change. |
+| **FU-2** | U10 | `executeBatch`'s compensating rollback swallows rollback failures silently — no log, no correlation id — so a failed rollback leaves the stack half-applied with no trace. `respond.ts`'s `reportInternalError` exists for exactly this. | **U11 — ASSESS** only. The fix is a behaviour change and needs its own unit after U11, if recommended. |
+| **FU-3** | U5 | `AUTH_COVERAGE` cannot see indirection: a handler doing I/O through a helper in another module reads as clean. U11 moves advisor logic into `src/services/**`, which is on the guard's I/O prefix list — so the guard's answer for the advisor routes must be re-checked after the move. | **U11 — Gate C2 check.** A vacuous result for those routes is a blocking finding for U11, not a footnote. |
+| **FU-4** | U5 | `getUser` is matched by identifier; an aliased import would be invisible to the guard. Declared in the guard's header limitation list. | **Deferred.** No route aliases it; closing now is speculative (§8-style condition: revisit if one ever does). |
+| **FU-5** | U6 | `RLS_COVERAGE` does not model `drop policy`, `disable row level security`, `alter policy`, or a later migration weakening an earlier one. | **Deferred.** No migration uses any of these today; this is the guard's most likely route to going stale, so it is recorded rather than closed. |
+| **FU-6** | U6 | The guard checks a policy *exists*, never that its `using` clause is correct — `own_stack_items`' parent-stack subquery and a hypothetical `using (true)` are indistinguishable to it. Policy-logic review stays human. | **Deferred**, with a named dependant: **§6.1.1** — U19's whole current-state argument rests on `own_stack_items` being correct, so U19 must read that policy directly rather than trust this guard. |
