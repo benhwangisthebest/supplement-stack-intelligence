@@ -87,6 +87,10 @@ targets them starts.
 structurally incapable of returning 400. The criterion needs a **written-reason exemption list** in the
 house `EXEMPT_LAYERS` shape, or it can never be satisfied honestly.
 
+**DISCHARGED 2026-08-04 → §10.1.** The 9 were recounted and each read individually; the list sorts them into
+three structural reasons (no input at all · path param only · coerced query param). The defect diagnosis
+above was correct and the count held. Criterion 1 is now met.
+
 **4.2 — "Auth-coverage and RLS-coverage tests fail on a deliberately non-compliant new file."**
 House style derives inventory from `git ls-files --cached`. An **unstaged** new file is invisible to the
 guard, so the mutation would pass green and *look* like proof. Every such mutation must be `git add -N`'d,
@@ -360,6 +364,7 @@ stopped *before* touching data, which the status code alone does not establish.
 
 ```
 Group A (parallel)   U1 · U5 · U6 · U7 · U9 · U10 · U12 · U14 · U15
+                     [DONE: U1 U5 U6 U7 U9 U10 U12 — open: U14 · U15]
    ├ GATE A1  U1 green: a route handler is importable and assertable under
    │          environment:"node". If red, the route-test programme is re-planned
    │          before U2 starts.
@@ -367,6 +372,23 @@ Group A (parallel)   U1 · U5 · U6 · U7 · U9 · U10 · U12 · U14 · U15
               pasted into the unit report. No unit advances on a self-reported
               claim — report §6 records that R1–R3b's claims were self-reported
               and had to be re-proved later.
+              DISCHARGED 2026-08-04. All four proven in a disposable worktree,
+              red text pasted in the unit report, then reverted green:
+                U5  5 reds incl. `found 0 tracked route files; a guard that
+                    scans nothing passes vacuously`, covering BOTH §6.2.3
+                    auth-placement shapes; + 3 anti-rot detector breaks.
+                U6  3 reds incl. `RLS enabled but no policy — denies all
+                    access, a silent outage, not a safe default`; + 3 anti-rot.
+                U10 4 reds incl. reverse-order rollback
+                    `expected [ 'delete:i-new-1', 'delete:i-new-2' ] to deeply
+                    equal [ 'delete:i-new-2', 'delete:i-new-1' ]`.
+                U12 5 field-deletion reds matching §6.2's predicted text
+                    verbatim (`context field "labMarkers" did not reach an
+                    observable output`), + 2 required-field wrong-value probes
+                    + the anti-drift row.
+              Note U10's own §6.2 row needed a STATEFUL mock before the
+              read-after-write mutation could be caught — a constant-returning
+              mock left it green. That is §6.2.2 in miniature.
 Group B              U2 · U3 · U8   → U19
    ├ GATE B1  U8's binding map asserted total in both directions; any real
    │          mismatch is triaged as a FINDING, never silenced by an exemption.
@@ -435,9 +457,13 @@ remaining ~100 lines per file are tests and commentary, which no shared harness 
 absorbed by U11: Gate C1 required the confirm-and-apply responses pinned *before* any line moved, so that
 route test already exists (406 lines, 18 pins). U19 is an edit to an existing file, not a new one.
 
-**Delivered:** U1 · U2 · U3 · U4 (route tests, **23/23 files**) · U5 · U6 · U10 (guards) · U11 (the
-refactor) · U19 (the behaviour change). Suite **718 across 68 files**, measured at `3417cfb`, up from the
-524/42 baseline recorded in §2. Route tests alone account for 23 files.
+**Delivered:** U1 · U2 · U3 · U4 (route tests, **23/23 files**) · U5 · U6 · U10 · U12 (guards) · U11 (the
+refactor) · U19 (the behaviour change) · U7 · U9 (boundary tests). Suite **793 across 70 files**, measured
+at `c2b37a7`, up from the 524/42 baseline recorded in §2. Route tests alone account for 23 files.
+The **~205–230 new-test** estimate at the top of this section is tracking high, not low: **+269** delivered
+so far with U8 · U13 · U14 · U15 · U16–U18 · U20 · U21 still open, so the projected total exceeds the
+range. Recorded, not rewritten — the estimate was made before any unit ran, and its error is the useful
+part.
 
 The realistic risk is not that a unit fails. It is that **U11 lands, looks green, and has quietly turned one
 409 into a 400, or moved the error boundary outside its guard.** Gates C1 and C2 exist for that and should
@@ -656,17 +682,63 @@ scope, stated in its header so no one "helpfully" extends it: counts of any kind
 
 The roadmap's seven, plus this plan's own. Countable and drift-proof — each states its command.
 
-- [ ] Every route file has ≥ 1 test asserting 401, the happy path, and 400 **where the file validates input**; the non-validating files are enumerated in a written-reason exemption list. (`git ls-files 'src/app/api/**/*.test.ts' | wc -l` = 23) — **PARTIAL 2026-08-04:** the count is met (23/23, U1–U4 integrated) and every file asserts 401 + happy path. Still open: the **written-reason exemption list** enumerating the non-validating files. Deliberately left unticked; a criterion is met or it is not.
+- [x] Every route file has ≥ 1 test asserting 401, the happy path, and 400 **where the file validates input**; the non-validating files are enumerated in a written-reason exemption list. (`git ls-files 'src/app/api/**/*.test.ts' | wc -l` = 23) — **MET 2026-08-04.** All four clauses measured, not assumed: 23 route files / 23 route test files; **23/23** assert `toBe(401)`; **23/23** assert `toBe(200)` or `toBe(201)`; **14/14** input-validating files assert `toBe(400)`; and the exemption list for the other **9** is §10.1 below. Previously PARTIAL because only the list was missing.
 - [ ] `mappers.ts` ≥ 90 % statements; `execute.ts` ≥ 80 %; `validation/schemas.ts` ≥ 80 %.
 - [ ] A schema↔type drift check exists and is **shown red** against a deliberately renamed column.
-- [ ] Reachability guard covers **7 / 7** `evaluateStack` context fields.
-- [ ] Auth-coverage and RLS-coverage guards are **shown red** against a `git add -N`-staged non-compliant new file (§4.2).
+- [x] Reachability guard covers **7 / 7** `evaluateStack` context fields. — **MET 2026-08-04 by U12.** Baseline recounted at 2/7 before the unit; all 7 fields at the `evaluateStack({…})` call site now carry a differential row, and an anti-drift row parses the call site so an eighth field cannot be added without one. No dead context found — every field reaches an observable output.
+- [ ] Auth-coverage and RLS-coverage guards are **shown red** against a `git add -N`-staged non-compliant new file (§4.2). — **PARTIAL 2026-08-04.** **AUTH_COVERAGE: proven** — a `git add -N`-staged route lacking `getUser()` was caught, and the glob-break variant produced `found 0 tracked route files; a guard that scans nothing passes vacuously`. **RLS_COVERAGE: not proven in this form** — U6's three reds mutated *existing* migration `0007` (RLS line, then policy), which shows detection but **not** the §4.2 staged-new-file property. Left unticked deliberately: §4.2 exists precisely because an unstaged file passes green and *looks* like proof, so the untested half is the half that matters.
 - [ ] Coverage thresholds configured for every pure engine directory and enforced by a CI step; no `branches` threshold within 10 pp of measured (D-2).
 - [ ] `[LIVE]` appears on every `E2E_LIVE`-gated describe (`grep -c '\[LIVE\]'` = 17, `grep -l E2E_LIVE | wc -l` = 17).
-- [ ] Every guard added in this phase has its **red output recorded in `docs/`** — not self-reported in-session. This is the Phase 0 lesson (report §6) written as a criterion.
+- [ ] Every guard added in this phase has its **red output recorded in `docs/`** — not self-reported in-session. This is the Phase 0 lesson (report §6) written as a criterion. — **PARTIAL 2026-08-04.** Now in `docs/`: U5, U6, U10 and U12's reds (§6.4 Gate A2), U11's Gate C1/C2 reds (§6.4). Still in-session only: the per-unit reds for U7, U9, U19 and U4. A Phase 1 report under `docs/04-report/` is the natural home; none exists yet.
 - [ ] A dated live-E2E baseline exists, recording the exact commands, env-var **names** (never values), timestamps and per-spec results, with the superseded "61/71" and "79/10" figures struck through rather than deleted. **Reworded per ruling 5:** the roadmap's original "reproducible in CI" clause is **removed** — a CI E2E job is out of Phase 1's scope, so requiring it here would make the criterion unmeetable. Reproducibility in CI moves to whichever phase actually adds a CI E2E job.
 - [ ] **`DOMAIN_IS_PURE` enforced** on true engine directories, with `src/lib/{auth,api,supabase}` registered as named exemptions carrying written reasons (ruling 2), and shown red against an un-allowlisted engine file importing `@/lib/db`.
 - [ ] `npx tsc --noEmit` clean, `npx vitest run` green, `npx next build` succeeds, CI green on the integration commit.
+
+### 10.1 Route-test 400-exemption list — the 9 files structurally incapable of returning 400
+
+Required by criterion 1 and by §4.1, which called for it *"in the house `EXEMPT_LAYERS` shape"* — a named
+entry carrying a written reason, never a bare path. §4.1 specified the **shape**, not the location; absent a
+stated home, it lives here, beside the criterion that consumes it.
+
+**Recounted 2026-08-04, not copied from §2:** `git ls-files --cached -- src/app/api | grep '/route\.ts$'`
+= **23**, of which `xargs grep -l '\.parse('` = **14**, leaving **9**. Each of the 9 was then read
+individually to confirm the absence of a 400 path — the `.parse(` grep is the discovery mechanism, not the
+evidence. None of the 9 contains `400`, `badRequest`, `validationError`, or `BAD_REQUEST` anywhere.
+
+**A — no request input of any kind (4).** The handler signature takes no arguments at all, so there is no
+value a caller could supply that the route could reject. A 400 test would have to fabricate an input the
+handler cannot receive.
+
+| File | Reason |
+|---|---|
+| `advisor/conversations/route.ts` | `GET()` — zero-arg handler; lists the caller's own conversations from `user.id`. |
+| `identity/route.ts` | `GET()` — zero-arg handler; the header states it derives from server-loaded owned data only, *"no request body, no client-trusted input"*. |
+| `lab-panels/route.ts` | `GET()` — zero-arg handler; `listPanels(supabase, user.id)`. |
+| `lab-trends/route.ts` | `GET()` — zero-arg handler; reads owned rows, then a pure engine. |
+
+**B — path parameter only, unvalidated by design (4).** These take a `[id]` from the URL. It is caller-supplied,
+but a malformed or foreign id resolves to **404 / empty**, never 400 — which is deliberate: a 400 that
+distinguished "not a uuid" from "not yours" would be a weak existence oracle, the same reasoning that
+made §6.1.1's mismatch a 404. **These four are exempt from 400, not from ownership testing**, which is a
+separate criterion.
+
+| File | Reason |
+|---|---|
+| `advisor/actions/[id]/undo/route.ts` | `POST(_request, {params})` — request deliberately unused (underscore-prefixed); unknown id → `notFound("Action")`, already-undone → 409. |
+| `advisor/conversations/[id]/route.ts` | `GET(_request, {params})` — request unused; today a foreign id yields an empty list via RLS. **U21 changes this to a 404; it does not add a 400, so this row survives U21.** |
+| `stacks/[id]/compare/route.ts` | `GET(_request, {params})` — request unused; unknown/foreign stack → `notFound("Stack")`. |
+| `stacks/[id]/evaluate/route.ts` | `POST(_request, {params})` — request unused; unknown/foreign stack → `notFound("Stack")`. |
+
+**C — query parameter, coerced rather than validated (1).**
+
+| File | Reason |
+|---|---|
+| `side-effects/route.ts` | `GET(request)` reads `?days`, but coerces with `Number(...) \|\| 90` (line 17). There is no rejection branch, so no input can produce a 400. **Recorded honestly: this is lenient coercion, not absence of input** — `?days=abc` and `?days=0` both silently become 90. See **FU-12**; the exemption is correct today either way, because the route cannot 400 whether or not that coercion is later tightened. |
+
+**How this list goes stale, and what to do.** It is prose, so nothing runs it — adding a tenth non-validating
+route, or adding `.parse(` to one of these nine, would leave it silently wrong. **FU-13** records that and
+names a candidate owner. Until then, re-derive the 9 with the two commands above rather than trusting the
+table.
 
 ---
 
@@ -699,4 +771,12 @@ right home for Phase 1 findings.)*
 | **FU-9** | U4 | The SSE `error`-event pin is the only test that reads streamed bytes, so its `events()` SSE-parsing helper is duplicated-in-waiting. It has **no legal home**: §6.3's ruling means a shared module cannot live in `src/testing/` without a new `EXEMPT_LAYERS` entry, and cannot be named `*.test.ts`. | **Deferred — no action while there is one SSE route.** Revisit only if a second appears; the ruling, not an oversight, is why it stays inline. |
 | **FU-10** | U4 | **F6** ("route-level reachability, 4 fixed handlers") is recorded closed on the strength of §5's disposition row — *"closed as a by-product of the advisor route tests"* — and all 5 advisor handlers now have tests. The **original finding text was not located**, so what was verified is the disposition row, not the underlying finding. | **Deferred, flagged honestly.** If F6's source text surfaces (mvp-transition-check or the closeout review), re-read it against U4's coverage before treating F6 as closed. |
 | **FU-11** | U19 | `belongsToStack` costs one extra `listItems` round-trip per PUT/DELETE. Correct and cheap at current stack sizes, but it re-reads a whole list to answer a membership question. | **Deferred, upgrade-bound:** switch to a `getItem` repo function if one ever exists (U7 territory). Not worth creating one for this alone — it would need its own row-fixture test (§5.6) for no behavioural gain. |
+| **FU-12** | §10.1 | `side-effects/route.ts:17` coerces `?days` with `Number(…) \|\| 90`, so `?days=abc` **and** `?days=0` both silently become 90. No rejection branch exists, which is *why* the file is 400-exempt. Not a safety issue — the value only widens a read window over the caller's own rows. | **Deferred, unowned.** Tightening it would add a 400 path and **invalidate §10.1's row C**, so the two must move together. Recorded so the exemption is not later read as "this route takes no input". |
+| **FU-13** | §10.1 | The 400-exemption list is **prose**. Nothing executes it: adding a tenth non-validating route, or adding `.parse(` to one of the nine, leaves it silently wrong — the exact "documented rule that nothing runs will rot" failure of `CLAUDE.md` §3.5. §4.1 asked for the *`EXEMPT_LAYERS` shape*, which in this repo is executable. | **Open — candidate owner U14.** U14 already binds prose (`CLAUDE.md` §4's table, §5's CI sentence) to executable assertions; this is the same technique on a third document. **Not silently added to U14's scope** — it is a recommendation for the next unit prompt to accept or decline. |
+| **FU-14** | U12 | The `sideEffectReports` and `checkins` reachability rows are **coupled**: the only rule observing them needs both, so deleting either turns both rows red. Each field is proven reachable, but neither is proven reachable *independently*. | **Deferred, honestly bounded.** A change making the rule need only one field would not be detected as a coverage loss. No cheap fix without inventing a second rule purely for the test. |
+| **FU-15** | U12 | The anti-drift row regex-parses the `evaluateStack({…})` call site out of `src/services/evaluation.ts` source text. A reformat that splits the call across a nested brace would break the parse. | **Deferred, low risk.** It fails **loudly** (the row goes red) rather than silently going vacuous, which is the acceptable failure direction for a drift guard. |
+| **FU-16** | U7 | `src/lib/db` holds **12** non-test modules and, after U7, **1** test file — so **11 modules remain untested** (`advisor-action-repo`, `checkin-repo`, `evaluation-flag-repo`, `lab-marker-repo`, `lab-panel-repo`, `profile-repo`, `seed`, `side-effect-repo`, `stack-item-repo`, `stack-repo`, `types`). U7's spec scoped `mappers.ts` only; query construction and filters are untested. | **Open — UNOWNED.** Checked against every open unit: U8 reads `types.ts` **statically** (schema binding, not behaviour); U13 sets thresholds for *pure engine* dirs, and `src/lib/db` is not one. No open unit covers these. Recorded rather than absorbed (§8.1). |
+| **FU-17** | U7 | `toCheckin` coalesces `row.ratings ?? {}`, `row.taken ?? []`, `row.scheduled ?? []` — but `0006_checkins.sql:10–12` declares all three `jsonb **not null** default`, and `CheckinRow` declares them non-nullable to match. **The DDL and the type agree; the mapper's defences are dead code.** U7's test reaches them only by casting through `as unknown as CheckinRow`. | **Open — owner U8's nullability half**, which §6.5's cut list names explicitly as a distinct, *cuttable* component. So the ownership is real but conditional: if that half is cut, this row reverts to unowned rather than closing. **Corrects the earlier framing of this row as a "type/reality mismatch": the migration was read, and the type is right.** |
+| **FU-18** | U9 | U9 pinned `labMarkerInputSchema.value` as accepting **negative** numbers (`z.number().finite()`, no `.nonnegative()`). The pin now asserts that permissiveness is intentional. **Verification task:** all **13** seeded biomarkers (`src/data/seed-biomarkers.ts`) carry positive `refLow`/`refHigh` — measured, zero negatives — but `marker` is free text (`z.string().min(1).max(120)`), so users are not restricted to the seed. Whether the free-text path *must* permit negatives is unresolved. | **Open — STANDALONE, not U8** (U8 is structural; this is a content question, and Phase 1 is structural work). Must be settled against a **real clinical source**, never model recall — `CLAUDE.md` §2.2 rule 8. Candidates worth checking, flagged as *unverified recall and not to be treated as established*: base-excess-style blood-gas markers. If the answer is "no legitimate negatives", the pin becomes wrong and the schema should gain `.nonnegative()`. |
+| **FU-19** | U9 | **Two request-boundary Zod modules have no direct accept/reject tests**: `src/lib/advisor/schema.ts` (`advisorRequestSchema`) and `src/lib/advisor/actions/schema.ts` (`confirmSchema`/`proposalSchema`). Both are covered **transitively** — U4's advisor 400 pins and U11's `VALIDATION_ERROR` pin — which proves *a* rejection occurs, not *which constraint* rejected, so a widened constraint on an unexercised field would survive. | **Deferred, sized.** Cheap (U9's pattern applied twice). **Two earlier counts of this row were wrong and are corrected here:** "two untested schema files" understated the characterisation, then "five" over-counted — `biomarkers/schema.ts`, `interactions/schema.ts` and `lab-import/schema.ts` are each **directly imported and exercised** by their sibling suites, so they were never in this row. |
 | **FU-8** | U11 | `src/services` has a `LAYER_FLOORS` entry of **1** while holding 2 files. The floor exists to catch a layer silently collapsing to zero; at 1 it now has no headroom to detect the loss of one of the two. | **Deferred.** Raise it when the layer grows again; noted rather than tightened now, because a floor at today's exact count blocks ordinary deletion (the stated reason floors sit below current counts). |
