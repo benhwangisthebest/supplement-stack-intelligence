@@ -38,6 +38,15 @@ vi.mock("@/lib/db/stack-repo", () => ({
   deleteStack: (...a: unknown[]) => deleteStack(...a),
 }));
 
+// U20: the rollback catch reports through `reportInternalError`. Mocked rather
+// than spying on the console, because what this file needs to assert is the
+// CALL and its code — the real function's logging shape is respond.test.ts's
+// business, and the real one would emit noise into every run of this suite.
+const reportInternalError = vi.fn((..._a: unknown[]) => "cid-test");
+vi.mock("@/lib/api/respond", () => ({
+  reportInternalError: (...a: unknown[]) => reportInternalError(...a),
+}));
+
 import { executeBatch, executeIntent, executeProposal } from "./execute";
 
 /** The module only forwards this value to the repos; it never reads it. */
@@ -334,6 +343,43 @@ describe("executeBatch — all-or-nothing rollback", () => {
     ).rejects.toThrow("write failed");
 
     expect(attempted).toEqual(["i-new-2", "i-new-1"]);
+  });
+
+  // U20 (FU-2). A failed rollback leaves the stack half-applied — the one state
+  // executeBatch exists to prevent — and used to vanish without a trace. These
+  // two are a pair on purpose: the first proves the report happens, the second
+  // proves it is tied to rollback FAILURE rather than fired unconditionally,
+  // which an "expect it was called" test alone would not distinguish.
+  it("reports every failed rollback step under ROLLBACK_FAILED", async () => {
+    const boom = new Error("rollback exploded");
+    deleteItem.mockRejectedValue(boom);
+    failAddOnCall(3);
+
+    await expect(
+      executeBatch(
+        DB,
+        USER,
+        [{ proposal: ADD }, { proposal: ADD }, { proposal: ADD }],
+        [null, null, null],
+      ),
+    ).rejects.toThrow("write failed"); // the original cause, still unmasked
+
+    // Both attempted inverses failed, so both are reported — a single report
+    // would hide how much of the stack is still half-applied.
+    expect(reportInternalError).toHaveBeenCalledTimes(2);
+    expect(reportInternalError).toHaveBeenCalledWith(boom, "ROLLBACK_FAILED");
+  });
+
+  it("reports nothing when the rollback itself succeeds", async () => {
+    failAddOnCall(2);
+    deleteItem.mockResolvedValue(undefined);
+
+    await expect(
+      executeBatch(DB, USER, [{ proposal: ADD }, { proposal: ADD }], [null, null]),
+    ).rejects.toThrow("write failed");
+
+    expect(deleteItem).toHaveBeenCalledTimes(1); // the rollback really ran
+    expect(reportInternalError).not.toHaveBeenCalled();
   });
 });
 

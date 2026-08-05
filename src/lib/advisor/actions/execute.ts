@@ -12,6 +12,7 @@ import {
   updateItem,
 } from "@/lib/db/stack-item-repo";
 import { createStack, deleteStack } from "@/lib/db/stack-repo";
+import { reportInternalError } from "@/lib/api/respond";
 import { forwardIntent, inverseIntent } from "./apply";
 import type {
   ActionProposal,
@@ -129,8 +130,21 @@ export async function executeBatch(
     for (let i = done.length - 1; i >= 0; i--) {
       try {
         await executeIntent(supabase, userId, done[i].exec.inverse);
-      } catch {
-        // Best-effort rollback — never mask the original failure with a rollback error.
+      } catch (rollbackErr) {
+        // Best-effort rollback — never mask the original failure with a rollback
+        // error, so this is still swallowed rather than re-thrown.
+        //
+        // But swallowing it SILENTLY was a trust defect (Phase 1 FU-2 → U20): a
+        // failed rollback leaves the stack half-applied, which is the one state
+        // this function exists to prevent, and there was no log, no correlation
+        // id, and no trace of it anywhere. The user sees the original error and
+        // reasonably assumes nothing was written.
+        //
+        // Log-only, deliberately. Every response byte is unchanged — the original
+        // error still propagates below, and `reportInternalError` offers no way to
+        // put text in front of a client (see its header), so this cannot reopen
+        // the §2.3 rule 13 disclosure the way a hand-rolled log line might.
+        reportInternalError(rollbackErr, "ROLLBACK_FAILED");
       }
     }
     throw err;
