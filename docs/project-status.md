@@ -276,13 +276,24 @@ test" part does not.
     deferred and unenforced**.
   - E2E: 17 of 23 spec files are `E2E_LIVE`-gated; **every** write path (profile → stack → evaluate →
     protocol → advisor apply → check-in → lab commit) is behind that gate. The `L1/L2/L3` naming does
-    **not** reliably indicate gating. `fullyParallel: true` contradicts a single shared demo user whose
+    **not** reliably indicate gating. ~~`fullyParallel: true` contradicts a single shared demo user whose
     seed performs destructive deletes — flaky by construction. `webServer` runs `npm run dev`, so a
-    production build is never E2E-tested.
+    production build is never E2E-tested.~~ **Both fixed 2026-08-06 by Phase 1 U16:** live runs are
+    serialised (`workers: 1`, `fullyParallel: false` under `E2E_LIVE`) and `webServer` now runs
+    `npm run build && npm run start`. The gated blocks are tagged `[LIVE]` — 18 blocks across 17 files,
+    enforced both ways by `src/architecture/e2e-live-tagging.test.ts`. Per-worker user isolation is still
+    **not** done and remains the prerequisite for a CI E2E job.
 - **Contradicting artifact:** `test-results/mvp-core-loop-e2e-.../error-context.md` (dated 2026-07-30)
-  records the core-loop E2E failing at login with `fetch failed` — a network/auth failure, **not** a
+  recorded the core-loop E2E failing at login with `fetch failed` — a network/auth failure, **not** a
   missing `ANTHROPIC_API_KEY`. The prior "live suite is fine apart from the API key" framing should not
-  be trusted without a fresh, dated re-run.
+  be trusted without a fresh, dated re-run. **RESOLVED 2026-08-06 by Phase 1 U17** →
+  `docs/05-qa/phase-1-live-e2e-baseline.md` §3. Both failure modes were reproduced from source without
+  credentials: unset env yields `Supabase is not configured`, while env-set-but-host-unreachable yields
+  `fetch failed` exactly. Login is a **server action**, so the string is Node's, not the browser's.
+  The artifact therefore proves the Supabase env **was** configured and the host was unreachable — the
+  review's reading is upheld and its severity was understated, since the login helper gates all 30 live
+  tests while the Anthropic key gates only the advisor specs. **The artifact itself no longer exists on
+  disk and was never tracked in git;** a dated non-live baseline now stands in its place.
 - **Classification: B.**
 
 ---

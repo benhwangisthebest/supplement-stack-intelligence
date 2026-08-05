@@ -158,11 +158,21 @@ the current baseline is **524 tests across 42 files**, which does not change the
 4. **`validation/schemas.ts` tests** — accept/reject boundaries per field.
 5. **Extend the reachability guard** from 2 of 7 to all 7 context fields threaded into `evaluateStack`,
    and write the pattern down so future engines get one by default.
-6. **Fix E2E honesty:** set `workers: 1` or give each spec a per-worker user fixture (the latter is the
+6. **Fix E2E honesty:** ~~set `workers: 1` or give each spec a per-worker user fixture (the latter is the
    prerequisite for CI E2E); point `webServer` at `npm run build && npm run start`; tag gated describes
-   `[LIVE]` explicitly rather than relying on the ambiguous `L1/L2/L3` convention.
-7. **Establish a dated live-E2E baseline** with all env vars set, replacing the contradicted "61/71" and
-   "79/10" figures. Investigate the on-disk `fetch failed` login artifact.
+   `[LIVE]` explicitly rather than relying on the ambiguous `L1/L2/L3` convention.~~ **DONE 2026-08-06 by
+   Phase 1 U16.** `workers: 1` + `fullyParallel: false` under `E2E_LIVE`, `webServer` on
+   `npm run build && npm run start`, and 18 gated blocks tagged across 17 files — enforced both ways by
+   `src/architecture/e2e-live-tagging.test.ts`. The per-worker user fixture is **not** done and remains the
+   prerequisite for CI E2E; serialising is the available fix, not the complete one.
+7. **Establish a dated live-E2E baseline** with all env vars set, replacing the contradicted ~~"61/71"~~ and
+   ~~"79/10"~~ figures. Investigate the on-disk `fetch failed` login artifact. **PARTIAL 2026-08-06 by
+   Phase 1 U17** → `docs/05-qa/phase-1-live-e2e-baseline.md`. The **non-live** baseline is measured and
+   dated (59 passed / 30 skipped / 0 failed at `4246044`, against a production build). The **live** half is
+   **BLOCKED(env)**: it needs a live Supabase project, migrations 0003–0007, a seeded demo user and
+   `API_ANTHROPIC_KEY` — none available to an agent. The `fetch failed` artifact **is investigated and
+   resolved**: reproduced from source, it proves the Supabase env WAS set and the host was unreachable, so
+   it was never an Anthropic-key problem. The artifact itself is gone from disk and was never tracked.
 8. Extend coverage **thresholds** from `stack-evaluator` alone to every pure engine directory.
 
 **Excluded work.** No product features. No content grounding. No observability (Phase 2). No component-test
