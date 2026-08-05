@@ -506,19 +506,20 @@ describe("architecture boundaries — harness sanity", () => {
     );
     expect(includes.length, "could not read `include` from vitest.config.ts").toBeGreaterThan(0);
 
-    // Minimal glob→regex for the forms this config uses: `**` spans
+    // Minimal glob→regex for the forms this config uses: `**/` spans
     // directories, `*` does not, `.` is literal.
+    //
+    // Split on `**/` rather than substituting a placeholder character. The first
+    // version of this used a placeholder, and the character it actually emitted
+    // was a NUL — every test still passed, because the substitution round-tripped
+    // consistently. The cost was invisible and nasty: two NUL bytes made `grep`
+    // treat this whole file as BINARY and silently report nothing, on the one
+    // file in the repository most likely to be audited with grep. Splitting needs
+    // no sentinel, so there is no character left to get wrong.
+    const escape = (s: string) =>
+      s.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*");
     const matchers = includes.map(
-      (g) =>
-        new RegExp(
-          "^" +
-            g
-              .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-              .replace(/\*\*\//g, " ")
-              .replace(/\*/g, "[^/]*")
-              .replace(/ /g, "(?:.*/)?") +
-            "$",
-        ),
+      (g) => new RegExp("^" + g.split("**/").map(escape).join("(?:.*/)?") + "$"),
     );
 
     const uncollected = TRACKED_SRC_PATHS.filter(
