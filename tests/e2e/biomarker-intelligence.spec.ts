@@ -33,7 +33,7 @@ test.describe("L2: Library biomarker relevance (no auth)", () => {
   });
 });
 
-test.describe("L3: labs → evaluate → lab-relevance flag", () => {
+test.describe("[LIVE] L3: labs → evaluate → lab-relevance flag", () => {
   test.skip(!LIVE, "requires live Supabase (set E2E_LIVE=1)");
 
   test("a low vitamin D lab + vitamin D in stack surfaces a lab-relevance note", async ({

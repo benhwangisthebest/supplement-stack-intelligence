@@ -31,7 +31,7 @@ test.describe("L2: public Library (no auth)", () => {
   });
 });
 
-test.describe("L2: authenticated profile + stack", () => {
+test.describe("[LIVE] L2: authenticated profile + stack", () => {
   test.skip(!LIVE, "requires live Supabase (set E2E_LIVE=1)");
 
   test("save profile then build & evaluate a stack", async ({ page }) => {

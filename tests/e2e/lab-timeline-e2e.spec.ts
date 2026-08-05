@@ -4,7 +4,7 @@ import { LIVE, latestValue, login, risingPair } from "./helpers";
 // lab-timeline (v4) — Design §8.4 (L3 E2E). Full journey: two dated panels →
 // timeline trend → trajectory-aware evaluation flag. Requires E2E_LIVE.
 
-test.describe("L3: upload → trend → evaluation trajectory", () => {
+test.describe("[LIVE] L3: upload → trend → evaluation trajectory", () => {
   test.skip(!LIVE, "requires live Supabase (set E2E_LIVE=1)");
 
   // Uses Magnesium (not Vitamin D) so it does not collide with the L1 commit

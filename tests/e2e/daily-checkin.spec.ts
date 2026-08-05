@@ -27,7 +27,7 @@ test.describe("L2: Stack Lab check-in section requires auth", () => {
   });
 });
 
-test.describe("L3: authed check-in round-trip", () => {
+test.describe("[LIVE] L3: authed check-in round-trip", () => {
   test.skip(!LIVE, "requires live Supabase with migration 0006 applied (set E2E_LIVE=1)");
 
   test("renders the Daily check-in section on Stack Lab", async ({ page }) => {

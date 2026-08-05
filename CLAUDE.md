@@ -187,7 +187,10 @@ passing, a clean typecheck, and a successful build.
 7. **New engines** ship with a coverage threshold entry.
 8. **Components rendering a safety flag, evidence grade, or citation** ship with a component test.
 9. `E2E_LIVE`-gated Playwright blocks must be tagged `[LIVE]` in their title. Do not rely on the
-   `L1/L2/L3` prefix to signal gating — it does not.
+   `L1/L2/L3` prefix to signal gating — it does not. **Enforced** by
+   `src/architecture/e2e-live-tagging.test.ts` (`LIVE_TAGGING`), both ways: a gated block without the
+   tag fails, and so does a tagged block that is not gated. Live runs are also serialised there
+   (`workers: 1`) — the authed specs share one seeded demo account.
 10. Before declaring work done: `npx tsc --noEmit`, `npx vitest run`, and `npx next build` must all pass.
 
 Measured baseline (re-measured 2026-08-03 at Phase 0 close): typecheck clean · **524/524 unit tests across

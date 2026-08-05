@@ -3,7 +3,7 @@ import { LIVE, login } from "./helpers";
 
 // L3 — Protocol Builder E2E (Design §8.4). Uses the seeded demo profile (goals sleep/focus).
 
-test.describe("L3: protocol builder", () => {
+test.describe("[LIVE] L3: protocol builder", () => {
   test.skip(!LIVE, "requires live Supabase + seeded demo user (set E2E_LIVE=1)");
 
   test("login → new stack → generate protocol → accept all → evaluate", async ({ page }) => {

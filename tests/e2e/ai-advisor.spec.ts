@@ -30,7 +30,7 @@ test.describe("L2: /advisor page requires auth", () => {
   });
 });
 
-test.describe("L3: authed grounded chat", () => {
+test.describe("[LIVE] L3: authed grounded chat", () => {
   test.skip(!LIVE, "requires live Supabase + API_ANTHROPIC_KEY (set E2E_LIVE=1)");
 
   test("sends a question and renders a streamed, grounded answer", async ({ page }) => {

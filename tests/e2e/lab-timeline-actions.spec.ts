@@ -7,7 +7,7 @@ import { LIVE, login } from "./helpers";
 
 const SAMPLE_CSV = path.join(process.cwd(), "tests/fixtures/labs-sample.csv");
 
-test.describe("L2: lab upload → review confirm gate", () => {
+test.describe("[LIVE] L2: lab upload → review confirm gate", () => {
   test.skip(!LIVE, "requires live Supabase (set E2E_LIVE=1)");
 
   test("uploading a CSV shows a review table, and commit is gated on approval", async ({

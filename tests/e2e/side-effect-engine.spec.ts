@@ -26,7 +26,7 @@ test.describe("L1: side-effects API auth guard (no auth)", () => {
   });
 });
 
-test.describe("L3: authed side-effect capture round-trip", () => {
+test.describe("[LIVE] L3: authed side-effect capture round-trip", () => {
   test.skip(!LIVE, "requires live Supabase with migration 0007 applied (set E2E_LIVE=1)");
 
   test("captures canonical side-effects via check-in and lists them back", async ({ page }) => {

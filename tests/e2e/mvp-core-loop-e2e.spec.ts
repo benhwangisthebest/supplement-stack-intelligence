@@ -4,7 +4,7 @@ import { LIVE, login } from "./helpers";
 // L3 — E2E scenario tests (Design §8.4). The full North Star loop.
 // Relies on the seeded demo profile (goal=sleep, allergy=fish).
 
-test.describe("L3: core loop", () => {
+test.describe("[LIVE] L3: core loop", () => {
   test.skip(!LIVE, "requires live Supabase + seeded demo user (set E2E_LIVE=1)");
 
   test("login → build stack → evaluate (allergy flag) → compare", async ({ page }) => {

@@ -22,7 +22,7 @@ test.describe("L2: public Library supplement archetype badge", () => {
   });
 });
 
-test.describe("L3: authed identity card", () => {
+test.describe("[LIVE] L3: authed identity card", () => {
   test.skip(!LIVE, "requires live Supabase with a seeded profile + stacks (set E2E_LIVE=1)");
 
   test("returns a card with five trait axes and per-stack archetypes", async ({ page }) => {

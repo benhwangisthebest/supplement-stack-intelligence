@@ -31,7 +31,7 @@ test.describe("L2: Library interactions (no auth)", () => {
     ).toBeVisible();
   });
 
-  test("the Medications profile field offers autocomplete suggestions", async ({
+  test("[LIVE] the Medications profile field offers autocomplete suggestions", async ({
     page,
   }) => {
     test.skip(!LIVE, "profile page requires live Supabase (set E2E_LIVE=1)");
@@ -42,7 +42,7 @@ test.describe("L2: Library interactions (no auth)", () => {
   });
 });
 
-test.describe("L3: meds → stack → interaction flag", () => {
+test.describe("[LIVE] L3: meds → stack → interaction flag", () => {
   test.skip(!LIVE, "requires live Supabase (set E2E_LIVE=1)");
 
   test("adding a conflicting medication surfaces a critical interaction + escalation", async ({

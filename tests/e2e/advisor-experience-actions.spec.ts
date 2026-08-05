@@ -22,7 +22,7 @@ test.describe("L2: provenance deep-link targets (public Library)", () => {
   });
 });
 
-test.describe("L2: live streaming + multi-action confirm", () => {
+test.describe("[LIVE] L2: live streaming + multi-action confirm", () => {
   test.skip(!LIVE, "requires live Supabase + API_ANTHROPIC_KEY + migration 0005 (set E2E_LIVE=1)");
 
   test("a live answer shows a progress label then streams tokens in", async ({ page }) => {

@@ -23,7 +23,7 @@ test.describe("L1: advisor-actions API auth guard (no auth)", () => {
   });
 });
 
-test.describe("L1: advisor-actions authed validation + lifecycle", () => {
+test.describe("[LIVE] L1: advisor-actions authed validation + lifecycle", () => {
   test.skip(!LIVE, "requires live Supabase + migration 0004 (set E2E_LIVE=1)");
 
   test("rejects a malformed proposal body with 400", async ({ page }) => {

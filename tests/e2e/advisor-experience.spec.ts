@@ -25,7 +25,7 @@ test.describe("L1: advisor-experience API auth guard (no auth)", () => {
   });
 });
 
-test.describe("L1: advisor-experience batch confirm + grouped undo", () => {
+test.describe("[LIVE] L1: advisor-experience batch confirm + grouped undo", () => {
   test.skip(!LIVE, "requires live Supabase + migration 0005 (set E2E_LIVE=1)");
 
   test("rejects an empty actions array with 400", async ({ page }) => {

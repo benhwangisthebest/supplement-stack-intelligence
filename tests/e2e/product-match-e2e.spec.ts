@@ -3,7 +3,7 @@ import { LIVE, login } from "./helpers";
 
 // L3 — Product Match E2E (Design §8.4). Uses the seeded demo stack (has magnesium etc.).
 
-test.describe("L3: product match", () => {
+test.describe("[LIVE] L3: product match", () => {
   test.skip(!LIVE, "requires live Supabase + seeded demo user (set E2E_LIVE=1)");
 
   test("login → open seeded stack → find products → cards render, affiliate disclosure is coupled to the link", async ({

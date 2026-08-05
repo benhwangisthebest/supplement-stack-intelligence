@@ -4,8 +4,13 @@ import { expect, type Page } from "@playwright/test";
 // These authed lab tests share one demo account whose data accumulates across
 // runs, so fixed values become non-rising on repeat. To stay idempotent: read
 // the marker's current latest value, then commit a strictly-higher today-dated
-// point so the final segment always rises (>10%). Run these specs with
-// --workers=1 (the extract-no-write count check needs no concurrent writes).
+// point so the final segment always rises (>10%).
+//
+// Serialisation used to be a manual `--workers=1` instructed here. It is now
+// structural: `playwright.config.ts` sets `workers: 1` and `fullyParallel:
+// false` whenever E2E_LIVE=1, because a mitigation that depends on a human
+// remembering a flag is not a mitigation (CLAUDE.md §3.5). Do not re-add the
+// flag instruction here — change the config if the policy changes.
 const DAY_MS = 86_400_000;
 
 /** Current latest canonical value for a biomarker via /api/lab-trends (fallback if absent). */

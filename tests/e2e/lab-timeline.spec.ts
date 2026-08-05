@@ -41,7 +41,7 @@ test.describe("L1: lab-import auth guards (no auth)", () => {
   });
 });
 
-test.describe("L1: lab-import authed flow", () => {
+test.describe("[LIVE] L1: lab-import authed flow", () => {
   test.skip(!LIVE, "requires live Supabase (set E2E_LIVE=1)");
 
   // NOTE: use `page.request` (shares the logged-in session cookies), not the
