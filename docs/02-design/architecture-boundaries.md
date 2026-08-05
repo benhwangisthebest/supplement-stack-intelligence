@@ -219,9 +219,15 @@ Status: **7/7** of `evaluateStack`'s context fields covered (was 2/7). No dead c
 - **Deferred:** the client-component rule (would fail on 7 of the 31 `"use client"` modules under
   `src/components` — those importing `@/lib/*` or `@/data`); the `NO_PERSISTENCE_FROM_UI` ratchet (free
   today); and full cycle detection.
-- **Tree-partition ignores loose files and symlinks** (closeout finding C-11). A loose
-  `src/middleware.ts` — a standard Next.js location — would be neither scanned nor exempt. None exists
-  today; latent.
+- ~~**Tree-partition ignores loose files and symlinks** (closeout finding C-11).~~ **CLOSED 2026-08-05 by
+  Phase 1 U15.** The partition filtered on `seg.length > 2`, which is exactly "has a directory component",
+  so any tracked file sitting directly under `src/` was dropped before the rule ever saw it. Three
+  assertions now cover it: loose files must appear in a new `EXEMPT_ROOT_FILES` map with a written reason
+  (empty today, and subject to the same anti-thin-reason bar as `EXEMPT_LAYERS`), stale entries in that map
+  fail, and **no tracked symlink may exist under `src/`** — a symlink makes a path's layer unknowable from
+  its name, which is what every rule in the file assumes. Proven red against a `git add -N`-staged
+  `src/middleware.ts` (`TREE_PARTITION: … neither in a scanned layer nor exempt`) and against a staged
+  symlink; both pass green while unstaged, which is why the plan §4.2 staging rule exists.
 - **`walk()` and vitest disagree on `.tsx`** (closeout finding C-12). The boundary scan considers
   `*.test.tsx` a test file, but `vitest.config.ts` collects only `*.test.ts`, so a `.test.tsx` file would
   be neither scanned nor executed. Zero exist today; latent, and tracked as roadmap exit criterion
@@ -231,10 +237,12 @@ Status: **7/7** of `evaluateStack`'s context fields covered (was 2/7). No dead c
 
 ```bash
 npm test                                              # includes both executable specs
-npx vitest run src/architecture/boundaries.test.ts     # layer boundaries only (28)
+npx vitest run src/architecture/boundaries.test.ts     # layer boundaries only (31)
 npx vitest run src/architecture/error-disclosure.test.ts # error disclosure only (30)
 npx vitest run src/architecture/auth-coverage.test.ts     # AUTH_COVERAGE only (13)
 npx vitest run src/architecture/rls-coverage.test.ts      # RLS_COVERAGE only (14)
+npx vitest run src/architecture/schema-type-drift.test.ts # SCHEMA_DRIFT only (23)
+npx vitest run src/architecture/doc-truth.test.ts         # DOC_TRUTH only (15)
 npx vitest run src/services/evaluation.test.ts            # reachability only (11)
 ```
 

@@ -109,7 +109,7 @@ No item is silently dropped. 9 → Phase 1 unit · 5 → deferred with reason ·
 | **C-5** `NO_UI_IMPORT` ratified | **Closed — record only** | Already documented and ratified in `CLAUDE.md` §4. Nothing left to run. Revisited by U15 only if its claim→observed pass finds the header describes B5 wrongly. |
 | **C-9** `[LIVE]` tags | **Phase 1 — U16** | Roadmap item 6 names it verbatim. Measured: 17 gated files, **0** tags. |
 | **C-10** archive staged despite exclusion | **Closed — record only** | Content verified correct; only the staging *decision* was unrecorded, and that record now exists. No executable claim available. |
-| **C-11** tree partition ignores loose files/symlinks | **Phase 1 — U15** | Latent but cheap, and in the file U15 already opens. A loose `src/middleware.ts` is a standard Next.js path. |
+| **C-11** tree partition ignores loose files/symlinks | **CLOSED 2026-08-05 by U15** | Both halves fixed: `EXEMPT_ROOT_FILES` (empty, written-reason bar, stale-entry check) and a no-tracked-symlink assertion. Red against a staged `src/middleware.ts` and a staged symlink — the latter also tripped `B2b`, which is direct evidence a symlink really does smuggle a forbidden dependency past a name-based rule. |
 | **C-12 / U-DEFER-4** `.tsx` neither scanned nor executed | **Phase 1 — U13, detector only** | Ship the detector (a tracked `*.test.tsx` vitest would not collect fails the build). Not jsdom/RTL — component testing is explicitly excluded work. |
 | **F3** typed error class for `NOT_CONFIGURED` | **Deferred → Phase 2** | Roadmap Phase 2 item 2 owns it. It touches `handle()`, the boundary U1–U4's envelope assertions pin; sequence it *after* those pins exist. |
 | **F5** surface correlation ID in UI | **Deferred → Phase 2** | Observability; Phase 1 excludes it explicitly. |
@@ -382,7 +382,7 @@ stopped *before* touching data, which the status code alone does not establish.
 
 ```
 Group A (parallel)   U1 · U5 · U6 · U7 · U9 · U10 · U12 · U14 · U15
-                     [DONE: U1 U5 U6 U7 U9 U10 U12 — open: U14 · U15]
+                     [COMPLETE 2026-08-05 — all nine delivered]
    ├ GATE A1  U1 green: a route handler is importable and assertable under
    │          environment:"node". If red, the route-test programme is re-planned
    │          before U2 starts.
@@ -427,7 +427,7 @@ Group B              U2 · U3 · U8   → U19          [COMPLETE 2026-08-05]
               created (§6.1.1), so it cannot run in parallel with it. This is the
               plan's dependency logic, not the topical grouping — U19 resembles
               U5's security work but depends on U3's file.
-Group C              U11 → U4 · U20 · U21          [U11, U4 DONE 2026-08-04]
+Group C              U11 → U4 · U20 · U21          [COMPLETE 2026-08-05]
    ├ GATE C1  Differential response pins captured and green BEFORE any line
    │          moves. Extraction lands only if all 8 outcome triples are identical.
    │          PASSED — 18 pins over 9 outcomes (see §6.2.1's count note),
@@ -437,13 +437,18 @@ Group C              U11 → U4 · U20 · U21          [U11, U4 DONE 2026-08-04]
               src/services/advisor-actions.ts:160, AND shown green with the
               same leak when the inventory extension was reverted, which is
               what proves the extension is doing the work.
-              U20 and U21 remain open in this group.
+              U20 DONE 2026-08-05 (log-only; all 24 U10 pins and all 49 advisor
+              route pins re-run unedited, so the response contract is proven
+              untouched rather than asserted). U21 DONE 2026-08-05 — the
+              phase's SECOND deliberate behaviour change, empty 200 -> 404.
 
 ROUTE-TEST PROGRAMME COMPLETE 2026-08-04 — 23 route files, 23 route test files
    (`git ls-files --cached -- src/app/api | grep -c 'route.test.ts$'` = 23).
    U1 · U2 · U3 · U4 all integrated. Gate A1's re-planning clause never fired.
-Group D              U13
-   └ GATE D1  Groups B and C green. Thresholds set from MEASURED per-directory
+Group D              U13          [GATE D1 OPEN 2026-08-05 — U13 unblocked]
+   └ GATE D1  Groups B and C green. SATISFIED: Group B complete (U8 closed it),
+              Group C complete (U20, U21). Group A also complete. U13's own
+              deps (U2-U4, U7, U9, U10) were already green. Thresholds set from MEASURED per-directory
               coverage, ≥10 pp below observed, `branches` omitted where D-2
               applies. CI gains a coverage step, or criterion 7 is unmet.
 Group E (cuttable)   U16 → U17
@@ -491,12 +496,12 @@ absorbed by U11: Gate C1 required the confirm-and-apply responses pinned *before
 route test already exists (406 lines, 18 pins). U19 is an edit to an existing file, not a new one.
 
 **Delivered:** U1 · U2 · U3 · U4 (route tests, **23/23 files**) · U5 · U6 · U10 · U12 (guards) · U11 (the
-refactor) · U19 (the behaviour change) · U7 · U9 (boundary tests) · U8 (schema↔type drift, closing
-**Group B**). Suite **816 across 71 files**, measured at U8's tip, up from the 524/42 baseline recorded
+refactor) · U19 · U21 (the two behaviour changes) · U7 · U9 (boundary tests) · U8 (schema↔type drift,
+closing **Group B**) · U20 (the log-only fix) · U14 · U15 (doc-truth and the claim→observed pass, closing
+**Group A**). Suite **837 across 72 files**, measured at U15's tip, up from the 524/42 baseline recorded
 in §2. Route tests alone account for 23 files.
-The **~205–230 new-test** estimate at the top of this section is tracking high, not low: **+292** delivered
-so far with U13 · U14 · U15 · U16–U18 · U20 · U21 still open, so the projected total exceeds the
-range. Recorded, not rewritten — the estimate was made before any unit ran, and its error is the useful
+The **~205–230 new-test** estimate at the top of this section is tracking high, not low: **+313** delivered
+with only U13 · U16 · U17 · U18 still open, so the projected total exceeds the range. Recorded, not rewritten — the estimate was made before any unit ran, and its error is the useful
 part.
 
 The realistic risk is not that a unit fails. It is that **U11 lands, looks green, and has quietly turned one
@@ -721,7 +726,15 @@ The roadmap's seven, plus this plan's own. Countable and drift-proof — each st
 - [ ] `mappers.ts` ≥ 90 % statements; `execute.ts` ≥ 80 %; `validation/schemas.ts` ≥ 80 %.
 - [x] A schema↔type drift check exists and is **shown red** against a deliberately renamed column. — **MET 2026-08-05 by U8.** `src/architecture/schema-type-drift.test.ts`, 23 tests. Renaming `checkins.created_at` to `createdate` in `0006` produced `checkins.createdate → CheckinRow column has no field` **and** `CheckinRow.created_at → checkins field has no column`. The nullability half (§6.5 lists it as cuttable) was **built, not cut**, and is red in both directions.
 - [x] Reachability guard covers **7 / 7** `evaluateStack` context fields. — **MET 2026-08-04 by U12.** Baseline recounted at 2/7 before the unit; all 7 fields at the `evaluateStack({…})` call site now carry a differential row, and an anti-drift row parses the call site so an eighth field cannot be added without one. No dead context found — every field reaches an observable output.
-- [ ] Auth-coverage and RLS-coverage guards are **shown red** against a `git add -N`-staged non-compliant new file (§4.2). — **PARTIAL 2026-08-04.** **AUTH_COVERAGE: proven** — a `git add -N`-staged route lacking `getUser()` was caught, and the glob-break variant produced `found 0 tracked route files; a guard that scans nothing passes vacuously`. **RLS_COVERAGE: not proven in this form** — U6's three reds mutated *existing* migration `0007` (RLS line, then policy), which shows detection but **not** the §4.2 staged-new-file property. Left unticked deliberately: §4.2 exists precisely because an unstaged file passes green and *looks* like proof, so the untested half is the half that matters.
+- [x] Auth-coverage and RLS-coverage guards are **shown red** against a `git add -N`-staged non-compliant new file (§4.2). — **MET 2026-08-05.** **AUTH_COVERAGE** (U5): a `git add -N`-staged route lacking `getUser()` was caught, plus the glob-break variant → `found 0 tracked route files; a guard that scans nothing passes vacuously`. **RLS_COVERAGE**: the missing half, run during the U14/U15 batch against a new `supabase/migrations/0008_unprotected.sql` creating `public.unprotected_notes` with no RLS. Both directions recorded, because the false-green half is the point of §4.2:
+
+  ```
+  UNSTAGED   → Tests  14 passed (14)          ← green, and it looks like proof
+  git add -N → RLS_COVERAGE: these tables are created with no `enable row level security`.
+                 unprotected_notes (created in supabase/migrations/0008_unprotected.sql)
+  ```
+
+  The same both-ways form was independently run for **SCHEMA_DRIFT** (staged rogue row type: 23 passed unstaged → `RowType is not bound to a table` staged) and for **U15's TREE_PARTITION** (staged `src/middleware.ts`: 31 passed unstaged → `neither in a scanned layer nor exempt` staged). Three guards, same property, same evidence shape.
 - [ ] Coverage thresholds configured for every pure engine directory and enforced by a CI step; no `branches` threshold within 10 pp of measured (D-2).
 - [ ] `[LIVE]` appears on every `E2E_LIVE`-gated describe (`grep -c '\[LIVE\]'` = 17, `grep -l E2E_LIVE | wc -l` = 17).
 - [ ] Every guard added in this phase has its **red output recorded in `docs/`** — not self-reported in-session. This is the Phase 0 lesson (report §6) written as a criterion. — **PARTIAL 2026-08-04.** Now in `docs/`: U5, U6, U10 and U12's reds (§6.4 Gate A2), U11's Gate C1/C2 reds (§6.4). Still in-session only: the per-unit reds for U7, U9, U19 and U4. A Phase 1 report under `docs/04-report/` is the natural home; none exists yet.

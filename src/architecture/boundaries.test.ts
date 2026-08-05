@@ -16,6 +16,25 @@
 // Phase 0 U6 widened coverage `include` to all of `src/`, the property that
 // keeps it out of the report is now the `exclude: ["src/**/*.test.{ts,tsx}"]`
 // glob rather than the old lib-only `include`.
+//
+// CLAIM→OBSERVED PASS, 2026-08-05 (Phase 1 U15). This header is the one in the
+// repository that had never received the technique that found three real defects
+// in R3b. Every factual claim above and every count below was re-measured rather
+// than re-read:
+//   * "no ESLint config and no `eslint` dependency" — TRUE: no config file of any
+//     name, and `eslint` appears nowhere in package.json.
+//   * "`typescript` is ALREADY installed" — TRUE, devDependency ^5.7.2.
+//   * "the barrel itself uses `export * from`" — TRUE, 10 occurrences.
+//   * "`exclude: [\"src/**/*.test.{ts,tsx}\"]`" — TRUE, vitest.config.ts:31, quoted
+//     exactly.
+//   * every LAYER_FLOORS "N today" comment — ALL FIVE ACCURATE (19/56/80/2/10).
+// Nothing in this header was found stale. That is worth recording precisely
+// because the pass was expected to find something: "we checked and it was fine"
+// and "we never checked" are indistinguishable a month later, and only one of
+// them justifies trusting the next claim.
+//
+// The audit DID find a hole, but in the code rather than the prose: the tree
+// partition below saw directories only (C-11). See EXEMPT_ROOT_FILES.
 
 import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
@@ -44,6 +63,16 @@ const SCANNED_LAYERS = [
  * SCANNED_LAYERS covers the whole of `src/`, so a new layer cannot appear
  * silently ungoverned — it must be scanned or consciously exempted here.
  */
+/**
+ * Loose files tracked DIRECTLY under `src/`, each with the reason it is allowed
+ * to sit outside every layer. Empty today, and that is the point: the partition
+ * rule below only looks at directories, so before Phase 1 U15 a loose
+ * `src/middleware.ts` — a standard Next.js path that runs on every request —
+ * was governed by nothing at all and no rule could see it (closeout finding
+ * C-11). Adding one must now be a conscious entry here, not a silent drop.
+ */
+const EXEMPT_ROOT_FILES: Readonly<Record<string, string>> = {};
+
 const EXEMPT_LAYERS: Readonly<Record<string, string>> = {
   "src/app":
     "Composition root and top layer. It may legitimately import from every layer below, so it is a target of rules (NO_UPWARD_APP_IMPORT), never a source of them.",
@@ -415,6 +444,75 @@ describe("architecture boundaries — harness sanity", () => {
     for (const layer of SCANNED_LAYERS) {
       expect(Object.keys(EXEMPT_LAYERS)).not.toContain(layer);
     }
+  });
+
+  // ---- C-11: the partition above sees DIRECTORIES only -------------------
+  // `seg.length > 2` drops every tracked path with exactly two segments, which
+  // is precisely a loose file at the root of src/. `src/middleware.ts` is a
+  // standard Next.js file that runs on every matched request; it could import
+  // anything, from anywhere, and no rule in this file would have applied to it.
+  // Closing this was U15's job (plan §5, C-11).
+  it("partitions loose files directly under src/, not only directories", () => {
+    const loose = [
+      ...new Set(
+        TRACKED_SRC_PATHS.map((p) => p.split("/"))
+          .filter((seg) => seg.length === 2)
+          .map((seg) => seg.join("/")),
+      ),
+    ].sort();
+
+    const ungoverned = loose.filter((f) => !(f in EXEMPT_ROOT_FILES));
+    expect(
+      ungoverned,
+      "TREE_PARTITION: these files sit directly under src/ and are neither in a\n" +
+        "scanned layer nor exempt. A loose file belongs to no layer, so every rule in\n" +
+        "this file silently skips it — including the upward-import and barrel rules.\n" +
+        "Move it into a layer, or add it to EXEMPT_ROOT_FILES with a written reason:\n  " +
+        ungoverned.join("\n  "),
+    ).toEqual([]);
+
+    // Same anti-thin-reason bar the layer exemptions carry.
+    for (const [file, reason] of Object.entries(EXEMPT_ROOT_FILES)) {
+      expect(reason.length, `${file} exemption reason is too thin`).toBeGreaterThan(40);
+    }
+  });
+
+  it("declares no root-file exemption for a file that is not there", () => {
+    // The reverse direction. A stale exemption is a standing permission for a
+    // path nobody is watching — re-create the file and it is pre-approved.
+    const loose = new Set(
+      TRACKED_SRC_PATHS.filter((p) => p.split("/").length === 2),
+    );
+    const stale = Object.keys(EXEMPT_ROOT_FILES).filter((f) => !loose.has(f)).sort();
+    expect(
+      stale,
+      "TREE_PARTITION: these root-file exemptions name files that do not exist:\n  " +
+        stale.join("\n  "),
+    ).toEqual([]);
+  });
+
+  it("contains no tracked symlink under src/", () => {
+    // The other half of C-11. Every rule here reasons about a path's LAYER from
+    // its string. A symlink makes the string lie: `src/types/shortcut.ts` can
+    // resolve into src/lib, so a file could satisfy the barrel rules by its name
+    // while its contents live somewhere the rules would forbid. Git records the
+    // mode, so this needs no filesystem walk.
+    const listing = execFileSync(
+      "git",
+      ["-C", REPO_ROOT, "ls-files", "-s", "-z", "--", "src"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 },
+    );
+    const symlinks = listing
+      .split("\0")
+      .filter((line) => line.startsWith("120000"))
+      .map((line) => line.split("\t")[1])
+      .sort();
+    expect(
+      symlinks,
+      "TREE_PARTITION: a tracked symlink under src/ makes a path's layer\n" +
+        "unknowable from its name, which is what every rule in this file assumes:\n  " +
+        symlinks.join("\n  "),
+    ).toEqual([]);
   });
 
   it("governs every path alias declared in tsconfig", () => {
