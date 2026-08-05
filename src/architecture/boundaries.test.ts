@@ -64,6 +64,55 @@ const SCANNED_LAYERS = [
  * silently ungoverned — it must be scanned or consciously exempted here.
  */
 /**
+ * Directories under `src/lib` that are NOT pure engines, each with its reason.
+ * Ruling 2 / D-4 (plan §7): the domain-purity rule's scope was unsettled because
+ * §4.5 read literally would fail 8 files, and only 3 of those are engine code.
+ * The other 5 live here — they are infrastructure, and infrastructure reaching
+ * persistence is its job, not a violation.
+ */
+const IMPURE_BY_DESIGN: Readonly<Record<string, string>> = {
+  "src/lib/auth":
+    "Authentication infrastructure. It exists to talk to Supabase — session reads and sign-in/out server actions are persistence calls by definition, so forbidding them would forbid the module's entire purpose.",
+  "src/lib/api":
+    "The HTTP response boundary. It maps errors and envelopes onto NextResponse, so importing next/* is what it is for; an engine that must not know about HTTP is exactly why this module exists separately.",
+  "src/lib/supabase":
+    "The Supabase client factory itself. The rule forbids engines from reaching persistence; this module IS the persistence entry point, and cannot be forbidden from being itself.",
+  "src/lib/db":
+    "The persistence layer proper — repositories and row mappers. Same reasoning as src/lib/supabase: a layer cannot 'reach' the layer it is. Named explicitly rather than left implicit, so a future file here cannot be argued into engine status.",
+};
+
+/**
+ * THE RATCHET. Individual engine files that violate purity today, each with the
+ * reason it is not fixed yet. A ratchet, not an amnesty: the test below asserts
+ * every entry STILL violates, so a fixed file cannot leave a standing permission
+ * behind, and an un-allowlisted fourth violation fails immediately.
+ *
+ * All three reach `@/lib/db`. None is a pure engine that got sloppy; each is an
+ * orchestration module sitting in an engine directory, which is the real finding
+ * — the fix is relocation, not deleting an import.
+ */
+const DOMAIN_PURITY_ALLOWLIST: Readonly<Record<string, string>> = {
+  "src/lib/advisor/actions/execute.ts":
+    "ORCHESTRATION, not an engine (classified 2026-08-05, Phase 1 U18, from U20's follow-up). It is the advisor's only write path: it sequences repo calls and builds the inverse intents undo replays. It belongs in src/services alongside advisor-actions.ts, which U11 created for exactly this kind of code — U11 moved the ROUTE's logic and deliberately left this module alone. U20 additionally gave it a transitive next/* edge via @/lib/api/respond, so it is now impure by two independent readings. Moving it is a scoped refactor with its own callers to enumerate; it is not free, so it is recorded here rather than done under another unit's name.",
+  "src/lib/advisor/context-loader.ts":
+    "ORCHESTRATION, not an engine. It assembles the advisor's prompt context by loading from several repositories, so it is a service-shaped module in an engine directory — the same misplacement as execute.ts, and the same fix.",
+  "src/lib/identity/context.ts":
+    "ORCHESTRATION, not an engine. `src/lib/identity` is otherwise pure derivation (deriveUserIdentity, deriveStackArchetype are called from the route with data passed in); this one file loads that data. Splitting it out would leave src/lib/identity fully pure.",
+};
+
+/** What a pure engine may not reach. `src/app` is already covered by NO_UPWARD_APP_IMPORT. */
+const PERSISTENCE_LAYERS = ["src/lib/db", "src/lib/supabase", "src/services"] as const;
+
+/** Is this file governed by DOMAIN_IS_PURE? */
+export function isPureEngineFile(fileRel: string): boolean {
+  return (
+    inLayer(fileRel, "src/lib") &&
+    !Object.keys(IMPURE_BY_DESIGN).some((d) => inLayer(fileRel, d)) &&
+    !(fileRel in DOMAIN_PURITY_ALLOWLIST)
+  );
+}
+
+/**
  * Loose files tracked DIRECTLY under `src/`, each with the reason it is allowed
  * to sit outside every layer. Empty today, and that is the point: the partition
  * rule below only looks at directories, so before Phase 1 U15 a loose
@@ -321,7 +370,31 @@ export function classify(fromFileRel: string, spec: string, line = 0): Violation
     };
   }
 
+  // Bare specifiers must be judged BEFORE the `resolved === null` return below,
+  // for the same reason TYPES_NO_EXTERNAL_DEPS is: `next/server` is external, so
+  // it resolves to null and would otherwise escape every rule. CLAUDE.md §4.5
+  // names `next/*` explicitly — a pure engine that imports the framework is no
+  // longer portable, testable without a request, or callable from a script.
+  if (isPureEngineFile(fromFileRel) && resolved === null && /^next(\/|$)/.test(spec)) {
+    return {
+      ...base,
+      rule: "DOMAIN_IS_PURE",
+      fix: "pure engine directories may not import next/* (CLAUDE.md §4.5). Keep the framework at the route boundary and pass plain values in.",
+    };
+  }
+
   if (resolved === null) return null;
+
+  // Domain purity (CLAUDE.md §4.5, ruling 2 / D-4). Scope is the ratchet above:
+  // infrastructure directories are exempt wholesale, and three known engine files
+  // are individually allowlisted with reasons.
+  if (isPureEngineFile(fromFileRel) && PERSISTENCE_LAYERS.some((l) => inLayer(resolved, l))) {
+    return {
+      ...base,
+      rule: "DOMAIN_IS_PURE",
+      fix: "pure engine directories may not reach persistence (CLAUDE.md §4.5). Load the data at the route or service boundary and pass it into the engine.",
+    };
+  }
 
   if (fromTypes && !isBarrel && resolved === "src/types") {
     return {
@@ -533,6 +606,84 @@ describe("architecture boundaries — harness sanity", () => {
         "as uncollected, so they are governed by nothing and assert nothing:\n  " +
         uncollected.join("\n  "),
     ).toEqual([]);
+  });
+
+  // ---- U18: the domain-purity ratchet's own integrity --------------------
+  it("every purity allowlist entry still violates, and names a real file", () => {
+    // THE RATCHET PROPERTY. An allowlist that outlives the violation it excused
+    // is a standing permission on a path nobody is watching: fix the file, leave
+    // the entry, and the next import slips in pre-approved. So each entry must
+    // still fail if it were judged — the list can only shrink.
+    const stale: string[] = [];
+    for (const file of Object.keys(DOMAIN_PURITY_ALLOWLIST)) {
+      const abs = path.join(REPO_ROOT, file);
+      if (!fs.existsSync(abs)) {
+        stale.push(`${file} — allowlisted but does not exist`);
+        continue;
+      }
+      const violates = extractEdges(file, fs.readFileSync(abs, "utf8")).some((e) => {
+        const resolved = resolveSpecifier(file, e.specifier);
+        return (
+          (resolved !== null && PERSISTENCE_LAYERS.some((l) => inLayer(resolved, l))) ||
+          (resolved === null && /^next(\/|$)/.test(e.specifier))
+        );
+      });
+      if (!violates) stale.push(`${file} — allowlisted but no longer violates; delete the entry`);
+    }
+    expect(
+      stale.sort(),
+      "DOMAIN_IS_PURE: the allowlist is a ratchet, not an amnesty. These entries no\n" +
+        "longer describe a real violation, so they are permissions rather than debt:\n  " +
+        stale.join("\n  "),
+    ).toEqual([]);
+
+    // Same anti-thin-reason bar the layer exemptions carry: an allowlist entry
+    // must say WHY, because the reason is what a future reader triages from.
+    for (const [file, reason] of Object.entries(DOMAIN_PURITY_ALLOWLIST)) {
+      expect(reason.length, `${file} allowlist reason is too thin`).toBeGreaterThan(40);
+    }
+  });
+
+  it("every impure-by-design directory is real, reasoned, and inside src/lib", () => {
+    for (const [dir, reason] of Object.entries(IMPURE_BY_DESIGN)) {
+      expect(reason.length, `${dir} exemption reason is too thin`).toBeGreaterThan(40);
+      expect(dir.startsWith("src/lib/"), `${dir} is not under src/lib`).toBe(true);
+      expect(
+        TRACKED_SRC_PATHS.some((p) => inLayer(p, dir)),
+        `${dir} is exempt from DOMAIN_IS_PURE but no tracked file lives there`,
+      ).toBe(true);
+    }
+    // An exempt directory must not ALSO carry file-level allowlist entries —
+    // that would be two overlapping excuses for one file, and deleting either
+    // would look safe while the other kept it hidden.
+    for (const file of Object.keys(DOMAIN_PURITY_ALLOWLIST)) {
+      expect(
+        Object.keys(IMPURE_BY_DESIGN).some((d) => inLayer(file, d)),
+        `${file} is allowlisted AND inside an exempt directory`,
+      ).toBe(false);
+    }
+  });
+
+  it("DOMAIN_IS_PURE fires on an un-allowlisted engine file, in both forms", () => {
+    // Detector self-test (the N3 pattern): the rule above passes because the
+    // tree complies, which cannot tell you the rule still works.
+    expect(classify("src/lib/stack-evaluator/rules.ts", "@/lib/db/stacks")?.rule).toBe(
+      "DOMAIN_IS_PURE",
+    );
+    expect(classify("src/lib/safety/index.ts", "@/lib/supabase/server")?.rule).toBe(
+      "DOMAIN_IS_PURE",
+    );
+    expect(classify("src/lib/compare/index.ts", "@/services/evaluation")?.rule).toBe(
+      "DOMAIN_IS_PURE",
+    );
+    expect(classify("src/lib/safety/index.ts", "next/server")?.rule).toBe("DOMAIN_IS_PURE");
+
+    // ...and does NOT fire where the ratchet says it must not.
+    expect(classify("src/lib/auth/session.ts", "@/lib/supabase/server")).toBeNull();
+    expect(classify("src/lib/db/stack-repo.ts", "@/lib/db/types")).toBeNull();
+    expect(classify("src/lib/advisor/actions/execute.ts", "@/lib/db/stack-item-repo")).toBeNull();
+    // A pure engine importing another pure engine stays legal.
+    expect(classify("src/lib/safety/index.ts", "@/lib/evidence")).toBeNull();
   });
 
   it("contains no tracked symlink under src/", () => {
@@ -779,5 +930,9 @@ describe("architecture boundaries — the real source tree", () => {
 
   it("B5: no business or persistence module imports src/components", () => {
     expect(violationsFor("NO_UI_IMPORT")).toEqual([]);
+  });
+
+  it("DOMAIN_IS_PURE: pure engine directories reach neither persistence nor next/*", () => {
+    expect(violationsFor("DOMAIN_IS_PURE")).toEqual([]);
   });
 });

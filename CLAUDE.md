@@ -155,7 +155,7 @@ Layering: `src/types` → pure engines in `src/lib` → `src/services` / `src/li
 |---|---|---|
 | 1, 2, 3 | **Enforced** | `boundaries.test.ts` — B1, B2, B2b, B3 |
 | **4** (`src/data` is a leaf) | **Enforced** | `boundaries.test.ts` — B4, B4b |
-| 5 (domain purity) | Not enforced | `DOMAIN_IS_PURE` deferred; would fail today at **three** `src/lib` files under the narrow `@/lib/db` reading, or **eight** under §4.5's literal wording — the scope is unsettled, which is why it is deferred. See `docs/02-design/architecture-boundaries.md` |
+| **5** (domain purity) | **Enforced** | `boundaries.test.ts` — `DOMAIN_IS_PURE`, as a **ratchet** (Phase 1 U18). Scope settled by ruling D-4: all of `src/lib` except `auth`, `api`, `supabase`, `db`, which are named exemptions carrying written reasons. **Three** orchestration files are individually allowlisted — `advisor/actions/execute.ts`, `advisor/context-loader.ts`, `identity/context.ts` — and a test asserts each still violates, so the list can only shrink. An un-allowlisted fourth fails. See `docs/02-design/architecture-boundaries.md` |
 | **6** (every top-level `src/*` registered) | **Enforced** | `boundaries.test.ts` — tree-partition, with a written-reason assertion |
 | 7 (client components take props) | Not enforced | Would fail today on 7 of 31 client components |
 | 8 (trust boundaries in testable modules) | Not enforced generally | The API error boundary is enforced by `error-disclosure.test.ts`; there is no general mechanical rule |

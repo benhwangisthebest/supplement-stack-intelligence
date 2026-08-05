@@ -205,17 +205,29 @@ Status: **7/7** of `evaluateStack`'s context fields covered (was 2/7). No dead c
 
 - **B1 catches direct edges only.** An indirect cycle (`a.ts → ./b → ./index`) is not
   detected. B1 + B2 keep `src/types` a closed set, which bounds the damage.
-- **Deferred ("next hardening"):** `DOMAIN_IS_PURE` — pure engine directories under `src/lib` must not
-  import `@/lib/db`, `@/lib/supabase`, `@/services`, `@/app`, or `next/*` (`CLAUDE.md` §4.5). Scope
-  matters here: under the *narrow* reading of `lib/{evidence,stack-evaluator,safety}` the rule already
-  passes — none of those three imports persistence. Under §4.5's broader "pure engine directories"
-  wording it **would fail today** at `src/lib/identity/context.ts`,
-  `src/lib/advisor/context-loader.ts`, and `src/lib/advisor/actions/execute.ts`, which are the only
-  `src/lib` engine files importing `@/lib/db`. **That list covers `@/lib/db` only.** Other `src/lib`
-  modules — `auth/actions.ts`, `auth/session.ts`, `api/respond.ts`, `supabase/server.ts`,
-  `supabase/middleware.ts` — import `@/lib/supabase` or `next/*`, also named by §4.5; they are excluded
-  here as infrastructure rather than engine directories, which is precisely the scope question that must
-  be settled first. Settling that scope is a precondition for enforcing it.
+- ~~**Deferred ("next hardening"):** `DOMAIN_IS_PURE`~~ — **ENFORCED 2026-08-05 by Phase 1 U18**, as a
+  **ratchet**. Pure engine directories under `src/lib` may not import `@/lib/db`, `@/lib/supabase`,
+  `@/services`, or `next/*` (`CLAUDE.md` §4.5; `@/app` was already covered by `NO_UPWARD_APP_IMPORT`).
+
+  **The scope question the deferral was waiting on is settled** (ruling 2 / D-4), and settled *broader*
+  than the old narrow reading. The narrow reading governed only `lib/{evidence,stack-evaluator,safety}`;
+  enforcement now covers **all of `src/lib`** except four directories named in the guard with written
+  reasons — `auth`, `api`, `supabase` (infrastructure, per the ruling) and **`db`**, added because the
+  persistence layer cannot sensibly be forbidden from reaching persistence, and naming it explicitly stops
+  a future file there being argued into engine status.
+
+  **Three engine files remain in violation and are individually allowlisted**, each with its reason:
+  `src/lib/advisor/actions/execute.ts`, `src/lib/advisor/context-loader.ts`, `src/lib/identity/context.ts`
+  — the same three the deferred text named, re-measured rather than copied. **All three are orchestration
+  modules sitting in engine directories**, so the fix is relocation (`src/services`, which U11 created for
+  exactly this), not deleting an import. That classification is the standing answer to "is
+  `src/lib/advisor/actions` a pure engine?" — **it is not**, and after U20 it is impure by two independent
+  readings, since `@/lib/api/respond` gives it a transitive `next/*` edge.
+
+  **What makes it a ratchet rather than an amnesty:** a test asserts every allowlist entry *still*
+  violates and still names a real file, so a fixed file cannot leave a standing permission behind and the
+  list can only shrink. An un-allowlisted fourth violation fails immediately — proven by deleting the
+  `identity/context.ts` entry, which produced four `DOMAIN_IS_PURE` violations at once.
 - **Deferred:** the client-component rule (would fail on 7 of the 31 `"use client"` modules under
   `src/components` — those importing `@/lib/*` or `@/data`); the `NO_PERSISTENCE_FROM_UI` ratchet (free
   today); and full cycle detection.
