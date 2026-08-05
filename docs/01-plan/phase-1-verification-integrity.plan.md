@@ -174,6 +174,24 @@ inside U4's bucket. The remaining drift (U3's 10, U4's 4) has no derivation and 
 criteria while the counts were wrong. Sizing numbers derived from a baseline table must state whether they
 are scoped the same way as the unit that consumes them.
 
+#### 6.0.1 U8's discovery scope — RATIFIED 2026-08-05
+
+U8's row reads *"binding migrations to `src/lib/db/types.ts`"*. Taken literally, that reading **cannot
+satisfy its own gate**. `types.ts` declares **8** row types; the migrations create **12** tables. The other
+four row shapes are private to two repo modules (see **FU-20**). Binding only `types.ts` therefore leaves
+four tables unbound, and Gate B1 forbids resolving that with an exemption — so the narrow reading is
+unsatisfiable by construction, not merely inconvenient.
+
+**Ruling: the guard's scope is the binding's scope.** U8 discovers row types **by shape** — every
+`interface <Name>Row` in tracked, non-test `src/lib/**` — rather than from a hardcoded file list. This
+makes the binding genuinely total (12 ↔ 12) and means a row type added in a *new* repo module is guarded
+automatically instead of silently escaping. `types.ts` is where these types *should* live; it is not the
+boundary of what must be *checked*.
+
+Generalisable, and the reason this is recorded rather than just done: **when a unit's stated file scope and
+its gate disagree, the gate wins** — the gate states the property, the file list was an estimate of where
+the property would be enforced. The estimate is the cheaper thing to be wrong about.
+
 ### 6.1 The U11 hazard — stated explicitly because it is invisible
 
 `src/architecture/error-disclosure.test.ts` discovers its inventory with
@@ -389,9 +407,22 @@ Group A (parallel)   U1 · U5 · U6 · U7 · U9 · U10 · U12 · U14 · U15
               Note U10's own §6.2 row needed a STATEFUL mock before the
               read-after-write mutation could be caught — a constant-returning
               mock left it green. That is §6.2.2 in miniature.
-Group B              U2 · U3 · U8   → U19
+Group B              U2 · U3 · U8   → U19          [COMPLETE 2026-08-05]
    ├ GATE B1  U8's binding map asserted total in both directions; any real
    │          mismatch is triaged as a FINDING, never silenced by an exemption.
+   │          SATISFIED 2026-08-05. 12 tables ↔ 12 row types, total in BOTH
+   │          directions, with no exemption list in the guard at all. The
+   │          drift check itself found NO drift: every column has a field,
+   │          every field has a column, and nullability agrees column by
+   │          column. Proven live by 9 mutations, incl. §6.2's three:
+   │            M1 rename a column   → `checkins.createdate → CheckinRow
+   │               column has no field` AND `CheckinRow.created_at → checkins
+   │               field has no column` (both predicted strings, one mutation)
+   │            M2 rename a TS field → the same pair on stacks/StackRow
+   │            M3 drop a binding row → `SCHEMA_DRIFT: RowType is not bound
+   │               to a table` + the reverse `bound to no RowType` + 11≠12
+   │          plus nullability both ways, an orphan table, the §4.2
+   │          staged-file pair, and 3 anti-rot detector breaks.
    └ U19 follows U3 rather than joining Group A: it EDITS the route test U3
               created (§6.1.1), so it cannot run in parallel with it. This is the
               plan's dependency logic, not the topical grouping — U19 resembles
@@ -458,10 +489,11 @@ absorbed by U11: Gate C1 required the confirm-and-apply responses pinned *before
 route test already exists (406 lines, 18 pins). U19 is an edit to an existing file, not a new one.
 
 **Delivered:** U1 · U2 · U3 · U4 (route tests, **23/23 files**) · U5 · U6 · U10 · U12 (guards) · U11 (the
-refactor) · U19 (the behaviour change) · U7 · U9 (boundary tests). Suite **793 across 70 files**, measured
-at `c2b37a7`, up from the 524/42 baseline recorded in §2. Route tests alone account for 23 files.
-The **~205–230 new-test** estimate at the top of this section is tracking high, not low: **+269** delivered
-so far with U8 · U13 · U14 · U15 · U16–U18 · U20 · U21 still open, so the projected total exceeds the
+refactor) · U19 (the behaviour change) · U7 · U9 (boundary tests) · U8 (schema↔type drift, closing
+**Group B**). Suite **816 across 71 files**, measured at U8's tip, up from the 524/42 baseline recorded
+in §2. Route tests alone account for 23 files.
+The **~205–230 new-test** estimate at the top of this section is tracking high, not low: **+292** delivered
+so far with U13 · U14 · U15 · U16–U18 · U20 · U21 still open, so the projected total exceeds the
 range. Recorded, not rewritten — the estimate was made before any unit ran, and its error is the useful
 part.
 
@@ -469,7 +501,8 @@ The realistic risk is not that a unit fails. It is that **U11 lands, looks green
 409 into a 400, or moved the error boundary outside its guard.** Gates C1 and C2 exist for that and should
 not be relaxed.
 
-**Cut order** (first cut at the top): U17 · U16 down to tags-only · U14 · U8's nullability half · U15 last
+**Cut order** (first cut at the top): U17 · U16 down to tags-only · U14 · ~~U8's nullability half~~ (built,
+not cut — 2026-08-05) · U15 last
 (cheapest unit here, and the technique caught three real defects — cutting it is a false economy).
 *(U2/U3 were on this list, scoped down to one handler per file. They are delivered in full and no longer
 cuttable; U4 is the remaining route unit and inherits that option if the phase needs trimming.)*
@@ -684,7 +717,7 @@ The roadmap's seven, plus this plan's own. Countable and drift-proof — each st
 
 - [x] Every route file has ≥ 1 test asserting 401, the happy path, and 400 **where the file validates input**; the non-validating files are enumerated in a written-reason exemption list. (`git ls-files 'src/app/api/**/*.test.ts' | wc -l` = 23) — **MET 2026-08-04.** All four clauses measured, not assumed: 23 route files / 23 route test files; **23/23** assert `toBe(401)`; **23/23** assert `toBe(200)` or `toBe(201)`; **14/14** input-validating files assert `toBe(400)`; and the exemption list for the other **9** is §10.1 below. Previously PARTIAL because only the list was missing.
 - [ ] `mappers.ts` ≥ 90 % statements; `execute.ts` ≥ 80 %; `validation/schemas.ts` ≥ 80 %.
-- [ ] A schema↔type drift check exists and is **shown red** against a deliberately renamed column.
+- [x] A schema↔type drift check exists and is **shown red** against a deliberately renamed column. — **MET 2026-08-05 by U8.** `src/architecture/schema-type-drift.test.ts`, 23 tests. Renaming `checkins.created_at` to `createdate` in `0006` produced `checkins.createdate → CheckinRow column has no field` **and** `CheckinRow.created_at → checkins field has no column`. The nullability half (§6.5 lists it as cuttable) was **built, not cut**, and is red in both directions.
 - [x] Reachability guard covers **7 / 7** `evaluateStack` context fields. — **MET 2026-08-04 by U12.** Baseline recounted at 2/7 before the unit; all 7 fields at the `evaluateStack({…})` call site now carry a differential row, and an anti-drift row parses the call site so an eighth field cannot be added without one. No dead context found — every field reaches an observable output.
 - [ ] Auth-coverage and RLS-coverage guards are **shown red** against a `git add -N`-staged non-compliant new file (§4.2). — **PARTIAL 2026-08-04.** **AUTH_COVERAGE: proven** — a `git add -N`-staged route lacking `getUser()` was caught, and the glob-break variant produced `found 0 tracked route files; a guard that scans nothing passes vacuously`. **RLS_COVERAGE: not proven in this form** — U6's three reds mutated *existing* migration `0007` (RLS line, then policy), which shows detection but **not** the §4.2 staged-new-file property. Left unticked deliberately: §4.2 exists precisely because an unstaged file passes green and *looks* like proof, so the untested half is the half that matters.
 - [ ] Coverage thresholds configured for every pure engine directory and enforced by a CI step; no `branches` threshold within 10 pp of measured (D-2).
@@ -779,4 +812,5 @@ right home for Phase 1 findings.)*
 | **FU-17** | U7 | `toCheckin` coalesces `row.ratings ?? {}`, `row.taken ?? []`, `row.scheduled ?? []` — but `0006_checkins.sql:10–12` declares all three `jsonb **not null** default`, and `CheckinRow` declares them non-nullable to match. **The DDL and the type agree; the mapper's defences are dead code.** U7's test reaches them only by casting through `as unknown as CheckinRow`. | **Open — owner U8's nullability half**, which §6.5's cut list names explicitly as a distinct, *cuttable* component. So the ownership is real but conditional: if that half is cut, this row reverts to unowned rather than closing. **Corrects the earlier framing of this row as a "type/reality mismatch": the migration was read, and the type is right.** |
 | **FU-18** | U9 | U9 pinned `labMarkerInputSchema.value` as accepting **negative** numbers (`z.number().finite()`, no `.nonnegative()`). The pin now asserts that permissiveness is intentional. **Verification task:** all **13** seeded biomarkers (`src/data/seed-biomarkers.ts`) carry positive `refLow`/`refHigh` — measured, zero negatives — but `marker` is free text (`z.string().min(1).max(120)`), so users are not restricted to the seed. Whether the free-text path *must* permit negatives is unresolved. | **Open — STANDALONE, not U8** (U8 is structural; this is a content question, and Phase 1 is structural work). Must be settled against a **real clinical source**, never model recall — `CLAUDE.md` §2.2 rule 8. Candidates worth checking, flagged as *unverified recall and not to be treated as established*: base-excess-style blood-gas markers. If the answer is "no legitimate negatives", the pin becomes wrong and the schema should gain `.nonnegative()`. |
 | **FU-19** | U9 | **Two request-boundary Zod modules have no direct accept/reject tests**: `src/lib/advisor/schema.ts` (`advisorRequestSchema`) and `src/lib/advisor/actions/schema.ts` (`confirmSchema`/`proposalSchema`). Both are covered **transitively** — U4's advisor 400 pins and U11's `VALIDATION_ERROR` pin — which proves *a* rejection occurs, not *which constraint* rejected, so a widened constraint on an unexercised field would survive. | **Deferred, sized.** Cheap (U9's pattern applied twice). **Two earlier counts of this row were wrong and are corrected here:** "two untested schema files" understated the characterisation, then "five" over-counted — `biomarkers/schema.ts`, `interactions/schema.ts` and `lab-import/schema.ts` are each **directly imported and exercised** by their sibling suites, so they were never in this row. |
+| **FU-20** | U8 | **Four of the twelve DB row types live outside `src/lib/db/types.ts`**, whose line 1 describes it as holding "DB row shapes": `ConversationRow`, `MessageRow`, `UsageRow` are **private** to `src/lib/advisor/repo.ts`, and `ActionRow` is private to `src/lib/db/advisor-action-repo.ts`. Being private, they cannot be imported or asserted against from anywhere else — U8 reads them as source text. The header does not literally claim exhaustiveness, but it reads that way, and one third of the row types are elsewhere. | **Open — UNOWNED**, placement refactor. Not taken up by U8: moving four types requires enumerating their callers (§9.4, the rule two defects in this project already came from), which is a change with real blast radius rather than a tidy-up. U8's shape-based discovery (§6.0.1) means the guard is correct either way — this row is about where the types *belong*, not about coverage. |
 | **FU-8** | U11 | `src/services` has a `LAYER_FLOORS` entry of **1** while holding 2 files. The floor exists to catch a layer silently collapsing to zero; at 1 it now has no headroom to detect the loss of one of the two. | **Deferred.** Raise it when the layer grows again; noted rather than tightened now, because a floor at today's exact count blocks ordinary deletion (the stated reason floors sit below current counts). |
