@@ -29,7 +29,13 @@
 //      matter: a rule that quietly GAINED enforcement without a doc update is a
 //      staleness bug too, just a happier one.
 //   B. Over `CLAUDE.md` §5's CI sentence and `.github/workflows/ci.yml`, it
-//      checks the declared triggers and the four declared steps.
+//      checks the declared triggers, and binds the declared step chain to the
+//      workflow's `run:` steps TOTALLY — as an ordered equality, not a subset.
+//      Totality was added by FU-23 after U13 added a fifth step (coverage) and
+//      this guard stayed green: it only asserted that the four DECLARED steps
+//      were present and ordered, so an UNDECLARED step was invisible to it.
+//      §5 was corrected by hand, and nothing forced that. Now the two lists must
+//      match exactly, so a step added to CI without a doc update fails here.
 //
 // WHAT IT DOES NOT COMPUTE:
 //   * It cannot tell that a test named `B4b:` actually enforces rule 4. It binds
@@ -105,6 +111,48 @@ export function readRuleTable(sectionText: string): RuleRow[] {
 export function testIdsIn(source: string): string[] {
   return [...source.matchAll(/it\(\s*"(B\d+[a-z]?):/g)].map((m) => m[1]);
 }
+
+/**
+ * The step chain §5 declares, e.g. "`npm ci` → typecheck → `vitest run` →
+ * **coverage thresholds** → `next build`", as plain labels in order.
+ *
+ * Anchored on `GitHub Actions \`CI\`:` and terminated by the first `,` after the
+ * chain — §5 continues ", on **every branch push**", which is the trigger clause
+ * that a separate rule already binds.
+ */
+export function readDeclaredSteps(sectionText: string): string[] {
+  const m = /GitHub Actions `CI`:([^,]*)/.exec(sectionText);
+  if (!m) {
+    throw new Error(
+      "DOC_TRUTH could not find §5's CI step chain. It is anchored on the literal\n" +
+        "'GitHub Actions `CI`:' — a reworded sentence fails here rather than letting\n" +
+        "this guard bind an empty list.",
+    );
+  }
+  return m[1]
+    .split("→")
+    .map((s) => s.replace(/[`*]/g, "").replace(/\s+/g, " ").trim())
+    .filter((s) => s.length > 0);
+}
+
+/** Every `run:` command in `ci.yml`, in file order. */
+export function readWorkflowRunSteps(yml: string): string[] {
+  return [...yml.matchAll(/^\s*(?:-\s*)?run:\s*(.+?)\s*$/gm)].map((m) => m[1]);
+}
+
+/**
+ * §5 names steps the way a reader would ("typecheck"), while the workflow runs
+ * npm scripts ("npm run typecheck"). This is the ONLY place the two vocabularies
+ * are joined, so an unmapped label is a hard failure rather than a silent skip:
+ * adding a step to §5 without deciding what it binds to must not pass.
+ */
+const DECLARED_STEP_COMMANDS: Record<string, string> = {
+  "npm ci": "npm ci",
+  typecheck: "npm run typecheck",
+  "vitest run": "npm test",
+  "coverage thresholds": "npm run test:coverage",
+  "next build": "npm run build",
+};
 
 const SECTION_4 = section(CLAUDE_MD, 4, 5);
 const SECTION_5 = section(CLAUDE_MD, 5, 6);
@@ -252,26 +300,48 @@ describe("DOC_TRUTH — CLAUDE.md §5's CI claim vs the workflow", () => {
     ).toBe(true);
   });
 
-  it("matches the declared four steps, in order", () => {
-    // §5: "`npm ci` → typecheck → `vitest run` → `next build`". The workflow
-    // runs the last two through npm scripts, so the binding goes through
-    // package.json rather than pretending the literal words appear in the YAML.
+  it("every step §5 declares is one this guard knows how to bind", () => {
+    // Anti-vacuity, and the reason an unmapped label cannot pass quietly: a step
+    // added to §5 with no entry in DECLARED_STEP_COMMANDS would otherwise drop
+    // out of the comparison below and weaken the very rule it extends.
+    const declared = readDeclaredSteps(SECTION_5);
+    expect(declared.length, "DOC_TRUTH: §5's CI step chain parsed as empty.").toBeGreaterThan(0);
+
+    const unmapped = declared.filter((d) => !(d in DECLARED_STEP_COMMANDS));
+    expect(
+      unmapped,
+      "DOC_TRUTH: §5 names a CI step this guard cannot bind to a command:\n  " +
+        `${unmapped.join(", ")}\n` +
+        "Add it to DECLARED_STEP_COMMANDS with the `run:` command it refers to.",
+    ).toEqual([]);
+  });
+
+  it("binds the declared step chain to ci.yml's steps EXACTLY, in order", () => {
+    // TOTAL, not a subset — see FU-23 in the header. The two lists are compared
+    // as ordered sequences, so BOTH failure directions are caught: a declared
+    // step missing from CI, and a step CI runs that §5 never declared.
+    const declared = readDeclaredSteps(SECTION_5).map((d) => DECLARED_STEP_COMMANDS[d]);
+    const actual = readWorkflowRunSteps(CI_YML);
+
+    expect(
+      actual,
+      "DOC_TRUTH: §5's declared CI steps and ci.yml's `run:` steps have diverged.\n" +
+        `  §5 declares: ${declared.join(" → ")}\n` +
+        `  ci.yml runs: ${actual.join(" → ")}\n` +
+        "Either the workflow gained/lost/reordered a step, or §5 was not updated with it.\n" +
+        "This is an ordered EQUALITY: an undeclared extra step fails exactly as a\n" +
+        "missing one does.",
+    ).toEqual(declared);
+  });
+
+  it("resolves the npm-script indirections §5 names by their real command", () => {
+    // §5 says "typecheck", "vitest run" and "next build"; CI runs npm scripts.
+    // Without this, the mapping above could point at a script that no longer
+    // runs the tool §5 promises.
     const pkg = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
-    const order = ["npm ci", "npm run typecheck", "npm test", "npm run build"];
-    const positions = order.map((cmd) => CI_YML.indexOf(`run: ${cmd}`));
-
-    expect(
-      positions.every((p) => p !== -1),
-      `DOC_TRUTH: §5 declares four CI steps; ci.yml is missing one of ${order.join(", ")}.`,
-    ).toBe(true);
-    expect(
-      positions.every((p, i) => i === 0 || p > positions[i - 1]),
-      "DOC_TRUTH: §5 declares the CI steps in a specific order; ci.yml runs them in another.",
-    ).toBe(true);
-
-    // The two indirections §5 names by their real command.
     expect(pkg.scripts.typecheck).toContain("tsc");
     expect(pkg.scripts.test).toContain("vitest run");
+    expect(pkg.scripts["test:coverage"]).toContain("coverage");
     expect(pkg.scripts.build).toContain("next build");
   });
 });
@@ -323,5 +393,50 @@ describe("DOC_TRUTH — parser self-tests", () => {
 
   it("fails loudly when a section heading cannot be found", () => {
     expect(() => section("# nothing here", 4, 5)).toThrow(/could not locate/);
+  });
+
+  // --- FU-23: the two parsers behind the TOTAL step binding ------------------
+
+  it("reads §5's step chain, stripping markdown and stopping at the trigger clause", () => {
+    expect(
+      readDeclaredSteps(
+        "prose (GitHub Actions `CI`: `npm ci` → typecheck → **coverage thresholds** → " +
+          "`next build`, on **every branch push**, and on `workflow_dispatch`).",
+      ),
+      // The trailing ", on **every branch push**…" must NOT be read as a step.
+    ).toEqual(["npm ci", "typecheck", "coverage thresholds", "next build"]);
+  });
+
+  it("fails loudly when §5's CI sentence is reworded away", () => {
+    expect(() => readDeclaredSteps("CI runs some steps.")).toThrow(/could not find/);
+  });
+
+  it("reads every `run:` step from a workflow, in order", () => {
+    const yml = [
+      "jobs:",
+      "  verify:",
+      "    steps:",
+      "      - name: Install",
+      "        run: npm ci",
+      "      # a comment between steps",
+      "      - name: Typecheck",
+      "        run: npm run typecheck",
+      "      - name: Build",
+      "        run: npm run build",
+    ].join("\n");
+    expect(readWorkflowRunSteps(yml)).toEqual(["npm ci", "npm run typecheck", "npm run build"]);
+  });
+
+  it("sees an UNDECLARED extra step — the case that let FU-23 through", () => {
+    // The old rule asked only "are the declared steps present, in order?", which
+    // this input satisfies. Totality is what makes the extra step visible.
+    const declared = ["npm ci", "npm run build"];
+    const actual = readWorkflowRunSteps(
+      ["        run: npm ci", "        run: npm run sneaky", "        run: npm run build"].join(
+        "\n",
+      ),
+    );
+    expect(declared.every((d) => actual.includes(d))).toBe(true); // old rule: green
+    expect(actual).not.toEqual(declared); // total rule: red
   });
 });
