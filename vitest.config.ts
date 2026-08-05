@@ -56,7 +56,7 @@ export default defineConfig({
       // infrastructure and `src/lib/db` is persistence (15.65% statements: it is
       // exercised through routes, not unit-tested — see follow-up FU-16), while
       // `src/lib/advisor` and `src/lib/identity` each still contain a file that
-      // reaches into `@/lib/db`. Those five are excluded here and are U18's
+      // reaches into `@/lib/db`. Those six are excluded here and are U18's
       // subject, not U13's; adding them would be asserting a purity claim this
       // unit has not established.
       thresholds: {

@@ -19,7 +19,7 @@ Run all commands from this directory (the repository root).
 
 **This repository is no longer permanently restricted to its original MVP scope.**
 
-The MVP was completed and thirteen further milestones (v2–v13) shipped on top of it. The original brief's
+The MVP was completed and twelve further milestones (v2–v13) shipped on top of it. The original brief's
 `MVP Scope`, `Out of Scope for MVP`, and `Development Priorities` sections are **retired**: they described a
 completed construction phase, and six subsystems they prohibit are already built, tested, and shipping.
 Those retired constraints — and the reason each originally existed — are preserved at
@@ -53,6 +53,15 @@ Information-rich but organized; layered, never dumbed down.
 
 **Navigation is exactly three top-level items.** Protocol Builder and Product Match live *inside* Stack Lab.
 Do not add a top-level item without an explicit product decision.
+
+> **[2026-08-06] The shipped UI diverges from this rule, and the rule is NOT being relaxed to match.**
+> `src/components/layout/TopNav.tsx` appends an `Advisor` pill to the same `NavPills` group for signed-in
+> users, so an authed reader sees **four**. The v6 design did record an explicit decision — but for a
+> "top-level-adjacent surface … **not** a 4th main pillar". Rendering it inside the pillar list is an
+> implementation divergence from that decision, not an authorised fourth pillar, and
+> `docs/product-direction.md` still states the three-item rule as permanent. Recorded as **FU-27** for a
+> product decision: move the Advisor out of the pillar group, or change the rule deliberately. Not
+> resolved here — §8.1, name it rather than absorb it.
 
 **It is not:** a magic AI doctor, a cure platform, a supplement quiz, a generic wellness app, an affiliate
 shop, or a replacement for medical care.
@@ -189,14 +198,16 @@ passing, a clean typecheck, and a successful build.
 9. `E2E_LIVE`-gated Playwright blocks must be tagged `[LIVE]` in their title. Do not rely on the
    `L1/L2/L3` prefix to signal gating — it does not. **Enforced** by
    `src/architecture/e2e-live-tagging.test.ts` (`LIVE_TAGGING`), both ways: a gated block without the
-   tag fails, and so does a tagged block that is not gated. Live runs are also serialised there
-   (`workers: 1`) — the authed specs share one seeded demo account.
+   tag fails, and so does a tagged block that is not gated. Live runs are **separately** serialised in
+   `playwright.config.ts` (`workers: 1`, `fullyParallel: false` when `E2E_LIVE=1`), because the authed
+   specs share one seeded demo account. That serialisation is **not** guarded by anything — removing it
+   breaks no test. Tracked as FU-25, whose real fix is per-worker user isolation.
 10. Before declaring work done: `npx tsc --noEmit`, `npx vitest run`, and `npx next build` must all pass.
 
-Measured baseline (re-measured 2026-08-03 at Phase 0 close): typecheck clean · **524/524 unit tests across
-42 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
+Measured baseline (re-measured **2026-08-06 at Phase 1 close**): typecheck clean · **859/859 unit tests
+across 73 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
 `vitest run` → **coverage thresholds** → `next build`, on **every branch push**, on PRs into `main`, and on
-`workflow_dispatch`). The coverage step was added by Phase 1 U13; the four before it are unchanged. These
+`workflow_dispatch`). The coverage step was added by Phase 1 U13, between `vitest run` and `next build`; the other four are unchanged. These
 figures are re-measured by every CI run — the authoritative result for any commit is its `push`/`main`
 run, not this line, which is a snapshot and will drift. **[2026-08-03]** CI **is** now a required status:
 `main` requires the `typecheck / test / build` check on the pushed SHA, and ruleset `main-integrity`
@@ -340,6 +351,9 @@ If the directory is absent after a fresh clone, that is expected: run `graphify 
 | `docs/roadmap.md` | Phased transition plan; sequencing authority |
 | `docs/reviews/mvp-transition-check.md` | The 2026-07-30 independent review findings (T-01…T-24) |
 | `docs/reviews/phase-0-closeout-check.md` | The 2026-08-01 independent Phase 0 closeout review (C-1…C-13), with its 2026-08-02 resolution addendum |
+| `docs/reviews/phase-1-closeout-check.md` | The 2026-08-06 independent Phase 1 closeout Check (P1-1…P1-9) — verdict **COMPLETE WITH FOLLOW-UP** |
+| `docs/04-report/phase-1-verification-integrity.report.md` | Phase 1 outcome, incl. the full red-evidence record (exit criterion 8) |
+| `docs/05-qa/phase-1-live-e2e-baseline.md` | The dated non-live E2E baseline; the live half is BLOCKED(env) |
 | `docs/02-design/architecture-boundaries.md` | Layer specification behind §4 |
 | `docs/archive/original-mvp-instructions.md` | Retired MVP constraints + why each existed (reference only) |
 | `docs/archive/2026-06/`, `2026-07/` | Per-feature history; `_INDEX.md` is the real status record |

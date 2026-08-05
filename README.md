@@ -23,7 +23,7 @@ Evidence-based supplement education, stack building, and product matching for he
 
 ### Enforced module boundaries
 
-These are not conventions — they run on `npm test` via [`src/architecture/boundaries.test.ts`](src/architecture/boundaries.test.ts) (28 tests) and [`src/architecture/error-disclosure.test.ts`](src/architecture/error-disclosure.test.ts) (29 tests), and are specified in [`docs/02-design/architecture-boundaries.md`](docs/02-design/architecture-boundaries.md):
+These are not conventions — they run on `npm test` via **seven** executable architecture specs under [`src/architecture/`](src/architecture), including [`boundaries.test.ts`](src/architecture/boundaries.test.ts) (36 tests) and [`error-disclosure.test.ts`](src/architecture/error-disclosure.test.ts) (30 tests), and are specified in [`docs/02-design/architecture-boundaries.md`](docs/02-design/architecture-boundaries.md):
 
 - `src/types/` is a **dependency-free Domain leaf** — it imports no packages and nothing outside `src/types/`.
 - `src/types/index.ts` is a **pure barrel**; it declares nothing, and no sibling may import it (shared primitives live in `src/types/primitives.ts`).
@@ -66,10 +66,10 @@ written permission.
 
 **Current maturity: post-MVP, in transition to functional beta.**
 
-The three pillars plus thirteen further milestones (v2–v13) are implemented — including the AI advisor,
+The three pillars plus twelve further milestones (v2–v13) are implemented — including the AI advisor,
 medication/food interactions, biomarkers, lab timeline, daily check-ins, the side-effect engine, and the
-identity layer. Re-verified 2026-08-03 at Phase 0 close: `npm run typecheck` clean, **524/524** unit
-tests passing across 42 files, production build succeeding, and RLS enabled with a matching policy on
+identity layer. Re-verified **2026-08-06 at Phase 1 close**: `npm run typecheck` clean, **859/859** unit
+tests passing across 73 files, production build succeeding, and RLS enabled with a matching policy on
 every table. These figures are a dated snapshot — CI re-measures them on every push, and that run is the
 authoritative result for a given commit.
 
@@ -80,11 +80,14 @@ Production-readiness gaps remain, and they are tracked rather than unknown:
   that is returned to the client, but there is no logging elsewhere, no error-reporting service, and no
   UI surface for a user to quote the correlation ID.
 - **Release enforcement** — CI runs on **every branch push** and every PR into `main` (typecheck, unit
-  tests, production build) and is green; `main` is current with all feature work. Since 2026-08-03 `main`
+  tests, coverage thresholds, production build) and is green; `main` is current with all feature work. Since 2026-08-03 `main`
   is protected: the `typecheck / test / build` check is **required** on the pushed SHA, and force-pushes
   and deletion are forbidden with no bypass actor. Residual limitation: `enforce_admins: false`, so the
   required check can be bypassed by the repository admin.
-- **Selected trust boundaries** — the advisor write path and the DB mapper layer lack unit coverage.
+- **The Supabase repository layer** — `src/lib/db/*-repo.ts` sits at **0 %** unit coverage (nine modules)
+  and `src/lib/advisor/repo.ts` at ~37 %; they are exercised only through route tests. Tracked as FU-16.
+  *(The advisor write path and the DB mapper layer were named here until Phase 1; both are now at 100 %
+  statements — `execute.ts` via U10, `mappers.ts` via U7.)*
 
 Do not treat this as production-ready. See [`docs/project-status.md`](docs/project-status.md) for the
 per-subsystem classification, [`docs/roadmap.md`](docs/roadmap.md) for the phased plan, and

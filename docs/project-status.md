@@ -2,11 +2,14 @@
 
 > **Status:** Active. Describes the repository's *actual* condition, not its intended design.
 > **Assessed:** 2026-07-30, by an independent five-reviewer MVP-transition review.
-> **Refreshed:** 2026-08-02 at Phase 0 close, and again 2026-08-03 when the closeout record was
-> converged. Sections §0, §1.1, §2.6, §2.8, §2.9 and §7 carry measured updates; the 2026-07-30 findings
-> are retained beside them rather than deleted (`CLAUDE.md` §7). Where a row is superseded it is marked
-> **[2026-08-02]**. Measurements are dated where they appear rather than pinned to a tip SHA here — a
-> single pinned baseline in this header went stale twice.
+> **Refreshed:** 2026-08-02 at Phase 0 close, again 2026-08-03 when the closeout record was converged,
+> and again **2026-08-06 at Phase 1 close**. Sections §0, §1.1, §2.4, §2.5, §2.6, §2.8, §2.9, §6 and §7
+> carry measured updates; the 2026-07-30 findings are retained beside them rather than deleted
+> (`CLAUDE.md` §7). Where a row is superseded it is marked with the date that superseded it — the current
+> marker is **[2026-08-06]**; **[2026-08-02]** marks the Phase 0 pass. Measurements are dated where they
+> appear rather than pinned to a tip SHA here — a single pinned baseline in this header went stale twice.
+> *(This header itself went stale a third time: it still described only the Phase 0 pass after the Phase 1
+> sync had edited §2.4, §2.5 and §6. Caught by the closeout Check as finding P1-2.)*
 > **Rule:** Existing code is evidence of current state, **not** automatically the intended final design.
 > Nothing below is labelled production-ready without stated evidence.
 
@@ -17,24 +20,28 @@
 | Check | Command | Result |
 |---|---|---|
 | Type check | `npx tsc --noEmit` | **Clean**, exit 0 |
-| Unit tests | `npx vitest run` | ~~**408 passed / 408**, 39 files~~ → **[2026-08-02] 524 passed / 524, 42 files** |
+| Unit tests | `npx vitest run` | ~~**408 passed / 408**, 39 files~~ → ~~**[2026-08-02] 524 passed / 524, 42 files**~~ → **[2026-08-06] 859 passed / 859, 73 files** |
 | Production build | `npx next build` | **Succeeds**; 15 Library pages prerendered (SSG) |
 | Migrations | `supabase/migrations/` | 7 files, `0001`–`0007` |
-| E2E (default run) | `npx playwright test` | ~33 of 89 tests execute; the rest are `E2E_LIVE`-gated |
-| CI | — | ~~**None.** No workflow files anywhere~~ → **[2026-08-02] GitHub Actions `CI` exists and is green** on `main` @ `1792f9f` ([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)): `npm ci` → typecheck → `vitest run` → `next build`. **[2026-08-03]** now a **required** status on `main` (`typecheck / test / build`), with force-push and deletion forbidden by ruleset `main-integrity`; `enforce_admins: false`. |
+| E2E (default run) | `npx playwright test` | ~~~33 of 89 tests execute~~ → **[2026-08-06] 59 passed / 30 skipped / 0 failed** of 89, against a production build; every skip is `[LIVE]`-tagged (`docs/05-qa/phase-1-live-e2e-baseline.md`) |
+| CI | — | ~~**None.** No workflow files anywhere~~ → **[2026-08-02] GitHub Actions `CI` exists and is green** on `main` @ `1792f9f` ([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)): `npm ci` → typecheck → `vitest run` → `next build`. **[2026-08-03]** now a **required** status on `main` (`typecheck / test / build`), with force-push and deletion forbidden by ruleset `main-integrity`; `enforce_admins: false`. **[2026-08-06]** a fifth blocking step was added between `vitest run` and the build — `Coverage thresholds` (`npm run test:coverage`, per-engine floors, Phase 1 U13). |
 | Lint | `npm run lint` | **Enforces nothing** — no ESLint dependency, no config |
 
 **[2026-08-02] Coverage scope was widened** in `8b1bd16`: `include` is now `src/**/*.{ts,tsx}`. Measured
 at `1792f9f` and re-measured at Phase 0 close with `npx vitest run --coverage` (read the `All files`
-row): **200 files, 47.68 % statements · ≈ 81.2 % branches · 69.85 % functions** repo-wide. Statements,
-functions, lines and the file count are stable run to run; **branch coverage is not** — it varies about
-±0.02 pp (observed 81.23–81.27) because v8 attributes branches in
-`src/lib/protocol-builder/rules.ts` differently depending on worker scheduling. The suite is 524/524
-green on every run; this is a measurement artifact, not a flaky test. Cite the range, not a decimal.
+row): **[2026-08-06] 201 files, 55.46 % statements · ≈ 84.9 % branches · 77.75 % functions** repo-wide
+(~~2026-08-02: 200 files, 47.68 % · ≈ 81.2 % · 69.85 %~~ — Phase 1's ~335 new tests moved all four).
+Statements, functions, lines and the file count are stable run to run; **branch coverage is not** — it
+varies about ±0.02 pp because v8 attributes branches in
+`src/lib/protocol-builder/rules.ts` differently depending on worker scheduling. The suite is **[2026-08-06]
+859/859** green on every run; this is a measurement artifact, not a flaky test. Cite the range, not a decimal.
 Six of
 the **seven** top-level `src` directories appear in the report — `src/architecture` holds only `*.test.ts`,
 which `coverage.exclude` drops; it is still a governed layer under §4.6, which counts all seven.
-Visibility only — the sole threshold remains `src/lib/stack-evaluator/**`. The paragraph below described
+~~Visibility only — the sole threshold remains `src/lib/stack-evaluator/**`.~~ **[2026-08-06] No longer
+visibility-only: coverage is a CI gate.** Phase 1 U13 configured floors on **14** pure-engine directories
+in `vitest.config.ts` (each `measured − 10`, with `branches` omitted where D-2's jitter applies) and added
+a blocking `Coverage thresholds` CI step. The paragraph below described
 the pre-`8b1bd16` state and its central warning still stands: a green suite is not a verified product.
 
 **Read the green suite carefully.** 408/408 does *not* mean the product is verified. Coverage is
@@ -171,14 +178,20 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   concatenated with user or DB data — no injection path into it. No tool performs network, shell, or
   file access. `claude-adapter.ts` is textbook ports-and-adapters (structural types, lazy server-only
   import, injectable client). Turn cap 5, batch cap 4.
-- **Incomplete:** `execute.ts` — the **sole write path** for advisor-driven mutations — has **0% unit
+- **Incomplete:** ~~`execute.ts` — the **sole write path** for advisor-driven mutations — has **0% unit
   coverage** (168 lines), exercised only by credential-gated E2E. Rollback failure is silently
-  swallowed with no logging (`execute.ts:127-136`). No timeout on the Anthropic call. Daily budget
-  check is non-atomic (read-then-write-later), so concurrency can exceed the cap. Client disconnect
-  neither stops the loop nor stops billing. ~190 lines of orchestration/safety-gate logic live inside
-  the route handler rather than a testable service.
+  swallowed with no logging (`execute.ts:127-136`).~~ ~~~190 lines of orchestration/safety-gate logic live
+  inside the route handler rather than a testable service.~~ **[2026-08-06] Three of these four closed by
+  Phase 1:** `execute.ts` (182 lines) is at **100 % statements** via `execute.test.ts` (U10, 24 pins);
+  rollback failure now calls `reportInternalError(rollbackErr, "ROLLBACK_FAILED")` (U20); and the
+  orchestration was extracted to `src/services/advisor-actions.ts` (196 lines) by U11, leaving a 40-line
+  transport route. **Still open:** no timeout on the Anthropic call. Daily budget check is non-atomic
+  (read-then-write-later), so concurrency can exceed the cap. Client disconnect neither stops the loop
+  nor stops billing.
 - **Persistence:** conversations, messages, usage, actions — all persisted with RLS.
-- **Classification: B.** Architecture sound; write path needs tests, logging, timeout, extraction.
+- **Classification: B.** Architecture sound; ~~write path needs tests, logging, timeout, extraction~~ →
+  **[2026-08-06]** tests, logging and extraction are done; **timeout** and the non-atomic budget check
+  are what still hold it at B (the latter is CLAUDE.md §4.9, which remains unenforced).
 
 ### 2.5 Persistence (`lib/db`, `supabase/migrations`) — **B**
 - **Works:** RLS is **complete and correct** — every table across all 7 migrations has both
@@ -186,9 +199,15 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   parent stack. Server clients use the **anon key** bound to session cookies, so RLS genuinely applies
   per request. Service-role key appears only in the dev seed script, never in HTTP-reachable code.
   Schema quality is high (derived-ownership policies, `touch_updated_at` triggers).
-- **Incomplete:** `src/lib/db/**` has **0% executed coverage** — no test calls any mapper. **No
-  contract test binds the SQL schema to `types.ts`**; `mappers.ts` casts (`row.intent as StackIntent`)
-  against plain `text` columns with no CHECK constraint, so drift is silent. `replaceFlags()` is a
+- **Incomplete:** ~~`src/lib/db/**` has **0% executed coverage** — no test calls any mapper. **No
+  contract test binds the SQL schema to `types.ts`**~~ **[2026-08-06] both closed by Phase 1.**
+  `mappers.ts` is at **100 % statements** (U7, 27 row-fixture tests), and
+  `src/architecture/schema-type-drift.test.ts` (U8, 23 tests) binds all 12 migration tables to their 12
+  row types, totally in both directions. **The gap that remains is the repository layer:** the nine
+  `src/lib/db/*-repo.ts` modules are at **0 %** and `src/lib/advisor/repo.ts` at ~37 %, exercised only
+  through route tests — tracked as **FU-16**. `mappers.ts` still casts (`row.intent as StackIntent`)
+  against plain `text` columns with no CHECK constraint, so *value* drift stays silent even though
+  *shape* drift no longer does. `replaceFlags()` is a
   non-atomic delete-then-insert — a failed insert leaves zero flags. No migration tooling, no `down`
   migrations, no record of what is deployed; migrations are applied by hand.
 - **[2026-08-02] Detection now exists.** `src/data/id-stability.test.ts` (43 tests, 9 namespaces) is
@@ -198,7 +217,9 @@ data is code, not a table), so the *soft-reference* description below stands —
 test" part does not.
 
 - **`stack_items.supplement_id` is a soft reference with no FK.** Renaming a seed ID silently orphans
-  every persisted row referencing it — a blank, unevaluable stack item. No detection, no test.
+  every persisted row referencing it — a blank, unevaluable stack item. ~~No detection, no test.~~
+  **Detection exists since 2026-08-02** — see the `id-stability.test.ts` note above; the missing FK is
+  by design (seed data is code, not a table).
 - **Classification: B.**
 
 ### 2.6 API layer (`src/app/api/**`) — **B**
@@ -207,14 +228,20 @@ test" part does not.
 > message plus an opaque correlation ID and logs the full exception server-side under that ID (`9e9e15d`,
 > **R3**); four further handlers that bypassed `handle()` were fixed in `1792f9f` (**R3b**), and
 > `src/architecture/error-disclosure.test.ts` enforces the rule across every tracked route. Route count is
-> **23**, of which 20 use `handle()` at 28 call sites.
-- **Works:** **all 22–23 routes call `getUser()` and return 401** — verified exhaustively. Zod
+> **23**, of which ~~20 use `handle()` at 28 call sites~~ → **[2026-08-06] 19 use `handle()` at 26 call
+> sites** (the earlier pair was never re-measured after the Phase 0 fixes; corrected at Phase 1 close).
+> All 23 have route tests — see §2.9.
+- **Works:** **[2026-08-06] all 23 routes call `getUser()` and return 401** — ~~22–23~~, a hedge that outlived the measurement; now verified exhaustively **and enforced** by `src/architecture/auth-coverage.test.ts`. Zod
   validation on all mutation routes. Consistent `{data, error}` envelope.
-- **Incomplete:** **zero tests**; the directory is excluded from coverage measurement entirely. Raw
+- **Incomplete:** ~~**zero tests**; the directory is excluded from coverage measurement entirely. Raw
   error messages returned verbatim to clients (`respond.ts:54`) — PostgREST text can leak constraint,
-  table, and column names. `handle()` dispatches on error-message *substrings* (`includes("not
-  configured")`) rather than typed errors. No rate limiting on any route, including the paid LLM
-  endpoint. No security headers in `next.config.ts`.
+  table, and column names.~~ **[2026-08-06] all three are stale.** All **23** route files have a
+  `route.test.ts` (Phase 1 U1–U4); the directory is measured, not excluded — `coverage.include` is
+  `src/**/*.{ts,tsx}` and `src/app/api` sits at **94.11 % statements**; and raw disclosure was fixed in
+  `9e9e15d`/`1792f9f` and is enforced by `error-disclosure.test.ts` (`respond.ts:54` is now
+  `validationError`). **Still open:** `handle()` dispatches on error-message *substrings*
+  (`includes("not configured")`) rather than typed errors — Phase 2 F3. No rate limiting on any route,
+  including the paid LLM endpoint (CLAUDE.md §4.9, unenforced). No security headers in `next.config.ts`.
 - **Classification: B.**
 
 ### 2.7 UI (`src/app`, `src/components`) — **B**
@@ -243,8 +270,10 @@ test" part does not.
 - **Classification: X.** The largest operational gap.
 
 ### 2.9 Testing infrastructure — **B**
-- **[2026-08-02] Updated:** **524 unit tests across 42 files.** Two executable architecture specs, not
-  one: `boundaries.test.ts` (**28** tests) and `error-disclosure.test.ts` (**29** tests). Both derive
+- **[2026-08-06] Updated at Phase 1 close:** **859 unit tests across 73 files** (was 524/42 at Phase 0
+  close). **Seven** executable architecture specs, not two: `boundaries.test.ts` (**36**),
+  `error-disclosure.test.ts` (**30**), `schema-type-drift.test.ts` (**23**), `doc-truth.test.ts` (**21**),
+  `rls-coverage.test.ts` (**14**), `auth-coverage.test.ts` (**13**) and `e2e-live-tagging.test.ts` (**11**). Six of the seven derive
   their inventory from `git ls-files`, so a verdict is a property of the repository rather than of one
   working tree (`a338370`, **R1**). `src/services` and `src/data` are now scanned layers, and every
   top-level `src/*` directory must be scanned or explicitly exempted with a written reason. Reference-ID
@@ -256,7 +285,8 @@ test" part does not.
   independently re-proved only by the final Check's re-execution
   (`docs/05-qa/phase-0-final-check.md`, reviewer R-A). See
   `docs/04-report/phase-0-integration-enforcement.report.md` §6.
-- **Still true:** coverage thresholds exist for `stack-evaluator` only; vitest collects `*.test.ts` only,
+- **Still true, except the first clause:** ~~coverage thresholds exist for `stack-evaluator` only~~ →
+  **[2026-08-06] 14 pure-engine directories carry floors, enforced by a CI step** (U13). vitest collects `*.test.ts` only,
   so a `.test.tsx` file is silently never run; `environment: "node"` with no jsdom means component tests
   cannot run; the E2E gaps below are unchanged and E2E remains excluded from CI.
 - **Original findings (2026-07-30), retained:**
@@ -364,16 +394,23 @@ Nothing in current evidence justifies step 3.
 ## 6. Does the architecture support continued development without compounding debt?
 
 **Yes — the shape is right and no rewrite is justified.** `src/types` → pure engines → repos/services →
-routes → components is correct, cycle-free, and three of four boundary rules are executable.
+routes → components is correct, cycle-free, and **[2026-08-06] all eight** boundary rules are executable
+(~~three of four~~): `TYPES_NO_BARREL_CYCLE`, `TYPES_IS_A_LEAF`, `TYPES_NO_EXTERNAL_DEPS`,
+`NO_UPWARD_APP_IMPORT`, `DATA_IS_A_LEAF`, `DATA_NO_EXTERNAL_DEPS`, `NO_UI_IMPORT`, `DOMAIN_IS_PURE`.
 
 > **[2026-08-02]** The three enforcement gaps named in this paragraph are closed: `src/services` and
 > `src/data` are scanned layers, and CI runs `npm test` on every push to `main` and every PR into it.
-> Domain purity (`DOMAIN_IS_PURE`) remains unenforced. The paragraph is retained as written to preserve
-> the 2026-07-30 reasoning.
+> ~~Domain purity (`DOMAIN_IS_PURE`) remains unenforced.~~ **[2026-08-05] Domain purity is now ENFORCED**
+> by Phase 1 U18, as a ratchet. The paragraph is retained as written to preserve the 2026-07-30 reasoning.
 
-What compounds debt is not the shape but **the coverage of enforcement**: two layers are ungoverned,
-purity is unenforced, the presentation layer is untestable-by-config, and none of it runs automatically.
-Plus two content/process issues:
+What compounds debt is not the shape but **the coverage of enforcement**: ~~two layers are ungoverned,
+purity is unenforced, the presentation layer is untestable-by-config, and none of it runs automatically.~~
+**[2026-08-06] Three of those four are closed** — `src/services` and `src/data` are scanned layers,
+`DOMAIN_IS_PURE` is enforced as a ratchet (U18), and all seven architecture specs run on every push via
+CI (including a coverage gate). **The presentation layer is still untestable by config**: `include` is
+`src/**/*.test.ts` with `environment: "node"`, so a `.test.tsx` cannot run — though since U13 a tracked
+`.test.tsx` at least fails loudly via `HARNESS_GAP` instead of being silently skipped. Plus two
+content/process issues:
 
 1. **Content debt compounds fastest** — every feature built on ungrounded grades enlarges the surface a
    future grounding cycle must revalidate.
@@ -393,9 +430,13 @@ Plus two content/process issues:
    every branch push and is green, and is now a **required** status on `main` with force-push and deletion
    forbidden (closeout finding **C-6**, closed — see `docs/01-plan/phase-1-verification-integrity.plan.md`
    §8.5–8.6). Residual: `enforce_admins: false`.
-6. **Core-loop E2E does not run by default**, and the one live-run artifact on disk shows a login failure.
-7. **`execute.ts` (LLM-driven write path) has 0% unit coverage.**
-8. **No schema↔type contract test; `supplement_id` has no ID-stability contract** — silent data corruption class.
+6. **Core-loop E2E does not run by default.** ~~and the one live-run artifact on disk shows a login failure.~~
+   **[2026-08-06]** that artifact no longer exists on disk and was never tracked; its failure mode is
+   diagnosed in `docs/05-qa/phase-1-live-e2e-baseline.md` §3, and a dated non-live baseline replaces it.
+7. ~~**`execute.ts` (LLM-driven write path) has 0% unit coverage.**~~ **[2026-08-06] CLOSED by U10** —
+   100 % statements, 24 pins.
+8. ~~**No schema↔type contract test; `supplement_id` has no ID-stability contract**~~ — **[2026-08-06]
+   both CLOSED**: `schema-type-drift.test.ts` (U8, 23 tests) and `id-stability.test.ts` (43 tests).
 9. **No rate limiting** on the paid LLM endpoint; budget check non-atomic; no abort on client disconnect.
 10. ~~**Raw error messages returned to clients**~~ — **[2026-08-02] closed** by `9e9e15d` (R3) and
     `1792f9f` (R3b), and enforced by `src/architecture/error-disclosure.test.ts`.

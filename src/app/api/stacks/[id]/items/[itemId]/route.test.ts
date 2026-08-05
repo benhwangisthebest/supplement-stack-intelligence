@@ -216,10 +216,13 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
     expect(deleteItem).not.toHaveBeenCalled();
   });
 
-  it("reports NOT_FOUND identically for a foreign stack and a foreign item", async () => {
-    // Both answer 404 with the same code, so neither response distinguishes
-    // "that stack isn't yours" from "that item isn't in it" — no existence
-    // oracle either way.
+  it("reports the same status and NOT_FOUND code for a foreign stack and a foreign item", async () => {
+    // Both answer 404 with the same error code, so neither the status nor the
+    // code is an existence oracle. NOTE (FU-28): the human-readable
+    // `error.message` DOES still differ — "Stack not found." vs "Item not
+    // found." — and this test does not pin it. The title used to claim the two
+    // were reported "identically", which was stronger than what is asserted
+    // here; corrected at Phase 1 closeout rather than left overstated.
     getUser.mockResolvedValue(USER);
     listItems.mockResolvedValue([ITEM]);
 

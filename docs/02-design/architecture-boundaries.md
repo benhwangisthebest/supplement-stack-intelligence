@@ -48,7 +48,7 @@ one of those lists, and each exemption must carry a written reason — so a new 
 silently ungoverned. Each scanned layer also has a minimum non-test file count, so a rule cannot pass
 vacuously because a directory was renamed away.
 
-Each rule is checked by `src/architecture/boundaries.test.ts` (28 tests). All rules apply equally to
+Each rule is checked by `src/architecture/boundaries.test.ts` (**36** tests, measured 2026-08-06). All rules apply equally to
 `import`, `import type`, `export … from`, dynamic `import()`, and `require()` — the checker
 uses the TypeScript parser, so type-only and multi-line forms cannot slip through.
 
@@ -103,7 +103,7 @@ be async functions). See `src/lib/auth/{actions,types}.ts`.
 
 ### B4 — `DATA_IS_A_LEAF`
 
-> Every non-external import in `src/data/` must resolve inside `src/types/`.
+> Every non-external import in `src/data/` must resolve inside `src/types/` or `src/data/`.
 
 `src/data/` is curated reference data — inert by design. It states facts; it must not reach into engines,
 services, or UI to compute them. Enforced since `0adf331` (U7).
@@ -165,7 +165,9 @@ a helper reading `err.message` one import away from a route is missed — plan f
 regression guard for the forms this defect actually took, not a taint-analysis engine.
 
 Every claim in that guard's header block has been verified against its own implementation by running the
-detector on a fixture per claim — 33 claims, all matching.
+detector on a fixture per claim — 33 claims, all matching **when that pass was run (2026-08-03, Phase 0
+close)**. Unlike `boundaries.test.ts`, this guard records no CLAIM→OBSERVED block in its own header, so
+the figure is a dated record and not a re-derivable one.
 
 ## Reachability guards — the pattern (Phase 1 U12)
 
@@ -175,9 +177,10 @@ proves the orchestration layer actually hands it the data. This repository has a
 `sideEffectReports`/`checkins` into `evaluateStack`, so the rule returned `[]` for every real user while
 385 tests stayed green — every one of them calling the engine directly.
 
-Optional context fields are what make it invisible. `evaluateStack`'s input marks five of its seven
-fields optional with `?? null` / `?? []` defaults, so omitting one from the call site is **silently legal
-at compile time**. `tsc` catches only the two required fields.
+Optional context fields are what make it invisible. `EvaluateStackInput` declares **eight** fields, six of
+them optional; the production call site in `src/services/evaluation.ts` passes **seven** of them (not
+`library`), and **five of those seven are optional** with `?? null` / `?? []` defaults — so omitting one
+from the call site is **silently legal at compile time**. `tsc` catches only the two required fields.
 
 **The pattern, as implemented in `src/services/evaluation.test.ts`:**
 
@@ -248,13 +251,14 @@ Status: **7/7** of `evaluateStack`'s context fields covered (was 2/7). No dead c
 ## Running the checks
 
 ```bash
-npm test                                              # includes both executable specs
-npx vitest run src/architecture/boundaries.test.ts     # layer boundaries only (31)
+npm test                                              # includes all seven executable specs
+npx vitest run src/architecture/boundaries.test.ts     # layer boundaries only (36)
 npx vitest run src/architecture/error-disclosure.test.ts # error disclosure only (30)
 npx vitest run src/architecture/auth-coverage.test.ts     # AUTH_COVERAGE only (13)
 npx vitest run src/architecture/rls-coverage.test.ts      # RLS_COVERAGE only (14)
 npx vitest run src/architecture/schema-type-drift.test.ts # SCHEMA_DRIFT only (23)
-npx vitest run src/architecture/doc-truth.test.ts         # DOC_TRUTH only (15)
+npx vitest run src/architecture/doc-truth.test.ts         # DOC_TRUTH only (21)
+npx vitest run src/architecture/e2e-live-tagging.test.ts  # LIVE_TAGGING only (11)
 npx vitest run src/services/evaluation.test.ts            # reachability only (11)
 ```
 

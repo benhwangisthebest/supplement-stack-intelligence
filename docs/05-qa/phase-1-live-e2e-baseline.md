@@ -14,7 +14,9 @@ when, and by what command. Where something was not run, it says so.
 
 ## 1. What ran
 
-**Commit:** `4246044` (branch `test/u16-u17`, U16 tip — tags + serialisation + build-then-start).
+**Commit:** `4246044` — the U16 tip (tags + serialisation + build-then-start), integrated into `main` and
+reachable from it since 2026-08-06. *(This originally named the branch `test/u16-u17`, which was deleted
+after integration; naming a deleted branch made the measurement look unreproducible.)*
 **Machine:** darwin arm64, Node v24.16.0, Playwright **1.60.0** (`@playwright/test` declared `^1.49.1`).
 **Started:** `2026-08-05T18:02:16Z` · **Ended:** `2026-08-05T18:02:40Z` (23.4s of test execution).
 
@@ -150,9 +152,12 @@ That distinction is decisive, and it is testable without credentials. Both modes
 directly (2026-08-05, `@supabase/supabase-js`, no live project involved):
 
 ```
-MODE A (env unset)        -> Supabase is not configured
+MODE A (env unset)        -> Supabase is not configured […]
 MODE B (host unreachable) -> fetch failed
 ```
+*(Mode A is truncated at the `[…]`; `getSupabaseEnv()` throws the full sentence "Supabase is not
+configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see .env.example)." Mode B
+is verbatim and complete — it is the string that matters here.)*
 
 - **Mode A** is what `getSupabaseEnv()` throws when `NEXT_PUBLIC_SUPABASE_URL` / `..._ANON_KEY` are
   missing. It is a *different string*.
@@ -172,8 +177,19 @@ severity was understated, not overstated.
 
 ## 4. Superseded figures
 
-Per §7 (never delete historical rationale), the contradicted figures are struck through where they
-appear rather than removed — see `docs/roadmap.md` item 7 and `docs/project-status.md`.
+Per §7 (never delete historical rationale), the contradicted figures are struck through rather than
+removed **in `docs/roadmap.md` item 7**, which is where they were being cited as current.
+
+Two other occurrences are deliberately left as they stand, because §7 forbids rewriting the historical
+record and both are exactly that:
+
+- `docs/reviews/mvp-transition-check.md:278` — the dated review that told us to stop citing them.
+- `docs/01-plan/features/context-adjusted-evidence.plan.md:370` — a 2026-07-16 Draft whose decision log
+  records `full suite 61/71` as what was believed **then**. Editing it would falsify the record of a past
+  decision.
+
+So "struck through everywhere" would be untrue, and is not claimed. What *is* claimed is narrower and
+checkable: no document presents either figure as a current measurement.
 
 - ~~61/71~~ — no command in this repository reproduces it; no dated record of how it was obtained.
 - ~~79/10~~ — likewise. It also disagrees with the current total: the suite is **89** tests in 23 files,

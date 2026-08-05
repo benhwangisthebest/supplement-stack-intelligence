@@ -18,16 +18,23 @@
 > functional beta → production readiness" sequence does not fit a codebase whose domain logic is already
 > production-grade but whose *content* and *operations* are not.
 
-**Phase status (updated 2026-08-03):** Phase 0 — **complete with follow-up**. All nine units (U1–U9)
+**Phase status (updated 2026-08-06):** Phase 0 — **complete with follow-up**. All nine units (U1–U9)
 shipped and are public, plus four post-review remediations — R1 `a338370`, R2 `ea5b270`, R3 `9e9e15d`,
 R3b `1792f9f` — and the documentation and record-correction commits that followed them. CI is green on
 `main`; the authoritative run for any commit is the GitHub Actions `CI` run whose head SHA is that
-commit. **Phase 1 — in progress** (2026-08-03): the plan at
-`docs/01-plan/phase-1-verification-integrity.plan.md` is **APPROVED**, and its Group A has begun.
-Phases 2–4 — not started.
+commit. **Phase 1 — complete with follow-up (2026-08-06)**: the plan at
+`docs/01-plan/phase-1-verification-integrity.plan.md` is **APPROVED** and all of its units (U1–U21, plus
+the FU-23 rider) shipped; **10 of 11 exit criteria are met and one is PARTIAL** — U17's live-E2E half is
+**BLOCKED(env)** on credentials no agent can supply. Outcome:
+`docs/04-report/phase-1-verification-integrity.report.md`.
+Phases 2–4 — not started, **with two exceptions already delivered out of order**: Phase 2 item 5's
+reference-ID manifest (`src/data/id-manifest.json` + `src/data/id-stability.test.ts`, delivered by
+Phase 0 U8) and the `execute.ts` rollback-failure correlation-ID log named by Phase 2 item 1 (delivered
+by Phase 1 U20, `d08885c`).
 
-"Complete with follow-up" is deliberate: **one exit criterion below remains unmet** and is annotated
-in place. The independent final Check **ran 2026-08-02** — first-pass verdict **NOT CLOSED** against
+"Complete with follow-up" is deliberate: **one Phase 0 exit criterion below** remains unmet and is
+annotated in place. (Phase 1 also closes with exactly one non-met criterion — its live-E2E half — so
+this sentence names the phase explicitly to stay unambiguous.) The independent final Check **ran 2026-08-02** — first-pass verdict **NOT CLOSED** against
 `0d9e008`. Its findings, the re-check of each after remediation, and the final certification are
 recorded in `docs/05-qa/phase-0-final-check.md`; that document is the authority on the Check, and this
 line deliberately does not restate its verdict.
@@ -63,10 +70,13 @@ the enforcement work every later phase depends on. It changes no product behavio
    layers; add a `DATA_IS_A_LEAF` rule (`src/data/**` may import only `src/types/**`); add a
    tree-partition sanity test asserting every top-level `src/*` directory is either scanned or in an
    explicitly-justified exemption list.
-6. **[U-DEFER-6 — deferred, NOT delivered]** Promote the currently-deferred **domain-purity** rule to
-   enforced: listed engine directories may not import `@/lib/db`, `@/lib/supabase`, `@/services`,
-   `@/app`, or `next/*`. *Would fail today at three `src/lib` files — see
-   `docs/02-design/architecture-boundaries.md`.*
+6. **[U-DEFER-6 — deferred in Phase 0; DELIVERED 2026-08-05 by Phase 1 U18]** Promote the domain-purity
+   rule to enforced: listed engine directories may not import `@/lib/db`, `@/lib/supabase`, `@/services`,
+   `@/app`, or `next/*`. ~~*Would fail today at three `src/lib` files.*~~ Now enforced as
+   `DOMAIN_IS_PURE` in `src/architecture/boundaries.test.ts`, scoped to all of `src/lib` except four
+   named exemptions (`auth`, `api`, `supabase`, `db`); the three violating files are a **ratchet**
+   allowlist whose entries must still violate, so the list can only shrink. See
+   `docs/02-design/architecture-boundaries.md`.
 7. **[U-DEFER-4 — deferred, NOT delivered]** One-line fix: change Vitest `include` to
    `src/**/*.test.{ts,tsx}` so `.tsx` tests stop being silently ignored, and add a jsdom environment path
    for component tests. *Zero `.test.tsx` files exist today, so this is latent.*
@@ -86,7 +96,8 @@ discard the only validated integrated state.
 **Testing requirements.** Suite stays green through the merge: `tsc --noEmit` clean, all unit tests
 passing, `next build` succeeding. Every new boundary rule must be **mutation-checked** — shown to go red
 against a deliberately introduced violation before it is trusted. *(Written against a 408-test baseline;
-measured **524/524 across 42 files** at Phase 0 close. The requirement is "green", not a fixed count.
+measured 524/524 across 42 files at Phase 0 close and **859/859 across 73 files at Phase 1 close
+(2026-08-06)**. The requirement is "green", not a fixed count.
 Every guard added in U7, U8, R1, R2, R3 and R3b was mutation-checked at execution time; what is
 **durably evidenced in `docs/`** differs by unit — see
 `docs/04-report/phase-0-integration-enforcement.report.md` §6 for the distinction, and
@@ -145,19 +156,26 @@ zero `.DS_Store` tracked.)*
 
 **Objective.** Make a green test run mean something. Close the gap between "408 tests pass" and "the
 product's critical paths are verified." (The figure in that gap was 408 when this phase was written;
-the current baseline is **524 tests across 42 files**, which does not change the argument.)
+the baseline was 524 across 42 files when it began and **859 across 73 files at its close (2026-08-06)**,
+which does not change the argument.)
 
-**Included work**
-1. **Route-handler tests** for all **23** routes (measured 2026-08-02; the figure was ~22 when written): unauthenticated → 401, invalid body → 400 with the
+**Included work** — *items without an explicit marker below were all delivered; see the per-item notes.*
+1. **[DONE 2026-08-04 by U1–U4]** **Route-handler tests** for all **23** routes (measured 2026-08-02; the figure was ~22 when written): unauthenticated → 401, invalid body → 400 with the
    correct envelope, happy path with a mocked Supabase client. Call exported handlers directly; no live server.
-2. **Mapper + schema-contract tests.** Unit-test every `mappers.ts` function with representative row
-   fixtures. Add a conformance check binding `supabase/migrations/*.sql` to `src/lib/db/types.ts`
-   (generate types from the schema and diff, or round-trip a row).
-3. **`execute.ts` unit tests** — the LLM-driven write path — independent of live E2E: correct repo call
-   and correct inverse-intent construction per proposal type, including rollback.
-4. **`validation/schemas.ts` tests** — accept/reject boundaries per field.
-5. **Extend the reachability guard** from 2 of 7 to all 7 context fields threaded into `evaluateStack`,
-   and write the pattern down so future engines get one by default.
+2. **[DONE 2026-08-05 by U7 + U8]** **Mapper + schema-contract tests.** Unit-test every `mappers.ts`
+   function with representative row fixtures. Add a conformance check binding `supabase/migrations/*.sql`
+   to `src/lib/db/types.ts`. Delivered as `src/architecture/schema-type-drift.test.ts`, which binds 12
+   tables to 12 row types **totally in both directions** with no exemption list; `mappers.ts` is at 100 %
+   statements.
+3. **[DONE 2026-08-04 by U10]** **`execute.ts` unit tests** — the LLM-driven write path — independent of
+   live E2E: correct repo call and correct inverse-intent construction per proposal type, including
+   rollback. 24 pins; `execute.ts` at 100 % statements.
+4. **[DONE 2026-08-04 by U9]** **`validation/schemas.ts` tests** — accept/reject boundaries per field.
+   40 tests; 100 % statements.
+5. **[DONE 2026-08-04 by U12]** **Extend the reachability guard** from 2 of 7 to all 7 context fields
+   threaded into `evaluateStack`, and write the pattern down so future engines get one by default. The
+   pattern is recorded in `docs/02-design/architecture-boundaries.md`, and an anti-drift test fails if an
+   eighth field is passed without a matching row.
 6. **Fix E2E honesty:** ~~set `workers: 1` or give each spec a per-worker user fixture (the latter is the
    prerequisite for CI E2E); point `webServer` at `npm run build && npm run start`; tag gated describes
    `[LIVE]` explicitly rather than relying on the ambiguous `L1/L2/L3` convention.~~ **DONE 2026-08-06 by
@@ -173,34 +191,58 @@ the current baseline is **524 tests across 42 files**, which does not change the
    `API_ANTHROPIC_KEY` — none available to an agent. The `fetch failed` artifact **is investigated and
    resolved**: reproduced from source, it proves the Supabase env WAS set and the host was unreachable, so
    it was never an Anthropic-key problem. The artifact itself is gone from disk and was never tracked.
-8. Extend coverage **thresholds** from `stack-evaluator` alone to every pure engine directory.
+8. **[DONE 2026-08-05 by U13]** Extend coverage **thresholds** from `stack-evaluator` alone to every pure
+   engine directory. 14 directories carry floors in `vitest.config.ts`, every number `measured − 10`, and
+   CI gained a `Coverage thresholds` step. "Every pure engine directory" resolved to **14 of 20**
+   `src/lib/*`: the four `IMPURE_BY_DESIGN` dirs are excluded by definition, and `src/lib/advisor` and
+   `src/lib/identity` are excluded because each still holds a ratchet violation — thresholding them would
+   assert a purity claim U13 had not established.
 
-**Excluded work.** No product features. No content grounding. No observability (Phase 2). No component-test
-backfill beyond safety-critical components. No new engines.
+**Excluded work.** No product features. No content grounding. No component-test backfill beyond
+safety-critical components. No new engines. **No observability (Phase 2) — with one recorded exception:**
+U20 added the correlation-ID log for `execute.ts`'s swallowed rollback failure, which is Phase 2 item 1's
+own text. Taken early because U10's rollback pins made the gap visible and the fix was two lines; recorded
+here rather than left as an unexplained overlap.
 
 **Prerequisites.** Phase 0 — CI must exist, or these tests can silently stop running.
 
-**Migration / refactoring requirements.** Extract the advisor confirm-and-apply orchestration (~190 lines
-in `src/app/api/advisor/actions/route.ts`) into `src/services/advisor-actions.ts`, so the product's most
-safety-critical trust boundary becomes unit-testable. Move its Zod schemas beside their siblings. Route
-becomes auth → parse → delegate → respond. **Behavior-preserving only.**
+**Migration / refactoring requirements.** ~~Extract the advisor confirm-and-apply orchestration (~190 lines
+in `src/app/api/advisor/actions/route.ts`) into `src/services/advisor-actions.ts`…~~ **DONE 2026-08-04 by
+U11**, the phase's only rank-1 refactor. The route is now **40** lines (auth → parse → delegate → respond)
+and the orchestration lives in `src/services/advisor-actions.ts` (**196** lines). Proven
+**behaviour-preserving** by Gate C1: all 8 outcome triples pinned before the move and re-run **unedited**
+after it.
 
 **Testing requirements.** Every guard added here must be mutation-verified red-then-green. This is a
 project-specific lesson: v11 shipped an analysis that *recommended* a regression guard and shipped
 without one; the omission was caught only by explicit mutation testing.
 
-**Security requirements.** Add enforced tests that (a) every `src/app/api/**/route.ts` calls the auth
+**Security requirements.** ~~Add enforced tests that (a) every `src/app/api/**/route.ts` calls the auth
 helper, and (b) every migration creating a table also enables RLS with a matching policy — converting
-today's perfect-but-conventional compliance into an enforced rule.
+today's perfect-but-conventional compliance into an enforced rule.~~ **DONE 2026-08-04 by U5 and U6:**
+`src/architecture/auth-coverage.test.ts` (13 tests) and `src/architecture/rls-coverage.test.ts` (14),
+both shown red against a `git add -N`-staged non-compliant new file.
 
-**Exit criteria (measurable)**
-- [ ] Every route file has ≥ 1 test each asserting 401, 400, and the happy path.
-- [ ] `mappers.ts` statement coverage ≥ 90%; `execute.ts` ≥ 80%; `validation/schemas.ts` ≥ 80%.
-- [ ] A schema↔type drift check exists and fails on a deliberately renamed column.
-- [ ] Reachability guard covers 7/7 `evaluateStack` context fields.
-- [ ] A dated live-E2E run exists with zero unexplained failures, reproducible in CI.
-- [ ] Auth-coverage and RLS-coverage tests fail on a deliberately non-compliant new file.
-- [ ] Coverage thresholds configured for every pure engine directory; enforced in CI.
+**Exit criteria (measurable)** — re-measured 2026-08-06 at Phase 1 close. The authoritative, fuller list
+with per-criterion evidence is `docs/01-plan/phase-1-verification-integrity.plan.md` §10; this is its
+summary and must not disagree with it.
+
+- [x] Every route file has ≥ 1 test each asserting 401, 400, and the happy path. — 23/23 route test files.
+      **400 applies only where the file validates request input**; the 9 structurally-exempt files are
+      enumerated in plan §10.1. As originally worded this criterion was not mechanically decidable.
+- [x] `mappers.ts` statement coverage ≥ 90%; `execute.ts` ≥ 80%; `validation/schemas.ts` ≥ 80%. — **100 %
+      / 100 % / 100 %**.
+- [x] A schema↔type drift check exists and fails on a deliberately renamed column. — U8,
+      `src/architecture/schema-type-drift.test.ts` (23 tests).
+- [x] Reachability guard covers 7/7 `evaluateStack` context fields. — U12.
+- [~] A dated live-E2E run exists with zero unexplained failures, reproducible in CI. — **PARTIAL.**
+      Non-live half measured and dated; live half **BLOCKED(env)**. The "reproducible in CI" clause was
+      **retired by ruling 5** — a CI E2E job is out of Phase 1's scope, so requiring it here would make
+      the criterion unmeetable. It moves to whichever phase adds that job (blocked on FU-25).
+- [x] Auth-coverage and RLS-coverage tests fail on a deliberately non-compliant new file. — U5 and U6,
+      both proven **both ways** per §4.2: false green unstaged, red once `git add -N`'d.
+- [x] Coverage thresholds configured for every pure engine directory; enforced in CI. — U13, 14
+      directories; see included-work item 8 for what "every" resolved to.
 
 ---
 
@@ -270,7 +312,8 @@ the dev seed script.
 ## Phase 3 — Evidence grounding (the trust layer)
 
 **Objective.** Make the Library's central claim true. Today 19 of 27 effect grades are hand-typed letters
-with no derivation — eight of them Grade A, some with zero linked papers — in a product that declares the
+with no derivation — **four** of them Grade A (there are eight Grade A in all; the other four already
+carry an `evidenceProfile`), some with zero linked papers — in a product that declares the
 Library its trust layer.
 
 **Why Phase 3 and not Phase 1.** It is the product's most important gap but also its most expensive, and
