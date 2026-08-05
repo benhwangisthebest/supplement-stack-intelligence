@@ -192,7 +192,8 @@ passing, a clean typecheck, and a successful build.
 
 Measured baseline (re-measured 2026-08-03 at Phase 0 close): typecheck clean · **524/524 unit tests across
 42 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
-`vitest run` → `next build`, on **every branch push**, on PRs into `main`, and on `workflow_dispatch`). These
+`vitest run` → **coverage thresholds** → `next build`, on **every branch push**, on PRs into `main`, and on
+`workflow_dispatch`). The coverage step was added by Phase 1 U13; the four before it are unchanged. These
 figures are re-measured by every CI run — the authoritative result for any commit is its `push`/`main`
 run, not this line, which is a snapshot and will drift. **[2026-08-03]** CI **is** now a required status:
 `main` requires the `typecheck / test / build` check on the pushed SHA, and ruleset `main-integrity`

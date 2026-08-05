@@ -93,5 +93,24 @@ jobs:
       - name: Unit and architecture tests
         run: npm test
 
+      # Phase 1 U13 - per-engine coverage floors (gate D1: "CI gains a coverage
+      # step, or the criterion is unmet").
+      #
+      # A SEPARATE step, not `npm test` swapped for the coverage run, for two
+      # reasons. It keeps the four steps above byte-identical, so this change is
+      # provably additive. And it keeps the two failure modes distinguishable: a
+      # red `npm test` means a broken assertion, a red step here means coverage
+      # fell through a floor. Folding them together would report both as "tests
+      # failed" and make the second look like the first.
+      #
+      # It re-runs the suite (~5s). Measured and accepted rather than optimised:
+      # the alternative is a coverage artifact passed between steps, which is
+      # more machinery than the saving justifies.
+      #
+      # The floors themselves, and the D-2 jitter constraint that sets their
+      # margin, are documented in vitest.config.ts beside the numbers.
+      - name: Coverage thresholds
+        run: npm run test:coverage
+
       - name: Production build
         run: npm run build

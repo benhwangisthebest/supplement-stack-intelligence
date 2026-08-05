@@ -491,6 +491,49 @@ describe("architecture boundaries — harness sanity", () => {
     ).toEqual([]);
   });
 
+  // ---- C-12: walk() and vitest disagree about .tsx ------------------------
+  // This file treats `*.test.tsx` as a test (so the boundary rules skip it),
+  // but `vitest.config.ts` collects `src/**/*.test.ts` only. A `.test.tsx` file
+  // therefore falls in the gap: not scanned as product code, and never
+  // EXECUTED — it would sit in the repository looking like coverage while
+  // asserting nothing. Detector only, per plan §5: component testing itself is
+  // excluded work, so this reports the gap rather than adopting jsdom (U13).
+  it("collects every tracked test file it excludes from scanning", () => {
+    const includes: string[] = JSON.parse(
+      (/include:\s*(\[[^\]]*\])/.exec(
+        fs.readFileSync(path.join(REPO_ROOT, "vitest.config.ts"), "utf8"),
+      )?.[1] ?? "[]").replace(/'/g, '"'),
+    );
+    expect(includes.length, "could not read `include` from vitest.config.ts").toBeGreaterThan(0);
+
+    // Minimal glob→regex for the forms this config uses: `**` spans
+    // directories, `*` does not, `.` is literal.
+    const matchers = includes.map(
+      (g) =>
+        new RegExp(
+          "^" +
+            g
+              .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+              .replace(/\*\*\//g, " ")
+              .replace(/\*/g, "[^/]*")
+              .replace(/ /g, "(?:.*/)?") +
+            "$",
+        ),
+    );
+
+    const uncollected = TRACKED_SRC_PATHS.filter(
+      (p) => /\.test\.tsx?$/.test(p) && !matchers.some((m) => m.test(p)),
+    ).sort();
+
+    expect(
+      uncollected,
+      "HARNESS_GAP: these files are tracked but not matched by vitest include;\n" +
+        "they would never run. This file skips them as tests while vitest skips them\n" +
+        "as uncollected, so they are governed by nothing and assert nothing:\n  " +
+        uncollected.join("\n  "),
+    ).toEqual([]);
+  });
+
   it("contains no tracked symlink under src/", () => {
     // The other half of C-11. Every rule here reasons about a path's LAYER from
     // its string. A symlink makes the string lie: `src/types/shortcut.ts` can
