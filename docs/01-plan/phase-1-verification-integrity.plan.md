@@ -454,7 +454,9 @@ Group E (cuttable)   U16 → U17
 ### 6.5 Sizing, honestly
 
 ~40 new test files, ~25 modified, **~205–230 new tests** (suite 524 → roughly **730–760**), one refactor,
-and **one deliberate behaviour change** — U19's 404 on an item/stack mismatch, added 2026-08-04 (§6.1.1).
+and ~~one~~ **two deliberate behaviour changes** — U19's 404 on an item/stack mismatch, added 2026-08-04
+(§6.1.1), and **U21's 404 on a foreign conversation** (2026-08-05), which replaced an empty 200. The count
+was written before U21 existed; U21 is the same ruling applied to a second route, not a new exception.
 Everything else is behaviour-preserving. U20 is not a second exception: it adds a log line and leaves every
 response byte identical. **3–5× Phase 0** by unit and test count, and it contains the
 repository's only rank-1 refactor.

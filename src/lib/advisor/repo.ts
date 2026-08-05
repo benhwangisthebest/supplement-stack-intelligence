@@ -92,6 +92,31 @@ export async function listConversations(
   return (data as ConversationRow[]).map(toConversation);
 }
 
+/**
+ * Does `conversationId` belong to `userId`?
+ *
+ * Returns a BOOLEAN rather than the row on purpose. Nothing here needs the
+ * conversation's fields, and a function that mapped a row would owe a row-fixture
+ * test (CLAUDE.md §5.6) for a value no caller reads. It also keeps the answer
+ * un-leakable: there is no shape to accidentally return to a client.
+ *
+ * Added by Phase 1 U21 — the U19 shape applied to conversation reads.
+ */
+export async function conversationBelongsToUser(
+  supabase: SupabaseClient,
+  userId: string,
+  conversationId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("advisor_conversations")
+    .select("id")
+    .eq("id", conversationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
 export async function getMessages(
   supabase: SupabaseClient,
   conversationId: string,
