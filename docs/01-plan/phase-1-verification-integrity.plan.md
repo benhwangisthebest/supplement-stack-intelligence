@@ -687,6 +687,16 @@ this amendment. What remains true and is *not* claimed closed: `enforce_admins: 
 check is bypassable by the repository admin, so it is a guardrail against accident, not a control against
 intent — stated in §8.2 and unchanged by this amendment.
 
+> **[2026-08-08 — forward pointer, appended; §8.2 and §8.5 above are left exactly as they were.]**
+> That residual is **closed**: `enforce_admins: true`, ruled by
+> `docs/01-plan/phase-2-operational-dependability.plan.md` §7 decision 4 and GET-verified, with ruleset
+> `main-integrity` unchanged. §8.2's analysis of the bypass asymmetry and §8.5's record of what was applied
+> on 2026-08-03 describe a state that was true then and must stay readable as such — the reason they are
+> annotated here rather than edited in place. **§8.4's untested edge case is not closed by this**: three
+> identically-named check runs on one SHA still make the required check's verdict depend on which run is
+> latest, and with `enforce_admins: true` a mysterious rejection is now something the admin cannot push
+> past. If an ff-push is ever rejected with a green-looking history, look there first.
+
 ### 8.4 Flagged as inferred, not verified
 
 - SHA-keyed evaluation on direct push — high confidence (classic), medium (rulesets). **The probe settles it; do not skip it.**

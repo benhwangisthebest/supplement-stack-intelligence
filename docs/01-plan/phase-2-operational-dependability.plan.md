@@ -165,7 +165,7 @@ defect; none is dropped.
 | **N-5** | `project-status.md:252` says "**two**" client components import domain engines; measured **7** | git grep | **Corrected in this commit** (docs only) |
 | **N-6** | `src/data/id-stability.test.ts:5` says "**eight** namespaces"; the manifest has **9** | read | **NOT corrected here — it is under `src/`, which this planning commit may not touch.** Register as **FU-32**; fix it in whichever unit next opens that file (U20). A guard header making a false count is the class U15 was created to audit |
 | **N-7** | **One `"use server"` module is an HTTP endpoint that no guard sees.** `src/lib/auth/actions.ts:27,44` return Supabase's raw `error.message` to the browser. `AUTH_COVERAGE` scans `src/app/api/**/route.ts`; `error-disclosure` does not scan `src/lib`. Not a live leak — the text is user-facing auth copy — but the **blind spot** is real | `git grep -ln '"use server"'` + reading both hits | **Register as FU-31.** Cheap ratchet: assert exactly **this 1 file** carries the directive, so a second cannot appear ungoverned. **[Corrected before approval]** This said "two", counting `src/lib/auth/types.ts` — which only *mentions* `"use server"` in a comment. Pinning 2 would have been wrong on day one. **[2026-08-08]** The ratchet's predicate is therefore **the directive as the module's first statement**, not `git grep -ln '"use server"'`, which still returns 2 — see U2 |
-| **N-8** | `enforce_admins: false` — the residual on the required CI check. Recorded in three documents, owned nowhere | `gh api` (Phase 1) | → **decision 4** |
+| **N-8** | `enforce_admins: false` — the residual on the required CI check. Recorded in three documents, owned nowhere | `gh api` (Phase 1) | → **decision 4**. **[2026-08-08 CLOSED]** flipped to `true` and GET-verified; the corpus is synced. The "three documents" figure was itself wrong — it is **four documents, five passages**, plus two dated records annotated rather than rewritten. A finding that miscounts its own blast radius is the FU-22 lesson again |
 
 ---
 
@@ -590,10 +590,26 @@ reason. Doing neither leaves a security note drifting through three documents in
 > proved SHA-keyed evaluation holds against a configuration with **no bypass**. The first ff-push made
 > *after* the flip is the empirical proof, and the honest place to look for it is the follow-up commit
 > below, which is that push.
-> **Obliges a follow-up commit.** At the moment this commit is authored, `enforce_admins` is still
-> `false` and the documents that say so are **correct**. They are synced in a **separate, small commit on
-> a fresh branch** with the same publish mechanics, once the flip is real — the alternative is writing a
-> claim before it is true, which is the failure mode this whole register exists to catch.
+> **Obliges a follow-up commit.** At the moment the approval commit was authored, `enforce_admins` was
+> still `false` and the documents that said so were **correct**. They are synced in a **separate, small
+> commit on a fresh branch** with the same publish mechanics, once the flip is real — the alternative is
+> writing a claim before it is true, which is the failure mode this whole register exists to catch.
+>
+> **[2026-08-08 — EXECUTED. This is that follow-up commit.]** `POST …/branches/main/protection/enforce_admins`
+> returned `{"enabled": true}`, and a subsequent **GET of the full protection object** confirms:
+> required check `typecheck / test / build` (`app_id` 15368) · `strict: true` · **`enforce_admins: true`** ·
+> `required_linear_history: true` · `allow_force_pushes: false` · `allow_deletions: false` ·
+> `required_pull_request_reviews` absent (so no PR gate was introduced as a side effect — that was option A,
+> rejected in Phase 1 §8.2). Ruleset `main-integrity` (`20291684`) is **unchanged**: `active`, on
+> `~DEFAULT_BRANCH`, rules `deletion` / `non_fast_forward` / `required_linear_history`, `bypass_actors: []`,
+> `current_user_can_bypass: "never"`.
+>
+> **The ff-push flow survived it, and the proof is this commit's own integration** — the first ff-push made
+> *after* the flip, and the first to be evaluated against a required check the pusher cannot bypass. Sites
+> synced: `README.md`, `CLAUDE.md` §5, `docs/roadmap.md`, and **two** in `docs/project-status.md` — four
+> documents, five passages, not the "three documents" N-8 estimated. Two further mentions are **dated
+> records and were annotated, not rewritten** (§7): the Phase 0 report's C-6 row, and Phase 1 plan §8.6,
+> whose §8.2/§8.5 text records what was *applied on 2026-08-03* and must stay as it was.
 > **What the flip does not buy.** `main-integrity`'s `bypass_actors: []` already bound the admin for
 > deletion and non-fast-forward. The flip extends that binding to the **required status check**, which was
 > the one rule an admin could still walk past. It does not make the repository resistant to a determined

@@ -24,7 +24,7 @@
 | Production build | `npx next build` | **Succeeds**; 15 Library pages prerendered (SSG) |
 | Migrations | `supabase/migrations/` | 7 files, `0001`–`0007` |
 | E2E (default run) | `npx playwright test` | ~~~33 of 89 tests execute~~ → **[2026-08-06] 59 passed / 30 skipped / 0 failed** of 89, against a production build; every skip is `[LIVE]`-tagged (`docs/05-qa/phase-1-live-e2e-baseline.md`) |
-| CI | — | ~~**None.** No workflow files anywhere~~ → **[2026-08-02] GitHub Actions `CI` exists and is green** on `main` @ `1792f9f` ([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)): `npm ci` → typecheck → `vitest run` → `next build`. **[2026-08-03]** now a **required** status on `main` (`typecheck / test / build`), with force-push and deletion forbidden by ruleset `main-integrity`; `enforce_admins: false`. **[2026-08-06]** a fifth blocking step was added between `vitest run` and the build — `Coverage thresholds` (`npm run test:coverage`, per-engine floors, Phase 1 U13). |
+| CI | — | ~~**None.** No workflow files anywhere~~ → **[2026-08-02] GitHub Actions `CI` exists and is green** on `main` @ `1792f9f` ([run 30744203782](https://github.com/benhwangisthebest/supplement-stack-intelligence/actions/runs/30744203782)): `npm ci` → typecheck → `vitest run` → `next build`. **[2026-08-03]** now a **required** status on `main` (`typecheck / test / build`), with force-push and deletion forbidden by ruleset `main-integrity`; ~~`enforce_admins: false`~~. **[2026-08-06]** a fifth blocking step was added between `vitest run` and the build — `Coverage thresholds` (`npm run test:coverage`, per-engine floors, Phase 1 U13). **[2026-08-08] `enforce_admins: true`** — the required check binds the admin; residual is that an admin can reconfigure the protection. |
 | Lint | `npm run lint` | **Enforces nothing** — no ESLint dependency, no config |
 
 **[2026-08-02] Coverage scope was widened** in `8b1bd16`: `include` is now `src/**/*.{ts,tsx}`. Measured
@@ -429,7 +429,9 @@ content/process issues:
 5. ~~**No CI**~~ — **[2026-08-02] closed for existence; [2026-08-03] closed for enforcement.** CI runs on
    every branch push and is green, and is now a **required** status on `main` with force-push and deletion
    forbidden (closeout finding **C-6**, closed — see `docs/01-plan/phase-1-verification-integrity.plan.md`
-   §8.5–8.6). Residual: `enforce_admins: false`.
+   §8.5–8.6). ~~Residual: `enforce_admins: false`.~~ **[2026-08-08] `enforce_admins: true`** — flipped by
+   Phase 2 plan §7 decision 4; the required check now binds the admin. The remaining residual is that an
+   admin can reconfigure the protection.
 6. **Core-loop E2E does not run by default.** ~~and the one live-run artifact on disk shows a login failure.~~
    **[2026-08-06]** that artifact no longer exists on disk and was never tracked; its failure mode is
    diagnosed in `docs/05-qa/phase-1-live-e2e-baseline.md` §3, and a dated non-live baseline replaces it.

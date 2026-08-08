@@ -211,8 +211,13 @@ across 73 files** · build succeeds · **CI exists and is green** (GitHub Action
 figures are re-measured by every CI run — the authoritative result for any commit is its `push`/`main`
 run, not this line, which is a snapshot and will drift. **[2026-08-03]** CI **is** now a required status:
 `main` requires the `typecheck / test / build` check on the pushed SHA, and ruleset `main-integrity`
-forbids deletion and non-fast-forward updates with no bypass actor. `enforce_admins: false`, so the check
-is a guardrail against accident rather than a control against a determined admin — see `docs/roadmap.md`.
+forbids deletion and non-fast-forward updates with no bypass actor. **[2026-08-08] `enforce_admins: true`**
+— GET-verified alongside `strict: true`, `required_linear_history: true`, and force-push/deletion both
+forbidden — so the required check binds the repository admin as well.
+~~`enforce_admins: false`, so the check is a guardrail against accident rather than a control against a
+determined admin.~~ The residual is now narrower: an admin can still **reconfigure** the protection, so
+this is a control against accidental bypass and against a determined admin only to the extent that
+changing a repository setting is a visible act. See `docs/roadmap.md`.
 
 ---
 

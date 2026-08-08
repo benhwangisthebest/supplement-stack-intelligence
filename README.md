@@ -82,8 +82,11 @@ Production-readiness gaps remain, and they are tracked rather than unknown:
 - **Release enforcement** — CI runs on **every branch push** and every PR into `main` (typecheck, unit
   tests, coverage thresholds, production build) and is green; `main` is current with all feature work. Since 2026-08-03 `main`
   is protected: the `typecheck / test / build` check is **required** on the pushed SHA, and force-pushes
-  and deletion are forbidden with no bypass actor. Residual limitation: `enforce_admins: false`, so the
-  required check can be bypassed by the repository admin.
+  and deletion are forbidden with no bypass actor. **[2026-08-08] `enforce_admins: true`** — the required
+  check binds the repository admin too. ~~Residual limitation: `enforce_admins: false`, so the required
+  check can be bypassed by the repository admin.~~ The residual that remains is narrower and worth stating
+  precisely: an admin can still *reconfigure* the protection. Accidental bypass is gone; a deliberate one
+  requires changing the setting, which is visible.
 - **The Supabase repository layer** — `src/lib/db/*-repo.ts` sits at **0 %** unit coverage (nine modules)
   and `src/lib/advisor/repo.ts` at ~37 %; they are exercised only through route tests. Tracked as FU-16.
   *(The advisor write path and the DB mapper layer were named here until Phase 1; both are now at 100 %

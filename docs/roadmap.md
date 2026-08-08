@@ -56,9 +56,8 @@ document needs to know:
    without the service-role key that `CLAUDE.md` §2.3 rule 14 confines.
 
 The remaining two: **`enforce_admins` is ruled to be flipped to `true`** — a repository setting, so it is
-executed rather than scheduled as work, and it is executed *after* this commit reaches `main` green, which
-is why the passages below still read `false` and are still correct at this commit; the sync lands in a
-separate small commit once the flip is real. And the **slug manifest gains a `publicSurfaces` field**
+executed rather than scheduled as work. **[2026-08-08 — done: `enforce_admins: true`, GET-verified**, with
+ruleset `main-integrity` unchanged; the Phase 0 criterion below is annotated accordingly.] And the **slug manifest gains a `publicSurfaces` field**
 rather than declaring a persistence site slugs do not have.
 
 "Complete with follow-up" is deliberate: **one Phase 0 exit criterion below** remains unmet and is
@@ -159,9 +158,13 @@ zero `.DS_Store` tracked.)*
       sub-requirement, "require PR", was **retired by recorded amendment** — see
       `docs/01-plan/phase-1-verification-integrity.plan.md` §8.6: it predates the `branches: ["**"]`
       trigger that made PR-based CI coverage redundant, and a PR flow would rewrite SHAs and so weaken the
-      very property the ff-only flow guarantees. **Stated limitation, not claimed closed:**
+      very property the ff-only flow guarantees. ~~**Stated limitation, not claimed closed:**
       `enforce_admins: false`, so the required check is a guardrail against accident, not a control
-      against a determined admin.
+      against a determined admin.~~ **[2026-08-08] That limitation is closed: `enforce_admins: true`.**
+      Flipped by Phase 2 plan §7 decision 4 and GET-verified. The required check now binds the repository
+      admin, so the ff-only flow cannot be walked past by accident. **The residual is narrower and is
+      still not claimed closed:** an admin can reconfigure the protection itself — no branch-protection
+      setting defends against the account that owns the settings.
 - [x] `boundaries.test.ts` scans ≥ 5 top-level layers (**5**: `src/types`, `src/components`, `src/lib`,
       `src/services`, `src/data`); each new rule verified red-then-green.
 - [ ] **Unmet — deliberately deferred (U-DEFER-4, closeout finding C-12).** A `.tsx` test placed anywhere
