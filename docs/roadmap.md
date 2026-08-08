@@ -27,10 +27,39 @@ commit. **Phase 1 — complete with follow-up (2026-08-06)**: the plan at
 the FU-23 rider) shipped; **10 of 11 exit criteria are met and one is PARTIAL** — U17's live-E2E half is
 **BLOCKED(env)** on credentials no agent can supply. Outcome:
 `docs/04-report/phase-1-verification-integrity.report.md`.
-Phases 2–4 — not started, **with two exceptions already delivered out of order**: Phase 2 item 5's
-reference-ID manifest (`src/data/id-manifest.json` + `src/data/id-stability.test.ts`, delivered by
-Phase 0 U8) and the `execute.ts` rollback-failure correlation-ID log named by Phase 2 item 1 (delivered
-by Phase 1 U20, `d08885c`).
+**Phase 2 — planned and approved, not started (plan approved 2026-08-08).** The plan is
+`docs/01-plan/phase-2-operational-dependability.plan.md`, **status APPROVED**, so it is rank 5 under
+`CLAUDE.md` §6 and sequences the phase. ~~Planning (2026-08-06): a DRAFT plan exists; it is not approved
+and authorises nothing.~~ No Phase 2 unit has been executed. Phases 3–4 — not started.
+
+**Two Phase 2 items were already delivered out of order** and the plan marks them so rather than
+scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` +
+`src/data/id-stability.test.ts`, delivered by Phase 0 U8 — its exit criterion is already met) and the
+`execute.ts` rollback-failure correlation-ID log named inside item 1's text (delivered by Phase 1 U20,
+`d08885c`). Items 1 and 2 are additionally **part-delivered**: correlation-ID logging exists but without
+`path`/`userId` and with no sink beyond `console.error`, and raw-error disclosure is fixed and enforced
+while the substring dispatch it names survives at `src/lib/api/respond.ts:247`.
+
+**The plan raised six decisions for the repository owner; all six were ruled on 2026-08-08** and are
+recorded in the plan's §7 beside the options each chose. Four of them change something a reader of *this*
+document needs to know:
+
+1. **FU-27, the fourth nav pill → move the Advisor out of the pillar group.** The three-item rule in
+   `CLAUDE.md` §1 is **not** relaxed; the shipped code moves to meet it (plan unit **U24**).
+2. **U-DEFER-4 → Phase 2 opens with it outstanding, by dated exception.** Recorded beside the criterion
+   itself, below. The criterion stays on the books.
+3. **Live E2E in CI → non-live only; no secrets enter this public repository.** The `[LIVE]` half is an
+   owner-run local baseline. See Phase 1 items 6–7.
+4. **Two Phase 2 exit criteria were unmeetable as written and are reworded below**, each struck in place
+   with its reason: "deployed schema matches migrations, verified in CI" needed live credentials that
+   ruling 3 refuses, and "export and delete their own data end to end" cannot delete the auth identity
+   without the service-role key that `CLAUDE.md` §2.3 rule 14 confines.
+
+The remaining two: **`enforce_admins` is ruled to be flipped to `true`** — a repository setting, so it is
+executed rather than scheduled as work, and it is executed *after* this commit reaches `main` green, which
+is why the passages below still read `false` and are still correct at this commit; the sync lands in a
+separate small commit once the flip is real. And the **slug manifest gains a `publicSurfaces` field**
+rather than declaring a persistence site slugs do not have.
 
 "Complete with follow-up" is deliberate: **one Phase 0 exit criterion below** remains unmet and is
 annotated in place. (Phase 1 also closes with exactly one non-met criterion — its live-E2E half — so
@@ -138,6 +167,29 @@ zero `.DS_Store` tracked.)*
 - [ ] **Unmet — deliberately deferred (U-DEFER-4, closeout finding C-12).** A `.tsx` test placed anywhere
       under `src/` is collected and executed. `vitest.config.ts` collects only `src/**/*.test.ts`. Zero
       `.test.tsx` files exist today, so this is latent rather than active.
+
+      > **[2026-08-08] Dated exception — Phase 2 opens with this criterion outstanding.** This document's
+      > own ordering rule says *"a later phase may not start while an earlier phase's exit criteria are
+      > unmet"* (see the top of this file). Phase 1 opened and closed against that rule with this criterion
+      > unmet, without ever saying so. **This note makes that decision explicit rather than implicit, and
+      > extends it once, to Phase 2.**
+      >
+      > **Why.** The criterion's cost is not the one-line `include` change — it is a **jsdom/RTL component
+      > harness**, which Phase 1 explicitly excluded and the Phase 2 plan excludes again (§3). Adding one
+      > to satisfy an ordering rule would import a testing decision on the wrong grounds and at the wrong
+      > time. The risk the criterion controls is *silent* omission, and that risk is already controlled:
+      > **C-12 is closed** — Phase 1 U13's `HARNESS_GAP` makes a tracked-but-uncollected `.tsx` test fail
+      > **loudly**. What remains open is making such a test **run**, which is a capability, not a hole.
+      > **The distinction is easy to blur and is the whole basis of this exception.**
+      >
+      > **What was rejected.** Retiring the criterion, or re-scoping it down to what U13 delivered. Both
+      > lower the bar instead of clearing it. **The criterion stays on the books, unchanged.**
+      >
+      > **Owner: the phase that introduces component testing.** Until such a phase exists this has a named
+      > owner-*condition* rather than an owner — stated that way because pretending otherwise would make
+      > the register look tidier than the project is. **This exception licenses nothing inside Phase 2**:
+      > `HARNESS_GAP` still hard-fails on a tracked `*.test.tsx`, which is why Phase 2's UI-touching units
+      > (U19, U24) are specified around source-level assertions instead.
 - [x] Coverage report lists `src/app`, `src/services`, `src/components`, `src/lib/db` — `include` is
       `src/**/*.{ts,tsx}` since `8b1bd16`.
 
@@ -183,6 +235,17 @@ which does not change the argument.)
    `npm run build && npm run start`, and 18 gated blocks tagged across 17 files — enforced both ways by
    `src/architecture/e2e-live-tagging.test.ts`. The per-worker user fixture is **not** done and remains the
    prerequisite for CI E2E; serialising is the available fix, not the complete one.
+
+   > **[2026-08-08] The E2E posture is now a ruling, not an open question.** **CI runs the non-live suite
+   > only. No Supabase or Anthropic secret enters this public repository** — the exfiltration argument is
+   > `docs/reviews/phase-0-plan-review.md` §P-03. The **`[LIVE]` half stays an owner-run local baseline.**
+   >
+   > What this settles and what it does not: it does **not** close FU-25 (per-worker isolation) or make the
+   > live half unnecessary — it settles that neither will be closed *by adding secrets to CI*. The seven
+   > environment items recorded as BLOCKED in `docs/05-qa/phase-1-live-e2e-baseline.md` §2 are still the
+   > entry condition for a live run; that run is now scoped to the owner's machine, so **what blocks it is
+   > scheduling, not credentials-in-CI.** A CI E2E job over the credential-free specs remains achievable
+   > and is Phase 2 plan unit U22 — which is in that plan's **cuttable** group.
 7. **Establish a dated live-E2E baseline** with all env vars set, replacing the contradicted ~~"61/71"~~ and
    ~~"79/10"~~ figures. Investigate the on-disk `fetch failed` login artifact. **PARTIAL 2026-08-06 by
    Phase 1 U17** → `docs/05-qa/phase-1-live-e2e-baseline.md`. The **non-live** baseline is measured and
@@ -303,9 +366,21 @@ the dev seed script.
 - [ ] Client disconnect provably terminates the advisor loop.
 - [ ] `replaceFlags` atomicity test passes under induced insert failure.
 - [ ] ID manifest exists; removing a published ID fails CI.
-- [ ] `db:migrate` exists; deployed schema matches migrations, verified in CI.
+- [ ] **[REWORDED 2026-08-08]** `db:migrate` exists, and **CI proves the migration set is coherent** by
+      applying every file in `supabase/migrations/` in order to a **throwaway Postgres** and failing on the
+      first error. ~~`db:migrate` exists; deployed schema matches migrations, verified in CI.~~
+      *Why:* verifying against the **deployed** database needs live credentials in CI, which the 2026-08-08
+      secrets ruling refuses for a public repository — so the original clause was unmeetable, not merely
+      hard. **Residue stated, not dropped:** matching the *live* database remains a **dated manual
+      record**, exactly like the live-E2E baseline.
 - [ ] Security headers present, verified by a response-header test.
-- [ ] A user can export and delete their own data end to end.
+- [ ] **[REWORDED 2026-08-08]** A user can **export their data and delete all of it across the 12 tables**,
+      with the **surviving auth identity stated in the response**.
+      ~~A user can export and delete their own data end to end.~~
+      *Why:* deleting the `auth.users` row needs the service-role key, which `CLAUDE.md` §2.3 rule 14
+      confines to the dev seed script — so "end to end" could not be satisfied by any compliant
+      implementation. The rewording narrows the **claim**, not the work: all 12 tables are still emptied,
+      and the part that cannot be deleted must be told to the user rather than discovered by them.
 
 ---
 

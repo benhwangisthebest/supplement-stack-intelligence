@@ -158,7 +158,7 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   All 10 rules run via `ALL_RULES` → `services/evaluation.ts:49`. Affiliate-blindness is *structural*:
   `toScorable()` strips `affiliateLink` before scoring (`product-matcher/index.ts:41-46`) so the ranker
   cannot read it. Evidence supremacy is regression-tested.
-- **Incomplete:** three superseded `safetyCopy` helpers have no production callers (dead code, not a
+- **Incomplete:** ~~three~~ **[2026-08-06] four** superseded `safetyCopy` helpers have no production callers (`labCaution`, `labSupported`, `medicationCaution`, `productReasonValue` — dead code, not a
   fabrication risk). `getBiomarker()` (`biomarkers/index.ts:151`) bypasses the injection seam.
 - **Risks:** engines are tested only with hand-built fixtures; nothing binds them to real DB data.
 - **Classification: P.** Materially more mature than "MVP" implies.
@@ -249,7 +249,7 @@ test" part does not.
   text with no `dangerouslySetInnerHTML` anywhere — no XSS surface today. Design system documented in
   `.claude/DESIGN.md` (542 lines).
 - **Incomplete:** **zero component tests**, and `.tsx` tests cannot even run (see §2.9). 31 client
-  components; two of them import domain engines and seed data directly into the browser bundle
+  components; ~~two~~ **[2026-08-06] seven** of them import from `@/lib` — **six as value imports that reach the browser bundle**, `AuthForm.tsx`'s being type-only and therefore erased at build. None imports `@/data` directly
   (`ProfileForm.tsx` → medication aliases; `StackItemRow.tsx` → `SEED_PRODUCTS` + matcher). Free at 15
   supplements; a bundle cliff at 1,000.
 - **Classification: B.**

@@ -96,6 +96,22 @@ A live run (`E2E_LIVE=1`) needs all of the following. **Names only — no values
 All seven are things only the repository owner can supply. **U17 is therefore BLOCKED(env)** for its
 live half.
 
+> **[2026-08-08 — addendum, appended not rewritten: the posture above is now a ruling.]** Everything in
+> §1–§4 describes what was run on 2026-08-05 and is unchanged. What changed is the *disposition* of the
+> live half, decided by the repository owner when the Phase 2 plan was approved
+> (`docs/01-plan/phase-2-operational-dependability.plan.md` §7 decision 3, option (a)):
+>
+> **CI runs the non-live suite only. No Supabase or Anthropic secret enters this public repository** — the
+> exfiltration argument is `docs/reviews/phase-0-plan-review.md` §P-03. **The `[LIVE]` half is an
+> owner-run local baseline**, run by the procedure in "To finish U17" below and appended to §1 as a second
+> dated run.
+>
+> **This changes who runs it, not whether it counts.** The seven items above remain the entry condition
+> verbatim; none is waived, and no live figure may be recorded until they are met on a real machine. What
+> is now settled is that waiting for them to arrive **in CI** is waiting for something that has been
+> decided against — so the live baseline's blocker is **scheduling on the owner's machine**, not a missing
+> capability. A CI E2E job over the credential-free specs is still achievable and is Phase 2 unit U22.
+
 ### To finish U17
 
 ```bash
