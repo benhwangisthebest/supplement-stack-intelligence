@@ -117,6 +117,37 @@ interface Construction {
   text: string;
 }
 
+/**
+ * Module-level `const NAME = "… not configured …"` declarations.
+ *
+ * Phase 2 U6 forced this. U1's rule found the phrase in the ARGUMENT of a
+ * construction, which worked while every throw site spelled its own text. U6
+ * replaced three hand-authored copies with one shared constant
+ * (`AI_SERVICE_NOT_CONFIGURED`, finding N-10) — and the moment it did,
+ * `new Error(AI_SERVICE_NOT_CONFIGURED)` became invisible to a literal-only
+ * scan. The guard would have gone green while the property it protects
+ * silently stopped being enforced: the exact "green about nothing" failure
+ * every anti-vacuity assertion in this repository exists to prevent.
+ *
+ * So the phrase is tracked through NAMES as well as literals. Collected across
+ * the whole scanned set, because the constant is declared in one module and
+ * used in three others.
+ */
+export function readPhraseConstants(sources: { file: string; ts: string }[]): Set<string> {
+  const names = new Set<string>();
+  const DECL = /\b(?:const|let|var)\s+([A-Za-z0-9_$]+)\s*(?::[^=]+)?=\s*(["'`])([\s\S]*?)\2/g;
+  for (const { ts } of sources) {
+    for (const m of stripLineComments(ts).matchAll(DECL)) {
+      if (m[3].toLowerCase().includes(PHRASE)) names.add(m[1]);
+    }
+  }
+  return names;
+}
+
+function stripLineComments(text: string): string {
+  return text.replace(/^\s*\/\/[^\n]*$/gm, "");
+}
+
 /** Literal text of an argument, or null when it is not a literal this rule reads. */
 function literalText(node: ts.Node): string | null {
   if (ts.isStringLiteralLike(node)) return node.text;
@@ -133,7 +164,11 @@ function literalText(node: ts.Node): string | null {
  * in-memory fixtures. A guard that must write files into `src/` to test itself
  * can leave debris in a live tree if the process dies.
  */
-export function findConstructions(fileName: string, sourceText: string): Construction[] {
+export function findConstructions(
+  fileName: string,
+  sourceText: string,
+  phraseConstants: ReadonlySet<string> = new Set(),
+): Construction[] {
   const source = ts.createSourceFile(
     fileName,
     sourceText,
@@ -149,8 +184,11 @@ export function findConstructions(fileName: string, sourceText: string): Constru
       const ctor = node.expression.text;
       if (ctor.endsWith("Error")) {
         for (const arg of node.arguments ?? []) {
-          const text = literalText(arg);
-          if (text && text.toLowerCase().includes(PHRASE)) {
+          const literal = literalText(arg);
+          const named =
+            ts.isIdentifier(arg) && phraseConstants.has(arg.text) ? arg.text : null;
+          const text = literal ?? named;
+          if (text && (named !== null || text.toLowerCase().includes(PHRASE))) {
             const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
             found.push({ file: fileName, line: line + 1, ctor, text });
             break;
@@ -165,8 +203,11 @@ export function findConstructions(fileName: string, sourceText: string): Constru
   return found;
 }
 
+const READ = (file: string) => fs.readFileSync(path.join(REPO_ROOT, file), "utf8");
+const PHRASE_CONSTANTS = readPhraseConstants(SOURCES.map((file) => ({ file, ts: READ(file) })));
+
 function constructionsInFile(file: string): Construction[] {
-  return findConstructions(file, fs.readFileSync(path.join(REPO_ROOT, file), "utf8"));
+  return findConstructions(file, READ(file), PHRASE_CONSTANTS);
 }
 
 const ALL = SOURCES.flatMap(constructionsInFile);
@@ -196,6 +237,13 @@ describe("NOT_CONFIGURED_TOTALITY — one class owns the 503 (Phase 2 U1)", () =
             '  throw new NotConfiguredError("SETTING_NAME not configured");\n\n' +
             violations.map((v) => `  ${v.file}:${v.line}  new ${v.ctor}(${JSON.stringify(v.text)})`).join("\n"),
     ).toEqual([]);
+  });
+
+  it("tracks the phrase through a shared constant, not only through literals", () => {
+    // Anti-vacuity for U6's change. If `readPhraseConstants` ever stops finding
+    // `AI_SERVICE_NOT_CONFIGURED`, the three throw sites below become invisible
+    // and the totality rule passes having checked nothing.
+    expect(PHRASE_CONSTANTS.has("AI_SERVICE_NOT_CONFIGURED")).toBe(true);
   });
 
   it("the sanctioned throw sites still exist, and are the ones U1 converted", () => {
@@ -258,6 +306,38 @@ describe("NOT_CONFIGURED_TOTALITY — one class owns the 503 (Phase 2 U1)", () =
       ["the phrase in a plain string", 'const s = "not configured"; use(s);'],
     ])("does not flag %s", (_label, src) => {
       expect(scan(src).filter((c) => c.ctor !== SANCTIONED)).toEqual([]);
+    });
+
+    it("flags a construction that passes a phrase CONSTANT rather than a literal", () => {
+      const consts = readPhraseConstants([
+        { file: "c.ts", ts: 'export const MSG = "the thing is not configured";' },
+      ]);
+      expect(consts.has("MSG")).toBe(true);
+      const hits = findConstructions("f.ts", "throw new Error(MSG);", consts);
+      expect(hits.map((h) => [h.ctor, h.text])).toEqual([["Error", "MSG"]]);
+    });
+
+    it("accepts the sanctioned class passing that same constant", () => {
+      const consts = new Set(["MSG"]);
+      expect(
+        findConstructions("f.ts", "throw new NotConfiguredError(MSG);", consts).filter(
+          (c) => c.ctor !== SANCTIONED,
+        ),
+      ).toEqual([]);
+    });
+
+    it("does not treat an unrelated constant as the phrase", () => {
+      const consts = readPhraseConstants([
+        { file: "c.ts", ts: 'const OTHER = "everything is fine";' },
+      ]);
+      expect(consts.size).toBe(0);
+      expect(findConstructions("f.ts", "throw new Error(OTHER);", consts)).toEqual([]);
+    });
+
+    it("ignores a phrase constant that exists only in a comment", () => {
+      expect(
+        readPhraseConstants([{ file: "c.ts", ts: '// const MSG = "not configured";' }]).size,
+      ).toBe(0);
     });
 
     it("reports the offending line, constructor and text", () => {

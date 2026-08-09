@@ -7,7 +7,7 @@
 // Phase 2 U1: `@/lib/api/errors` is a zero-import module by design, so importing
 // it here adds no framework edge to this pure-engine directory (DOMAIN_IS_PURE).
 // Importing `@/lib/api/respond` would — see that file's header.
-import { NotConfiguredError } from "@/lib/api/errors";
+import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors";
 import type {
   AdapterMessage,
   AdapterStep,
@@ -38,6 +38,14 @@ export interface AnthropicLike {
 
 export const DEFAULT_ADVISOR_MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 1024;
+
+/**
+ * Phase 2 U6. Without an explicit timeout the SDK's default governs how long a
+ * request may hang, and a hung request on a serverless function burns the whole
+ * `maxDuration` before anything else can react. Set here, at the one place the
+ * client is constructed, so no call site can forget it.
+ */
+const REQUEST_TIMEOUT_MS = Number(process.env.ANTHROPIC_TIMEOUT_MS ?? 60_000);
 
 export interface AdapterDeps {
   client?: AnthropicLike; // injected in tests
@@ -151,11 +159,15 @@ export class AdvisorClaudeAdapter implements ClaudeAdapter {
     if (this.client) return this.client;
     const apiKey = this.deps.apiKey ?? process.env.API_ANTHROPIC_KEY;
     if (!apiKey) {
-      throw new NotConfiguredError("API_ANTHROPIC_KEY not configured");
+      throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
     }
     // Lazily imported so the SDK loads only on the live server path.
     const mod = await import("@anthropic-ai/sdk");
-    this.client = new mod.default({ apiKey }) as unknown as AnthropicLike;
+    this.client = new mod.default({
+      apiKey,
+      timeout: REQUEST_TIMEOUT_MS,
+      maxRetries: 1,
+    }) as unknown as AnthropicLike;
     return this.client;
   }
 }

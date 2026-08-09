@@ -25,7 +25,7 @@ import {
   validationError,
   type ApiEnvelope,
 } from "./respond";
-import { NotConfiguredError } from "./errors";
+import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "./errors";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
 /**
@@ -574,7 +574,7 @@ describe("T5 — NOT_CONFIGURED keeps its evidence-backed 503 contract", () => {
   // deliberate, reviewed change to a public API message.
   it.each([
     "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see .env.example).",
-    "API_ANTHROPIC_KEY not configured",
+    AI_SERVICE_NOT_CONFIGURED,
   ])("returns 503 NOT_CONFIGURED with the authored message: %s", async (message) => {
     const spy = captureLog();
     const res = await handle(throwing(new NotConfiguredError(message)));
@@ -592,7 +592,7 @@ describe("T5 — NOT_CONFIGURED keeps its evidence-backed 503 contract", () => {
   it("carries no secret value, absolute path, or host in those messages", async () => {
     for (const message of [
       "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see .env.example).",
-      "API_ANTHROPIC_KEY not configured",
+      AI_SERVICE_NOT_CONFIGURED,
     ]) {
       const { text } = await readBody(
         await handle(throwing(new NotConfiguredError(message))),
@@ -678,8 +678,8 @@ describe("T5 — NOT_CONFIGURED keeps its evidence-backed 503 contract", () => {
   it("keeps publicMessage and message identical, so the wire text cannot drift", () => {
     // One constructor parameter sets both. If a later edit lets them diverge,
     // `respond.ts` would answer with text no log or stack trace ever shows.
-    const err = new NotConfiguredError("API_ANTHROPIC_KEY not configured");
-    expect(err.publicMessage).toBe("API_ANTHROPIC_KEY not configured");
+    const err = new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
+    expect(err.publicMessage).toBe(AI_SERVICE_NOT_CONFIGURED);
     expect(err.message).toBe(err.publicMessage);
     expect(err.name).toBe("NotConfiguredError");
     expect(err).toBeInstanceOf(Error);

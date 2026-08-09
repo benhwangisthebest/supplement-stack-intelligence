@@ -36,6 +36,7 @@ vi.mock("@/lib/lab-import/pdf-adapter", () => ({
 }));
 
 import { POST } from "./route";
+import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors";
 
 /** JSON-path request: the handler reads content-type, then `.json()`. */
 function jsonReq(body: unknown): NextRequest {
@@ -134,6 +135,27 @@ describe("POST /api/lab-import/extract", () => {
 
     expect(res.status).toBe(401);
     expect(enforceRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("answers 503, not 502, when the AI service is not configured (U6 / N-9)", async () => {
+    // DECLARED BYTE CHANGE. Before U6 this was 502 EXTRACTION_FAILED with
+    // "Extraction failed — try CSV or paste." — advice that cannot work, since
+    // paste routes through the same absent key. A missing server key is an
+    // operational state, so it now answers 503 NOT_CONFIGURED through the
+    // shared boundary, with copy that names no environment variable.
+    getUser.mockResolvedValue(USER);
+    parsePaste.mockImplementation(() => {
+      throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
+    });
+
+    const res = await POST(jsonReq({ kind: "paste", text: "x", columnMap: COLUMN_MAP }));
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error.code).toBe("NOT_CONFIGURED");
+    expect(body.error.message).toBe(AI_SERVICE_NOT_CONFIGURED);
+    expect(body.error.message).not.toMatch(/API_ANTHROPIC_KEY/);
+    expect(body.error.message).not.toMatch(/try CSV or paste/);
   });
 
   it("imports no repository or Supabase client at all", () => {

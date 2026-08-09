@@ -4,7 +4,7 @@
 // diagnoses. Its JSON output MUST pass adapterOutputSchema or we throw
 // EXTRACTION_FAILED (never coerce, never persist). Imported only by the
 // `extract` route; no domain code depends on this.
-import { NotConfiguredError } from "@/lib/api/errors";
+import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors";
 import { normalizeMarker } from "@/lib/biomarkers";
 import type { ParsedMarkerCandidate } from "@/types/lab";
 import { adapterOutputSchema } from "./schema";
@@ -89,6 +89,12 @@ export async function extractFromText(
     rawJson = await transcribe(text);
   } catch (e) {
     if (e instanceof ExtractionError) throw e;
+    // Phase 2 U6, ruling on finding N-9. A missing server key is NOT a failed
+    // extraction: wrapping it as one told the user "try CSV or paste", advice
+    // that cannot work — paste routes through the same absent key, so only the
+    // CSV third of it was ever true. Rethrown unchanged, it reaches `handle()`
+    // and answers 503 NOT_CONFIGURED with operational copy.
+    if (e instanceof NotConfiguredError) throw e;
     // Phase 2 U2 (FU-7): the underlying text used to be interpolated into this
     // message. It travels as `cause` instead — preserved for the log, absent
     // from any value a caller might forward. The route's client text is a canned
@@ -119,6 +125,12 @@ export async function extractFromPdf(
     rawJson = await transcribe(base64Pdf);
   } catch (e) {
     if (e instanceof ExtractionError) throw e;
+    // Phase 2 U6, ruling on finding N-9. A missing server key is NOT a failed
+    // extraction: wrapping it as one told the user "try CSV or paste", advice
+    // that cannot work — paste routes through the same absent key, so only the
+    // CSV third of it was ever true. Rethrown unchanged, it reaches `handle()`
+    // and answers 503 NOT_CONFIGURED with operational copy.
+    if (e instanceof NotConfiguredError) throw e;
     // Phase 2 U2 (FU-7): the underlying text used to be interpolated into this
     // message. It travels as `cause` instead — preserved for the log, absent
     // from any value a caller might forward. The route's client text is a canned
@@ -168,7 +180,7 @@ async function loadAnthropic(apiKey: string): Promise<AnthropicLike> {
 function requireKey(deps: ExtractDeps): string {
   const apiKey = deps.apiKey ?? process.env.API_ANTHROPIC_KEY;
   if (!apiKey) {
-    throw new NotConfiguredError("API_ANTHROPIC_KEY not configured");
+    throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
   }
   return apiKey;
 }

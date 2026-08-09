@@ -85,6 +85,16 @@ export interface RunAdvisorTurnArgs {
    * log — never a fallback to the exception's text.
    */
   onInternalError?: (err: unknown, code: string) => string;
+  /**
+   * Phase 2 U6: the client's connection. Checked at the TOP of every loop
+   * iteration, so an aborted turn stops before the NEXT paid call rather than
+   * after the last one — the roadmap's "stops the loop *and the billing*".
+   *
+   * Checked between steps rather than passed into the adapter because a request
+   * already in flight has already been paid for; cancelling it saves nothing
+   * and loses the usage figures the settle needs.
+   */
+  signal?: { aborted: boolean };
 }
 
 /**
@@ -95,7 +105,7 @@ export interface RunAdvisorTurnArgs {
 export async function runAdvisorTurn(
   args: RunAdvisorTurnArgs,
 ): Promise<AdvisorTurnResult> {
-  const { adapter, ctx, userMessage, budgetRemaining, onProgress, onInternalError } = args;
+  const { adapter, ctx, userMessage, budgetRemaining, onProgress, onInternalError, signal } = args;
   const maxTurns = args.maxTurns ?? MAX_TURNS;
   const maxBatch = args.maxBatch ?? MAX_BATCH_PROPOSALS;
 
@@ -124,6 +134,19 @@ export async function runAdvisorTurn(
   onProgress?.({ type: "turn-start" });
 
   for (let turn = 0; turn < maxTurns; turn++) {
+    // U6: the client is gone — stop before spending anything more. The usage
+    // accumulated so far is still returned, so the caller can settle honestly
+    // rather than releasing a reservation for tokens that were really bought.
+    if (signal?.aborted) {
+      return {
+        status: "aborted",
+        answer: "",
+        citations: [],
+        usage: { inputTokens, outputTokens },
+        toolsUsed,
+      };
+    }
+
     const step = await adapter.next({
       system: ADVISOR_SYSTEM_PROMPT,
       messages,

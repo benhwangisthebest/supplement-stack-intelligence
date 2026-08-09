@@ -151,7 +151,8 @@ export type AdvisorTurnStatus =
   | "refused-no-data" // every tool returned ok=false → honest refusal
   | "refused-budget" // per-user budget exhausted before any model call
   | "refused-turn-cap" // hit MAX_TURNS without a final answer → grounded summary
-  | "proposed"; // v7 advisor-actions: the loop halted on a write-proposal to confirm
+  | "proposed" // v7 advisor-actions: the loop halted on a write-proposal to confirm
+  | "aborted"; // Phase 2 U6: the client disconnected; the loop stopped before the next paid call
 
 export interface AdvisorTurnResult {
   status: AdvisorTurnStatus;

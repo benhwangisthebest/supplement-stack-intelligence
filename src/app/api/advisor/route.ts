@@ -22,6 +22,7 @@ import {
 } from "@/lib/advisor/repo";
 import { advisorRequestSchema } from "@/lib/advisor/schema";
 import { enforceRateLimit } from "@/lib/api/rate-limit-guard";
+import { AI_SERVICE_NOT_CONFIGURED } from "@/lib/api/errors";
 import {
   INTERNAL_ERROR_MESSAGE,
   fail,
@@ -33,6 +34,14 @@ import type { AdapterMessage, ProgressEvent } from "@/types/advisor";
 import { ZodError } from "zod";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Phase 2 U6 (§4 rule 9). A paid, tool-looping SSE route with no ceiling can run
+ * until the platform's default kills it, and every second of that is billable.
+ * The loop's own cap is MAX_TURNS; this is the wall-clock backstop for a step
+ * that hangs rather than errors.
+ */
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   const user = await getUser();
@@ -50,7 +59,7 @@ export async function POST(request: NextRequest) {
   // missing key still returns a proper 503 (preserves the v7 contract). The route
   // always uses the real adapter, which reads this env var.
   if (!process.env.API_ANTHROPIC_KEY) {
-    return fail("NOT_CONFIGURED", "API_ANTHROPIC_KEY not configured", 503);
+    return fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503);
   }
 
   const supabase = await createClient();
@@ -108,7 +117,23 @@ export async function POST(request: NextRequest) {
           // `reportInternalError` lives behind `next/server`, and the agent loop
           // is a pure-engine module that must not acquire that edge.
           onInternalError: reportInternalError,
+          // U6: the client's connection. `runAdvisorTurn` checks it at the top
+          // of each iteration, so a disconnect stops the loop before the next
+          // paid call instead of after the last one.
+          signal: request.signal,
         });
+
+        // U6: the client is gone. SETTLE FIRST — the reservation must be
+        // reconciled against what the loop really spent, or a disconnect leaves
+        // the full amount charged for the day — then stop. Nothing is persisted:
+        // an aborted turn has no answer, and appending an empty assistant
+        // message would put a blank turn in the user's history.
+        if (result.status === "aborted") {
+          if (budgetRemaining > 0) {
+            await settleAdvisorUsage(supabase, budgetRemaining, result.usage);
+          }
+          return;
+        }
 
         // Persist the turn + meter usage. A new conversation is created lazily.
         const conversationId =
@@ -122,6 +147,13 @@ export async function POST(request: NextRequest) {
         // when usage is zero — a refused or empty turn still has a reservation
         // held against it, and skipping the settle would leave it charged for
         // the rest of the day.
+        //
+        // U6: this runs for an ABORTED turn too, and that is the point. A
+        // disconnect that skipped the settle would leave the full reservation
+        // charged for the day, so a user with a flaky connection would lose
+        // their budget to requests that produced nothing. `result.usage` carries
+        // what the loop really spent before it stopped, so the charge is the
+        // truth in both directions.
         if (budgetRemaining > 0) {
           await settleAdvisorUsage(supabase, budgetRemaining, result.usage);
         }

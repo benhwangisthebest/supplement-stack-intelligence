@@ -241,3 +241,80 @@ describe("runAdvisorTurn — a failing tool handler discloses nothing to the mod
     expect(content).not.toContain("internal.sock");
   });
 });
+
+// ------------------------------------------------------ Phase 2 U6 ----------
+
+describe("runAdvisorTurn — a disconnected client stops the loop AND the billing", () => {
+  it("stops before the next paid call once the signal aborts", async () => {
+    // The roadmap's wording is "stops the loop *and the billing*", and the
+    // second half is what this pins: the adapter must not be called again.
+    // Scripted to loop forever, so only the abort can end it.
+    const adapter = new ScriptedAdapter([toolStep("checkInteractions")]);
+    const signal = { aborted: false };
+
+    // Abort after the first step has been served.
+    const spy = { get aborted() { return adapter.calls >= 1; } };
+
+    const r = await runAdvisorTurn({
+      adapter,
+      ctx: makeContext(),
+      userMessage: "hello",
+      budgetRemaining: 10_000,
+      signal: spy,
+      maxTurns: 5,
+    });
+
+    // ONE model call, not five. Asserted BEFORE the status so that removing the
+    // check reports the thing that costs money — the call count — rather than a
+    // status name.
+    expect(adapter.calls, "adapter.next call count").toBe(1);
+    expect(r.status).toBe("aborted");
+    expect(signal.aborted).toBe(false); // the fixture above is the live one
+  });
+
+  it("returns the usage spent so far, so the caller can settle the truth", async () => {
+    // The failure this prevents: returning zero usage on abort would release the
+    // whole reservation and charge nothing for calls that were really made.
+    const adapter = new ScriptedAdapter([
+      toolStep("checkInteractions", {}, { usage: { inputTokens: 40, outputTokens: 7 } }),
+    ]);
+
+    const r = await runAdvisorTurn({
+      adapter,
+      ctx: makeContext(),
+      userMessage: "hello",
+      budgetRemaining: 10_000,
+      signal: { get aborted() { return adapter.calls >= 1; } },
+      maxTurns: 5,
+    });
+
+    expect(r.status).toBe("aborted");
+    expect(r.usage).toEqual({ inputTokens: 40, outputTokens: 7 });
+  });
+
+  it("never calls the adapter at all when the client is already gone", async () => {
+    const adapter = new ScriptedAdapter([finalStep("hi")]);
+    const r = await runAdvisorTurn({
+      adapter,
+      ctx: makeContext(),
+      userMessage: "hello",
+      budgetRemaining: 10_000,
+      signal: { aborted: true },
+    });
+    expect(r.status).toBe("aborted");
+    expect(adapter.calls).toBe(0);
+    expect(r.usage).toEqual({ inputTokens: 0, outputTokens: 0 });
+  });
+
+  it("is unaffected by a signal that never aborts", async () => {
+    const adapter = new ScriptedAdapter([finalStep("Magnesium may support sleep.")]);
+    const r = await runAdvisorTurn({
+      adapter,
+      ctx: makeContext(),
+      userMessage: "hello",
+      budgetRemaining: 10_000,
+      signal: { aborted: false },
+    });
+    expect(r.status).not.toBe("aborted");
+  });
+});

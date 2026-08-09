@@ -54,3 +54,22 @@ export class NotConfiguredError extends Error {
     this.publicMessage = publicMessage;
   }
 }
+
+/**
+ * The client-facing text for "the Anthropic key is absent" (Phase 2 U6,
+ * findings N-9 and N-10).
+ *
+ * ONE constant, because there were three hand-authored copies of this string —
+ * `advisor/route.ts`'s pre-flight, `claude-adapter.ts`'s throw, and
+ * `lab-import/pdf-adapter.ts`'s — and nothing bound them. Editing one left the
+ * others stale, and the pre-flight copy is the one users actually saw.
+ *
+ * The WORDING changed with the constant, deliberately. It used to be
+ * `"API_ANTHROPIC_KEY not configured"`: an environment-variable name, shown to
+ * an end user, who can do nothing with it and should not be told the shape of
+ * the server's configuration. It now names the situation and the only true
+ * remedy. It makes no claim the system has not computed — it is an operational
+ * state, not an advisory one — and it promises no timeline.
+ */
+export const AI_SERVICE_NOT_CONFIGURED =
+  "This feature is temporarily unavailable because an AI service it relies on is not configured. No information was sent anywhere, and nothing has been saved. Please try again later.";

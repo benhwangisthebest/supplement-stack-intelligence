@@ -17,6 +17,7 @@
 // a successful-looking response carrying an error event.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
+import { readFileSync } from "node:fs";
 import type { AdvisorContext } from "@/types/advisor";
 
 const getUser = vi.fn();
@@ -231,6 +232,40 @@ describe("POST /api/advisor — the stream", () => {
     expect((await res.json()).error.code).toBe("RATE_LIMITED");
     expect(reserveAdvisorTokens).not.toHaveBeenCalled();
     expect(runAdvisorTurn).not.toHaveBeenCalled();
+  });
+
+  it("settles the reservation when the client disconnects (U6)", async () => {
+    // The billing half of "stops the loop and the billing". Skipping the settle
+    // on abort would leave the whole reservation charged for the day, so a user
+    // on a flaky connection would lose their budget to turns that produced
+    // nothing. `result.usage` is what the loop really spent before stopping.
+    runAdvisorTurn.mockResolvedValue({
+      answer: "",
+      citations: [],
+      status: "aborted",
+      toolsUsed: [],
+      usage: { inputTokens: 40, outputTokens: 7 },
+    });
+
+    await events(await POST(req(BODY)));
+
+    expect(settleAdvisorUsage).toHaveBeenCalledWith({}, 25000, {
+      inputTokens: 40,
+      outputTokens: 7,
+    });
+    // And nothing is persisted or streamed to a connection that is gone.
+    expect(appendMessages).not.toHaveBeenCalled();
+  });
+
+  it("declares maxDuration — PAID_ROUTE_CONFIG", async () => {
+    // A paid, tool-looping SSE route with no wall-clock ceiling runs until the
+    // platform's default kills it, and every second is billable. Asserted on the
+    // source because the value is a module-level export the handler never reads;
+    // U7 generalises this across the derived paid-route set.
+    const source = readFileSync(new URL("./route.ts", import.meta.url).pathname, "utf8");
+    expect(source, "PAID_ROUTE_CONFIG: /api/advisor declares no maxDuration").toMatch(
+      /export const maxDuration\s*=\s*\d+/,
+    );
   });
 
   it("checks the limit BEFORE reserving budget, not after", async () => {
