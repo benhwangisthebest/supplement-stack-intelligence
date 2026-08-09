@@ -168,7 +168,7 @@ Layering: `src/types` → pure engines in `src/lib` → `src/services` / `src/li
 | **6** (every top-level `src/*` registered) | **Enforced** | `boundaries.test.ts` — tree-partition, with a written-reason assertion |
 | 7 (client components take props) | Not enforced | Would fail today on 7 of 31 client components |
 | 8 (trust boundaries in testable modules) | Not enforced generally | The API error boundary is enforced by `error-disclosure.test.ts`; there is no general mechanical rule |
-| 9 (budget + rate limit on paid APIs) | Not enforced | No mechanical check exists |
+| **9** (budget + rate limit on paid APIs) | **Enforced** | `boundaries.test.ts` — `PAID_API_BUDGET`, as a **derived** set (Phase 2 U7): it walks the import graph from every tracked `src/app/api/**/route.ts` and governs those reaching `@anthropic-ai/sdk`, so a new paid route is covered the day it is written rather than the day someone remembers to list it. Today exactly **2** — `/api/advisor` and `/api/lab-import/extract` — and the membership is itself pinned, so a third is a red build. Each must carry a rate limit **and** either a token reservation or a `maxDuration` ceiling. It found `/api/lab-import/extract` missing the second control on the day it was written |
 
 A further rule **B5** (`src/lib`/`src/services` must not import `src/components`) is enforced but is not
 one of the numbered rules above — see closeout finding C-5.

@@ -903,6 +903,67 @@ describe("architecture boundaries — legal edges stay silent (positive controls
   });
 });
 
+/** External packages whose use costs money per call. */
+const PAID_PACKAGES = ["@anthropic-ai/sdk"];
+
+/**
+ * Tracked API routes whose import graph reaches a paid package (Phase 2 U7).
+ *
+ * A depth-first walk following resolvable `@/` specifiers, so a route that
+ * reaches the SDK three modules away is found — which both real ones do:
+ * NEITHER imports it directly. They go through `claude-adapter.ts` and
+ * `pdf-adapter.ts`, both of which `await import("@anthropic-ai/sdk")` lazily.
+ * A direct-import check would report zero paid routes and pass.
+ */
+export function paidApiRoutes(): string[] {
+  const memo = new Map<string, boolean>();
+
+  const reachesPaid = (file: string, stack: Set<string>): boolean => {
+    const cached = memo.get(file);
+    if (cached !== undefined) return cached;
+    if (stack.has(file)) return false; // cycle
+    stack.add(file);
+
+    const abs = path.join(REPO_ROOT, file);
+    if (!fs.existsSync(abs)) {
+      stack.delete(file);
+      return false;
+    }
+    const edges = extractEdges(file, fs.readFileSync(abs, "utf8"));
+
+    let found = edges.some((e) =>
+      PAID_PACKAGES.some((pkg) => e.specifier === pkg || e.specifier.startsWith(`${pkg}/`)),
+    );
+
+    if (!found) {
+      for (const e of edges) {
+        const resolved = resolveSpecifier(file, e.specifier);
+        if (resolved === null) continue;
+        // resolveSpecifier yields a module-or-directory path; try both spellings.
+        const candidates = [`${resolved}.ts`, `${resolved}.tsx`, `${resolved}/index.ts`];
+        for (const candidate of candidates) {
+          if (!fs.existsSync(path.join(REPO_ROOT, candidate))) continue;
+          if (reachesPaid(candidate, stack)) {
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+    }
+
+    stack.delete(file);
+    memo.set(file, found);
+    return found;
+  };
+
+  return TRACKED_SRC_PATHS.filter(
+    (f) => f.startsWith("src/app/api/") && f.endsWith("/route.ts"),
+  )
+    .filter((f) => reachesPaid(f, new Set()))
+    .sort();
+}
+
 describe("architecture boundaries — the real source tree", () => {
   it("B1: no file in src/types imports the barrel", () => {
     expect(violationsFor("TYPES_NO_BARREL_CYCLE")).toEqual([]);
@@ -934,5 +995,73 @@ describe("architecture boundaries — the real source tree", () => {
 
   it("DOMAIN_IS_PURE: pure engine directories reach neither persistence nor next/*", () => {
     expect(violationsFor("DOMAIN_IS_PURE")).toEqual([]);
+  });
+
+  // ---- U7: CLAUDE.md §4 rule 9, enforced for the first time ---------------
+  //
+  // "Any endpoint calling a paid external API needs an atomic per-user budget
+  // reservation and a request rate limit." Written in Phase 0 and unenforced
+  // ever since — and the cost of that was measurable: `/api/lab-import/extract`
+  // shipped with NEITHER control (finding N-1), which no review caught because
+  // nothing looked.
+  //
+  // THIS FILE IS FORCED, NOT CHOSEN. `doc-truth.test.ts` resolves rule 9's
+  // marker to the literal `PAID_API_BUDGET` and derives its title list ONLY
+  // from `boundaries.test.ts`. A guard of this name anywhere else would leave
+  // rule 9 unbound in the "silently gained enforcement" direction — the exact
+  // drift DOC_TRUTH exists to catch.
+  //
+  // THE GOVERNED SET IS DERIVED, NOT LISTED. A hand-written list of paid routes
+  // is a list of the routes someone remembered; this walks the import graph
+  // from every tracked `route.ts` and governs the ones that REACH
+  // `@anthropic-ai/sdk`. A new paid route is governed on the day it is written,
+  // which is the only property that would have caught N-1.
+  it("PAID_API_BUDGET: every route reaching a paid API declares a budget and a rate limit", () => {
+    const paid = paidApiRoutes();
+
+    // Anti-vacuity FIRST, and as a hard failure: a broken graph walk finds
+    // nothing, reports nothing, and looks identical to full compliance.
+    expect(
+      paid.length,
+      "PAID_API_BUDGET: found 0 paid-API routes; a guard that scans nothing passes\n" +
+        "vacuously. Either the import-graph walk is broken or PAID_PACKAGES is stale.",
+    ).toBeGreaterThanOrEqual(2);
+
+    const violations: string[] = [];
+    for (const route of paid) {
+      const src = fs.readFileSync(path.join(REPO_ROOT, route), "utf8");
+      if (!/enforceRateLimit\s*\(/.test(src)) {
+        violations.push(`${route} — reaches a paid API with no rate limit (enforceRateLimit)`);
+      }
+      // The budget half is satisfied either by reserving tokens (metered spend,
+      // the advisor) or by a wall-clock ceiling on the request. They are
+      // different controls for different shapes of cost; a route with neither is
+      // unbounded in both.
+      if (!/reserveAdvisorTokens\s*\(/.test(src) && !/export const maxDuration/.test(src)) {
+        violations.push(
+          `${route} — reaches a paid API with neither a budget reservation nor a maxDuration ceiling`,
+        );
+      }
+    }
+
+    expect(
+      violations.sort(),
+      "PAID_API_BUDGET: CLAUDE.md §4 rule 9 requires BOTH an atomic per-user budget\n" +
+        "reservation and a request rate limit on any endpoint calling a paid external API.\n" +
+        "These routes reach a paid package through their import graph and are missing one\n" +
+        "or both. An unbounded paid endpoint is a bill someone else can run up:\n  " +
+        violations.join("\n  "),
+    ).toEqual([]);
+  });
+
+  it("PAID_API_BUDGET: the derived set is exactly the two routes it should be", () => {
+    // The inverse of the rule above. "No violations" is equally true of a walk
+    // that found the WRONG routes, so membership is pinned: a third paid route
+    // appearing is a red build, which forces it through the rule deliberately
+    // rather than letting it inherit a green.
+    expect(paidApiRoutes()).toEqual([
+      "src/app/api/advisor/route.ts",
+      "src/app/api/lab-import/extract/route.ts",
+    ]);
   });
 });

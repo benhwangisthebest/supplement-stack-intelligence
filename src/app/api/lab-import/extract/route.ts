@@ -14,6 +14,16 @@ import { enforceRateLimit } from "@/lib/api/rate-limit-guard";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB cap (Design §7)
 
+/**
+ * Phase 2 U7 (§4 rule 9). PAID_API_BUDGET found this missing the moment it was
+ * written: the route had U5's rate limit but no ceiling on a single request.
+ * A native-PDF transcription is the slowest paid call in the product, and an
+ * unbounded one runs until the platform's default kills it — billable the whole
+ * way. Unlike the advisor there is no token ledger to reserve against (one
+ * upload, one call), so wall-clock IS the budget control here.
+ */
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   return handle(async () => {
     const user = await getUser();
