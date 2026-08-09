@@ -114,7 +114,7 @@ confines the user to their own row, so no other user's data is reachable. It cos
 
 | Item | State | Disposition |
 |---|---|---|
-| **F3** typed `NOT_CONFIGURED` | not started (`respond.ts:247`) | → **U1** |
+| **F3** typed `NOT_CONFIGURED` | ~~not started (`respond.ts:247`)~~ → **CLOSED 2026-08-08 by U1** (`c0eb8bf`) | `NotConfiguredError` in `src/lib/api/errors.ts`; `respond.ts` dispatches on `err instanceof NotConfiguredError` and reads `publicMessage`. The substring branch is **deleted**, and `not-configured-totality.test.ts` (18 tests) asserts it stays deleted *and* that no other class carries the text. Evidence: `respond.test.ts` T5 (503 by class, 500 for a bare Error), M4's bypass probe red |
 | **F5** correlation ID in UI | not started — zero `correlationId` in any `.tsx`; `AdvisorPanel.tsx:286` receives one and discards it | → **U19**, formatter-only (§5) |
 | **Slug append-only manifest** (§7 ruling 3) | not started — no `slugs` namespace; **`id === slug` for all 15 supplements**; slugs persisted in **no** DB column | → **U20** (two schema decisions — §7) |
 | **§4 rule 9** budget + rate limit | **UNENFORCED**, no guard | → **U7** |
@@ -147,7 +147,18 @@ behaviour this project's review discipline exists to prevent. They land when thi
 - **FU-13 → unowned.** Its candidate owner U14 shipped without binding the §10.1 400-exemption list, which
   remains prose. **U16 is the trigger to make it executable** (§5).
 
-**Dispositioned into units:** FU-5 (→U3), FU-6 (→U3, partially), FU-7 (→U2), FU-16 (→U9, reframed),
+> **[2026-08-08] FU-7 → CLOSED by U2** (`4d3a060`). `error-disclosure.test.ts` gained a third inventory,
+> `LIB_MODULES` over `src/lib/**` (81 non-test modules), so a helper reading `err.message` one import away
+> from a route is no longer invisible. **Measured, not predicted: 3 violations in 2 files** —
+> `advisor/agent.ts:154` and `lab-import/pdf-adapter.ts:92,119`; `respond.ts` came back clean because U1
+> had already removed its read by construction. Both files are fixed, and **the allowlist was never
+> created** — the `publicMessage` naming decision is what bought that, exactly as U1's spec predicted.
+> Evidence that the extension is what does the work, rather than something pre-existing catching the
+> plant: mutation **M6** kept a planted read in `stack-evaluator/rules.ts` and reverted only
+> `SCANNED_FILES` → **31 passed**. What FU-7 does **not** close is stated in the guard's own header and in
+> **FU-31**: `src/components/**`, `src/app/**/page.tsx`, and `auth/actions.ts`'s non-caught reads.
+
+**Dispositioned into units:** FU-5 (→U3), FU-6 (→U3, partially), ~~FU-7 (→U2)~~ **FU-7 CLOSED**, FU-16 (→U9, reframed),
 FU-20 (→U11), FU-24 (→U21), FU-25/FU-26 (→U22), FU-28 (→U12).
 
 **Remaining open, deliberately unscheduled:** FU-1, FU-4, FU-8, FU-9, FU-10, FU-11, FU-12, FU-14, FU-15,
@@ -167,6 +178,18 @@ defect; none is dropped.
 | **N-7** | **One `"use server"` module is an HTTP endpoint that no guard sees.** `src/lib/auth/actions.ts:27,44` return Supabase's raw `error.message` to the browser. `AUTH_COVERAGE` scans `src/app/api/**/route.ts`; `error-disclosure` does not scan `src/lib`. Not a live leak — the text is user-facing auth copy — but the **blind spot** is real | `git grep -ln '"use server"'` + reading both hits | **Register as FU-31.** Cheap ratchet: assert exactly **this 1 file** carries the directive, so a second cannot appear ungoverned. **[Corrected before approval]** This said "two", counting `src/lib/auth/types.ts` — which only *mentions* `"use server"` in a comment. Pinning 2 would have been wrong on day one. **[2026-08-08]** The ratchet's predicate is therefore **the directive as the module's first statement**, not `git grep -ln '"use server"'`, which still returns 2 — see U2 |
 | **N-8** | `enforce_admins: false` — the residual on the required CI check. Recorded in three documents, owned nowhere | `gh api` (Phase 1) | → **decision 4**. **[2026-08-08 CLOSED]** flipped to `true` and GET-verified; the corpus is synced. The "three documents" figure was itself wrong — it is **four documents, five passages**, plus two dated records annotated rather than rewritten. A finding that miscounts its own blast radius is the FU-22 lesson again |
 
+### 4.5 Raised by executed units — the register the phase writes as it runs
+
+Findings surfaced *by* a unit that fall outside that unit's scope (`CLAUDE.md` §8.1). A row is closed by
+the owning unit's report, not by this table. Numbering continues **N-**, append-only, so a number cited in
+a commit message keeps pointing at the same finding.
+
+| # | Found by | Finding | Evidence | Disposition |
+|---|---|---|---|---|
+| **N-9** | U1 | **A missing `API_ANTHROPIC_KEY` reaches the user as a *failed extraction*, with advice that cannot work.** `requireKey`'s throw is re-wrapped by `extractFromPdf`/`extractFromText` into `ExtractionError(…, "EXTRACTION_FAILED")`, so the route answers **502 EXTRACTION_FAILED** with `"Extraction failed — try CSV or paste."` It is an operational 503 wearing a 502, and the remedy it offers is wrong: **paste routes through the same absent key** (`makeClaudeTranscriber`), so only the CSV third of that advice can succeed. U1 found this while enumerating callers and **deliberately preserved it** | `pdf-adapter.ts` `requireKey` → the `catch` at `:92`/`:119` → `extract/route.ts`'s `ExtractionError` branch. Preservation is pinned by `lab-import.test.ts` ("still surfaces a missing API key as ExtractionError/EXTRACTION_FAILED") | **Unit candidate — UNDECLARED-BYTE-CHANGE class, and that is why U1 did not take it.** Correcting it moves 502→503 and rewrites client copy; U1's only declared change was the bare-`Error` 503→500. **Sequenced to U6** by the plan's own logic: U6 already owns `claude-adapter.ts` + the paid-call failure paths and is the first unit after U5 that touches how a paid route reports failure, so the copy and the status move once, together, with U5's 429 already declared. **Needs a decision only on the copy**, not on the status |
+| **N-10** | U1 | **`src/app/api/advisor/route.ts:52` re-authors the literal `"API_ANTHROPIC_KEY not configured"`** in a `fail(…)` pre-flight, independently of `claude-adapter.ts`'s `NotConfiguredError`. Two hand-authored copies of one operational string, in two layers, with nothing binding them. Editing one leaves the other stale, and the pre-flight is the copy users actually see | `git grep -n "API_ANTHROPIC_KEY not configured"` → `advisor/route.ts:52`, `claude-adapter.ts:154`, `pdf-adapter.ts:171` (the latter two re-measured after U1's import lines shifted them) | **Open — small, deliberately not folded into U1.** `NOT_CONFIGURED_TOTALITY` does not see it: it is a `fail()` argument, not a `new …Error(…)`, so widening the guard to catch it would mean flagging every string literal, not a construction. The honest fix is a shared constant, which is a change to the advisor route — **U6's file list**, or standalone |
+| **N-11** | U2 | **`ExtractionError` now carries `cause` and nothing logs it.** U2 moved the underlying transcription error off the message and onto `cause` (removing the disclosure read). The diagnostic value is preserved *in the object* but never reaches a sink: the extract route answers a canned 502 and `handle()` is never reached, so `logInternalError`'s `describeCause` never runs on it | `pdf-adapter.ts:97,127` carry `cause: e` (the reads U2 removed were at `:92,119` before the fix); `extract/route.ts`'s `ExtractionError` branch returns without logging | **Open — blocked on a sink, which is roadmap item 1's residue.** Closes when **U23** lands (`path`, `userId`, a real sink). Recorded now because "the data is captured" and "the data is observable" are different claims and U2 only bought the first |
+
 ---
 
 ## 5. Units
@@ -176,7 +199,7 @@ fixtures, or ~5–10 route tests · **L** = a refactor plus its tests.
 
 ### Group A — the error contract
 
-**U1 · Typed `NotConfiguredError` replaces substring dispatch.** *(roadmap 2, F3)*
+**U1 · Typed `NotConfiguredError` replaces substring dispatch.** *(roadmap 2, F3)* — **DONE 2026-08-08, `c0eb8bf`** (+24 tests → 883/74; CI run 31312551699). Five mutations red incl. the M4 bypass probe; the file list held except that the unit also added a **reachability** pin, because every other pin constructs the error itself and would stay green if every throw site reverted. **Caller enumeration (§9.4) changed the unit:** only `supabase/env.ts` actually reaches `handle()` — `claude-adapter.ts` is pre-empted by the route's own pre-flight and `pdf-adapter.ts` is intercepted by the `ExtractionError` branch — so the plan's premise that all three sites shared one path was **false**, and converting `pdf-adapter` naively would have moved bytes 502→503 undeclared. Preserved instead, and pinned. See **N-9**, **N-10**.
 N `src/lib/api/errors.ts` · M `respond.ts:247-255`, `supabase/env.ts`, `claude-adapter.ts`,
 `lab-import/pdf-adapter.ts`, `respond.test.ts` · N `src/architecture/not-configured-totality.test.ts`.
 **M**, deps none.
@@ -191,7 +214,7 @@ the route test goes `expected 500 to be 503`; delete the `instanceof` branch →
 500 + correlation ID instead of 503. All three real sites are converted, so no live path changes. A new
 pin asserting the bare-Error case is now 500 is what makes this deliberate rather than absorbed.
 
-**U2 · Extend `error-disclosure` to `src/lib/**`.** *(FU-7)*
+**U2 · Extend `error-disclosure` to `src/lib/**`.** *(FU-7)* — **DONE 2026-08-08, `4d3a060`** (+3 tests → 886/74; CI run 31313289912). **3 violations measured in 2 files**, as §4.3's closure records. Behaviour change #2 shipped as specified: the loop takes an injected `onInternalError` and puts only a correlation id where the exception text used to be, so `agent.ts` gained no `@/lib/api/respond` edge. See **N-11**.
 M `error-disclosure.test.ts` (a third inventory; its header's "`src/lib/**` in particular is not scanned"
 paragraph becomes false) · M `advisor/agent.ts`, `lab-import/pdf-adapter.ts` + tests. **M**, deps **U1**.
 Measured: err-text reads reachable by the catch-taint detector live in **3** files under `src/lib` —
@@ -225,6 +248,21 @@ predicate must be **the directive as the module's first statement**, not the str
 > **already returns 3 today** (one declaration at `:103` plus two call sites) — the gate passed before any
 > work was done. That is precisely the vacuity failure this plan condemns in U18's eslint `ignores`,
 > committed in the gate that was supposed to prevent it. Caught by the claim→observed pass.
+>
+> ### **[2026-08-08] GATE A1 — DISCHARGED.** Same command, both sides:
+> ```
+> git show f00d6a9:src/architecture/error-disclosure.test.ts \
+>   | grep -cE '^const [A-Z_]+ = trackedFiles\('        →  2     (before, at Group A's base)
+> grep -cE '^const [A-Z_]+ = trackedFiles\(' \
+>   src/architecture/error-disclosure.test.ts           →  3     (after, at 4d3a060)
+> ```
+> Clause by clause: **three** inventories — `API_ROUTES`, `SERVICE_MODULES`, `LIB_MODULES` — each asserted
+> non-empty *inside* the test (`trackedFiles` hard-fails on an empty result, and `LIB_MODULES` additionally
+> carries a `>= 60` floor, proven red at N3 against a partial collapse to 2 that the empty-check misses);
+> violation list `[]`; **allowlist empty — none was ever created**, which was the point of U1's field-name
+> decision; `error-disclosure.test.ts` green at **31 tests**.
+>
+> The corrected check is what made this meaningful: the original form returned 3 before either unit ran.
 
 ### Group B — paid-API control
 
