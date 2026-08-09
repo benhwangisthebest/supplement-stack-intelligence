@@ -1,6 +1,7 @@
 // Application — shared API response envelope + error mapping (Design §4, §6.2).
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { NotConfiguredError } from "./errors";
 
 export interface ApiError {
   code: string;
@@ -230,7 +231,11 @@ export function reportInternalError(err: unknown, code = "INTERNAL_ERROR"): stri
 
 /**
  * Wraps a handler with uniform error handling:
- * ZodError -> 400, Error('not configured') -> 503, anything else -> 500.
+ * ZodError -> 400, NotConfiguredError -> 503, anything else -> 500.
+ *
+ * A bare `Error` whose text merely mentions "not configured" is NOT a 503 —
+ * that was Phase 2 U1's declared behaviour change. It is an unexpected
+ * exception like any other: 500, generic message, correlation id.
  *
  * The catch-all deliberately does NOT read `err.message`. It previously returned
  * it verbatim, so any driver, filesystem, or provider error text reached the
@@ -244,14 +249,18 @@ export async function handle<T>(
     return await fn();
   } catch (err) {
     if (err instanceof ZodError) return validationError(err);
-    if (err instanceof Error && err.message.includes("not configured")) {
-      // Unchanged by R3, on evidence: all three "not configured" throw sites in
-      // this repository (lib/supabase/env.ts, lib/advisor/claude-adapter.ts,
-      // lib/lab-import/pdf-adapter.ts) raise hand-authored operational text
-      // naming only public NEXT_PUBLIC_* / API_ANTHROPIC_KEY variable names —
-      // no secret value, path, host, or driver text. It is a deliberate,
-      // client-safe 503, and respond.test.ts pins it.
-      return fail("NOT_CONFIGURED", err.message, 503);
+    if (err instanceof NotConfiguredError) {
+      // Phase 2 U1. This replaced `err.message.includes("not configured")` —
+      // a substring test over text the boundary does not own. Any dependency,
+      // driver, or provider whose error happened to contain that phrase was
+      // routed to a 503 and had its raw message returned to the client; the
+      // class makes the 503 something a throw site OPTS IN to.
+      //
+      // `publicMessage`, not `message`: the field is client-safe by
+      // construction and by name, and reading it is not a read of error text,
+      // so error-disclosure needs no allowlist entry for this line. See
+      // ./errors.ts.
+      return fail("NOT_CONFIGURED", err.publicMessage, 503);
     }
     return internalError(err);
   }

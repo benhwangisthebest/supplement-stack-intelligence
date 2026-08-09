@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseCsv } from "./csv";
 import { parsePaste } from "./paste";
+import { NotConfiguredError } from "@/lib/api/errors";
 import {
   candidatesFromTranscript,
   extractFromText,
@@ -155,6 +156,28 @@ describe("extractFromText (injected transcriber)", () => {
     await expect(extractFromText("text", { transcribe })).rejects.toMatchObject({
       code: "EXTRACTION_FAILED",
     });
+  });
+
+  // ---- Phase 2 U1: response-byte preservation, asserted rather than assumed --
+  it("still surfaces a missing API key as ExtractionError/EXTRACTION_FAILED", async () => {
+    // U1 retyped `requireKey`'s throw from ExtractionError to
+    // NotConfiguredError. That is safe ONLY because the wrapper above catches
+    // every non-ExtractionError and re-wraps it with the same code — so the
+    // route still answers 502 EXTRACTION_FAILED and the wire bytes do not move.
+    // Nothing pinned that before, which is exactly how a status change goes
+    // unnoticed. No `transcribe` is injected, so the real key check runs; no
+    // network is reached, because the throw happens before the SDK import.
+    const previous = process.env.API_ANTHROPIC_KEY;
+    delete process.env.API_ANTHROPIC_KEY;
+    try {
+      const rejection = await extractFromText("some lab text").catch((e: unknown) => e);
+      expect(rejection).toBeInstanceOf(ExtractionError);
+      expect((rejection as ExtractionError).code).toBe("EXTRACTION_FAILED");
+      expect(rejection).not.toBeInstanceOf(NotConfiguredError);
+    } finally {
+      if (previous === undefined) delete process.env.API_ANTHROPIC_KEY;
+      else process.env.API_ANTHROPIC_KEY = previous;
+    }
   });
 });
 

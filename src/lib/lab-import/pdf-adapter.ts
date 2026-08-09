@@ -4,6 +4,7 @@
 // diagnoses. Its JSON output MUST pass adapterOutputSchema or we throw
 // EXTRACTION_FAILED (never coerce, never persist). Imported only by the
 // `extract` route; no domain code depends on this.
+import { NotConfiguredError } from "@/lib/api/errors";
 import { normalizeMarker } from "@/lib/biomarkers";
 import type { ParsedMarkerCandidate } from "@/types/lab";
 import { adapterOutputSchema } from "./schema";
@@ -137,13 +138,29 @@ async function loadAnthropic(apiKey: string): Promise<AnthropicLike> {
   return new mod.default({ apiKey }) as unknown as AnthropicLike;
 }
 
+/**
+ * Phase 2 U1 — typed, and deliberately NOT response-affecting.
+ *
+ * This throw never reached `handle()`'s "not configured" dispatch and still does
+ * not. `requireKey` runs inside the transcriber, which runs inside
+ * `extractFromText`/`extractFromPdf`'s `try`, whose `catch` wraps any
+ * non-`ExtractionError` into `ExtractionError("Transcription failed: …",
+ * "EXTRACTION_FAILED")`. The route then answers **502 EXTRACTION_FAILED** with
+ * its own canned client text. Swapping `ExtractionError` for
+ * `NotConfiguredError` therefore leaves the wire bytes identical — it takes the
+ * *other* branch of that same wrapper and lands on the same class and code.
+ * `lab-import.test.ts` pins that, so the preservation is asserted, not assumed.
+ *
+ * FINDING, recorded not absorbed (§8.1): a missing server key is an operational
+ * 503, and this path reports it to the user as a failed extraction with "try CSV
+ * or paste" — advice that cannot work, since CSV needs no key but paste and PDF
+ * both route through the same absent one. Changing it is a response-byte change
+ * U1 did not pre-declare, so it is a follow-up, not a silent fix here.
+ */
 function requireKey(deps: ExtractDeps): string {
   const apiKey = deps.apiKey ?? process.env.API_ANTHROPIC_KEY;
   if (!apiKey) {
-    throw new ExtractionError(
-      "API_ANTHROPIC_KEY not configured",
-      "EXTRACTION_FAILED",
-    );
+    throw new NotConfiguredError("API_ANTHROPIC_KEY not configured");
   }
   return apiKey;
 }

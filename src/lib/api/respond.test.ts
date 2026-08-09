@@ -25,6 +25,8 @@ import {
   validationError,
   type ApiEnvelope,
 } from "./respond";
+import { NotConfiguredError } from "./errors";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
 /**
  * Unmistakably sensitive text: a credential, an internal host, and an absolute
@@ -560,18 +562,22 @@ describe("T4 — intentionally handled errors keep their public behavior", () =>
 // ------------------------------------------------------------------- T5 ------
 
 describe("T5 — NOT_CONFIGURED keeps its evidence-backed 503 contract", () => {
-  // Decision (R3): unchanged. Every "not configured" throw site in this repo
-  // raises hand-authored operational text naming only public variable names —
-  // src/lib/supabase/env.ts, src/lib/advisor/claude-adapter.ts,
-  // src/lib/lab-import/pdf-adapter.ts. None carries a secret value, path, host,
-  // or driver text. These cases pin the exact strings so a future edit to any
-  // of them is a deliberate, reviewed change to a public API message.
+  // Decision (R3): unchanged in substance, retyped by Phase 2 U1. The authored
+  // strings still name only public variable names — src/lib/supabase/env.ts,
+  // src/lib/advisor/claude-adapter.ts, src/lib/lab-import/pdf-adapter.ts —
+  // carrying no secret value, path, host, or driver text. What changed is HOW
+  // the boundary recognises them: `err.message.includes("not configured")`
+  // became `err instanceof NotConfiguredError`, so the 503 is opted into at the
+  // throw site rather than inferred from text the boundary does not own.
+  //
+  // These cases pin the exact strings, so a future edit to any of them is a
+  // deliberate, reviewed change to a public API message.
   it.each([
     "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see .env.example).",
     "API_ANTHROPIC_KEY not configured",
   ])("returns 503 NOT_CONFIGURED with the authored message: %s", async (message) => {
     const spy = captureLog();
-    const res = await handle(throwing(new Error(message)));
+    const res = await handle(throwing(new NotConfiguredError(message)));
     const { json } = await readBody(res);
 
     expect(res.status).toBe(503);
@@ -588,9 +594,95 @@ describe("T5 — NOT_CONFIGURED keeps its evidence-backed 503 contract", () => {
       "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see .env.example).",
       "API_ANTHROPIC_KEY not configured",
     ]) {
-      const { text } = await readBody(await handle(throwing(new Error(message))));
+      const { text } = await readBody(
+        await handle(throwing(new NotConfiguredError(message))),
+      );
       expect(text).not.toMatch(/password|secret|sk-|eyJ|\/Users\/|postgres:\/\//i);
     }
+  });
+
+  it("answers 503 on the CLASS, not on the text — an empty message still routes", async () => {
+    // The inverse of the pin below, and the reason the class exists: recognition
+    // is by type. A NotConfiguredError whose text says nothing about
+    // configuration is still a 503; a bare Error that says everything about it
+    // is not. Neither could be true under substring dispatch.
+    const res = await handle(throwing(new NotConfiguredError("Storage bucket missing.")));
+    const { json } = await readBody(res);
+
+    expect(res.status).toBe(503);
+    expect(json.error?.code).toBe("NOT_CONFIGURED");
+    expect(json.error?.message).toBe("Storage bucket missing.");
+  });
+
+  // ---- Phase 2 U1, DECLARED BEHAVIOUR CHANGE #1 ----------------------------
+  it.each([
+    ["a bare Error carrying the old magic phrase", "Supabase is not configured."],
+    ["a dependency error that merely mentions it", 'pg: SSL is not configured for host db.internal'],
+  ])("returns 500, not 503, for %s", async (_label, message) => {
+    // BEFORE U1 both of these were 503 with `message` returned verbatim, because
+    // `handle()` tested `err.message.includes("not configured")` — a substring
+    // of text authored by whoever threw, including third-party code. The second
+    // case is why that was a disclosure risk and not merely imprecise: it names
+    // an internal host, and the old boundary would have put it on the wire.
+    //
+    // Now an unconverted throw is an unexpected exception like any other. This
+    // pin is what makes the change deliberate rather than absorbed.
+    const spy = captureLog();
+    const res = await handle(throwing(new Error(message)));
+    const { json, text } = await readBody(res);
+
+    expect(res.status).toBe(500);
+    expect(json.error?.code).toBe("INTERNAL_ERROR");
+    expect(json.error?.message).toBe(INTERNAL_ERROR_MESSAGE);
+    expect(json.error?.correlationId).toEqual(expect.any(String));
+    // The whole point: the authored text does not cross the boundary.
+    expect(text).not.toContain("not configured");
+    expect(text).not.toContain("db.internal");
+    // It is not lost, either — it goes to the log with the correlation id.
+    expect(loggedText(spy)).toContain(message);
+  });
+
+  it("reaches the 503 from the one throw site that actually gets there", async () => {
+    // REACHABILITY, not a restatement of the pins above (CLAUDE.md §5.3). Those
+    // construct the error themselves, so they would stay green if every throw
+    // site in the repository reverted to a bare `Error` — the guard would be
+    // pure unit theatre. This one runs the real production path:
+    // `getSupabaseEnv()` with the env unset, inside `handle()`, which is how an
+    // unconfigured deployment actually answers a request. Of U1's three
+    // converted sites it is the only one that reaches this boundary, so it is
+    // the only one whose conversion is observable here.
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const spy = captureLog();
+    try {
+      const res = await handle(async () => {
+        getSupabaseEnv();
+        throw new Error("unreachable — getSupabaseEnv must have thrown");
+      });
+      const { json } = await readBody(res);
+
+      expect(res.status).toBe(503);
+      expect(json.error?.code).toBe("NOT_CONFIGURED");
+      expect(json.error?.message).toContain("NEXT_PUBLIC_SUPABASE_URL");
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      if (url === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+      else process.env.NEXT_PUBLIC_SUPABASE_URL = url;
+      if (key === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      else process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = key;
+    }
+  });
+
+  it("keeps publicMessage and message identical, so the wire text cannot drift", () => {
+    // One constructor parameter sets both. If a later edit lets them diverge,
+    // `respond.ts` would answer with text no log or stack trace ever shows.
+    const err = new NotConfiguredError("API_ANTHROPIC_KEY not configured");
+    expect(err.publicMessage).toBe("API_ANTHROPIC_KEY not configured");
+    expect(err.message).toBe(err.publicMessage);
+    expect(err.name).toBe("NotConfiguredError");
+    expect(err).toBeInstanceOf(Error);
   });
 });
 

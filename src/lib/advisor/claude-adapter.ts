@@ -4,6 +4,10 @@
 // injectable, mirroring lib/lab-import/pdf-adapter.ts. The pure mapping cores
 // (toAnthropicTools / parseResponse / buildToolResultMessage) are unit-tested with
 // a canned client — no network. Plan SC-9 (isolation).
+// Phase 2 U1: `@/lib/api/errors` is a zero-import module by design, so importing
+// it here adds no framework edge to this pure-engine directory (DOMAIN_IS_PURE).
+// Importing `@/lib/api/respond` would — see that file's header.
+import { NotConfiguredError } from "@/lib/api/errors";
 import type {
   AdapterMessage,
   AdapterStep,
@@ -147,7 +151,7 @@ export class AdvisorClaudeAdapter implements ClaudeAdapter {
     if (this.client) return this.client;
     const apiKey = this.deps.apiKey ?? process.env.API_ANTHROPIC_KEY;
     if (!apiKey) {
-      throw new Error("API_ANTHROPIC_KEY not configured");
+      throw new NotConfiguredError("API_ANTHROPIC_KEY not configured");
     }
     // Lazily imported so the SDK loads only on the live server path.
     const mod = await import("@anthropic-ai/sdk");
