@@ -21,6 +21,7 @@ import {
   settleAdvisorUsage,
 } from "@/lib/advisor/repo";
 import { advisorRequestSchema } from "@/lib/advisor/schema";
+import { enforceRateLimit } from "@/lib/api/rate-limit-guard";
 import {
   INTERNAL_ERROR_MESSAGE,
   fail,
@@ -53,6 +54,13 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
+
+  // Phase 2 U5 — §4 rule 9's second half. Counted BEFORE the reservation and
+  // long before the model call: a refused request must cost nothing, so the
+  // cheapest check goes first. Also before the SSE stream is opened, so the
+  // refusal can still be a status code rather than an error event.
+  const limited = await enforceRateLimit("advisor", user.id, request);
+  if (limited) return limited;
 
   // Phase 2 U4: RESERVE before spending, never read-then-write.
   //

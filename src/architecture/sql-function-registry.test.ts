@@ -30,10 +30,11 @@
 //      something revokes it. "The body checks auth.uid()" is a fine second
 //      barrier and a bad only one.
 //
-// SCOPE, measured rather than assumed: the tracked migrations define THREE
-// functions — `touch_updated_at` (0001, a plain trigger function) and U3's
-// `reserve_advisor_tokens` / `settle_advisor_tokens`. Only the last two are
-// SECURITY DEFINER, and only they are subject to the four rules. The trigger's
+// SCOPE, measured rather than assumed: the tracked migrations define FOUR
+// functions — `touch_updated_at` (0001, a plain trigger function), U3's
+// `reserve_advisor_tokens` / `settle_advisor_tokens`, and U5's
+// `consume_rate_limit`. Only the last three are SECURITY DEFINER, and only they
+// are subject to the four rules. The trigger's
 // non-definer status is itself pinned, so making it a definer later is a red
 // build rather than a silent inheritance of privileges.
 //
@@ -214,9 +215,11 @@ describe("SQL_FUNCTION_REGISTRY — the real migration set", () => {
     // below iterates DEFINERS. A parser regression that matched nothing would
     // leave all of them green while checking no function at all. U3 defines two.
     expect(MIGRATIONS.length).toBeGreaterThan(0);
-    // 3 today: `touch_updated_at` (0001, a trigger function) plus U3's two.
-    expect(FACTS.functions.length).toBeGreaterThanOrEqual(3);
+    // 4 today: `touch_updated_at` (0001, a trigger function), U3's two, and
+    // U5's `consume_rate_limit`.
+    expect(FACTS.functions.length).toBeGreaterThanOrEqual(4);
     expect(DEFINERS.map((f) => f.name).sort()).toEqual([
+      "consume_rate_limit",
       "reserve_advisor_tokens",
       "settle_advisor_tokens",
     ]);

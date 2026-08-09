@@ -344,6 +344,7 @@ const BINDING: Record<string, string> = {
   MessageRow: "advisor_messages",
   UsageRow: "advisor_usage",
   ActionRow: "advisor_actions",
+  RateLimitRow: "api_rate_limits",
 };
 
 const MIGRATIONS = trackedFiles(

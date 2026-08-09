@@ -106,3 +106,17 @@ export interface EvaluationFlagRow {
   evidence_level: string;
   created_at: string;
 }
+
+/**
+ * Rate-limit counter row (migration 0009, Phase 2 U5).
+ *
+ * `bucket_key` is an opaque application-composed string, not a user id — see
+ * the migration header on why identity is not the primary key. `user_id` is
+ * nullable and exists only so RLS can grant the owner a SELECT.
+ */
+export interface RateLimitRow {
+  bucket_key: string;
+  window_start: string;
+  request_count: number;
+  user_id: string | null;
+}

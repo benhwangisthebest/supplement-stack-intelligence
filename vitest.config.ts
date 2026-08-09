@@ -69,6 +69,13 @@ export default defineConfig({
         "src/lib/lab-import/**": { lines: 65, functions: 54, branches: 81, statements: 65 },
         "src/lib/lab-trends/**": { lines: 85, functions: 90, branches: 71, statements: 85 },
         "src/lib/product-matcher/**": { lines: 85, functions: 82, branches: 83, statements: 85 },
+        // Phase 2 U5. Measured 2026-08-08 at 100/100/100/100 — a small, wholly
+        // pure module (identity parsing + one decision function), so the floor
+        // is the usual measured−10 and the branches margin is the full 10 pp
+        // D-2 requires. It is NOT set at 100: a floor sitting on the measured
+        // value turns any harmless refactor red, which is how coverage gates
+        // get deleted.
+        "src/lib/rate-limit/**": { lines: 90, functions: 90, branches: 90, statements: 90 },
         // D-2 rule 2: no `branches` key here. Do not add one.
         "src/lib/protocol-builder/**": { lines: 89, functions: 90, statements: 89 },
         "src/lib/safety/**": { lines: 88, functions: 86, branches: 84, statements: 88 },

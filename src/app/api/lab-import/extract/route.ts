@@ -10,6 +10,7 @@ import { extractFromPdf, ExtractionError } from "@/lib/lab-import/pdf-adapter";
 import { columnMapSchema } from "@/lib/lab-import/schema";
 import type { ParsedMarkerCandidate } from "@/types/lab";
 import { fail, handle, ok, unauthorized } from "@/lib/api/respond";
+import { enforceRateLimit } from "@/lib/api/rate-limit-guard";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB cap (Design §7)
 
@@ -17,6 +18,13 @@ export async function POST(request: NextRequest) {
   return handle(async () => {
     const user = await getUser();
     if (!user) return unauthorized();
+
+    // Phase 2 U5, closing half of finding N-1: this route calls a paid external
+    // API (`@anthropic-ai/sdk` via pdf-adapter) and had NEITHER of §4 rule 9's
+    // two required controls. The limit is counted before the upload is even
+    // read, so a refused request costs no parsing and no transcription.
+    const limited = await enforceRateLimit("lab-import-extract", user.id, request);
+    if (limited) return limited;
 
     const contentType = request.headers.get("content-type") ?? "";
 

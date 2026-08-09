@@ -15,7 +15,13 @@ import type { NextRequest } from "next/server";
 const getUser = vi.fn();
 const parsePaste = vi.fn();
 
+const enforceRateLimit = vi.fn();
+
 vi.mock("@/lib/auth/session", () => ({ getUser: () => getUser() }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({}) }));
+vi.mock("@/lib/api/rate-limit-guard", () => ({
+  enforceRateLimit: (...a: unknown[]) => enforceRateLimit(...a),
+}));
 vi.mock("@/lib/lab-import/csv", () => ({ parseCsv: vi.fn(() => []) }));
 vi.mock("@/lib/lab-import/paste", () => ({ parsePaste: (...a: unknown[]) => parsePaste(...a) }));
 vi.mock("@/lib/lab-import/pdf-adapter", () => ({
@@ -44,6 +50,7 @@ const COLUMN_MAP = { marker: 0, value: 1, unit: 2 };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  enforceRateLimit.mockResolvedValue(null);
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -96,10 +103,55 @@ describe("POST /api/lab-import/extract", () => {
     expect(body.data.unreadable).toBe(false);
   });
 
+  it("answers 429 and parses nothing when the rate limit refuses (U5)", async () => {
+    // Gate B1 clause (iv), the second paid route. Closes the limiter half of
+    // finding N-1: before U5 this endpoint called a paid external API with
+    // NEITHER of §4 rule 9's two controls.
+    getUser.mockResolvedValue(USER);
+    enforceRateLimit.mockResolvedValue(
+      new Response(JSON.stringify({ data: null, error: { code: "RATE_LIMITED" } }), {
+        status: 429,
+        headers: { "Retry-After": "60" },
+      }),
+    );
+
+    const res = await POST(jsonReq({ kind: "paste", text: "x", columnMap: COLUMN_MAP }));
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("60");
+    // Nothing was parsed and, by extension, nothing was transcribed: a refused
+    // request must cost neither CPU nor an Anthropic call.
+    expect(parsePaste).not.toHaveBeenCalled();
+  });
+
+  it("checks the limit AFTER auth, so an anonymous caller never touches the counter", async () => {
+    // Ordering matters in the other direction here: counting an unauthenticated
+    // request would let anyone fill a bucket, and `bucketKey` would have no user
+    // id to key it on anyway.
+    getUser.mockResolvedValue(null);
+
+    const res = await POST(jsonReq({ kind: "paste", text: "x", columnMap: COLUMN_MAP }));
+
+    expect(res.status).toBe(401);
+    expect(enforceRateLimit).not.toHaveBeenCalled();
+  });
+
   it("imports no repository or Supabase client at all", () => {
     // A structural assertion, not a behavioural one: no arrangement of mocks
     // can prove a write never happens on paths this file does not exercise,
     // but the absence of any persistence import proves it for every path.
+    //
+    // [Phase 2 U5] SCOPE CHANGE, recorded rather than absorbed. This route now
+    // calls `enforceRateLimit`, which DOES write — one `api_rate_limits` counter
+    // row, through a Supabase client it creates internally. So the honest claim
+    // is no longer "this request path performs no write at all"; it is "this
+    // FILE reaches no repository and no lab-data table", which is the property
+    // the confirm gate actually depends on.
+    //
+    // The guard was written to take no client precisely so this pin would keep
+    // holding. Weakening the assertion to admit a `@/lib/supabase` import would
+    // have been the easy fix and would have traded a safety property for a
+    // convenience; the counter write is deliberately kept one module away.
     const source = readFileSync(
       new URL("./route.ts", import.meta.url).pathname,
       "utf8",

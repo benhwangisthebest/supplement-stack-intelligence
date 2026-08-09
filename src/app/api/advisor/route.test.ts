@@ -39,6 +39,10 @@ vi.mock("@/lib/advisor/claude-adapter", () => ({
 vi.mock("@/lib/advisor/context-loader", () => ({
   loadAdvisorContext: (...a: unknown[]) => loadAdvisorContext(...a),
 }));
+const enforceRateLimit = vi.fn();
+vi.mock("@/lib/api/rate-limit-guard", () => ({
+  enforceRateLimit: (...a: unknown[]) => enforceRateLimit(...a),
+}));
 vi.mock("@/lib/advisor/repo", () => ({
   appendMessages: (...a: unknown[]) => appendMessages(...a),
   createConversation: (...a: unknown[]) => createConversation(...a),
@@ -88,6 +92,7 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubEnv("API_ANTHROPIC_KEY", FAKE_KEY);
   loadAdvisorContext.mockResolvedValue(CTX);
+  enforceRateLimit.mockResolvedValue(null);
   reserveAdvisorTokens.mockResolvedValue(25000);
   getMessages.mockResolvedValue([]);
   createConversation.mockResolvedValue({ id: "c-new" });
@@ -206,6 +211,45 @@ describe("POST /api/advisor — the stream", () => {
       inputTokens: 10,
       outputTokens: 20,
     });
+  });
+
+  it("answers 429 and spends nothing when the rate limit refuses (U5)", async () => {
+    // Gate B1 clause (iv). The assertions that matter are the NEGATIVE ones: a
+    // refused request must not reserve budget and must not reach the model, or
+    // the limiter costs money while appearing to save it.
+    enforceRateLimit.mockResolvedValue(
+      new Response(JSON.stringify({ data: null, error: { code: "RATE_LIMITED" } }), {
+        status: 429,
+        headers: { "Retry-After": "60" },
+      }),
+    );
+
+    const res = await POST(req(BODY));
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("60");
+    expect((await res.json()).error.code).toBe("RATE_LIMITED");
+    expect(reserveAdvisorTokens).not.toHaveBeenCalled();
+    expect(runAdvisorTurn).not.toHaveBeenCalled();
+  });
+
+  it("checks the limit BEFORE reserving budget, not after", async () => {
+    // Ordering, pinned separately: reserving first would take the reservation
+    // off the ledger and then refuse, so a rate-limited caller would burn their
+    // own daily budget doing nothing. The call order is the proof.
+    const order: string[] = [];
+    enforceRateLimit.mockImplementation(async () => {
+      order.push("limit");
+      return null;
+    });
+    reserveAdvisorTokens.mockImplementation(async () => {
+      order.push("reserve");
+      return 25000;
+    });
+
+    await events(await POST(req(BODY)));
+
+    expect(order).toEqual(["limit", "reserve"]);
   });
 
   it("ships proposals with their cumulative safety flags when the loop halts", async () => {
