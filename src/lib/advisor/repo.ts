@@ -182,7 +182,98 @@ export async function getRemainingBudget(
   return Math.max(0, dailyBudget - used);
 }
 
-/** Add a turn's usage to today's ledger (upsert + accumulate). SC-8. */
+/**
+ * An upper bound on what one advisor turn may spend, reserved BEFORE the model
+ * is called and settled to the real figure afterwards (Phase 2 U4).
+ *
+ * WHERE THE NUMBER COMES FROM, and what it does not promise. The output half is
+ * derived: `MAX_TURNS` (5) × the adapter's `max_tokens` (1024) = 5,120 output
+ * tokens is a hard ceiling the loop cannot exceed. The input half is an
+ * ESTIMATE — prompt, advisor context, and conversation history are not bounded
+ * by any constant in this repository — so the reservation is deliberately
+ * generous and `settleAdvisorUsage` corrects it to the truth immediately after.
+ *
+ * What the reservation buys is CONCURRENCY safety: N simultaneous turns cannot
+ * each see the full remaining budget, because each has already taken its bound
+ * off the top. What it does NOT buy is a per-turn hard cap — if a single turn's
+ * actual usage exceeds this bound, settle charges the real figure and the day's
+ * total can overshoot by that difference, once. Bounding a turn's input is a
+ * different mechanism (truncating context), not a ledger property.
+ */
+export const ADVISOR_TURN_RESERVATION = Number(
+  process.env.ADVISOR_TURN_RESERVATION ?? 25_000,
+);
+
+/**
+ * Reserve a turn's worth of budget atomically. Returns the granted amount, or
+ * **0 when the reservation would breach the daily budget** — which the caller
+ * must treat as a refusal.
+ *
+ * WHY AN RPC AND NOT A READ-THEN-WRITE (Phase 2 U4, finding N-2). The previous
+ * pair — `getRemainingBudget` then `recordUsage` — had two races, not one:
+ *
+ *   1. between the two calls: every concurrent turn read the same remaining
+ *      budget and every one of them proceeded;
+ *   2. INSIDE `recordUsage`, which was select-then-upsert, so concurrent turns
+ *      overwrote rather than accumulated and usage was silently LOST.
+ *
+ * Neither is fixable in supabase-js: PostgREST cannot express `col = col + n`,
+ * so there is no client-side spelling of "add and check in one statement". The
+ * single `UPDATE … WHERE … RETURNING` lives in
+ * `supabase/migrations/0008_usage_ledger_policy.sql` and this is its only
+ * caller. The user id is NOT passed: the function derives it from `auth.uid()`,
+ * because a definer function that trusts a supplied id lets any caller charge
+ * anyone's ledger.
+ *
+ * Proven here against a stateful fake, which establishes that THIS FUNCTION has
+ * no read-then-write window. That the SQL is atomic under real concurrent
+ * Postgres sessions is an owner-run check — see the migration's header.
+ */
+export async function reserveAdvisorTokens(
+  supabase: SupabaseClient,
+  amount: number = ADVISOR_TURN_RESERVATION,
+  dailyBudget: number = ADVISOR_DAILY_TOKEN_BUDGET,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("reserve_advisor_tokens", {
+    p_amount: amount,
+    p_daily_budget: dailyBudget,
+  });
+  if (error) throw error;
+  return typeof data === "number" ? data : 0;
+}
+
+/**
+ * Release a reservation and charge what was actually spent, in one statement.
+ *
+ * Splitting these would reintroduce a window where the reservation is released
+ * but the usage is not yet recorded — briefly handing the user their budget
+ * back for free.
+ */
+export async function settleAdvisorUsage(
+  supabase: SupabaseClient,
+  reserved: number,
+  usage: { inputTokens: number; outputTokens: number },
+): Promise<void> {
+  const { error } = await supabase.rpc("settle_advisor_tokens", {
+    p_reserved: reserved,
+    p_input_tokens: usage.inputTokens,
+    p_output_tokens: usage.outputTokens,
+  });
+  if (error) throw error;
+}
+
+/**
+ * Add a turn's usage to today's ledger (upsert + accumulate). SC-8.
+ *
+ * **[Phase 2 U4] No longer on the request path, and it can no longer work.**
+ * 0008 removed the user's INSERT/UPDATE/DELETE on `advisor_usage`, so this
+ * direct upsert is denied for an end-user client. It is retained only because
+ * `npm run db:seed` runs under the service-role key, which bypasses RLS — and
+ * deleting it would be a change to the seed path under U4's name. The advisor
+ * route uses `reserveAdvisorTokens` / `settleAdvisorUsage`.
+ *
+ * @deprecated for request-path use; see N-2 and 0008.
+ */
 export async function recordUsage(
   supabase: SupabaseClient,
   userId: string,

@@ -22,11 +22,11 @@ import type { AdvisorContext } from "@/types/advisor";
 const getUser = vi.fn();
 const runAdvisorTurn = vi.fn();
 const loadAdvisorContext = vi.fn();
-const getRemainingBudget = vi.fn();
+const reserveAdvisorTokens = vi.fn();
 const getMessages = vi.fn();
 const createConversation = vi.fn();
 const appendMessages = vi.fn();
-const recordUsage = vi.fn();
+const settleAdvisorUsage = vi.fn();
 
 vi.mock("@/lib/auth/session", () => ({ getUser: () => getUser() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({}) }));
@@ -44,8 +44,8 @@ vi.mock("@/lib/advisor/repo", () => ({
   createConversation: (...a: unknown[]) => createConversation(...a),
   deriveTitle: (m: string) => m.slice(0, 10),
   getMessages: (...a: unknown[]) => getMessages(...a),
-  getRemainingBudget: (...a: unknown[]) => getRemainingBudget(...a),
-  recordUsage: (...a: unknown[]) => recordUsage(...a),
+  reserveAdvisorTokens: (...a: unknown[]) => reserveAdvisorTokens(...a),
+  settleAdvisorUsage: (...a: unknown[]) => settleAdvisorUsage(...a),
 }));
 
 import { POST } from "./route";
@@ -88,11 +88,11 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubEnv("API_ANTHROPIC_KEY", FAKE_KEY);
   loadAdvisorContext.mockResolvedValue(CTX);
-  getRemainingBudget.mockResolvedValue(100000);
+  reserveAdvisorTokens.mockResolvedValue(25000);
   getMessages.mockResolvedValue([]);
   createConversation.mockResolvedValue({ id: "c-new" });
   appendMessages.mockResolvedValue(undefined);
-  recordUsage.mockResolvedValue(undefined);
+  settleAdvisorUsage.mockResolvedValue(undefined);
   runAdvisorTurn.mockResolvedValue({
     answer: "Magnesium may support sleep.",
     citations: [],
@@ -199,7 +199,13 @@ describe("POST /api/advisor — the stream", () => {
       { role: "user", content: BODY.message, citations: [] },
       { role: "assistant", content: "Magnesium may support sleep.", citations: [] },
     ]);
-    expect(recordUsage).toHaveBeenCalledWith({}, "u1", { inputTokens: 10, outputTokens: 20 });
+    // U4: the reservation is settled against the real usage, and the id is NOT
+    // passed — `settle_advisor_tokens` derives it from auth.uid(), so a caller
+    // cannot settle someone else's ledger.
+    expect(settleAdvisorUsage).toHaveBeenCalledWith({}, 25000, {
+      inputTokens: 10,
+      outputTokens: 20,
+    });
   });
 
   it("ships proposals with their cumulative safety flags when the loop halts", async () => {

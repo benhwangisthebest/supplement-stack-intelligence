@@ -170,11 +170,40 @@ export function readFunctionFacts(sources: { file: string; sql: string }[]): Fun
   return { functions, revokedFromPublic };
 }
 
+/** Tracked non-test TypeScript under `src/` — the callers of these functions. */
+function trackedSources(): string[] {
+  const stdout = execFileSync("git", ["-C", REPO_ROOT, "ls-files", "-z", "--cached", "--", "src"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  const files = stdout
+    .split("\0")
+    .filter((p) => p.endsWith(".ts") && !p.endsWith(".test.ts"));
+  if (files.length === 0) {
+    throw new Error("SQL_FUNCTION_REGISTRY found 0 tracked sources under src/; a guard that scans nothing passes vacuously.");
+  }
+  return files.sort();
+}
+
+/** Every `supabase.rpc("name", …)` target named in application code. */
+export function readRpcCallees(sources: { file: string; ts: string }[]): Set<string> {
+  const called = new Set<string>();
+  const RPC = /\.rpc\(\s*["'`]([a-z0-9_]+)["'`]/gi;
+  for (const { ts } of sources) {
+    for (const m of ts.matchAll(RPC)) called.add(m[1]);
+  }
+  return called;
+}
+
 const MIGRATIONS = trackedMigrations();
 const FACTS = readFunctionFacts(
   MIGRATIONS.map((file) => ({ file, sql: fs.readFileSync(path.join(REPO_ROOT, file), "utf8") })),
 );
 const DEFINERS = FACTS.functions.filter((f) => f.securityDefiner);
+const RPC_CALLEES = readRpcCallees(
+  trackedSources().map((file) => ({ file, ts: fs.readFileSync(path.join(REPO_ROOT, file), "utf8") })),
+);
 
 /** Parameter names that would mean the caller supplies an identity. */
 const IDENTITY_PARAM = /^(p_)?(user_?id|uid|owner_?id|account_?id)$/;
@@ -261,6 +290,41 @@ describe("SQL_FUNCTION_REGISTRY — the real migration set", () => {
         "  revoke all on function public.<name>(<types>) from public;\n" +
         "  grant execute on function public.<name>(<types>) to authenticated;\n  " +
         open.join("\n  "),
+    ).toEqual([]);
+  });
+});
+
+describe("SQL_FUNCTION_REGISTRY — SQL and its TypeScript callers are total (Phase 2 U4)", () => {
+  it("every rpc() name in application code is a function some migration defines", () => {
+    // A typo here is invisible until production: PostgREST answers 404 for an
+    // unknown function, `error` is set, `reserveAdvisorTokens` throws, and the
+    // advisor turn 500s. `tsc` cannot help — the name is a string.
+    const undefinedTargets = [...RPC_CALLEES]
+      .filter((name) => !FACTS.functions.some((f) => f.name === name))
+      .sort();
+    expect(
+      undefinedTargets,
+      "SQL_FUNCTION_REGISTRY: application code calls supabase.rpc() with a name no tracked\n" +
+        "migration defines. The compiler cannot see this — the callee is a string literal —\n" +
+        "so the first evidence would be a 404 in production:\n  " +
+        undefinedTargets.join("\n  "),
+    ).toEqual([]);
+  });
+
+  it("every SECURITY DEFINER function has a caller", () => {
+    // The other direction, and the one that keeps this a TOTALITY rather than a
+    // one-way check. A privileged function with no caller is dead code that
+    // still runs with the owner's rights if anyone finds it — the worst kind to
+    // leave lying around, and the kind a "did we ship the caller?" review misses.
+    const uncalled = DEFINERS.filter((f) => !RPC_CALLEES.has(f.name))
+      .map((f) => `${f.name} (${f.file})`)
+      .sort();
+    expect(
+      uncalled,
+      "SQL_FUNCTION_REGISTRY: a SECURITY DEFINER function has no caller in src/.\n" +
+        "Either the caller was not shipped with the migration, or this is privileged code\n" +
+        "nothing needs — which should be dropped rather than left executable:\n  " +
+        uncalled.join("\n  "),
     ).toEqual([]);
   });
 });
@@ -361,6 +425,29 @@ describe("SQL_FUNCTION_REGISTRY — parser self-tests", () => {
       as $$ begin perform auth.uid(); end; $$;
     `).functions[0];
     expect(f.params).toEqual(["p_a", "p_b", "p_c"]);
+  });
+
+  it("reads rpc() callees out of TypeScript, in both quote styles", () => {
+    expect(
+      readRpcCallees([
+        { file: "a.ts", ts: 'await supabase.rpc("reserve_advisor_tokens", { p_amount: 1 });' },
+        { file: "b.ts", ts: "await client.rpc('settle_advisor_tokens', {});" },
+        // No leading `.`, so this is not a call and is correctly not matched —
+        // measured, not assumed: the first draft of this test expected it to be
+        // picked up, and the regex proved stricter than its own author thought.
+        { file: "c.ts", ts: "const s = 'rpc(\"not_a_call\")';" },
+      ]),
+    ).toEqual(new Set(["reserve_advisor_tokens", "settle_advisor_tokens"]));
+  });
+
+  it("does match a `.rpc(\"…\")` that happens to sit inside a string", () => {
+    // The honest limit of text analysis, pinned so it is a known property rather
+    // than a surprise. It over-matches only in the safe direction: a false
+    // "this is called" can make the uncalled-function rule greener, never the
+    // undefined-target rule.
+    expect(readRpcCallees([{ file: "d.ts", ts: 'const doc = "call db.rpc(\'ghost\') here";' }])).toEqual(
+      new Set(["ghost"]),
+    );
   });
 
   it("treats a non-definer function as out of scope for the definer rules", () => {

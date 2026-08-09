@@ -17,8 +17,8 @@ import {
   createConversation,
   deriveTitle,
   getMessages,
-  getRemainingBudget,
-  recordUsage,
+  reserveAdvisorTokens,
+  settleAdvisorUsage,
 } from "@/lib/advisor/repo";
 import { advisorRequestSchema } from "@/lib/advisor/schema";
 import {
@@ -54,9 +54,20 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // Load budget + context + prior turns in parallel (all read-only).
+  // Phase 2 U4: RESERVE before spending, never read-then-write.
+  //
+  // `reserveAdvisorTokens` takes this turn's upper bound off the ledger in one
+  // atomic statement and returns what it granted — 0 when the day's budget
+  // cannot cover another turn. Passing that straight through as
+  // `budgetRemaining` preserves the existing contract exactly: the loop's SC-8
+  // guard already refuses on `<= 0` with REFUSAL_BUDGET, so an exhausted budget
+  // produces the same SSE bytes it did before this change.
+  //
+  // It is no longer strictly "read-only", so the parallel load now mixes one
+  // write with two reads. That is deliberate: the reservation must happen
+  // before the model call, and doing it here keeps it on the same await.
   const [budgetRemaining, ctx, history] = await Promise.all([
-    getRemainingBudget(supabase, user.id),
+    reserveAdvisorTokens(supabase),
     loadAdvisorContext(supabase, user.id),
     body.conversationId
       ? getMessages(supabase, body.conversationId).then(
@@ -99,8 +110,12 @@ export async function POST(request: NextRequest) {
           { role: "user", content: message, citations: [] },
           { role: "assistant", content: result.answer, citations: result.citations },
         ]);
-        if (result.usage.inputTokens + result.usage.outputTokens > 0) {
-          await recordUsage(supabase, user.id, result.usage);
+        // Settle the reservation against what was actually spent. Called even
+        // when usage is zero — a refused or empty turn still has a reservation
+        // held against it, and skipping the settle would leave it charged for
+        // the rest of the day.
+        if (budgetRemaining > 0) {
+          await settleAdvisorUsage(supabase, budgetRemaining, result.usage);
         }
 
         // Token-stream the FINAL, already-gated answer (SC-2/SC-3).
@@ -135,6 +150,12 @@ export async function POST(request: NextRequest) {
         // event. The status code is long gone, but the disclosure rule is not:
         // the raw message used to be streamed straight into a role="alert" in
         // AdvisorPanel. Generic text + a correlation id, same as every 500.
+        // NOT settled here, deliberately. A turn that threw may already have
+        // made a paid call, so releasing the reservation would hand back budget
+        // that was really spent. Leaving it charged over-charges by at most one
+        // reservation and never under-charges — the safe direction. Refining
+        // this (and the disconnect case, which is not an exception at all) is
+        // U6's subject.
         const correlationId = reportInternalError(err, "ADVISOR_ERROR");
         controller.enqueue(
           sse("error", { message: INTERNAL_ERROR_MESSAGE, correlationId }),

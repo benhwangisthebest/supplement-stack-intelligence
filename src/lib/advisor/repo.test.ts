@@ -5,6 +5,8 @@ import {
   deriveTitle,
   getRemainingBudget,
   recordUsage,
+  reserveAdvisorTokens,
+  settleAdvisorUsage,
 } from "./repo";
 
 describe("deriveTitle", () => {
@@ -84,5 +86,162 @@ describe("recordUsage", () => {
     const { client, upserts } = fakeSupabase(null);
     await recordUsage(client, "u1", { inputTokens: 8, outputTokens: 4 });
     expect(upserts[0]).toMatchObject({ input_tokens: 8, output_tokens: 4 });
+  });
+});
+
+// ----------------------------------------------- Phase 2 U4 (finding N-2) ---
+
+/**
+ * A STATEFUL ledger fake. The statefulness is the whole point: Phase 1's U10
+ * shipped a concurrency test against a constant-returning mock, which stayed
+ * green against the very race it was written for (§6.2.2). A mock that always
+ * answers "500 remaining" cannot distinguish an atomic reservation from a
+ * read-then-write one.
+ *
+ * It serves BOTH shapes off one piece of state:
+ *   - `rpc(...)`  — the atomic path: the decision and the write happen with no
+ *                   await between them, which is what `UPDATE … WHERE …` buys.
+ *   - `from(...)` — the old read-then-write path, kept so a mutation can restore
+ *                   the pre-U4 implementation and be shown to breach the cap.
+ *
+ * Every operation yields once (`await Promise.resolve()`) at its START, so
+ * concurrent callers genuinely interleave rather than running to completion one
+ * at a time. Without that yield the old implementation would pass too, and the
+ * test would prove nothing.
+ */
+function statefulLedger(dailyBudget: number) {
+  const state = { input: 0, output: 0 };
+  const granted: number[] = [];
+
+  const client = {
+    async rpc(fn: string, args: Record<string, number>) {
+      await Promise.resolve();
+      if (fn === "reserve_advisor_tokens") {
+        // decision + write, no await between them
+        if (state.input + state.output + args.p_amount > args.p_daily_budget) {
+          granted.push(0);
+          return { data: 0, error: null };
+        }
+        state.input += args.p_amount;
+        granted.push(args.p_amount);
+        return { data: args.p_amount, error: null };
+      }
+      if (fn === "settle_advisor_tokens") {
+        state.input = Math.max(0, state.input - args.p_reserved + args.p_input_tokens);
+        state.output += args.p_output_tokens;
+        return { data: null, error: null };
+      }
+      throw new Error(`unexpected rpc: ${fn}`);
+    },
+    from() {
+      return {
+        select() { return this; },
+        eq() { return this; },
+        async maybeSingle() {
+          await Promise.resolve();
+          return { data: { input_tokens: state.input, output_tokens: state.output }, error: null };
+        },
+        async upsert(payload: { input_tokens: number; output_tokens: number }) {
+          await Promise.resolve();
+          state.input = payload.input_tokens;
+          state.output = payload.output_tokens;
+          return { error: null };
+        },
+      };
+    },
+  } as unknown as SupabaseClient;
+
+  return { client, state, granted, used: () => state.input + state.output };
+}
+
+describe("reserveAdvisorTokens — the daily cap holds under concurrency (N-2)", () => {
+  it("grants only what the budget admits when 5 turns start at once", async () => {
+    // Budget 1000, reservation 400 → exactly 2 can be granted. The other 3 must
+    // be refused with 0, and the ledger must end at 800, not 2000.
+    const ledger = statefulLedger(1000);
+
+    const results = await Promise.all(
+      Array.from({ length: 5 }, () => reserveAdvisorTokens(ledger.client, 400, 1000)),
+    );
+
+    expect(results.filter((r) => r === 400)).toHaveLength(2);
+    expect(results.filter((r) => r === 0)).toHaveLength(3);
+    expect(ledger.used()).toBe(800);
+    expect(ledger.used()).toBeLessThanOrEqual(1000);
+  });
+
+  it("refuses once the day's budget is already spent", async () => {
+    const ledger = statefulLedger(1000);
+    await reserveAdvisorTokens(ledger.client, 1000, 1000);
+    expect(await reserveAdvisorTokens(ledger.client, 1, 1000)).toBe(0);
+  });
+
+  it("passes no user id — the SQL derives it from auth.uid()", async () => {
+    // A SECURITY DEFINER function bypasses RLS, so a supplied id would be the
+    // only thing deciding whose ledger is charged. Pinned here as well as in
+    // SQL_FUNCTION_REGISTRY, because this is the side that would send one.
+    const calls: { fn: string; args: Record<string, unknown> }[] = [];
+    const spy = {
+      async rpc(fn: string, args: Record<string, unknown>) {
+        calls.push({ fn, args });
+        return { data: 1, error: null };
+      },
+    } as unknown as SupabaseClient;
+
+    await reserveAdvisorTokens(spy, 1, 2);
+    await settleAdvisorUsage(spy, 1, { inputTokens: 1, outputTokens: 1 });
+
+    expect(calls.map((c) => c.fn)).toEqual([
+      "reserve_advisor_tokens",
+      "settle_advisor_tokens",
+    ]);
+    for (const c of calls) {
+      expect(Object.keys(c.args).join(",")).not.toMatch(/user|uid|owner/i);
+    }
+  });
+
+  it("treats a non-numeric RPC result as a refusal, not as a grant", async () => {
+    // PostgREST returning null (a function that raised, a shape change) must not
+    // read as "granted", which `?? 0` on a truthy check would get wrong.
+    const nully = { async rpc() { return { data: null, error: null }; } } as unknown as SupabaseClient;
+    expect(await reserveAdvisorTokens(nully, 400, 1000)).toBe(0);
+  });
+});
+
+describe("settleAdvisorUsage — releases the reservation and charges the truth", () => {
+  it("replaces the reserved amount with the actual usage", async () => {
+    const ledger = statefulLedger(100_000);
+    const reserved = await reserveAdvisorTokens(ledger.client, 25_000, 100_000);
+    expect(ledger.used()).toBe(25_000);
+
+    await settleAdvisorUsage(ledger.client, reserved, { inputTokens: 300, outputTokens: 120 });
+
+    // 25,000 released, 420 charged — not 25,420, and not 0.
+    expect(ledger.used()).toBe(420);
+  });
+
+  it("accumulates concurrent settles rather than overwriting them (race 2)", async () => {
+    // N-2's SECOND race, which is a different defect from the reservation one
+    // and needs its own proof. The old `recordUsage` was select-then-upsert: it
+    // read the row, added its own usage to what it had read, and wrote the
+    // whole row back. Two turns settling at once both read the same starting
+    // value, and the later write ERASED the earlier one — usage silently LOST,
+    // in the direction that costs money.
+    //
+    // The RPC accumulates in-statement (`output_tokens = output_tokens + n`), so
+    // three concurrent settles must all land.
+    const ledger = statefulLedger(100_000);
+    await Promise.all([
+      settleAdvisorUsage(ledger.client, 0, { inputTokens: 0, outputTokens: 100 }),
+      settleAdvisorUsage(ledger.client, 0, { inputTokens: 0, outputTokens: 200 }),
+      settleAdvisorUsage(ledger.client, 0, { inputTokens: 0, outputTokens: 300 }),
+    ]);
+    expect(ledger.used()).toBe(600);
+  });
+
+  it("never drives the ledger negative when actual exceeds nothing", async () => {
+    const ledger = statefulLedger(100_000);
+    await settleAdvisorUsage(ledger.client, 25_000, { inputTokens: 0, outputTokens: 0 });
+    expect(ledger.used()).toBe(0);
   });
 });
