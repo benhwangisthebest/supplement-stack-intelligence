@@ -63,13 +63,38 @@
 //   * a name inside the handler that shadows the caught binding — it stays
 //     tainted, so `catch (err) { rows.forEach((err) => f(err.message)) }` is a
 //     false positive;
-//   * anything in a file outside the scanned inventory. That inventory is
-//     `src/app/api/**/route.ts` PLUS `src/services/**/*.ts` (non-test) as of
-//     Phase 1 U11 — see SERVICE_MODULES below for why the second half exists.
-//     Everything else is still unscanned: `src/lib/**` in particular, so a
-//     helper that reads `err.message` one import away from a route is missed.
+//   * anything in a file outside the scanned inventory — see the next block,
+//     which states exactly what that is.
 // It is a regression guard for the forms this defect actually took and the
 // obvious ways to re-spell them — not a taint-analysis engine.
+//
+// ---------------------------------------------------------------------------
+// WHAT IS AND IS NOT SCANNED — three inventories, as of Phase 2 U2
+// ---------------------------------------------------------------------------
+// SCANNED:
+//   * `src/app/api/**/route.ts`     — API_ROUTES, the original inventory
+//   * `src/services/**/*.ts`        — SERVICE_MODULES, added by Phase 1 U11
+//   * `src/lib/**/*.ts`             — LIB_MODULES, added by Phase 2 U2 (FU-7)
+//   (non-test files only, in all three)
+//
+// NOT SCANNED, named rather than left to be discovered:
+//   * `src/components/**` — 31 client modules, and the place `error.message` is
+//     actually RENDERED. They read a message off an API envelope, not off a
+//     caught exception, so this detector's model does not apply to them; a rule
+//     for that layer is a different rule, not a wider pathspec here.
+//   * `src/app/**/page.tsx` and every other non-route file under `src/app`.
+//   * `src/data/**`, `src/types/**` — inert.
+//   * **The one `"use server"` module, `src/lib/auth/actions.ts`.** It IS inside
+//     LIB_MODULES' pathspec and so is walked — but its reads at :27 and :44 are
+//     of a returned Supabase result object, not of a caught binding, so the
+//     detector's model does not reach them and this extension does NOT close
+//     them. That module is a POST endpoint the browser calls directly and
+//     `AUTH_COVERAGE` does not see it either. Recorded as **FU-31**; unclosed,
+//     and deliberately not papered over by a passing green here.
+//
+// FU-7 is closed by the third inventory: the class of "a helper one import away
+// from a route" is now covered. The class of "error text reaching a client by a
+// route this detector cannot model" is NARROWED, not eliminated.
 
 import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
@@ -151,8 +176,34 @@ const SERVICE_MODULES = trackedFiles(
   "service modules",
 );
 
+/**
+ * Library modules (Phase 2 U2, closing follow-up FU-7).
+ *
+ * The inventory above stopped at the route and service layers, which meant the
+ * rule could be satisfied by *moving* a read one import away: a helper under
+ * `src/lib` reading `err.message` and returning it to a caller in a scanned file
+ * was invisible, because the guard flags the read, and the read had left the
+ * scanned set. The Phase 1 closeout demonstrated that the leak was real and
+ * undetected, not hypothetical.
+ *
+ * `src/lib` is also where the two *live* instances were: `advisor/agent.ts`
+ * interpolated a caught tool error into text that is JSON-serialised into a
+ * tool result and fed back to the model, which can echo it to the user; and
+ * `lab-import/pdf-adapter.ts` wrapped one into an `ExtractionError` message.
+ * Neither is a route, and neither would ever have been caught by an inventory
+ * of routes.
+ *
+ * Test files are excluded for the same reason as above: they discuss error text
+ * on purpose.
+ */
+const LIB_MODULES = trackedFiles(
+  "src/lib",
+  (p) => p.endsWith(".ts") && !p.endsWith(".test.ts"),
+  "library modules",
+);
+
 /** Everything this rule applies to. */
-const SCANNED_FILES = [...API_ROUTES, ...SERVICE_MODULES];
+const SCANNED_FILES = [...API_ROUTES, ...SERVICE_MODULES, ...LIB_MODULES];
 
 interface Violation {
   file: string;
@@ -361,14 +412,35 @@ describe("API error disclosure — CLAUDE.md §2.3 rule 13", () => {
     expect(SERVICE_MODULES.filter((f) => f.endsWith(".test.ts"))).toEqual([]);
   });
 
-  it("no API route or service module reads a caught exception's error text", () => {
+  it("finds library modules to scan, including the two U2 fixed", () => {
+    // Phase 2 U2, GATE A1. Anti-vacuity first: 81 non-test modules live under
+    // src/lib today, so a pathspec regression that collapsed this to a handful
+    // would be caught by the floor rather than by nobody.
+    expect(LIB_MODULES.length).toBeGreaterThanOrEqual(60);
+    // Then the specific files, for the same reason the route list names three:
+    // these are where the live reads WERE. `agent.ts:154` interpolated a caught
+    // tool error into text fed back to the model; `pdf-adapter.ts` wrapped one
+    // into an ExtractionError message at two sites. If either leaves this
+    // inventory, the guard goes green about the exact files it was written for.
+    for (const required of [
+      "src/lib/advisor/agent.ts",
+      "src/lib/lab-import/pdf-adapter.ts",
+      "src/lib/api/respond.ts",
+    ]) {
+      expect(LIB_MODULES, `${required} is not being scanned`).toContain(required);
+    }
+    expect(LIB_MODULES.filter((f) => f.endsWith(".test.ts"))).toEqual([]);
+  });
+
+  it("no API route, service module, or library module reads a caught exception's error text", () => {
     const violations = SCANNED_FILES.flatMap(violationsInFile);
 
     expect(
       violations,
       violations.length === 0
         ? ""
-        : "A route handler is reading a caught exception's text. This rule flags the READ,\n" +
+        : "A route, service, or library module is reading a caught exception's text.\n" +
+            "This rule flags the READ,\n" +
             "not proof of disclosure — but this repo renders `error.message` at 17 call sites\n" +
             "across 15 files, and AdvisorPanel renders the SSE `error` event, so a read here\n" +
             "is one edit away from CLAUDE.md §2.3 rule 13 — rank 1.\n\n" +

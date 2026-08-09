@@ -69,6 +69,22 @@ export interface RunAdvisorTurnArgs {
   onProgress?: (event: ProgressEvent) => void;
   /** v8: override the batch proposal cap (tests). Defaults to MAX_BATCH_PROPOSALS. */
   maxBatch?: number;
+  /**
+   * Phase 2 U2: injected sink for a tool handler's own exception. Returns a
+   * correlation id, which is the ONLY thing about that exception the loop is
+   * allowed to know.
+   *
+   * It is injected rather than imported because the natural implementation is
+   * `reportInternalError` from `@/lib/api/respond`, and that module imports
+   * `next/server`. `src/lib/advisor` is a pure engine directory under
+   * `DOMAIN_IS_PURE`, and a transitive framework edge is precisely what Phase 1
+   * U18's ratchet blames for `actions/execute.ts`. So the route owns the
+   * logging and the loop takes a function.
+   *
+   * Omitted (tests, and any caller with nothing to log to) means no id and no
+   * log — never a fallback to the exception's text.
+   */
+  onInternalError?: (err: unknown, code: string) => string;
 }
 
 /**
@@ -79,7 +95,7 @@ export interface RunAdvisorTurnArgs {
 export async function runAdvisorTurn(
   args: RunAdvisorTurnArgs,
 ): Promise<AdvisorTurnResult> {
-  const { adapter, ctx, userMessage, budgetRemaining, onProgress } = args;
+  const { adapter, ctx, userMessage, budgetRemaining, onProgress, onInternalError } = args;
   const maxTurns = args.maxTurns ?? MAX_TURNS;
   const maxBatch = args.maxBatch ?? MAX_BATCH_PROPOSALS;
 
@@ -148,10 +164,24 @@ export async function runAdvisorTurn(
         try {
           result = tool.handler(call.input, ctx);
         } catch (err) {
+          // Phase 2 U2 (FU-7). This used to interpolate `(err as Error).message`
+          // into `emptyReason`. That is not bookkeeping: `emptyReason` is
+          // JSON.stringify'd into the tool_result content a few lines below and
+          // fed straight back to the model, which can quote it in its answer.
+          // So a driver, filesystem, or provider string was one model turn away
+          // from the user — CLAUDE.md §2.3 rule 13, rank 1, reached by a path no
+          // route-level guard could see.
+          //
+          // The exception now goes whole to the injected sink; only its
+          // correlation id comes back, which is safe to show and is the same id
+          // the server log carries.
+          const ref = onInternalError?.(err, "ADVISOR_TOOL_ERROR");
           result = {
             ok: false,
             data: null,
-            emptyReason: `Tool "${call.name}" failed: ${(err as Error).message}`,
+            emptyReason: ref
+              ? `Tool "${call.name}" failed (reference ${ref}).`
+              : `Tool "${call.name}" failed.`,
             citations: [],
           };
         }

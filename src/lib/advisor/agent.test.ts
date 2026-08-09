@@ -156,3 +156,88 @@ describe("runAdvisorTurn — dispatch robustness", () => {
     expect(adapter.received[1].toolResults[0].toolCallId).toBe("call_checkInteractions");
   });
 });
+
+// --------------------------------------------------- Phase 2 U2 (FU-7) ------
+
+describe("runAdvisorTurn — a failing tool handler discloses nothing to the model", () => {
+  // `emptyReason` is JSON.stringify'd into the tool_result content and sent back
+  // to the model on the next turn, which can quote it into its answer. Before
+  // U2 it interpolated `(err as Error).message`, so a driver or filesystem
+  // string was one model turn from the user — CLAUDE.md §2.3 rule 13, rank 1,
+  // by a path no route-level guard could see.
+  //
+  // The throw is REAL, not mocked at the seam: a poisoned `stackItems` getter
+  // makes the actual `checkInteractions` handler raise while reading context.
+  // A mock that returned a rejected promise would not prove the loop's own
+  // `catch` is what runs.
+  const SECRET = "postgres password=do-not-return host=/Users/example/internal.sock";
+
+  function poisonedContext() {
+    const poisoned = makeContext();
+    Object.defineProperty(poisoned, "stackItems", {
+      get() {
+        throw new Error(SECRET);
+      },
+    });
+    return poisoned;
+  }
+
+  it("sends the model a reference id, never the exception text", async () => {
+    const adapter = new ScriptedAdapter([
+      toolStep("checkInteractions"),
+      finalStep("I could not check that just now."),
+    ]);
+    const seen: { err: unknown; code: string }[] = [];
+
+    const r = await runAdvisorTurn({
+      adapter,
+      ctx: poisonedContext(),
+      userMessage: "Is my stack safe with my meds?",
+      budgetRemaining: 10_000,
+      onInternalError: (err, code) => {
+        seen.push({ err, code });
+        return "corr-1234";
+      },
+    });
+
+    // What the model was actually handed on the following turn.
+    const content = adapter.received[1].toolResults[0].content;
+    expect(content).toContain("corr-1234");
+    expect(content).not.toContain("do-not-return");
+    expect(content).not.toContain("internal.sock");
+    expect(content).not.toContain("password");
+
+    // The exception is not lost — it goes to the sink WHOLE, so the sink can log
+    // a stack and a cause. Passing the value (rather than its text) is also what
+    // keeps this line clean under error-disclosure.
+    expect(seen).toHaveLength(1);
+    expect(seen[0].err).toBeInstanceOf(Error);
+    expect((seen[0].err as Error).message).toBe(SECRET);
+    expect(seen[0].code).toBe("ADVISOR_TOOL_ERROR");
+
+    // And the turn still completes rather than 500-ing the whole conversation.
+    expect(r.status).toBe("refused-no-data");
+  });
+
+  it("omits the reference entirely when no sink is injected", async () => {
+    // The failure mode worth pinning: a missing sink must degrade to LESS
+    // information, never fall back to the exception's text.
+    const adapter = new ScriptedAdapter([
+      toolStep("checkInteractions"),
+      finalStep("I could not check that just now."),
+    ]);
+
+    await runAdvisorTurn({
+      adapter,
+      ctx: poisonedContext(),
+      userMessage: "Is my stack safe with my meds?",
+      budgetRemaining: 10_000,
+    });
+
+    const content = adapter.received[1].toolResults[0].content;
+    expect(content).toContain('Tool \\"checkInteractions\\" failed.');
+    expect(content).not.toContain("reference");
+    expect(content).not.toContain("do-not-return");
+    expect(content).not.toContain("internal.sock");
+  });
+});

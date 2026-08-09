@@ -84,6 +84,11 @@ export async function POST(request: NextRequest) {
           history,
           budgetRemaining,
           onProgress,
+          // Phase 2 U2: the loop hands a failed tool's exception here whole and
+          // gets back only a correlation id. The route owns this because
+          // `reportInternalError` lives behind `next/server`, and the agent loop
+          // is a pure-engine module that must not acquire that edge.
+          onInternalError: reportInternalError,
         });
 
         // Persist the turn + meter usage. A new conversation is created lazily.

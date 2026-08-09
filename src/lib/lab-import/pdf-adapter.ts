@@ -13,8 +13,9 @@ export class ExtractionError extends Error {
   constructor(
     message: string,
     readonly code: "UNREADABLE_DOCUMENT" | "EXTRACTION_FAILED",
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "ExtractionError";
   }
 }
@@ -88,10 +89,13 @@ export async function extractFromText(
     rawJson = await transcribe(text);
   } catch (e) {
     if (e instanceof ExtractionError) throw e;
-    throw new ExtractionError(
-      `Transcription failed: ${(e as Error).message}`,
-      "EXTRACTION_FAILED",
-    );
+    // Phase 2 U2 (FU-7): the underlying text used to be interpolated into this
+    // message. It travels as `cause` instead — preserved for the log, absent
+    // from any value a caller might forward. The route's client text is a canned
+    // string either way, so no response byte moves.
+    throw new ExtractionError("Transcription failed", "EXTRACTION_FAILED", {
+      cause: e,
+    });
   }
   return candidatesFromTranscript(rawJson);
 }
@@ -115,10 +119,13 @@ export async function extractFromPdf(
     rawJson = await transcribe(base64Pdf);
   } catch (e) {
     if (e instanceof ExtractionError) throw e;
-    throw new ExtractionError(
-      `Transcription failed: ${(e as Error).message}`,
-      "EXTRACTION_FAILED",
-    );
+    // Phase 2 U2 (FU-7): the underlying text used to be interpolated into this
+    // message. It travels as `cause` instead — preserved for the log, absent
+    // from any value a caller might forward. The route's client text is a canned
+    // string either way, so no response byte moves.
+    throw new ExtractionError("Transcription failed", "EXTRACTION_FAILED", {
+      cause: e,
+    });
   }
   return candidatesFromTranscript(rawJson);
 }
@@ -144,8 +151,9 @@ async function loadAnthropic(apiKey: string): Promise<AnthropicLike> {
  * This throw never reached `handle()`'s "not configured" dispatch and still does
  * not. `requireKey` runs inside the transcriber, which runs inside
  * `extractFromText`/`extractFromPdf`'s `try`, whose `catch` wraps any
- * non-`ExtractionError` into `ExtractionError("Transcription failed: …",
- * "EXTRACTION_FAILED")`. The route then answers **502 EXTRACTION_FAILED** with
+ * non-`ExtractionError` into `ExtractionError("Transcription failed",
+ * "EXTRACTION_FAILED", { cause })` — U2 moved the underlying text from that
+ * message onto `cause`. The route then answers **502 EXTRACTION_FAILED** with
  * its own canned client text. Swapping `ExtractionError` for
  * `NotConfiguredError` therefore leaves the wire bytes identical — it takes the
  * *other* branch of that same wrapper and lands on the same class and code.
