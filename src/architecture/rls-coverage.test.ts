@@ -38,10 +38,20 @@
 //     covers the right commands. `own_stack_items` deriving ownership through a
 //     parent-stack subquery and a policy reading `using (true)` are
 //     indistinguishable here. Reviewing policy LOGIC remains a human job.
-//   * It does not model `drop policy`, `disable row level security`, `alter
-//     policy`, or a later migration weakening an earlier one. No migration does
-//     any of these today; if one ever does, this guard would keep passing and
-//     that is a hole worth closing at the time.
+//   * [CLOSED by Phase 2 U3 — FU-5.] It now DOES model `drop policy`,
+//     `alter policy`, and `disable row level security`, because 0008 is the
+//     first migration to use one and FU-5's deferral condition — "no migration
+//     does any of these today" — fired. Policies are applied in migration order,
+//     so a drop REMOVES the policy from the effective set and the "RLS enabled
+//     but no policy" rule below is computed on what survives, not on everything
+//     ever written. Every such event must additionally appear in
+//     DECLARED_WEAKENINGS with a written reason (see below); an undeclared one
+//     fails even when it is harmless, because "harmless" is a judgement a text
+//     scanner must not make on its own.
+//     What it still does NOT do: judge whether an `alter policy`'s new
+//     expression is weaker than the old one. That is SQL semantics, not text.
+//     The register makes the event VISIBLE and forces a human sentence about
+//     it; it does not evaluate the sentence.
 //   * It does not see tables created outside `supabase/migrations/*.sql`, nor
 //     tables created by Supabase itself (`auth.users` and friends) — only
 //     `create table` statements in this repository's own tracked migrations.
@@ -86,13 +96,28 @@ function trackedMigrations(): string[] {
   return files.sort();
 }
 
+/** A statement that removes or rewrites protection an earlier migration added. */
+export interface Weakening {
+  kind: "drop policy" | "alter policy" | "disable rls";
+  table: string;
+  /** Policy name, or "" for a table-level `disable row level security`. */
+  policy: string;
+  file: string;
+}
+
 export interface MigrationFacts {
   /** table name → the migration that created it */
   createdTables: Map<string, string>;
-  /** tables with `enable row level security` */
+  /** tables with RLS enabled and not later disabled */
   rlsEnabled: Set<string>;
-  /** table name → policy names declared on it */
+  /**
+   * table name → policy names IN EFFECT after every migration is applied in
+   * order. A policy created in 0003 and dropped in 0008 is absent here — which
+   * is the whole of FU-5.
+   */
   policies: Map<string, string[]>;
+  /** Every drop/alter/disable seen, in migration order. */
+  weakenings: Weakening[];
 }
 
 /** `--` comments removed, whitespace collapsed. See the header on why. */
@@ -111,25 +136,78 @@ export function readMigrationFacts(sources: { file: string; sql: string }[]): Mi
   const createdTables = new Map<string, string>();
   const rlsEnabled = new Set<string>();
   const policies = new Map<string, string[]>();
+  const weakenings: Weakening[] = [];
 
   const CREATE = /create table (?:if not exists )?(?:public\.)?([a-z0-9_]+)/gi;
   const ENABLE = /alter table (?:public\.)?([a-z0-9_]+) enable row level security/gi;
+  const DISABLE = /alter table (?:public\.)?([a-z0-9_]+) disable row level security/gi;
   const POLICY = /create policy "([^"]+)" on (?:public\.)?([a-z0-9_]+)/gi;
+  const DROP_POLICY = /drop policy (?:if exists )?"([^"]+)" on (?:public\.)?([a-z0-9_]+)/gi;
+  const ALTER_POLICY = /alter policy "([^"]+)" on (?:public\.)?([a-z0-9_]+)/gi;
 
-  for (const { file, sql } of sources) {
-    const text = normalize(sql);
-    for (const m of text.matchAll(CREATE)) {
+  /**
+   * Statements are applied in FILE order, and within a file in the order they
+   * appear. That ordering is the point: `drop policy "p"` followed by `create
+   * policy "p"` in the same file is a replacement and must end with the policy
+   * present, while the reverse order leaves the table bare. A set-union parser
+   * cannot tell those apart — the old one could not.
+   */
+  const applyInOrder = (file: string, text: string) => {
+    interface Event { at: number; run: () => void }
+    const events: Event[] = [];
+    const push = (re: RegExp, run: (m: RegExpMatchArray) => void) => {
+      for (const m of text.matchAll(re)) {
+        events.push({ at: m.index ?? 0, run: () => run(m) });
+      }
+    };
+
+    push(CREATE, (m) => {
       if (!createdTables.has(m[1])) createdTables.set(m[1], file);
-    }
-    for (const m of text.matchAll(ENABLE)) rlsEnabled.add(m[1]);
-    for (const m of text.matchAll(POLICY)) {
+    });
+    push(ENABLE, (m) => rlsEnabled.add(m[1]));
+    push(DISABLE, (m) => {
+      rlsEnabled.delete(m[1]);
+      weakenings.push({ kind: "disable rls", table: m[1], policy: "", file });
+    });
+    push(POLICY, (m) => {
       const list = policies.get(m[2]) ?? [];
-      list.push(m[1]);
+      if (!list.includes(m[1])) list.push(m[1]);
       policies.set(m[2], list);
-    }
-  }
-  return { createdTables, rlsEnabled, policies };
+    });
+    push(DROP_POLICY, (m) => {
+      const list = (policies.get(m[2]) ?? []).filter((name) => name !== m[1]);
+      policies.set(m[2], list);
+      weakenings.push({ kind: "drop policy", table: m[2], policy: m[1], file });
+    });
+    push(ALTER_POLICY, (m) =>
+      weakenings.push({ kind: "alter policy", table: m[2], policy: m[1], file }),
+    );
+
+    for (const e of events.sort((a, b) => a.at - b.at)) e.run();
+  };
+
+  for (const { file, sql } of sources) applyInOrder(file, normalize(sql));
+
+  return { createdTables, rlsEnabled, policies, weakenings };
 }
+
+/**
+ * THE WEAKENING REGISTER (Phase 2 U3, closing FU-5).
+ *
+ * Every `drop policy`, `alter policy`, or `disable row level security` in the
+ * tracked migration set must appear here with a reason. This is a ratchet, not
+ * an allowlist of forgiveness: the assertion is an EQUALITY, so an entry whose
+ * statement is later removed fails just as loudly as an undeclared statement.
+ *
+ * Why a register rather than a rule that judges the SQL: whether a rewritten
+ * policy is weaker than the one it replaced is a question about Postgres row
+ * security semantics, and this file is a text scanner. What it can do — and
+ * what nothing did before U3 — is make the event impossible to land silently.
+ */
+const DECLARED_WEAKENINGS: Readonly<Record<string, string>> = {
+  'drop policy own_advisor_usage on advisor_usage (supabase/migrations/0008_usage_ledger_policy.sql)':
+    "Phase 2 U3. The dropped policy was `for all using (user_id = auth.uid())`, which includes DELETE — so a user could delete their own row in `advisor_usage` and reset the daily token budget that exists to constrain them. REPLACED IN THE SAME MIGRATION by `read_own_advisor_usage` (SELECT only); writes move to two SECURITY DEFINER functions. This is a NARROWING, and it is the only weakening-shaped statement in the repository.",
+};
 
 const MIGRATIONS = trackedMigrations();
 const FACTS = readMigrationFacts(
@@ -187,6 +265,63 @@ describe("RLS_COVERAGE — the real migration set", () => {
   it("enables RLS on no table this repository never creates", () => {
     const orphans = [...FACTS.rlsEnabled].filter((t) => !FACTS.createdTables.has(t)).sort();
     expect(orphans, `Unknown tables in \`enable row level security\`: ${orphans.join(", ")}`).toEqual([]);
+  });
+
+  it("declares every policy drop, alter, or RLS disable — and no more (FU-5)", () => {
+    // The gap FU-5 named: before U3 this guard unioned every `create policy`
+    // ever written and never looked for their removal, so a later migration
+    // dropping one left the guard green and the table bare. 0008 is the first
+    // migration to contain such a statement, which is exactly the condition
+    // FU-5's deferral was waiting on.
+    const seen = FACTS.weakenings
+      .map((w) => `${w.kind} ${w.policy || "-"} on ${w.table} (${w.file})`)
+      .sort();
+    const declared = Object.keys(DECLARED_WEAKENINGS).sort();
+
+    expect(
+      seen,
+      "RLS_COVERAGE: the set of protection-removing statements does not match the\n" +
+        "register in this file.\n\n" +
+        "An EXTRA line below means a migration drops, alters, or disables RLS protection\n" +
+        "without a written reason. Add an entry to DECLARED_WEAKENINGS saying what the old\n" +
+        "policy allowed, what replaces it, and why the replacement is not weaker.\n\n" +
+        "A MISSING line means a declared statement is gone: delete its entry, or the\n" +
+        "register is claiming a protection change that no longer happens.\n\n" +
+        `  seen:     ${JSON.stringify(seen, null, 2)}\n` +
+        `  declared: ${JSON.stringify(declared, null, 2)}`,
+    ).toEqual(declared);
+  });
+
+  it("leaves no table RLS-enabled with every policy dropped", () => {
+    // The consequence rule. `every RLS-enabled table has at least one policy`
+    // above now runs on the EFFECTIVE set, so an unreplaced drop already fails
+    // it — this asserts the same property against the drops specifically, so
+    // the failure message names the migration that did it rather than only the
+    // table.
+    const stranded = FACTS.weakenings
+      .filter((w) => w.kind === "drop policy")
+      .filter((w) => (FACTS.policies.get(w.table) ?? []).length === 0)
+      .map((w) => `${w.table}: "${w.policy}" dropped in ${w.file}, nothing replaced it`);
+
+    expect(
+      stranded,
+      "RLS_COVERAGE: a migration dropped a policy and left the table with none.\n" +
+        "Under RLS that is not a loosening — it is a total denial, so the table becomes\n" +
+        "unreadable and unwritable through the anon key, and the failure shows up at\n" +
+        "runtime rather than here. Drop and replace in the SAME migration:\n  " +
+        stranded.join("\n  "),
+    ).toEqual([]);
+  });
+
+  it("never disables row level security on a table", () => {
+    const disabled = FACTS.weakenings.filter((w) => w.kind === "disable rls").map((w) => `${w.table} (${w.file})`);
+    expect(
+      disabled,
+      "RLS_COVERAGE: `disable row level security` removes the only barrier between one\n" +
+        "user's rows and every other user. There is no reason this repository would need\n" +
+        "it, and CLAUDE.md §2.3 rule 12 forbids the state it produces:\n  " +
+        disabled.join("\n  "),
+    ).toEqual([]);
   });
 
   it("covers every table the tracked migrations create", () => {
@@ -273,6 +408,62 @@ describe("RLS_COVERAGE — parser self-tests", () => {
     ]);
     expect(facts.createdTables.get("a")).toBe("0001.sql");
     expect(facts.createdTables.get("b")).toBe("0002.sql");
+  });
+
+  it("removes a dropped policy from the effective set", () => {
+    // FU-5's core case. Before U3 the parser unioned every `create policy` and
+    // never saw the drop, so this returned ["own_a"] and the table read as
+    // covered while Postgres had no policy on it at all.
+    const facts = readMigrationFacts([
+      { file: "0001.sql", sql: `create table public.a (id uuid); alter table public.a enable row level security; create policy "own_a" on public.a for all using (true);` },
+      { file: "0002.sql", sql: `drop policy if exists "own_a" on public.a;` },
+    ]);
+    expect(facts.policies.get("a")).toEqual([]);
+    expect(facts.weakenings).toEqual([
+      { kind: "drop policy", table: "a", policy: "own_a", file: "0002.sql" },
+    ]);
+  });
+
+  it("keeps the policy when a drop is replaced in the same migration", () => {
+    // The 0008 shape. Order within the file decides the answer, which is why
+    // the parser sorts events by position instead of applying them by kind.
+    const facts = readMigrationFacts([
+      { file: "0001.sql", sql: `create table public.a (id uuid); alter table public.a enable row level security; create policy "own_a" on public.a for all using (true);` },
+      { file: "0002.sql", sql: `drop policy if exists "own_a" on public.a; create policy "read_a" on public.a for select using (true);` },
+    ]);
+    expect(facts.policies.get("a")).toEqual(["read_a"]);
+  });
+
+  it("respects statement ORDER — a create then a drop leaves nothing", () => {
+    // The inverse of the test above, and the one that catches a parser applying
+    // creates before drops regardless of where they appear.
+    const facts = readMigrationFacts([
+      { file: "0001.sql", sql: `create table public.a (id uuid);` },
+      { file: "0002.sql", sql: `create policy "read_a" on public.a for select using (true); drop policy "read_a" on public.a;` },
+    ]);
+    expect(facts.policies.get("a")).toEqual([]);
+  });
+
+  it("detects `disable row level security` and un-enables the table", () => {
+    const facts = readMigrationFacts([
+      { file: "0001.sql", sql: `create table public.a (id uuid); alter table public.a enable row level security;` },
+      { file: "0002.sql", sql: `alter table public.a disable row level security;` },
+    ]);
+    expect(facts.rlsEnabled.has("a")).toBe(false);
+    expect(facts.weakenings.map((w) => w.kind)).toEqual(["disable rls"]);
+  });
+
+  it("records an `alter policy` as a weakening event without judging it", () => {
+    const facts = readMigrationFacts([
+      { file: "0001.sql", sql: `create table public.a (id uuid); create policy "own_a" on public.a for all using (user_id = auth.uid());` },
+      { file: "0002.sql", sql: `alter policy "own_a" on public.a using (true);` },
+    ]);
+    // The policy is still in effect — an alter does not remove it. What the
+    // guard provides is that the rewrite cannot land unmentioned.
+    expect(facts.policies.get("a")).toEqual(["own_a"]);
+    expect(facts.weakenings).toEqual([
+      { kind: "alter policy", table: "a", policy: "own_a", file: "0002.sql" },
+    ]);
   });
 
   it("collects multiple policies declared on one table", () => {
