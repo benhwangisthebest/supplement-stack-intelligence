@@ -158,7 +158,26 @@ behaviour this project's review discipline exists to prevent. They land when thi
 > `SCANNED_FILES` → **31 passed**. What FU-7 does **not** close is stated in the guard's own header and in
 > **FU-31**: `src/components/**`, `src/app/**/page.tsx`, and `auth/actions.ts`'s non-caught reads.
 
-**Dispositioned into units:** FU-5 (→U3), FU-6 (→U3, partially), ~~FU-7 (→U2)~~ **FU-7 CLOSED**, FU-16 (→U9, reframed),
+> **[2026-08-08] FU-5 → CLOSED by U3** (`656a628`). Its deferral condition — *"no migration uses any of
+> these today"* — **fired**: `0008` is the first migration in the repository to contain a `drop policy`.
+> `RLS_COVERAGE` now applies statements **in position order**, so a policy dropped in a later migration
+> leaves the effective set (a set-union parser cannot tell `drop; create` from `create; drop`, and the old
+> one could not); every `drop policy` / `alter policy` / `disable row level security` must additionally
+> appear in `DECLARED_WEAKENINGS` with a written reason, asserted as an **equality** so a removed statement
+> fails as loudly as an undeclared one. Proven red at M8 both `git add -N` ways — unstaged 22 passed,
+> staged named the table *and* the migration. 14 → 22 tests.
+> **What it still does not do, stated rather than implied:** judge whether a rewritten policy is weaker
+> than the one it replaced. That is SQL semantics; this is text. The register makes the event impossible to
+> land silently and forces a human sentence about it — it does not evaluate the sentence.
+>
+> **[2026-08-08] N-2 → CLOSED by U4** (`54ef19b`). Both races, each with its own red: race 1
+> (`getRemainingBudget` → `recordUsage`) at **M14**, `expected [400,400,400,400,400] to have a length of 2
+> but got 5`; race 2 (select-then-upsert **inside** `recordUsage`, which *lost* usage) at **M15**,
+> `expected 300 to be 600`. The fake is stateful and yields at the start of every operation — without that
+> yield the old implementation passes too and the test proves nothing, which is Phase 1 U10's §6.2.2 lesson
+> applied rather than quoted.
+
+**Dispositioned into units:** ~~FU-5 (→U3)~~ **FU-5 CLOSED**, FU-6 (→U3, partially), ~~FU-7 (→U2)~~ **FU-7 CLOSED**, FU-16 (→U9, reframed),
 FU-20 (→U11), FU-24 (→U21), FU-25/FU-26 (→U22), FU-28 (→U12).
 
 **Remaining open, deliberately unscheduled:** FU-1, FU-4, FU-8, FU-9, FU-10, FU-11, FU-12, FU-14, FU-15,
@@ -189,6 +208,26 @@ a commit message keeps pointing at the same finding.
 | **N-9** | U1 | **A missing `API_ANTHROPIC_KEY` reaches the user as a *failed extraction*, with advice that cannot work.** `requireKey`'s throw is re-wrapped by `extractFromPdf`/`extractFromText` into `ExtractionError(…, "EXTRACTION_FAILED")`, so the route answers **502 EXTRACTION_FAILED** with `"Extraction failed — try CSV or paste."` It is an operational 503 wearing a 502, and the remedy it offers is wrong: **paste routes through the same absent key** (`makeClaudeTranscriber`), so only the CSV third of that advice can succeed. U1 found this while enumerating callers and **deliberately preserved it** | `pdf-adapter.ts` `requireKey` → the `catch` at `:92`/`:119` → `extract/route.ts`'s `ExtractionError` branch. Preservation is pinned by `lab-import.test.ts` ("still surfaces a missing API key as ExtractionError/EXTRACTION_FAILED") | **Unit candidate — UNDECLARED-BYTE-CHANGE class, and that is why U1 did not take it.** Correcting it moves 502→503 and rewrites client copy; U1's only declared change was the bare-`Error` 503→500. **Sequenced to U6** by the plan's own logic: U6 already owns `claude-adapter.ts` + the paid-call failure paths and is the first unit after U5 that touches how a paid route reports failure, so the copy and the status move once, together, with U5's 429 already declared. **Needs a decision only on the copy**, not on the status |
 | **N-10** | U1 | **`src/app/api/advisor/route.ts:52` re-authors the literal `"API_ANTHROPIC_KEY not configured"`** in a `fail(…)` pre-flight, independently of `claude-adapter.ts`'s `NotConfiguredError`. Two hand-authored copies of one operational string, in two layers, with nothing binding them. Editing one leaves the other stale, and the pre-flight is the copy users actually see | `git grep -n "API_ANTHROPIC_KEY not configured"` → `advisor/route.ts:52`, `claude-adapter.ts:154`, `pdf-adapter.ts:171` (the latter two re-measured after U1's import lines shifted them) | **Open — small, deliberately not folded into U1.** `NOT_CONFIGURED_TOTALITY` does not see it: it is a `fail()` argument, not a `new …Error(…)`, so widening the guard to catch it would mean flagging every string literal, not a construction. The honest fix is a shared constant, which is a change to the advisor route — **U6's file list**, or standalone |
 | **N-11** | U2 | **`ExtractionError` now carries `cause` and nothing logs it.** U2 moved the underlying transcription error off the message and onto `cause` (removing the disclosure read). The diagnostic value is preserved *in the object* but never reaches a sink: the extract route answers a canned 502 and `handle()` is never reached, so `logInternalError`'s `describeCause` never runs on it | `pdf-adapter.ts:97,127` carry `cause: e` (the reads U2 removed were at `:92,119` before the fix); `extract/route.ts`'s `ExtractionError` branch returns without logging | **Open — blocked on a sink, which is roadmap item 1's residue.** Closes when **U23** lands (`path`, `userId`, a real sink). Recorded now because "the data is captured" and "the data is observable" are different claims and U2 only bought the first |
+
+| **N-12** | U4 | **`getRemainingBudget` has no caller outside its own tests.** U4 replaced the read-then-decide pair with `reserveAdvisorTokens`, so the read half is now unreferenced by `src/app` and `src/components` (measured: zero matches in either). It is not dead by accident — it is the honest, non-mutating way to answer "how much budget is left", which **F5's correlation-ID work and any future budget UI would want** | `git grep -n getRemainingBudget -- src/app src/components` → no output; 4 references remain, all in `repo.ts` and `repo.test.ts` | **Open — KEPT DELIBERATELY, owner: whichever unit first renders budget state (candidate U19, which already opens the advisor UI).** Recorded rather than deleted because `CLAUDE.md` §8.2 forbids letting a temporary state pass as permanent in either direction: an unused export is debt, and deleting a correct read accessor to make a count go down is worse debt. If no UI claims it by phase close, delete it then |
+| **N-13** | U4 | **`recordUsage` survives for the seed path only, and can no longer work for anyone else.** 0008 removed the end user's INSERT/UPDATE/DELETE on `advisor_usage`, so its direct upsert is denied for any anon-key client. `npm run db:seed` runs under the service-role key, which bypasses RLS, so the function still works there and only there | `supabase/migrations/0008_usage_ledger_policy.sql` §1; `recordUsage` is now marked `@deprecated` for request-path use | **Open — narrow and labelled, not removed.** Deleting it is a change to the seed path under a unit that did not own the seed path (§8.1). The `@deprecated` tag plus the header sentence is what stops a future caller adopting it and discovering the denial in production. Owner: the seed/migration-tooling unit, **U15** |
+
+### 4.6 Owner-run operational items — things CI structurally cannot do
+
+Nothing in this repository applies a migration or opens a database connection during a test run, so a
+claim about the **deployed** database is never established by a green build. These are the items that
+require the repository owner and a live Postgres. They are listed here, not buried in a file header, so
+that "Phase 2 closed" cannot be read as "these were done".
+
+| # | Item | Why CI cannot do it | Exact procedure |
+|---|---|---|---|
+| **OP-1** | **Deployment order for 0008 + U4.** `0008_usage_ledger_policy.sql` removes the end user's INSERT/UPDATE/DELETE on `advisor_usage`; U4 is the code that stops needing them. **They are one deployment.** Applying 0008 against a database whose deployed code still calls `.from("advisor_usage").upsert(...)` makes every advisor turn fail to record usage — the write is denied, `recordUsage` raises, and the turn 500s **after the paid call has already been made** | CI applies no migrations and holds no credentials; both halves are in the same integration commit, so the repository is self-consistent and only the *live* rollout can get the order wrong | Deploy the application code first, or both together. Never the migration alone. Rolling back the code without rolling back 0008 recreates the same failure |
+| **OP-2** | **Verify the ledger hole is actually closed.** That the SELECT-only policy denies DELETE/UPDATE, and that the two `SECURITY DEFINER` functions work and cap correctly | Every U3 assertion is **static SQL text analysis**. `RLS_COVERAGE` and `SQL_FUNCTION_REGISTRY` read the migration as text; neither can execute a policy | The four psql statements in `0008_usage_ledger_policy.sql`'s header. **Run them as the `authenticated` role** — a superuser session bypasses RLS and reports a false pass. Record the output under `docs/05-qa/` with a date, per the U17 pattern |
+| **OP-3** | **Verify the reservation is atomic under real concurrency.** U4's proof is a stateful fake, which establishes that the TypeScript caller has no read-then-write window — not that Postgres serialises the `UPDATE … WHERE … RETURNING` | No database in CI, and a JS fake cannot model row locks | Two concurrent psql sessions calling `reserve_advisor_tokens` against a budget admitting one. Same dated record as OP-2 |
+
+**Until OP-2 and OP-3 have dated records, the honest statement is: the ledger hole is closed IN THE
+MIGRATION SET and unverified AGAINST THE DEPLOYED DATABASE.** Those are different claims, and §2's finding
+is only fully retired by the second.
 
 ---
 
@@ -266,7 +305,7 @@ predicate must be **the directive as the module's first statement**, not the str
 
 ### Group B — paid-API control
 
-**U3 · Harden the ledger: writes leave the user's reach.** *(§2, FU-5, FU-6 partially)*
+**U3 · Harden the ledger: writes leave the user's reach.** *(§2, FU-5, FU-6 partially)* — **DONE 2026-08-08, `656a628`** (+18 tests → 910/75; CI run 31314668727). Seven mutations red incl. M13 (unstaging 0008 blinds both guards). **Closes FU-5.** §2's finding is closed in the migration set; **OP-2 owes the live verification.**
 N `supabase/migrations/0008_usage_ledger_policy.sql` (drop `own_advisor_usage`; select-only replacement;
 `security definer` reserve/settle function **with `set search_path = ''`**) · M `rls-coverage.test.ts`
 (must now model `drop policy` / `alter policy` — **closes FU-5**) · N
@@ -278,7 +317,7 @@ optional.
 → `SQL_FUNCTION_REGISTRY: … is SECURITY DEFINER with no "set search_path" — a caller-controlled
 search_path is a privilege-escalation vector`; `git add -N` the migration → both ways, both guards.
 
-**U4 · Atomic reserve-then-spend.** *(roadmap 3; named exit criterion; N-2)*
+**U4 · Atomic reserve-then-spend.** *(roadmap 3; named exit criterion; N-2)* — **DONE 2026-08-08, `54ef19b`** (+11 tests → 921/75; CI run 31316634263). **Closes N-2**, both races. All **50** advisor route pins pass; precisely, their assertions are unchanged except the one naming `recordUsage`, while the `vi.mock` wiring changed because the module's exports did — "unedited" would have been wrong. Added beyond spec: a **SQL↔TS totality** binding in `SQL_FUNCTION_REGISTRY` (every `rpc()` callee is a defined function, and every definer function has a caller), proven red both directions. See **N-12**, **N-13**, **OP-3**.
 M `advisor/repo.ts:168-210` · M `advisor/route.ts` · **M** `src/lib/advisor/repo.test.ts` (exists, 9 tests) · M `route.test.ts`. **M**, deps U3.
 **Ruling the plan makes:** supabase-js cannot express `col = col + n` over PostgREST, so "single `UPDATE …
 RETURNING`" is either an RPC (U3 provides one) or a **compare-and-set** (`.eq` on the prior values;
