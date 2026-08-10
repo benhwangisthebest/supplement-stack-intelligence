@@ -1,6 +1,8 @@
 # Deployed-instance migration record — 2026-08-10
 
 **OP-1 DISCHARGED. OP-2 and OP-3 remain OPEN.**
+*[2026-08-10, later the same day] **OP-2 has since been discharged** —
+`docs/05-qa/2026-08-10-ledger-policy-verification.md`. OP-3 is still open. See §5.*
 
 Where OP-1/OP-2 point (`plan §4.6`): a dated record under `docs/05-qa/`, per the U17 pattern. This is it.
 Run by the repository owner against the deployed Supabase instance; recorded here from the owner's report.
@@ -118,8 +120,8 @@ because the owner exercised the real UI.
 
 | | |
 |---|---|
-| **OP-2** | The four `0008` header checks, **run as `authenticated`** (a superuser session bypasses RLS and reports a false pass). **NOT RUN** — no output was provided with this report. Owner will run it in a later sitting |
-| **OP-3** | Two concurrent `reserve_advisor_tokens` sessions against a budget admitting one. **NOT RUN**, same sitting as OP-2 |
+| **OP-2** | ~~The four `0008` header checks, **run as `authenticated`**. **NOT RUN** — no output was provided with this report. Owner will run it in a later sitting~~ **[2026-08-10, later the same day] RUN AND DISCHARGED** — `docs/05-qa/2026-08-10-ledger-policy-verification.md`. All four as predicted, as `authenticated`, reservation rolled back |
+| **OP-3** | Two concurrent `reserve_advisor_tokens` sessions against a budget admitting one. **STILL NOT RUN.** The OP-2 sitting could not cover it — it was one session, and both reserve calls shared a transaction, so no lock was ever contended |
 | **OP-1 residual** | A code rollback leaving `0008` applied still reproduces the original failure |
 | **N-22** | Re-scoped — see the plan |
 | **N-26** | The probe fixture defect |
@@ -128,3 +130,8 @@ because the owner exercised the real UI.
 > that the ledger must not be user-writable**, and that property is exactly what OP-2 checks and what
 > nothing here has checked. Until OP-2 runs as `authenticated`, the deployed instance has the migration
 > but no evidence the policy behaves as intended.
+>
+> **[2026-08-10, later the same day] It ran, and the policy behaves as intended.** See
+> `2026-08-10-ledger-policy-verification.md`. The sentence above is retired **for `advisor_usage` only** —
+> it still holds verbatim for `api_rate_limits`, whose own header checks are unrun and are now registered
+> as **OP-6**.
