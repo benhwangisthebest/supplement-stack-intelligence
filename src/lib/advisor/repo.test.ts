@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ownerBinding, querySpy } from "@/lib/db/__testing__/query-spy";
 import {
   ADVISOR_DAILY_TOKEN_BUDGET,
+  appendMessages,
+  conversationBelongsToUser,
+  createConversation,
   deriveTitle,
+  getMessages,
   getRemainingBudget,
+  listConversations,
   recordUsage,
   reserveAdvisorTokens,
   settleAdvisorUsage,
@@ -243,5 +249,79 @@ describe("settleAdvisorUsage — releases the reservation and charges the truth"
     const ledger = statefulLedger(100_000);
     await settleAdvisorUsage(ledger.client, 25_000, { inputTokens: 0, outputTokens: 0 });
     expect(ledger.used()).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// U9 — OWNERSHIP PINS (2026-08-10)
+//
+// The advisor's tables were the last user-owned surface with no test asserting
+// that the owner reaches the query. The rationale is in
+// `src/lib/db/__testing__/query-spy.ts`; the short version is that RLS is the
+// last line rather than the only one, and `SECURITY DEFINER` functions and the
+// service-role seed path both run with it switched off.
+// ---------------------------------------------------------------------------
+describe("advisor repo — ownership pins (U9)", () => {
+  it("createConversation writes user_id into the row", async () => {
+    const spy = querySpy({ data: { id: "c1", user_id: "u1", title: "t", created_at: "", updated_at: "" } });
+    await createConversation(spy.client, "u1", "t");
+    expect(spy.tables).toEqual(["advisor_conversations"]);
+    expect(ownerBinding(spy, "u1")).toBe("payload");
+  });
+
+  it("listConversations filters by user_id", async () => {
+    const spy = querySpy({ data: [] });
+    await listConversations(spy.client, "u1");
+    expect(spy.filters()).toContainEqual(["user_id", "u1"]);
+  });
+
+  it("conversationBelongsToUser filters by BOTH id and user_id", async () => {
+    // The whole function is the ownership check U21 added; an `id`-only filter
+    // would make it answer "yes" for every conversation that exists.
+    const spy = querySpy({ data: { id: "c1" } });
+    expect(await conversationBelongsToUser(spy.client, "u1", "c1")).toBe(true);
+    expect(spy.filters()).toContainEqual(["id", "c1"]);
+    expect(spy.filters()).toContainEqual(["user_id", "u1"]);
+  });
+
+  it("conversationBelongsToUser answers false on a miss without throwing", async () => {
+    const spy = querySpy({ data: null });
+    expect(await conversationBelongsToUser(spy.client, "u1", "c1")).toBe(false);
+  });
+
+  it("getMessages is scoped to the conversation, which owns it transitively", async () => {
+    // `advisor_messages` has no `user_id`; ownership derives from the parent
+    // conversation, which is why it is one of GATE C1's three exemptions.
+    const spy = querySpy({ data: [] });
+    await getMessages(spy.client, "c1");
+    expect(spy.filters()).toContainEqual(["conversation_id", "c1"]);
+  });
+
+  it("appendMessages stamps the conversation on every row and touches only that conversation", async () => {
+    // Pinned as it is, and worth reading beside `advisor-action-repo.test.ts`:
+    // the `advisor_conversations` bump is addressed by `id` alone on a table
+    // that HAS a `user_id`. Safe today because the route establishes ownership
+    // first (U21's `conversationBelongsToUser`) and RLS backs it — but the check
+    // and the act are two statements, and only RLS closes the gap between them.
+    const spy = querySpy({ data: null });
+    await appendMessages(spy.client, "c1", [
+      { role: "user", content: "hi", citations: [] },
+    ]);
+    expect(spy.tables).toEqual(["advisor_messages", "advisor_conversations"]);
+    expect(spy.payloads.every((r) => r.conversation_id === "c1" || "updated_at" in r)).toBe(true);
+    expect(spy.filters()).toContainEqual(["id", "c1"]);
+  });
+
+  it("appendMessages writes nothing at all for an empty batch", async () => {
+    const spy = querySpy({ data: null });
+    await appendMessages(spy.client, "c1", []);
+    expect(spy.tables).toEqual([]);
+  });
+
+  it("getRemainingBudget filters by user_id and today's date", async () => {
+    const spy = querySpy({ data: { input_tokens: 100, output_tokens: 50 } });
+    await getRemainingBudget(spy.client, "u1", 1000);
+    expect(spy.tables).toEqual(["advisor_usage"]);
+    expect(spy.filters()).toContainEqual(["user_id", "u1"]);
   });
 });

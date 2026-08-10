@@ -28,7 +28,11 @@ export default defineConfig({
       // thresholds are deferred to Phase 1 (U-DEFER-5).
       include: ["src/**/*.{ts,tsx}"],
       // Tests measure product code; they are not product coverage themselves.
-      exclude: ["src/**/*.test.{ts,tsx}"],
+      // `__testing__` holds fixtures and spies shared BETWEEN test files (U9). A
+      // helper inside a `.test.ts` would have that file's suites collected twice
+      // by every importer, so it lives beside them and is excluded for the same
+      // reason they are: it measures product code, it is not product code.
+      exclude: ["src/**/*.test.{ts,tsx}", "src/**/__testing__/**"],
       // ---------------------------------------------------------------------
       // Per-engine thresholds (Phase 1 U13). Gate D1: set from MEASURED
       // per-directory coverage, ≥10 pp below observed.
