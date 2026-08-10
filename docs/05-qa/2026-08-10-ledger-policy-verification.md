@@ -167,8 +167,9 @@ and a header block with no register row is exactly the burial that section exist
 | **OP-3** | **OPEN.** Two concurrent `reserve_advisor_tokens` sessions. Not runnable in one sitting with OP-2; separate sitting |
 | **OP-4** | ✅ DISCHARGED 2026-08-10 — `2026-08-10-omniroute-probe-record.md`, with one verdict withdrawn by the OP-1 record |
 | **OP-5** | **OPEN — owner condition, pre-deployment.** Gateway provider set (§2.3 rule 15) |
-| **OP-6** | **OPEN — new, §5 above.** `0009`'s four `api_rate_limits` checks |
-| **N-27** | **OPEN — new, §3 above.** OP-2's procedure exercises one of two definer functions and cannot isolate budget accumulation |
+| **OP-6** | ~~**OPEN — new, §5 above.**~~ ✅ **DISCHARGED the same day** — `2026-08-10-rate-limit-policy-verification.md`. All four `0009` checks passed, including the `42501` error shape this record's §2.1 predicted could only come from an INSERT |
+| **N-27** | ~~**OPEN — new, §3 above.**~~ **CLOSED IN PART the same day**, same record §3. The **accumulation** clause closed decisively — `reserve_advisor_tokens(1000, 1500)` returned 0, and `1000 ≤ 1500`, so an accumulation-blind implementation would have granted. The **`settle`** clause did NOT close: it was called and returned cleanly, but its effect was unobservable through the fixture used. Residue carried by **N-28** |
+| **N-28** | **OPEN — new.** A fixture whose reads cannot see its own writes: the "after" sub-selects shared a statement with the mutating calls, so both returned the "before" values |
 
 > The sentence this record retires: *"the deployed instance has the migration but no evidence the policy
 > behaves as intended."* It now has that evidence, for `advisor_usage`. **It does not yet have it for
