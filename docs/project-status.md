@@ -80,7 +80,8 @@ known to be harmless. Recorded here so the choice is visible rather than implici
   anywhere; its files were left untouched. It is **not** this repository and holds no authoritative
   content. Background: closeout finding **C-2** and `docs/04-report/phase-0-integration-enforcement.report.md` §2.
 - Stack: Next.js 15 (App Router), React 19, TypeScript 5.7, Tailwind, Supabase (Postgres + Auth),
-  Anthropic SDK, Zod. Vitest + Playwright. No ORM (deliberate — hand-written repos so RLS does tenant
+  ~~Anthropic SDK~~ **OmniRoute** (self-hosted OpenAI-compatible AI gateway, reached over plain HTTP —
+  Phase 2 U25, 2026-08-10; `@anthropic-ai/sdk` is no longer a dependency), Zod. Vitest + Playwright. No ORM (deliberate — hand-written repos so RLS does tenant
   isolation). No linter, no formatter. **[2026-08-02]** CI now exists (typecheck + unit tests + build).
 - **Measured 2026-08-03** (tracked files, `git ls-files | xargs wc -l`): 13,831 LOC `src/lib`, 5,518
   `src/components`, 2,863 `src/data`, 1,906 `src/app`, 1,308 `src/types`. A point-in-time measurement —
@@ -170,7 +171,7 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
 - **Standing caveat:** the sweep validates **vocabulary, not truth**. It cannot catch a
   correctly-hedged false statement. This is the v11 lesson and it is permanent.
 
-### 2.4 AI advisor (`lib/advisor`) — **B**
+### 2.4 AI advisor (`lib/advisor`) — **B** · provider: **OmniRoute** since 2026-08-10 (U25)
 - **Works — unusually disciplined:** the LLM **cannot write data**. Tools only *propose*;
   `POST /api/advisor/actions` re-loads context server-side, re-validates every proposal with Zod
   against fresh RLS-scoped data, and runs an **authoritative** `cumulativeRecheck` that hard-blocks
@@ -185,9 +186,18 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   Phase 1:** `execute.ts` (182 lines) is at **100 % statements** via `execute.test.ts` (U10, 24 pins);
   rollback failure now calls `reportInternalError(rollbackErr, "ROLLBACK_FAILED")` (U20); and the
   orchestration was extracted to `src/services/advisor-actions.ts` (196 lines) by U11, leaving a 40-line
-  transport route. **Still open:** no timeout on the Anthropic call. Daily budget check is non-atomic
+  transport route. ~~**Still open:** no timeout on the Anthropic call. Daily budget check is non-atomic
   (read-then-write-later), so concurrency can exceed the cap. Client disconnect neither stops the loop
-  nor stops billing.
+  nor stops billing.~~ **[2026-08-10] All three closed** — U6 (timeout + disconnect), U4 (atomic
+  reservation). The timeout is now *ours*: U25 replaced the SDK's untested `timeout` option with an
+  `AbortController`, which is observable under fake timers, so finding **N-20** finally has a red proof.
+- **Provider path [2026-08-10, U25]:** the advisor calls **OmniRoute**, not Anthropic — one module,
+  `src/lib/omniroute/client.ts`, is the only place in `src/` that can spend money, asserted by
+  `SOLE_PAID_CLIENT`. The routed **model id comes from `OMNIROUTE_MODEL` with no default in `src/`**
+  (finding N-21: a hardcoded id 400'd on the first real gateway, and an unset variable would have failed
+  every turn from a green suite). Live evidence: `docs/05-qa/2026-08-10-omniroute-probe-record.md`.
+  **Open against this path:** N-22 — an `auto/*` alias can complete a tool loop and return an **empty**
+  answer, which every safety and grounding gate passes.
 - **Persistence:** conversations, messages, usage, actions — all persisted with RLS.
 - **Classification: B.** Architecture sound; ~~write path needs tests, logging, timeout, extraction~~ →
   **[2026-08-06]** tests, logging and extraction are done; **timeout** and the non-atomic budget check
@@ -223,6 +233,21 @@ test" part does not.
 - **Classification: B.**
 
 ### 2.6 API layer (`src/app/api/**`) — **B**
+
+> **[2026-08-10, Phase 2 U25] Both paid routes now reach OmniRoute, and there is no second provider.**
+> `/api/advisor` and `/api/lab-import/extract` are the two routes `PAID_API_BUDGET` governs, derived from
+> an import-graph walk rather than a hand-kept list. That marker was briefly a **union** — the package
+> `@anthropic-ai/sdk` plus the module `src/lib/omniroute/client.ts` — while the halves landed separately;
+> it has **collapsed back to the single module marker**, which is the mechanical proof the last Anthropic
+> import is gone, and `@anthropic-ai/sdk` left `package.json` in the same commit.
+> **Lab-timeline PDF extraction (`pdf-adapter.ts`)** no longer sends an Anthropic `document` block: a PDF
+> travels as an OpenAI **`file` content part** with a base64 data URL — decision **7B**, ruled from live
+> evidence against both a text PDF and an **image-only** one, not from documentation. `/v1/ocr` was probed
+> as the fallback and answered 400, so it is not one.
+> Its model id, like the advisor's, comes from `OMNIROUTE_MODEL` with **no default in `src/`** (N-21).
+> One finding from that path is worth carrying: the routed model **fences its JSON**, and until `U25` added
+> `stripJsonFence` a *correct* transcription answered 502 `EXTRACTION_FAILED` (**N-23**). Record:
+> `docs/05-qa/2026-08-10-omniroute-probe-record.md`.
 
 > **[2026-08-02]** Raw internal error disclosure is **resolved**. `handle()` now returns a fixed generic
 > message plus an opaque correlation ID and logs the full exception server-side under that ID (`9e9e15d`,
