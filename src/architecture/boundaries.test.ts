@@ -903,22 +903,63 @@ describe("architecture boundaries — legal edges stay silent (positive controls
   });
 });
 
-/** External packages whose use costs money per call. */
+/**
+ * External packages whose use costs money per call.
+ *
+ * **Phase 2 U25 — this list is now HALF the marker set, and it is shrinking.**
+ * The advisor moved to Omniroute, which is reached over plain HTTP: there is no
+ * package to import, so an import-graph rule has nothing to match. The marker
+ * for that provider is a MODULE (below), not a package.
+ *
+ * `@anthropic-ai/sdk` stays here because `/api/lab-import/extract` still uses
+ * it — genuinely, at runtime, today. Removing it now would drop the derived set
+ * to one route and redden the `>= 2` anti-vacuity floor: the guard telling the
+ * truth about a real paid route it had stopped seeing. It leaves in the
+ * lab-import half of U25, in the same commit as the last Anthropic import, and
+ * that removal is the mechanical proof the swap finished.
+ */
 const PAID_PACKAGES = ["@anthropic-ai/sdk"];
 
 /**
- * Tracked API routes whose import graph reaches a paid package (Phase 2 U7).
+ * Repository modules whose use costs money per call (Phase 2 U25).
+ *
+ * A path marker rather than a package one, because the paid boundary is no
+ * longer drawn by a dependency. `src/lib/omniroute/client.ts` is the only
+ * module in `src/` that may POST to the gateway, so "routes reaching it" is
+ * once again exactly "routes that can spend money" — the property the package
+ * marker used to provide for free.
+ *
+ * **This marker is weaker than a package marker in one specific way**, and the
+ * weakness is why `SOLE_PAID_CLIENT` exists beside it: a package cannot be used
+ * without importing it, but an HTTP call can be written inline, and an
+ * inline `fetch` is invisible to an import graph. The two assertions are one
+ * control in two halves; neither is sufficient alone.
+ */
+const PAID_MODULES = ["src/lib/omniroute/client.ts"];
+
+/**
+ * Tracked API routes whose import graph reaches a paid package OR a paid module
+ * (Phase 2 U7, extended by U25).
  *
  * A depth-first walk following resolvable `@/` specifiers, so a route that
- * reaches the SDK three modules away is found — which both real ones do:
- * NEITHER imports it directly. They go through `claude-adapter.ts` and
- * `pdf-adapter.ts`, both of which `await import("@anthropic-ai/sdk")` lazily.
+ * reaches a marker three modules away is found — which both real ones do:
+ * NEITHER reaches its provider directly. `/api/advisor` goes through
+ * `model-adapter.ts` → `omniroute/client.ts`; `/api/lab-import/extract` goes
+ * through `pdf-adapter.ts`, which `await import("@anthropic-ai/sdk")`s lazily.
  * A direct-import check would report zero paid routes and pass.
  */
-export function paidApiRoutes(): string[] {
+export function paidApiRoutes(
+  packages: readonly string[] = PAID_PACKAGES,
+  modules: readonly string[] = PAID_MODULES,
+): string[] {
   const memo = new Map<string, boolean>();
 
   const reachesPaid = (file: string, stack: Set<string>): boolean => {
+    // A paid MODULE is paid by being itself, not by what it imports — the walk
+    // must terminate here or the client's own zero-import purity would make it
+    // invisible to the marker that names it.
+    if (modules.includes(file)) return true;
+
     const cached = memo.get(file);
     if (cached !== undefined) return cached;
     if (stack.has(file)) return false; // cycle
@@ -932,7 +973,7 @@ export function paidApiRoutes(): string[] {
     const edges = extractEdges(file, fs.readFileSync(abs, "utf8"));
 
     let found = edges.some((e) =>
-      PAID_PACKAGES.some((pkg) => e.specifier === pkg || e.specifier.startsWith(`${pkg}/`)),
+      packages.some((pkg) => e.specifier === pkg || e.specifier.startsWith(`${pkg}/`)),
     );
 
     if (!found) {
@@ -1063,5 +1104,126 @@ describe("architecture boundaries — the real source tree", () => {
       "src/app/api/advisor/route.ts",
       "src/app/api/lab-import/extract/route.ts",
     ]);
+  });
+
+  // ---- U25: the marker set is a union during the provider transition -------
+  //
+  // Two providers are live at once: the advisor is on Omniroute (a MODULE
+  // marker, because there is no package to import), lab-import is still on the
+  // Anthropic SDK (a PACKAGE marker). Pinning only the union would let either
+  // half rot silently — the union stays 2 if one marker stops matching and the
+  // other accidentally starts matching both. So each marker is asserted to
+  // account for exactly its own route.
+  //
+  // WHEN THE LAB-IMPORT HALF LANDS: `PAID_PACKAGES` empties, this test's
+  // package clause becomes `[]`, and the module clause takes both routes. That
+  // edit is the mechanical proof the last Anthropic import is gone — which is
+  // why the assertion is written per-marker rather than as a total.
+  it("PAID_API_BUDGET: each marker accounts for exactly its own route", () => {
+    expect(paidApiRoutes(PAID_PACKAGES, []), "the Anthropic package marker").toEqual([
+      "src/app/api/lab-import/extract/route.ts",
+    ]);
+    expect(paidApiRoutes([], PAID_MODULES), "the Omniroute module marker").toEqual([
+      "src/app/api/advisor/route.ts",
+    ]);
+  });
+
+  it("PAID_API_BUDGET: the module marker names a file that exists", () => {
+    // A path marker is a string, and a string can be stale in a way an imported
+    // package cannot: rename the client and the marker matches nothing, the
+    // walk finds one route, and only the `>= 2` floor stands between that and a
+    // green build over an ungoverned paid route.
+    for (const module of PAID_MODULES) {
+      expect(fs.existsSync(path.join(REPO_ROOT, module)), module).toBe(true);
+    }
+  });
+
+  // ---- U25: SOLE_PAID_CLIENT ----------------------------------------------
+  //
+  // The other half of the module marker. `PAID_API_BUDGET` answers "which
+  // routes reach the client"; this answers "is the client the only way to
+  // spend money". Neither is sufficient alone: an inline `fetch` to the
+  // gateway is invisible to an import graph, so without this the marker could
+  // be bypassed by simply not using it.
+  //
+  // WHAT IT ACTUALLY COMPUTES, stated plainly (§2.2 rule 7). It matches the
+  // completions PATH LITERAL across tracked non-test sources under `src/`.
+  // That is a literal match, and N-14's audit classifies exactly what defeats
+  // one: a differently-spelled URL, a path assembled from fragments, or a call
+  // made from outside `src/`. It raises the cost of bypassing the client; it
+  // does not make bypass impossible, and it is not taint analysis.
+  //
+  // The probe scripts under `scripts/` are deliberately out of scope: they are
+  // owner-run diagnostics that the application cannot reach, and OP-4's
+  // lab-import probe must be free to send shapes this repository has not yet
+  // committed to (decision 7B).
+  const NON_TEST_SRC = TRACKED_SRC_PATHS.filter(
+    (f) => (f.endsWith(".ts") || f.endsWith(".tsx")) && !f.includes(".test."),
+  );
+
+  it("SOLE_PAID_CLIENT: the completions path appears in exactly one module", () => {
+    expect(
+      NON_TEST_SRC.length,
+      "SOLE_PAID_CLIENT scanned nothing; a guard over an empty set passes vacuously.",
+    ).toBeGreaterThanOrEqual(100);
+
+    const holders = NON_TEST_SRC.filter((f) =>
+      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("/v1/chat/completions"),
+    ).sort();
+
+    expect(
+      holders,
+      "SOLE_PAID_CLIENT: the paid endpoint is reachable from more than one module,\n" +
+        "or from none. `PAID_API_BUDGET` derives its governed set from the import\n" +
+        "graph, so a call written anywhere else is a paid endpoint no budget rule\n" +
+        "can see. Route it through `createCompletion` in src/lib/omniroute/client.ts:\n  " +
+        holders.join("\n  "),
+    ).toEqual(["src/lib/omniroute/client.ts"]);
+  });
+
+  it("SOLE_PAID_CLIENT: the gateway key is read only where it is declared to be", () => {
+    // A ratchet in Phase 1 U18's shape, asserted as an equality so it can only
+    // change deliberately. The adapter reads the key because that is where the
+    // `NotConfiguredError` throw lives (NOT_CONFIGURED_TOTALITY's sanctioned
+    // list depends on it); the route reads it for the pre-flight that keeps a
+    // missing key a 503 instead of an error event on a committed stream.
+    const readers = NON_TEST_SRC.filter((f) =>
+      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OMNIROUTE_API_KEY"),
+    ).sort();
+
+    expect(
+      readers,
+      "SOLE_PAID_CLIENT: a new module reads the gateway credential. Every reader is\n" +
+        "a place that can authenticate a paid call, so the list is pinned rather than\n" +
+        "bounded — add the reason here, or route the call through the client:\n  " +
+        readers.join("\n  "),
+    ).toEqual([
+      "src/app/api/advisor/route.ts",
+      "src/lib/advisor/model-adapter.ts",
+    ]);
+  });
+
+  it("RETIRED_PACKAGE: src/lib/advisor no longer reaches the Anthropic SDK", () => {
+    // U25's advisor half. The repository-wide form of this assertion — and the
+    // `package.json` clause that goes with it — belong to the LAB-IMPORT half,
+    // because `pdf-adapter.ts` still imports the SDK at runtime and dropping the
+    // dependency now would break that route. Constraint (8) of the amendment
+    // says the dependency leaves in the same commit as the last import; this is
+    // that constraint honoured, scoped to the half that is finished.
+    const advisorFiles = NON_TEST_SRC.filter((f) => inLayer(f, "src/lib/advisor"));
+    expect(advisorFiles.length).toBeGreaterThanOrEqual(5);
+
+    const survivors = advisorFiles.filter((f) =>
+      extractEdges(f, fs.readFileSync(path.join(REPO_ROOT, f), "utf8")).some((e) =>
+        e.specifier.startsWith("@anthropic-ai/sdk"),
+      ),
+    );
+
+    expect(
+      survivors,
+      "RETIRED_PACKAGE: the advisor was migrated off @anthropic-ai/sdk in Phase 2 U25.\n" +
+        "An import that comes back reintroduces a second paid provider on a route the\n" +
+        "budget guard now governs through a different marker:\n  " + survivors.join("\n  "),
+    ).toEqual([]);
   });
 });

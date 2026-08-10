@@ -34,8 +34,19 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({}) }));
 vi.mock("@/lib/advisor/agent", () => ({
   runAdvisorTurn: (...a: unknown[]) => runAdvisorTurn(...a),
 }));
-vi.mock("@/lib/advisor/claude-adapter", () => ({
-  AdvisorClaudeAdapter: class {},
+// Phase 2 U25 — WIRING CHANGE, not an assertion change (U4's precedent). The
+// mocked module path and class name moved with the provider swap, and the
+// double now carries `usageReported`, because the route reads it to decide
+// whether the ledger may settle. The stub defaults to `true`, which is what the
+// pre-U25 route did unconditionally, so every existing settle assertion below
+// stands unedited.
+const adapterState = { usageReported: true };
+vi.mock("@/lib/advisor/model-adapter", () => ({
+  AdvisorModelAdapter: class {
+    get usageReported() {
+      return adapterState.usageReported;
+    }
+  },
 }));
 vi.mock("@/lib/advisor/context-loader", () => ({
   loadAdvisorContext: (...a: unknown[]) => loadAdvisorContext(...a),
@@ -87,11 +98,14 @@ const BODY = { message: "Does my stack make sense?" };
 
 // A syntactically valid but obviously fake value. Never a real key.
 const FAKE_KEY = "test-key-not-a-real-credential";
+const FAKE_BASE_URL = "https://gateway.invalid";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  adapterState.usageReported = true;
   vi.spyOn(console, "error").mockImplementation(() => {});
-  vi.stubEnv("API_ANTHROPIC_KEY", FAKE_KEY);
+  vi.stubEnv("OMNIROUTE_API_KEY", FAKE_KEY);
+  vi.stubEnv("OMNIROUTE_BASE_URL", FAKE_BASE_URL);
   loadAdvisorContext.mockResolvedValue(CTX);
   enforceRateLimit.mockResolvedValue(null);
   reserveAdvisorTokens.mockResolvedValue(25000);
@@ -155,7 +169,7 @@ describe("POST /api/advisor — guards before the stream", () => {
 
   it("returns 503 NOT_CONFIGURED before committing to a stream", async () => {
     getUser.mockResolvedValue(USER);
-    vi.stubEnv("API_ANTHROPIC_KEY", "");
+    vi.stubEnv("OMNIROUTE_API_KEY", "");
 
     const res = await POST(req(BODY));
 
@@ -168,6 +182,33 @@ describe("POST /api/advisor — guards before the stream", () => {
     expect(body.error.code).toBe("NOT_CONFIGURED");
     expect(res.headers.get("Content-Type")).not.toContain("text/event-stream");
     expect(runAdvisorTurn).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 NOT_CONFIGURED when the base URL is absent but the key is not", async () => {
+    // Phase 2 U25. Half-configured is not configured: a key with nowhere to
+    // send it would otherwise commit to a 200 stream and fail inside the
+    // adapter, turning an operational 503 into an error event on a stream the
+    // client already believes succeeded.
+    getUser.mockResolvedValue(USER);
+    vi.stubEnv("OMNIROUTE_BASE_URL", "");
+
+    const res = await POST(req(BODY));
+
+    expect(res.status).toBe(503);
+    expect((await res.json()).error.code).toBe("NOT_CONFIGURED");
+    expect(runAdvisorTurn).not.toHaveBeenCalled();
+  });
+
+  it("names no environment variable in the 503 body", async () => {
+    // §2.3: the client is told the situation, never the shape of the server's
+    // configuration. The constant survived the provider swap unchanged, so this
+    // pins that the swap did not reintroduce an env name into user-facing copy.
+    getUser.mockResolvedValue(USER);
+    vi.stubEnv("OMNIROUTE_API_KEY", "");
+
+    const body = await (await POST(req(BODY))).json();
+
+    expect(body.error.message).not.toMatch(/OMNIROUTE|ANTHROPIC|API_KEY|BASE_URL/i);
   });
 });
 
@@ -255,6 +296,60 @@ describe("POST /api/advisor — the stream", () => {
     });
     // And nothing is persisted or streamed to a connection that is gone.
     expect(appendMessages).not.toHaveBeenCalled();
+  });
+
+  it("does NOT settle when the provider did not report usage (U25)", async () => {
+    // The single most valuable pin in U25, and the difference between "never
+    // estimate" and a free advisor.
+    //
+    // Behind a routing gateway a completion can come back with no `usage`
+    // object. The old adapter mapped that to `{0,0}` and the route settled
+    // anyway — which RELEASES the entire reservation for a turn that really
+    // spent money. Do that on every turn and the daily budget stops binding
+    // while the suite stays green, because nothing on the wire looks wrong.
+    //
+    // The reservation stays charged instead: over-charging by at most one
+    // reservation, never under-charging, exactly as a thrown turn already does.
+    adapterState.usageReported = false;
+
+    const evts = await events(await POST(req(BODY)));
+
+    expect(settleAdvisorUsage).not.toHaveBeenCalled();
+    // And the turn still SUCCEEDS. Refusing to settle is a ledger decision, not
+    // a failure: the user gets their grounded answer either way.
+    expect(appendMessages).toHaveBeenCalled();
+    expect(evts.find((e) => e.event === "done")?.data.status).toBe("answered");
+  });
+
+  it("does NOT settle an ABORTED turn whose usage was unreported (U25)", async () => {
+    // The same rule on U6's disconnect path. Settling here would hand back the
+    // reservation for a turn that made paid calls and then lost its client —
+    // the one case where nobody is watching the response at all.
+    adapterState.usageReported = false;
+    runAdvisorTurn.mockResolvedValue({
+      answer: "",
+      citations: [],
+      status: "aborted",
+      toolsUsed: [],
+      usage: { inputTokens: 40, outputTokens: 7 },
+    });
+
+    await events(await POST(req(BODY)));
+
+    expect(settleAdvisorUsage).not.toHaveBeenCalled();
+    expect(appendMessages).not.toHaveBeenCalled();
+  });
+
+  it("fails CLOSED when the adapter carries no usageReported at all", async () => {
+    // A stale test double or a future adapter that forgets the property must
+    // not read as "usage was reported". `?? false` in the route is what makes
+    // the missing-property case over-charge rather than release.
+    // @ts-expect-error — deliberately modelling an adapter without the property.
+    adapterState.usageReported = undefined;
+
+    await events(await POST(req(BODY)));
+
+    expect(settleAdvisorUsage).not.toHaveBeenCalled();
   });
 
   it("declares maxDuration — PAID_ROUTE_CONFIG", async () => {

@@ -251,15 +251,29 @@ describe("NOT_CONFIGURED_TOTALITY — one class owns the 503 (Phase 2 U1)", () =
     // a repository where every such throw was DELETED would satisfy "no bad
     // constructions" perfectly. These three are the sites U1 enumerated by
     // command before editing (§9.4), and each reaches the client differently:
-    //   supabase/env.ts       → through handle() → 503 NOT_CONFIGURED (live)
-    //   advisor/claude-adapter → the SSE stream, never through handle()
-    //   lab-import/pdf-adapter → re-wrapped as ExtractionError → 502 (preserved)
+    //   supabase/env.ts        → through handle() → 503 NOT_CONFIGURED (live)
+    //   advisor/model-adapter  → the SSE stream, never through handle(); the
+    //                            route's own pre-flight pre-empts it in practice
+    //   lab-import/pdf-adapter → rethrown unchanged → handle() → 503 NOT_CONFIGURED
+    //
+    // [2026-08-10, finding N-17] The third line USED TO SAY "re-wrapped as
+    // ExtractionError → 502 (preserved)". That was true when U1 wrote it and
+    // false the moment U6 landed: `pdf-adapter.ts` now rethrows
+    // `NotConfiguredError` unchanged, and `extract/route.test.ts` pins the 503.
+    // The assertion below never went wrong — only its explanation did, which is
+    // finding N-14's class in its cheapest form. A reader deciding whether this
+    // guard still covers the right thing reads the comment, not the diff.
+    //
+    // [2026-08-10, U25] The second entry was renamed with its file:
+    // `claude-adapter.ts` → `model-adapter.ts`, when the advisor moved off the
+    // Anthropic SDK. The list is a pinned equality precisely so that rename had
+    // to be made here deliberately rather than discovered later.
     const sanctionedFiles = ALL.filter((c) => c.ctor === SANCTIONED).map((c) => c.file);
 
     expect(sanctionedFiles).toEqual(
       expect.arrayContaining([
         "src/lib/supabase/env.ts",
-        "src/lib/advisor/claude-adapter.ts",
+        "src/lib/advisor/model-adapter.ts",
         "src/lib/lab-import/pdf-adapter.ts",
       ]),
     );

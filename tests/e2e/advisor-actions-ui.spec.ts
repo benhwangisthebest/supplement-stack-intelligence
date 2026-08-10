@@ -3,11 +3,11 @@ import { LIVE, login } from "./helpers";
 
 // advisor-actions (v7) — Design §8.3 (L2/UI) + §8.4 (L3/E2E).
 // The proposal card only appears after the LLM calls a proposal tool, so these
-// require the live advisor (configured Supabase + API_ANTHROPIC_KEY + migration
+// require the live advisor (configured Supabase + OMNIROUTE_BASE_URL/_API_KEY + migration
 // 0004 applied). Gated on E2E_LIVE, same posture as the v6 advisor L3 flow.
 
 test.describe("[LIVE] L2/L3: suggest-then-confirm UI", () => {
-  test.skip(!LIVE, "requires live Supabase + API_ANTHROPIC_KEY + migration 0004 (set E2E_LIVE=1)");
+  test.skip(!LIVE, "requires live Supabase + OMNIROUTE_BASE_URL/_API_KEY + migration 0004 (set E2E_LIVE=1)");
 
   test("the advisor proposes an add, the user confirms, then undoes it", async ({ page }) => {
     await login(page);

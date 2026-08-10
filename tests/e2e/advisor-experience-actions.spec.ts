@@ -3,7 +3,7 @@ import { LIVE, login } from "./helpers";
 
 // advisor-experience (v8) — Design §8.3 (L2/UI). The deep-link TARGET check runs
 // anywhere (it only needs the public Library); the live progress strip + multi-action
-// confirm card require the live advisor (configured Supabase + API_ANTHROPIC_KEY +
+// confirm card require the live advisor (configured Supabase + OMNIROUTE_BASE_URL/_API_KEY +
 // migration 0005), gated on E2E_LIVE — same posture as the v6/v7 advisor flows.
 
 test.describe("L2: provenance deep-link targets (public Library)", () => {
@@ -23,7 +23,7 @@ test.describe("L2: provenance deep-link targets (public Library)", () => {
 });
 
 test.describe("[LIVE] L2: live streaming + multi-action confirm", () => {
-  test.skip(!LIVE, "requires live Supabase + API_ANTHROPIC_KEY + migration 0005 (set E2E_LIVE=1)");
+  test.skip(!LIVE, "requires live Supabase + OMNIROUTE_BASE_URL/_API_KEY + migration 0005 (set E2E_LIVE=1)");
 
   test("a live answer shows a progress label then streams tokens in", async ({ page }) => {
     await login(page);

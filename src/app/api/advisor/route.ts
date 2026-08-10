@@ -10,7 +10,7 @@ import type { NextRequest } from "next/server";
 import { getUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { runAdvisorTurn } from "@/lib/advisor/agent";
-import { AdvisorClaudeAdapter } from "@/lib/advisor/claude-adapter";
+import { AdvisorModelAdapter } from "@/lib/advisor/model-adapter";
 import { loadAdvisorContext } from "@/lib/advisor/context-loader";
 import {
   appendMessages,
@@ -55,10 +55,14 @@ export async function POST(request: NextRequest) {
     return fail("BAD_REQUEST", "Invalid request body.", 400);
   }
 
-  // Pre-flight the live-LLM key BEFORE committing to a 200 SSE response, so a
-  // missing key still returns a proper 503 (preserves the v7 contract). The route
-  // always uses the real adapter, which reads this env var.
-  if (!process.env.API_ANTHROPIC_KEY) {
+  // Pre-flight the live-LLM configuration BEFORE committing to a 200 SSE
+  // response, so a missing setting still returns a proper 503 (preserves the v7
+  // contract). The route always uses the real adapter, which reads these env
+  // vars. Phase 2 U25: both halves are required — a base URL without a key
+  // cannot authenticate, and a key without a base URL has nowhere to go. The
+  // client text is unchanged: `AI_SERVICE_NOT_CONFIGURED` names no environment
+  // variable, so a provider swap moves no response byte on this path.
+  if (!process.env.OMNIROUTE_API_KEY || !process.env.OMNIROUTE_BASE_URL) {
     return fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503);
   }
 
@@ -103,7 +107,29 @@ export async function POST(request: NextRequest) {
         controller.enqueue(sse("progress", e));
 
       // One adapter instance per turn (it threads the tool-use transcript internally).
-      const adapter = new AdvisorClaudeAdapter();
+      const adapter = new AdvisorModelAdapter();
+
+      /**
+       * Phase 2 U25 — the ledger settles only figures the provider REPORTED.
+       *
+       * `adapter.usageReported` is false when any completion this turn came
+       * back without a `usage` object. Behind a routing gateway that is
+       * possible, and settling anyway would mean settling against zeros: the
+       * reservation would be released in full for a turn that really spent
+       * money, and the daily budget would quietly stop binding while every
+       * test stayed green.
+       *
+       * So an unreported turn leaves its reservation charged. That
+       * over-charges by at most one reservation and never under-charges — the
+       * same direction a *thrown* turn already takes (U6) — and it is the only
+       * option that does not require estimating a figure the system did not
+       * compute (`CLAUDE.md` §2.2 rule 7).
+       *
+       * `?? false` is load-bearing: an adapter without the property (a stale
+       * test double, a future implementation that forgets it) fails CLOSED,
+       * toward over-charging, rather than toward a free advisor.
+       */
+      const maySettle = () => budgetRemaining > 0 && (adapter.usageReported ?? false);
       try {
         const result = await runAdvisorTurn({
           adapter,
@@ -129,7 +155,7 @@ export async function POST(request: NextRequest) {
         // an aborted turn has no answer, and appending an empty assistant
         // message would put a blank turn in the user's history.
         if (result.status === "aborted") {
-          if (budgetRemaining > 0) {
+          if (maySettle()) {
             await settleAdvisorUsage(supabase, budgetRemaining, result.usage);
           }
           return;
@@ -154,7 +180,7 @@ export async function POST(request: NextRequest) {
         // their budget to requests that produced nothing. `result.usage` carries
         // what the loop really spent before it stopped, so the charge is the
         // truth in both directions.
-        if (budgetRemaining > 0) {
+        if (maySettle()) {
           await settleAdvisorUsage(supabase, budgetRemaining, result.usage);
         }
 

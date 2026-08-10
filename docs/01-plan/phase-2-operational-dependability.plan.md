@@ -13,6 +13,25 @@
 > applied to `docs/roadmap.md`'s Phase 2 exit criteria **in this same commit**, and ruling 4 was *executed*
 > rather than planned.
 >
+> **[2026-08-10] SCOPE AMENDMENT — U25 — APPROVED**, by the repository owner, as drafted.
+> ~~**PROPOSED — awaiting approval.** The U25 spec below, decision 7 and findings N-17…N-20 are drafted
+> and authorise nothing until ruled.~~ *(The proposed-status line is struck rather than deleted — §7:
+> retire, do not erase.)*
+> **The approval carried three rulings**, recorded in §7 beside decision 7: **7A confirmed** as drafted;
+> **7B DEFERRED PENDING PROBE** — no option may be chosen from documentation, so **OP-4**'s probe scripts
+> are authored as owner-run artifacts and the ruling follows the dated record, not the README; and a
+> **sequencing constraint** — the **advisor half is implemented now, the lab-import half must not be
+> written in any file** until 7B carries a dated ruling.
+>
+> **[2026-08-10] SCOPE AMENDMENT — U25, the LLM provider swap.** The repository owner instructed, as a
+> rank-2 explicit instruction under `CLAUDE.md` §6, that **Omniroute replaces the Anthropic SDK as the LLM
+> provider for both paid routes** — full replacement, no Anthropic fallback. Appended as **U25** in §5
+> Group D (numbering is append-only), with **decision 7** in §7 and findings **N-17…N-20** in §4.5.
+> A rank-2 instruction changes *what* is built; it suspends nothing in §2 of `CLAUDE.md`, and U25 is
+> written so that it does not: §2.1's safety gate and §2.2's grounding rules apply to the new provider
+> exactly as they applied to the old one. **One half of U25 is blocked on decision 7B** and must not be
+> written until that is ruled.
+>
 > **Authored:** 2026-08-06, at Phase 1 close (`d4f6194`, suite 859/73).
 > **Scope authority:** `docs/roadmap.md` "Phase 2 — Operational dependability" (rank 6, sequencing).
 > **Predecessor:** `docs/04-report/phase-1-verification-integrity.report.md` ·
@@ -214,6 +233,10 @@ a commit message keeps pointing at the same finding.
 | **N-14** | U6 | **A guard that matches literal text is one constant-refactor away from vacuity, and this was not a hypothetical.** U6 replaced three hand-authored `"… not configured"` literals with the shared constant `AI_SERVICE_NOT_CONFIGURED` (closing N-10). `NOT_CONFIGURED_TOTALITY` matched the *literal argument text* of a `new …Error(...)`, so `new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED)` became **invisible to it** — the good refactor disarmed the guard watching that exact code. It did not fail silently only because the guard's own anti-vacuity inverse (the sanctioned-sites assertion) went red | U6 extended the guard with `readPhraseConstants`, so the phrase is now tracked through **names** as well as literals, plus 4 self-tests and a pin that `AI_SERVICE_NOT_CONFIGURED` is still resolved. 18 → 23 tests | **Instance closed by U6; the CLASS is open, and this row owns it.** Named task, **audit only, no guard edits**: enumerate every guard in `src/architecture/` by **matching strategy** — literal / identifier / structural — and state for each whether a constant-extraction, a rename, or a helper-extraction would defeat it, and what specifically would do so. Fixes land in each guard's owning unit, never here. **Delivered by U10 (2026-08-10) — the table is immediately below §4.5.** Sibling evidence that the class is real and not confined to `src/`: **GATE B1 clause (i)'s own check text** is a raw `grep` that this discharge found matching migration 0008's explanatory *comment* quoting the very policy it dropped — see the gate block |
 | **N-15** | U6 | **`AdvisorPanel` does not handle the new `aborted` turn status.** U6 gave the agent loop a terminal `aborted` state so a client disconnect settles its reservation and stops the loop. Today that state is **server-side terminal** — the client that would see it is by definition the one that hung up, so nothing renders wrong and there is no live defect | `src/lib/advisor/agent.ts` returns `{ status: "aborted", … }`; `AdvisorPanel` switches on the other statuses only | **Open — not a defect today, and a trap tomorrow.** The moment any surface *retries* or *resumes* a turn, or the status is persisted and re-read, an unhandled case becomes a silent blank. Owner: **U19**, which already opens the advisor UI. Recorded because "unreachable today" and "safe" are different claims |
 | **N-16** | Gate B1 discharge | **`RLS_COVERAGE` cannot see a counter table being *widened* by a later migration — only dropped, altered, or disabled.** Its `Weakening` union is exactly `"drop policy" \| "alter policy" \| "disable rls"`. A future `0010` adding `create policy "x" on public.advisor_usage for all using (user_id = auth.uid())` **alongside** the SELECT-only policy would reopen §2's hole, and the effective-policy model would record it as a policy merely *present* — no weakening event, no red | `rls-coverage.test.ts:100-105` (the union) and `:139` (`weakenings` is only pushed from the drop/alter/disable handlers); confirmed against the effective-state parse used to evaluate gate clause (i) | **Open.** The gate's clause (i) is a **one-time command evaluation at discharge**, not a standing assertion — nothing prevents regression after it. The durable form is a named `COUNTER_TABLES` set (`advisor_usage`, `api_rate_limits`) with a rule that no effective policy on them may be `for all`/`for delete`/`for insert`/`for update`. Owner: **U15** (migration tooling) or whichever unit next opens `rls-coverage.test.ts`, whichever is first. Not taken in U5–U7: none of them owned that guard, and §8.1 says name it rather than absorb it |
+| **N-17** | U25 planning | **A guard's own explanatory comment states behaviour that U6 reversed.** `not-configured-totality.test.ts:256` documents its third sanctioned site as `lab-import/pdf-adapter → re-wrapped as ExtractionError → 502 (preserved)`. U6 (`3d6b3c4`) inverted exactly that: `pdf-adapter.ts` now rethrows `NotConfiguredError` unchanged, it escapes to `handle()`, and the route answers **503 `NOT_CONFIGURED`** — which `extract/route.test.ts:148-157` pins. The assertion beneath the comment is still correct; only the comment is false | Measured 2026-08-10: `pdf-adapter.ts:97,133` (`if (e instanceof NotConfiguredError) throw e;`) against `not-configured-totality.test.ts:256`. Both statements cannot be true | **Open — owner: U25**, which edits that sanctioned-site list anyway (see U25's file list), so the comment is corrected by the first unit that has the file open rather than by a drive-by. **This is N-14's class in its cheapest form:** the guard did not go wrong, its *explanation of itself* did — and a reader deciding whether the guard still covers the right thing reads the comment, not the diff |
+| **N-18** | U25 planning | **The advisor budget is denominated in tokens, and a routing gateway makes tokens a weaker proxy for cost than they were.** With one provider and one model, tokens and money differ by a constant. Behind a router that may serve a turn from any of hundreds of models at different prices — and that advertises response compression which changes the token count without changing the answer — a per-user *token* budget no longer bounds spend. `ADVISOR_DAILY_TOKEN_BUDGET` would cap a cheap model and a costly one identically | `.env.example` (`ADVISOR_DAILY_TOKEN_BUDGET`); `reserve_advisor_tokens` / `settle_advisor_tokens` are token-denominated in `0008`; OmniRoute's documented per-model routing and `x-omniroute-compression` header | **Open — registered, not absorbed, and deliberately NOT taken in U25.** Making the ledger cost-denominated is a migration (`advisor_usage` columns), a price table, and a new source of truth for prices that the repository would have to author and keep true — §2.2 rule 8 territory, since a wrong price is a fabricated figure. U25 keeps the ledger exactly as it is and changes only which numbers feed it. Owner: a future unit, and the question it must answer first is *where a trustworthy price comes from*, not *how to store it* |
+| **N-19** | U25 planning | **The OpenAI-compatible surface has no equivalent of the Anthropic `document` content block, so native PDF transcription has no like-for-like replacement.** `makeClaudePdfTranscriber` sends `{type:"document", source:{type:"base64", media_type:"application/pdf"}}` — an Anthropic-shaped block. OmniRoute exposes `/v1/*` as **OpenAI-compatible**; its README lists no `/v1/messages`. If the routed model does not accept a `file` content part, every PDF that transcribes today answers **502 `EXTRACTION_FAILED`** — a functional regression, not the prose change U25 declares | `pdf-adapter.ts:207-229`; OmniRoute README (`/v1/*` "OpenAI-compatible — chat, embeddings, images, audio, OCR") and its API reference (chat/embeddings/images/audio endpoints; `/v1/ocr` present, no Anthropic surface) | **Open — this is decision 7B and it BLOCKS U25's lab-import half.** Recorded here rather than resolved in the spec because no reading of the docs settles it: whether a *routed* model accepts a base64 PDF is a property of the live gateway, and the only honest way to know is **OP-4**, an owner-run probe. §8.1: name it |
+| **N-20** | U25 planning | **`claude-adapter.ts`'s `REQUEST_TIMEOUT_MS` is configured and never tested.** U6 set `timeout: REQUEST_TIMEOUT_MS` on the SDK client and pinned three mutations — abort, settle-on-abort, `maxDuration` — none of which is the timeout. So the control the header calls load-bearing has no red proof, and deleting the option today reddens nothing | `claude-adapter.ts:48,168`; U6's red list in §5 names abort/settle/`maxDuration` only; `claude-adapter.test.ts` (7 tests) never advances a clock | **Closed by U25 in the only direction available.** The SDK's `timeout` option leaves with the SDK, so U25 must reimplement it — and constraint (4) of the amendment requires it be tested "equivalently", which is a **higher** bar than what exists rather than parity with it. Recorded so the phase report does not later read as though a tested timeout was replaced by a tested timeout |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -257,6 +280,7 @@ that "Phase 2 closed" cannot be read as "these were done".
 | **OP-1** | **Deployment order for 0008 + U4.** `0008_usage_ledger_policy.sql` removes the end user's INSERT/UPDATE/DELETE on `advisor_usage`; U4 is the code that stops needing them. **They are one deployment.** Applying 0008 against a database whose deployed code still calls `.from("advisor_usage").upsert(...)` makes every advisor turn fail to record usage — the write is denied, `recordUsage` raises, and the turn 500s **after the paid call has already been made** | CI applies no migrations and holds no credentials; both halves are in the same integration commit, so the repository is self-consistent and only the *live* rollout can get the order wrong | Deploy the application code first, or both together. Never the migration alone. Rolling back the code without rolling back 0008 recreates the same failure |
 | **OP-2** | **Verify the ledger hole is actually closed.** That the SELECT-only policy denies DELETE/UPDATE, and that the two `SECURITY DEFINER` functions work and cap correctly | Every U3 assertion is **static SQL text analysis**. `RLS_COVERAGE` and `SQL_FUNCTION_REGISTRY` read the migration as text; neither can execute a policy | The four psql statements in `0008_usage_ledger_policy.sql`'s header. **Run them as the `authenticated` role** — a superuser session bypasses RLS and reports a false pass. Record the output under `docs/05-qa/` with a date, per the U17 pattern |
 | **OP-3** | **Verify the reservation is atomic under real concurrency.** U4's proof is a stateful fake, which establishes that the TypeScript caller has no read-then-write window — not that Postgres serialises the `UPDATE … WHERE … RETURNING` | No database in CI, and a JS fake cannot model row locks | Two concurrent psql sessions calling `reserve_advisor_tokens` against a budget admitting one. Same dated record as OP-2 |
+| **OP-4** | **A live end-to-end call against real Omniroute credentials** — one advisor turn that calls at least one tool and returns a grounded answer, and one lab extraction, run against a reachable gateway with a real `OMNIROUTE_API_KEY`. It answers three questions no unit test can: (a) does the routed model return `usage.prompt_tokens` / `usage.completion_tokens` **per response**, or does it omit them; (b) does it accept a base64 PDF content part (**decision 7B / N-19**); (c) does the tool-calling round-trip work end to end against the real gateway rather than a scripted mock | **Ruling 3 (2026-08-08) forbids the credentials that would let CI do it**: live E2E needs secrets in a public repository, and that was decided against. So this is owner-run by construction, on the same footing as OP-2/OP-3 and the `[LIVE]` E2E baseline. **No secret enters the repository** — not in `.env.example`, not in a fixture, not in a recorded transcript | Set `OMNIROUTE_BASE_URL` and `OMNIROUTE_API_KEY` in a local `.env.local` (gitignored). Run one advisor turn and one PDF extraction against a running app. Record under `docs/05-qa/` with a date, the model id actually routed to, and **the `usage` object's field names and whether they were populated** — the names, never the key. Per the U17 pattern. **(a) and (c) are entry conditions for U25's advisor half; (b) is the entry condition for its lab-import half** |
 
 **Until OP-2 and OP-3 have dated records, the honest statement is: the ledger hole is closed IN THE
 MIGRATION SET and unverified AGAINST THE DEPLOYED DATABASE.** Those are different claims, and §2's finding
@@ -653,6 +677,290 @@ byte changes** — this is the first declared behaviour change in either phase t
 undecided, which is the "absorb it" failure `CLAUDE.md` §8.1 forbids. Cutting it requires re-opening the
 ruling explicitly.
 
+**U25 · Omniroute replaces the Anthropic SDK on both paid routes.** *(§7 decision 7, ruled **full
+replacement** on 2026-08-10 — a rank-2 scope instruction)* **L**, deps **U5, U6, U7** (all DONE). Lands
+alongside Group D; it shares no file with U13–U24.
+**Baseline measured 2026-08-10 at `9f8f1e6`: 1055 tests / 89 files green.** The five test files this unit
+directly rewrites or edits hold **66** of them: `advisor/route.test.ts` (15), `advisor/agent.test.ts` (15),
+`claude-adapter.test.ts` (7), `lab-import.test.ts` (21), `lab-import/extract/route.test.ts` (8).
+*(§5's U4 entry says "all **50** advisor route pins"; `src/app/api/advisor/route.test.ts` contains **15**
+`it()` blocks today. The 50 is a broader advisor-wide figure from Phase 1 and is not this unit's inventory
+— **the measurement wins and the discrepancy is recorded rather than smoothed over.** U25's obligation is
+the 66 above, re-measured at execution time, not either historical number.)*
+
+**What the provider actually is, measured from its own documentation and not assumed.** OmniRoute is a
+self-hosted **OpenAI-compatible** gateway: `POST {base}/v1/chat/completions`, `Authorization: Bearer …`,
+key env `OMNIROUTE_API_KEY`, default base `http://localhost:20128`. Responses carry `usage` with
+`prompt_tokens` / `completion_tokens`. Tool calling and streaming are supported. **It publishes no
+Anthropic-compatible `/v1/messages` surface** — that single fact drives most of what follows, because
+every wire shape in both adapters today is Anthropic's.
+
+**Consequence, stated before the design: this is not a client swap, it is a protocol change.**
+`toAnthropicTools`, `seedMessages`, `buildToolResultMessage` and `parseResponse` are pure mapping cores
+*to the Anthropic message protocol*. All four are rewritten, and so are their unit tests. Anyone reading
+"replace the SDK" as "change one import" will produce a green suite that has stopped testing the protocol
+in use.
+
+---
+
+**(1) Detection target — the decision constraint (1) demands be taken deliberately.**
+`PAID_API_BUDGET` derives its governed set by walking the import graph for `PAID_PACKAGES =
+["@anthropic-ai/sdk"]`. A full swap makes that set empty and the anti-vacuity assertion goes red —
+**by design, and that red is the guard working**, not a defect to route around.
+
+| Option | What it buys | What it costs |
+|---|---|---|
+| **(i) `openai` npm SDK** pointed at OmniRoute's `baseURL`; marker becomes the package `"openai"` | The guard's shape is unchanged — still a package marker, still transitive. A `timeout` option comes free, as today | A new runtime dependency for one JSON POST, against §3.4. The repo's existing posture is deliberately the opposite: both adapters avoid a build-time dep and use structural types |
+| **(ii) raw `fetch` through one named client module** `src/lib/omniroute/client.ts`; marker becomes that path (**recommended**) | No dependency. The timeout becomes *ours* and therefore testable (**N-20**). The governed set reads "routes reaching the one module that can spend money", which is what rule 9 means | An import-graph rule has nothing to match if someone writes an inline `fetch` — so the marker needs a **second, sole-client assertion** or it is defeatable by not using it |
+
+**Recommendation (ii), and the sole-client ratchet is not optional under it.** `PAID_PACKAGES` becomes
+`PAID_MODULES = ["src/lib/omniroute/client.ts"]`; `paidApiRoutes()`'s `found` predicate matches the
+resolved *file* instead of the bare specifier (`resolveSpecifier` already normalises `@/` → `src/`, and
+`extractEdges` already sees `await import()`, so both mechanics carry over unchanged). Alongside it, a
+**`SOLE_PAID_CLIENT`** assertion: exactly one tracked module under `src/` may read `OMNIROUTE_API_KEY` or
+construct the completions URL. **Its honest weakness, per N-14's taxonomy: that is an identifier+literal
+match, so a differently-spelled URL or a key read through a helper defeats it** — it raises the cost of
+bypassing the client, it does not make bypass impossible. Say that in the file header rather than let the
+name imply more.
+**Membership stays pinned at exactly 2** — `/api/advisor` and `/api/lab-import/extract` — and a third
+ungoverned paid route must be proven red (mutation M2 below).
+
+**(2) The definition, the guard and the doc row move in one commit.** `CLAUDE.md` §4 row 9 and §8's
+exit criterion both *define* "paid-API route" as reaching `@anthropic-ai/sdk`, and `DOC_TRUTH` binds row 9
+in both directions (`UNENFORCED_MARKERS[9] = "PAID_API_BUDGET"`, plus the "names only rule ids that are
+real test titles" and "understates enforcement" assertions). U25 edits `boundaries.test.ts`, `CLAUDE.md`
+§4 row 9 and this plan's §8 criterion **in the same commit**. Splitting them leaves the repository
+asserting a definition it no longer implements — which is the entire failure class `DOC_TRUTH` exists for.
+
+**(3) NOT_CONFIGURED plumbing.** `API_ANTHROPIC_KEY` → **`OMNIROUTE_API_KEY`** and **`OMNIROUTE_BASE_URL`**
+(no default: `localhost:20128` is a developer's gateway, and defaulting a deployed app to it would fail
+obscurely rather than loudly). `.env.example` gains both, loses the Anthropic block.
+**`AI_SERVICE_NOT_CONFIGURED` is not re-authored** — it names no environment variable, which was U6's
+design decision paying off here: **the user-facing 503 body does not change by a single byte** under a
+provider swap. Both adapters and the advisor route's pre-flight keep throwing / returning it, so N-9's
+ruling stands and a missing key stays an honest 503.
+**`NOT_CONFIGURED_TOTALITY`'s sanctioned-site list is edited deliberately, not reactively.** The list is
+`{supabase/env.ts, advisor/claude-adapter.ts, lab-import/pdf-adapter.ts}`; the second entry is renamed
+below, and its stale explanatory comment (**N-17**) is corrected in the same edit. **The key check stays in
+the two adapters and does NOT move into the client module** — the client receives an already-resolved key.
+That keeps the throw sites where the guard's inverse assertion can see them and keeps `errors.ts` a
+zero-import module reachable from both pure-engine directories.
+
+**(4) U6's pinned behaviours must survive.** All four, re-proven not re-argued:
+- **Request timeout.** The SDK's `timeout` leaves with the SDK. Reimplement with `AbortSignal.timeout(ms)`
+  composed against the caller's signal, `OMNIROUTE_TIMEOUT_MS` defaulting to the same 60 000.
+  **This gets the first real test the control has ever had (N-20).**
+- **`maxDuration = 60`** on both routes — unchanged, and still one of the two controls
+  `PAID_API_BUDGET` accepts.
+- **Abort → settle-then-return BEFORE persistence.** Unchanged; the route's ordering is not touched.
+- **A thrown turn still does not settle.** Unchanged. Over-charging by one reservation stays the safe
+  direction.
+
+**(5) Ledger semantics — reserve an upper bound, settle to what the provider actually reported.**
+Mapping is `prompt_tokens → inputTokens`, `completion_tokens → outputTokens`.
+**The dangerous part is the absent case, and it is a live hazard rather than a hypothetical.**
+`parseResponse` today does `resp.usage?.input_tokens ?? 0`, and `claude-adapter.test.ts` *pins* that
+(`// missing usage → 0`). With one provider that always reports, 0 never occurs. Behind a router that may
+serve from any of hundreds of models, "usage absent" and "usage zero" become indistinguishable — and they
+settle in opposite directions: absent-as-zero **releases the entire reservation** for a turn that really
+spent money. That is the one direction the amendment forbids: *never estimate, and if usage is missing the
+settle keeps the full reservation.*
+**Design, chosen to keep the port and `agent.ts` untouched (constraint 7):** `AdapterStep.usage` keeps its
+exact shape, and the adapter instance — which the route already constructs and holds — exposes a
+`usageReported: boolean` **outside** the `ClaudeAdapter` interface. After `runAdvisorTurn` returns, the
+route settles only when it is true. `src/types/advisor.ts` is unchanged, `agent.ts` is unchanged, and no
+governed pure-engine file moves.
+*(Alternative considered and rejected: threading a `reported` flag through `AdapterStep` →
+`AdvisorTurnResult`. It is more explicit, and it edits both `src/types/advisor.ts` and `agent.ts` for a
+fact only the route acts on.)*
+**OP-4(a) is the entry condition** — if the routed model does report usage on every response, the flag is
+belt-and-braces; if it does not, the flag is the only thing standing between a router and a free advisor.
+The follow-on question — *should a token-denominated budget become cost-denominated?* — is registered as
+**N-18** and explicitly **not taken here**.
+
+**(6) Rate limiting is provider-agnostic and unchanged.** `enforceRateLimit`, `src/lib/rate-limit/**`,
+`0009_rate_limits.sql` and both routes' 429 pins are untouched; the pins **re-run unedited**. If any needs
+editing, that is a finding, not a fix.
+
+**(7) The port stays identical; one file and one class are renamed.** `ClaudeAdapter.next()` keeps its
+signature exactly, so `agent.ts` — a governed pure-engine file — is untouched, and the new client adds no
+`next/*` and no `@/lib/api/respond` edge (`DOMAIN_IS_PURE` governs `src/lib/omniroute` by ruling D-4's
+scope, and a `fetch` client imports none of the banned four; pin it).
+**Renamed:** `src/lib/advisor/claude-adapter.ts` → `model-adapter.ts`, class `AdvisorClaudeAdapter` →
+`AdvisorModelAdapter`. A module named for a provider it no longer calls is a name that lies (§8.2), and
+`NOT_CONFIGURED_TOTALITY`'s list is being edited in this unit anyway — doing it now touches that file once
+instead of twice. **The `ClaudeAdapter` *type* is deliberately NOT renamed**: it lives in
+`src/types/advisor.ts` and `agent.ts` imports it, so renaming it would touch the one file constraint (7)
+asks to leave alone, for zero behavioural gain. Registered as residual naming debt in U25's report.
+
+**(8) `@anthropic-ai/sdk` leaves `package.json` in the same commit as the last import**, and a new
+assertion makes its return red: zero tracked files under `src/` reference it (import, `require`, or
+`await import`), **and** it appears in neither `dependencies` nor `devDependencies`. Anti-vacuity: the
+scanned set is asserted non-empty, or a broken scan reads as a clean removal.
+
+**(9) Declared behaviour change #6 — the provider changes.** Answer prose changes for every advisor turn
+and every lab extraction; tool-selection may differ; extraction accuracy may differ. **No status, envelope
+or header change is expected.** Two places where that expectation could break, both to be *stopped on*
+rather than absorbed: the PDF content block (**decision 7B / N-19**, which would move a 200 to a 502) and
+any turn whose usage is unreported (which changes no response byte, only a ledger entry).
+
+**(10) §2.1 and §2.2 get no exception.** The safety re-check, the grounding rules and the `src/lib/safety`
+vocabulary gate sit **around** the adapter and are not touched: `runAdvisorTurn` still gates the final
+answer before a token leaves the server, `safety-recheck.ts` still runs server-side and authoritative, and
+the extraction prompt is still transcription-only. A cheaper provider is not a reason to trust its output
+more. `EXTRACTION_SYSTEM_PROMPT` is carried across **verbatim** — it is pinned by test, and rewording it
+for a new model would be an undeclared change to a safety-critical instruction.
+
+**(11) Test inventory, and where `vi.mock` wiring necessarily changes (U4's precedent).** U4 recorded that
+its assertions were unchanged *but its mock wiring changed because the module's exports did* — and that
+"unedited" would have been the wrong word. The same distinction applies here and must be reported the same
+way, per assertion and not per file:
+- `advisor/route.test.ts:37-39` mocks `@/lib/advisor/claude-adapter` → the mock **path and class name
+  change** (wiring); `vi.stubEnv("API_ANTHROPIC_KEY", …)` at `:94` and `:158` → **env name changes**
+  (wiring). Every *assertion*, including the 503 pre-flight pin, is expected to stand unedited.
+- `claude-adapter.test.ts` → `model-adapter.test.ts`: **rewritten**, because it tests the Anthropic wire
+  protocol. Its `MockAnthropic` becomes a scripted OpenAI-shaped client; the `// missing usage → 0` pin is
+  **replaced by its inverse** — missing usage must set `usageReported = false` — and the replacement is
+  visible in the diff rather than silent, exactly as U6 inverted lab-import's preservation pin.
+- `lab-import.test.ts` (21): the injected-`transcribe` tests are provider-agnostic and stand; the tests
+  reaching `requireKey` change env name only.
+- `lab-import/extract/route.test.ts` (8): the inverted 503/`NOT_CONFIGURED` preservation pin
+  (`:148-157`) **re-runs unedited** — the constant does not move.
+- `agent.test.ts` (15): expected **entirely unedited**. If any test here needs a change, the port was not
+  kept identical and that is a finding.
+- Guard files edited: `boundaries.test.ts` (marker + membership + new `SOLE_PAID_CLIENT` + retired-package
+  assertion), `not-configured-totality.test.ts` (sanctioned list + N-17's comment). `doc-truth.test.ts`
+  is **not** edited — it must go green against the edited `CLAUDE.md` on its existing logic.
+- `tests/e2e/{ai-advisor,advisor-actions-ui,advisor-experience-actions}.spec.ts`: `test.skip` **reason
+  text** names `API_ANTHROPIC_KEY`. Text only — no gating change, so `LIVE_TAGGING` is unaffected.
+- `vitest.config.ts`: `src/lib/omniroute/**` needs a threshold entry (§5.7), set at **measured − 10** with
+  D-2's branches rule. **Its red proof is weak by nature** — a threshold's failure mode is the coverage
+  step, not a mutation — and saying so is better than manufacturing one.
+- **Dated records are annotated, never rewritten** (§7): `docs/05-qa/phase-1-live-e2e-baseline.md`'s env
+  table, `docs/04-report/phase-1-verification-integrity.report.md`, `docs/roadmap.md:257` and the
+  `docs/archive/**` design/QA documents all name `API_ANTHROPIC_KEY` as what was true when written.
+
+**Files.** N `src/lib/omniroute/client.ts` + `client.test.ts` · R `advisor/claude-adapter.ts` →
+`model-adapter.ts` (+ its test) · M `lab-import/pdf-adapter.ts` + `lab-import.test.ts` · M
+`advisor/route.ts` + `route.test.ts` · M `lab-import/extract/route.ts` (only if 7B forces it) +
+`route.test.ts` · M `boundaries.test.ts`, `not-configured-totality.test.ts` · M `vitest.config.ts`,
+`package.json`, `.env.example` · M `CLAUDE.md` §4 row 9 · M this plan's §8 · M 3 E2E spec skip reasons.
+
+**Blocked half.** The advisor half may proceed once **OP-4(a)** and **OP-4(c)** are recorded. **The
+lab-import half must not be written until decision 7B is ruled** — every design for it presupposes an
+answer to N-19, and writing one first would be choosing the answer by implementation.
+
+#### **[2026-08-10] U25's split — the two obligations that had to move, and why that is not absorption**
+
+The owner's sequencing ruling implements the advisor half now. Two clauses of the amendment turned out to
+be **unsatisfiable while the lab-import half is unwritten**, and both were stopped on rather than quietly
+dropped or quietly forced:
+
+1. **The paid-route marker is a UNION during the transition, not a replacement.** Swapping
+   `PAID_PACKAGES = ["@anthropic-ai/sdk"]` for `PAID_MODULES = ["src/lib/omniroute/client.ts"]` outright
+   would stop detecting `/api/lab-import/extract` — which is *still genuinely a paid Anthropic route* —
+   dropping the derived set to **1** and reddening the `>= 2` anti-vacuity floor. That red would be the
+   guard telling the truth, and silencing it by lowering the floor is the exact vacuity this plan
+   condemns. So the guard now carries **both** markers, because during the transition there really are
+   two paid providers in the tree. Membership stays pinned at exactly **2**, and the union is asserted to
+   find **one route through each marker** — so neither marker can rot unnoticed.
+   **The single-marker form is the lab-import half's closing act**, and its removal of `@anthropic-ai/sdk`
+   from `PAID_PACKAGES` is the mechanical proof that the last Anthropic import is gone.
+2. **`@anthropic-ai/sdk` stays in `package.json`, and the retired-package assertion is deferred with it.**
+   Constraint (8) says the dependency drops *in the same commit the last import goes* — and the last
+   import is `pdf-adapter.ts`'s, which this half may not open. Removing it now would break the lab-import
+   route at runtime. **This is constraint (8) honoured, not weakened:** the commit it names is the
+   lab-import commit, not this one. What lands now is the assertion's *scannable half* — `src/lib/advisor`
+   is proven free of the SDK — with the repository-wide form and the `package.json` clause named as the
+   lab-import half's obligation.
+
+**`CLAUDE.md` §4 row 9 and §8's criterion are updated to the transitional definition in this commit**, so
+the document describes the guard that exists rather than the one that will exist. Both move again when the
+lab-import half lands. A definition that is briefly a union is honest; a definition that is briefly false
+is what `DOC_TRUTH` exists to prevent.
+
+#### U25's red list — every guard the swap edits, and the mutation that must redden it
+
+`CLAUDE.md` §5.2: a test not shown red against the bug it targets is not a guard. Every row below names
+the mutation, the guard, and **the text expected on the wire** — predicted here so that a mutation which
+reddens for a *different* reason is caught as such. Rows marked **†** are re-runs of an existing pin,
+which must go red **without being edited**; if a re-run needs editing, the port or the contract moved and
+that is a finding for the report.
+
+| # | Mutation | Guard that must go red | Expected failure text |
+|---|---|---|---|
+| **M1** | Point `PAID_MODULES` at a path that does not exist | `PAID_API_BUDGET` anti-vacuity | `found 0 paid-API routes; a guard that scans nothing passes vacuously` |
+| **M2** | `git add -N` a third `route.ts` importing `omniroute/client` with **neither** control | `PAID_API_BUDGET` — both assertions | membership pin `expected [ …3 items ] to deeply equal [ …2 items ]` **and** `reaches a paid API with no rate limit`. Unstaged, the same file must give a **false green** — the §4.2 index property, proven both ways |
+| **M3** | Delete `enforceRateLimit(...)` from `extract/route.ts` | `PAID_API_BUDGET` | `src/app/api/lab-import/extract/route.ts — reaches a paid API with no rate limit (enforceRateLimit)` |
+| **M4** | Delete `export const maxDuration` from `extract/route.ts` | `PAID_API_BUDGET` | `… neither a budget reservation nor a maxDuration ceiling` |
+| **M5** | Inline a `fetch` to the completions URL **inside a route**, bypassing the client module | `SOLE_PAID_CLIENT` | names the second module. **This is the new marker's specific weakness — an unproven M5 means the path marker is decorative** |
+| **M6** | Revert `CLAUDE.md` §4 row 9 to the `@anthropic-ai/sdk` definition, or to `Not enforced` | `DOC_TRUTH` | `DOC_TRUTH: rule 9: §4 says not enforced, but PAID_API_BUDGET: exists` (and, for a phantom id, `claims a rule is enforced by a test that does not exist`) |
+| **M7** | Revert one adapter's throw to a bare `Error(AI_SERVICE_NOT_CONFIGURED)` | `NOT_CONFIGURED_TOTALITY` | `An error carrying 'not configured' text is being constructed through a class other than NotConfiguredError` + the file and line |
+| **M8** | Move the key check into `omniroute/client.ts` without updating the sanctioned list | `NOT_CONFIGURED_TOTALITY` inverse | `expected [ … ] to contain "src/lib/advisor/model-adapter.ts"` — the assertion that caught N-14 |
+| **M9** | `git add -N` a new module with a bare `Error("… not configured")` | `NOT_CONFIGURED_TOTALITY` | red staged, green unstaged — both directions recorded |
+| **M10** | Re-add `import Anthropic from "@anthropic-ai/sdk"` to any tracked `src/` file | new retired-package assertion | names the file; and with the scan broken instead, the anti-vacuity floor fires |
+| **M11** | Re-add `"@anthropic-ai/sdk"` to `package.json` | new retired-package assertion | names `dependencies` |
+| **M12** | Remove the `AbortSignal.timeout` composition from the client | new timeout test | a hanging `fetch` under a fake clock: `promise resolved instead of rejecting` — **the first red this control has ever had (N-20)** |
+| **M13 †** | Remove the `signal?.aborted` check from `agent.ts` | U6's abort pin, **unedited** | `adapter.next` called 3 times, not 1 |
+| **M14 †** | Remove settle-on-abort from `advisor/route.ts` | U6's settle pin, **unedited** | `settleAdvisorUsage` not called |
+| **M15 †** | Move the abort return to **after** `appendMessages` | U6's persistence pin, **unedited** | `expected "spy" to not be called at all, but actually been called 1 times` — the exact failure U6 hit |
+| **M16** | Make the client default absent `usage` to `{0,0}` and report it as measured | new usage-honesty pin | `settleAdvisorUsage` called with `{inputTokens:0,outputTokens:0}` where it must not be called at all. **The single most valuable mutation in this unit: it is the difference between "never estimate" and a free advisor** |
+| **M17** | Emit tool results as one aggregated `user` message instead of one `{role:"tool", tool_call_id}` per call | rewritten adapter threading test | the scripted client's second request lacks `tool_call_id` → `expected undefined to be "call_1"` |
+| **M18** | Treat `function.arguments` as an object rather than a JSON string | rewritten `parseResponse` test | `expected '{"a":1}' to deeply equal { a: 1 }` |
+| **M19 †** | Revert `pdf-adapter.ts`'s `NotConfiguredError` rethrow | U6's **inverted** preservation pin, **unedited** | `expected 502 to be 503` at `extract/route.test.ts` |
+| **M20** | `import "next/server"` in `omniroute/client.ts` | `DOMAIN_IS_PURE` | names the file and the specifier |
+| **M21** | Delete the `src/lib/omniroute/**` threshold entry | *(none — stated honestly)* | A coverage threshold has no mutation proof; its absence is invisible to `vitest run` and shows only in the coverage step. **Recorded as a weak proof rather than dressed as a strong one** |
+
+**Not in this list, deliberately:** the E2E skip-reason text and the dated-record annotations have no red
+proof because they are prose. They are verified by reading, and the report must say so rather than let
+them ride under a mutation count.
+
+#### **[2026-08-10] U25 ADVISOR HALF — DONE.** Red record, measured not predicted
+
+**Verification, run at the tip of this change:** `npx tsc --noEmit` clean · `npx vitest run` **1100 tests /
+90 files, 0 failed** (from 1055/89 — **+45 tests, +1 file**, and the file count nets to +1 because
+`client.test.ts` and `model-adapter.test.ts` arrived while `claude-adapter.test.ts` left) ·
+`vitest run --coverage` thresholds pass with `src/lib/omniroute` at **100 / 88.23 / 100 / 100** ·
+`npx next build` succeeds. CI has not run — nothing is pushed.
+
+**Every red below was produced by applying the mutation, running the named suite, and restoring the file.**
+Where the observed text differs from the prediction, the observed text is what is recorded.
+
+| # | Verdict | Observed failure |
+|---|---|---|
+| **M1** | **RED** ×4 | `found 0 paid-API routes; a guard that scans nothing passes vacuously … expected 1 to be greater than or equal to 2`, plus the membership pin, the per-marker pin (`the Omniroute module marker: expected [] to deeply equal [ 'src/app/api/advisor/route.ts' ]`) and the marker-exists pin |
+| **M2** | **RED staged, false green unstaged** | staged: `expected [ Array(3) ] to deeply equal [ Array(2) ]` **and** `src/app/api/zz-probe/route.ts — reaches a paid API with no rate limit`. Unstaged: `43 passed` — the §4.2 index property, proven both ways |
+| **M3** | **RED** | `src/app/api/lab-import/extract/route.ts — reaches a paid API with no rate limit (enforceRateLimit)`. **Run deliberately:** the marker change is mine, so leaving the *other* route's governance unverified would be trusting the change I made. A mutation applied and reverted is not writing the lab-import half |
+| **M4** | **RED** | `… reaches a paid API with neither a budget reservation nor a maxDuration ceiling` |
+| **M5** | **RED** | `SOLE_PAID_CLIENT: the paid endpoint is reachable from more than one module … expected [ …(2) ] to deeply equal [ 'src/lib/omniroute/client.ts' ]`. **The one that matters most**: without it the module marker is decorative |
+| **M6** | **RED** | `DOC_TRUTH: rule 9: §4 says not enforced, but PAID_API_BUDGET: exists` — the literal text U7 predicted, still binding after the row was rewritten |
+| **M7** | **RED** ×2 | `src/lib/advisor/model-adapter.ts:310 new Error("AI_SERVICE_NOT_CONFIGURED")`, plus the sanctioned-sites inverse |
+| **M8** | **RED** ×2 forms | Both the literal form (the throw leaves `model-adapter.ts`) and an accidental discovery — wrapping the constant so the identifier is no longer resolvable reddens the same inverse. That second form **is N-14's exact failure mode**, and finding it by accident is the strongest evidence yet that the inverse assertion is the load-bearing half of that guard |
+| **M9** | **RED staged, green unstaged** | `src/lib/omniroute/rogue.ts:2 new Error("OMNIROUTE_API_KEY not configured")` |
+| **M10** | **RED** ×2 | `RETIRED_PACKAGE: … expected [ 'src/lib/advisor/model-adapter.ts' ] to deeply equal []`, **and** the per-marker pin caught it independently (`the Anthropic package marker: expected [ Array(2) ] to deeply equal [ Array(1) ]`) — two unrelated assertions on one regression |
+| **M11** | **DEFERRED** | The `package.json` clause belongs to the lab-import half, which still imports the SDK at runtime. Not run, not claimed |
+| **M12** | **RED** ×2 | `Test timed out in 5000ms` on both timeout tests. **Recorded honestly as a weaker red than the others**: the mutation makes the promise never settle, so the failure is a suite timeout rather than a named assertion. That is inherent to testing a deadline, and it is still the first red this control has ever had (**N-20**) |
+| **M13** | **RED** ×3, **unedited** | `adapter.next call count: expected 5 to be 1` — U6's pin, re-run against the new adapter without a single change |
+| **M14** | **RED**, **unedited** | `expected "spy" to be called with arguments: [ Array(3) ]` |
+| **M15** | **RED** ×2, **unedited** | `expected "spy" to not be called at all, but actually been called 1 times` — **the exact text U6 recorded hitting when it first placed the abort branch wrong**, reproduced years-of-context later by a re-run nobody edited |
+| **M16** | **RED** ×4 + ×2 | Client half: `expected { inputTokens: 3, outputTokens: +0 } to be null`. Adapter half (M16b): `expected true to be false` on both the inverted pin and the sticky-flag test. **The most valuable mutation in the unit** — it is the difference between "never estimate" and a free advisor |
+| **M17** | **RED** ×2 | `expected [ { role: 'user', …(1) } ] to deeply equal [ { role: 'tool', …(2) }, …(1) ]` |
+| **M18** | **RED** ×2 | `expected {} to deeply equal { a: 1 }` |
+| **M19** | **DEFERRED** | Lab-import's inverted preservation pin re-runs green in the full suite but its mutation belongs to that half |
+| **M20** | **RED** | `DOMAIN_IS_PURE: … expected [ Array(1) ] to deeply equal []` |
+| **M21** | **NO PROOF, as predicted** | A coverage threshold has no mutation. Stated rather than manufactured |
+
+**Two things the red record changed about the plan's own claims:**
+
+1. **A test found a real defect in the client, and the fix went into the code rather than the test.** The
+   probe for "an already-disconnected caller" hung instead of failing, because the fake `fetch` modelled
+   an aborted signal the way the platform does and the client had no short-circuit — it constructed and
+   dispatched a paid request for a connection that was already gone. `createCompletion` now refuses
+   before `fetch`, and the test asserts `fetchImpl` was never called. The spec did not predict this.
+2. **`resolveClient`'s replacement is not a like-for-like port.** The old adapter resolved a client once
+   and cached it; the new one resolves configuration per call. That is invisible behaviourally (both are
+   per-turn instances) and is recorded only so nobody later reads the rename as a pure move.
+
 ### Group E — cuttable
 
 **U21 · FU-24, cited artifacts must be tracked.** N `src/architecture/cited-artifact.test.ts`. **S**.
@@ -676,7 +984,7 @@ Group A   U1 → U2                                   [error contract]      GATE
 Group B   U3 → U4 → U5 → U6 → U7                    [paid-API control]    GATE B1
 Group C   U8 → U9 → U10 → ~~U11~~ · U12→D            [persistence]         GATE C1 discharged 2026-08-10
                                                                           remainder → U26
-Group D   U13 → U14 · U15 · U16 → U17 · U18 · U19 · U20 · U24              GATE D1, D2
+Group D   U13 → U14 · U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25        GATE D1, D2
 Group E   U21 · U22 · U23                           [cuttable]
 ```
 **A precedes B** because U4/U5/U6 all add `catch` blocks under `src/lib/**` and U2's guard is what must see
@@ -684,6 +992,9 @@ them. **B precedes C** for merge hygiene (U5 and U11 both edit `db/types.ts` and
 independent except U19←U1. **U24 sits in D on dependency logic, not affinity**: it has no dependencies at
 all and blocks nothing, so it lands wherever D's independent units land. It is *not* in Group E, because
 Group E is the cuttable group and U24 is not cuttable (above).
+**U25 sits in D on the same logic** — it depends only on already-DONE units (U5, U6, U7) and shares no file
+with any other D unit. It is placed **last within D** for one reason: it changes what `PAID_API_BUDGET`
+detects, and letting the other D units land first keeps that change isolated in the history.
 
 > **GATE D1** — any unit adding a CI step updated `CLAUDE.md` §5's declared chain in the **same commit**.
 > **Check:** `doc-truth.test.ts` green. Already mechanical since FU-23; no new machinery.
@@ -703,7 +1014,8 @@ Group E is the cuttable group and U24 is not cuttable (above).
 9. **U16/U17** — last, and **both go together**: an export route without deletion is half a data-rights
    feature; deletion without export is worse than neither.
 
-**Never cut:** **U1, U2** (the error contract; FU-7's guard is the only thing that would notice a
+**Never cut:** **U25** (it implements a rank-2 scope instruction; cutting it is not a sizing decision —
+2026-08-10, the same logic as U24) · **U1, U2** (the error contract; FU-7's guard is the only thing that would notice a
 regression) · **U3, U4** (§2 — the ledger is user-writable *today*) · **U7** (rule 9 is the unenforced rule
 this phase explicitly owns) · **U8** and **U13** (named exit criteria, cheap) · **U24** (it carries a
 ruling, and cutting a ruling is not a sizing decision — 2026-08-08).
@@ -712,9 +1024,10 @@ ruling, and cutting a ruling is not a sizing decision — 2026-08-08).
 
 ## 6. Risks
 
-**Trust boundaries touched:** U3, U4, U5, U7, U9, U10, U12, U14, U16, **U17 (irreversible deletion)**.
+**Trust boundaries touched:** U3, U4, U5, U7, U9, U10, U12, U14, U16, **U17 (irreversible deletion)**,
+**U25** (it moves every paid call to a different provider and re-defines what the paid-route guard detects).
 
-**Declared behaviour changes — Phase 1 had two and pre-declared both; this phase has five:**
+**Declared behaviour changes — Phase 1 had two and pre-declared both; this phase has ~~five~~ six:**
 1. **U1** — bare `Error("… not configured")` from an unconverted source: 503 → 500.
 2. **U2** — advisor tool-failure text changes → model input changes → answer prose can change.
 3. **U12** — `Item not found.` → one shared message.
@@ -722,6 +1035,12 @@ ruling, and cutting a ruling is not a sizing decision — 2026-08-08).
 5. **U24** *(added on approval, 2026-08-08)* — the signed-in header's rendered markup changes. **The only
    one of the five that is not a response-byte change**: no status, envelope, header or API body moves.
    Listed with the others anyway, because "it's only visual" is how a change escapes being declared.
+6. **U25** *(added by the 2026-08-10 scope amendment)* — **the LLM provider changes**, so answer prose
+   changes for every advisor turn and every lab extraction, and tool-selection and extraction accuracy may
+   differ. No status, envelope or header change is expected. **Two things could break that expectation and
+   both are to be stopped on, not absorbed:** the PDF content block (**N-19 / decision 7B**, which would
+   turn a working 200 into a 502) and an unreported `usage` object (which moves no response byte, only a
+   ledger entry — and is therefore the easier of the two to ship without noticing).
 *Conditional:* **U4** adds a refusal that only manifests under concurrency; **U8** changes behaviour only
 under induced insert failure.
 
@@ -731,10 +1050,21 @@ under induced insert failure.
 - U18's eslint with an over-broad `ignores` — green over zero files, the very defect item 9 exists to fix.
 - **U7 landing while U4/U5 are incomplete** — the guard would be written to match what exists rather than
   to state the rule.
+- **U25's absent-`usage` case defaulting to zero.** Every test passes, every turn answers, and the daily
+  budget silently stops binding because each turn settles to nothing. Nothing on the wire looks wrong.
+  Mutation **M16** is the only thing that distinguishes it from correct behaviour.
+- **U25's path marker matching a *comment*.** N-14's audit already recorded that `PAID_API_BUDGET`'s
+  identifier detection would accept the control's name inside a comment; moving the marker to a module
+  path inherits that, and adds a second way to be green about nothing — a paid call written as an inline
+  `fetch` that the import graph never sees. **M5** is what makes `SOLE_PAID_CLIENT` more than a name.
+- **U25's rewritten mapping cores passing against a mock built from the same wrong assumption.** The four
+  pure cores and their scripted client are written together from the same reading of the protocol; if that
+  reading is wrong, both agree and the suite is green. **OP-4(c) — one real call — is the only check that
+  is not self-referential**, which is why it is an entry condition and not a nicety.
 
 ---
 
-## 7. Decisions needed — **all six ruled 2026-08-08**
+## 7. Decisions needed — **six ruled 2026-08-08; a seventh raised 2026-08-10, half of it still open**
 
 > **The options below are preserved as written, unchanged.** Each decision now carries a **RULING** block
 > stating what was chosen and what it obliges. Preserving the rejected options is deliberate (§7): a
@@ -748,6 +1078,8 @@ under induced insert failure.
 > | 4 | `enforce_admins: false` | **Flip to `true`** | **Executed in this unit**, against the live repository |
 > | 5 | Two unmeetable exit criteria | **Approved as drafted** | `docs/roadmap.md`, this commit |
 > | 6 | Slug manifest schema | **Approved** — add `publicSurfaces` | **U20** |
+> | **7A** | Omniroute replaces the Anthropic SDK | **Full replacement, no fallback** — instructed 2026-08-10 | **U25** |
+> | **7B** | How a PDF reaches an OpenAI-compatible endpoint | **OPEN — blocks U25's lab-import half** | — |
 
 ### Decision 1 — **FU-27: the fourth nav pill** *(product decision; blocks nothing, but it is a live contradiction between a rank-3 rule and shipped code)*
 
@@ -910,6 +1242,93 @@ and belongs in this plan, not inside a unit.** Recommended: add `publicSurfaces`
 > While that file is open, U20 also fixes **FU-32** (`id-stability.test.ts:5` says "eight namespaces"; there
 > are 9) — N-6's disposition already routes it here.
 
+### Decision 7 — **Omniroute replaces the Anthropic SDK on both paid routes** *(raised 2026-08-10)*
+
+Two questions, and only the first is settled. Recorded as one decision because 7B exists only as a
+consequence of 7A.
+
+**7A — the swap itself.** Instructed by the repository owner on 2026-08-10 as a rank-2 explicit
+instruction: replace `@anthropic-ai/sdk` with Omniroute for **both** `/api/advisor` and
+`/api/lab-import/extract`, **full replacement, no Anthropic fallback**.
+
+> **RULING — 7A, full replacement, 2026-08-10, by owner instruction.** A rank-2 instruction changes what
+> is built and in what order; it does not suspend anything in `CLAUDE.md` §2, and **U25 is written so that
+> nothing in §2 moves**: the safety gate, the server-side authoritative re-check and the grounding rules
+> sit around the adapter and are untouched, and `AI_SERVICE_NOT_CONFIGURED` is not re-authored, so the
+> user-facing 503 does not change by a byte.
+> **Obliges, and each is a clause of U25 rather than an aspiration:** the detection target moves from the
+> package `@anthropic-ai/sdk` to the module `src/lib/omniroute/client.ts` **with a `SOLE_PAID_CLIENT`
+> ratchet**, because an import-graph rule has nothing to match against a raw `fetch`; membership stays
+> pinned at exactly **2** and a third ungoverned paid route is proven red; **`CLAUDE.md` §4 row 9, §8's
+> criterion and the guard move in one commit**, since all three currently *define* a paid route as one
+> reaching the Anthropic SDK; the ledger settles only to figures the provider actually reported and
+> **never estimates**; U6's four pinned behaviours re-run unedited; and `@anthropic-ai/sdk` leaves
+> `package.json` in the same commit as its last import, with its return made red.
+> **Explicitly not taken:** token- vs cost-denominated budgeting (**N-18**) and the `ClaudeAdapter` port
+> **type** rename, which would touch the one governed pure-engine file the amendment asks to leave alone.
+
+**7B — how a PDF reaches an OpenAI-compatible endpoint. OPEN, and it blocks half of U25.**
+`makeClaudePdfTranscriber` sends an Anthropic `document` content block. OmniRoute publishes `/v1/*` as
+**OpenAI-compatible** and no `/v1/messages`, so that block has no direct equivalent (**N-19**). This is
+not a wording question: if nothing accepts the PDF, files that transcribe today answer **502
+`EXTRACTION_FAILED`**, which is a functional regression and **not** the prose change declared as behaviour
+change #6.
+
+| Option | What it costs | What it buys |
+|---|---|---|
+| **(a) OpenAI `file` content part** — `{type:"file", file:{filename, file_data:"data:application/pdf;base64,…"}}` (**recommended, conditional on OP-4(b)**) | Nothing in the repository; but support is a property of the **routed model**, not of the gateway, so it is unverifiable from documentation and could regress silently when routing changes | Closest to today: one call, no new dependency, scanned PDFs still work if the model is multimodal |
+| **(b) OmniRoute `/v1/ocr`, then the existing `extractFromText`** | A second endpoint and a second failure mode; OCR quality becomes a variable in a **transcription-only safety path** | Deterministic and provider-independent of vision support. The existing text path is already built and tested |
+| **(c) Server-side PDF text extraction, then `extractFromText`** | Reintroduces exactly the dependency the v4 design avoided, and **loses scanned PDFs entirely** — a real capability regression | No model multimodality needed at all |
+| **(d) Keep lab-import on Anthropic** | — | **Rejected by 7A**, which is a rank-2 instruction: full replacement, no fallback. Listed only so the rejection is on the record rather than implied |
+
+**I recommend (a) with (b) as the recorded fallback, and I am not able to choose between them from
+documentation** — the deciding fact is whether a routed model accepts a base64 PDF, which only
+**OP-4(b)** can establish. **Ruling needed before U25's lab-import half is written.** Writing it first
+would settle the question by implementation, which is how the answer stops being a decision.
+
+> **RULING — 2026-08-10.**
+>
+> **7A — CONFIRMED as ruled.** Full replacement, no Anthropic fallback. The obligations recorded above
+> stand unchanged.
+>
+> **7B — DEFERRED PENDING PROBE**, on the stated ground that *it is a property of the routed model, so no
+> option may be chosen from documentation.* The deferral is not a postponement of the decision; it is a
+> ruling about **what evidence may settle it**, and that is the substantive part. A README is not
+> evidence about a model.
+> **Obliges — and this is executed in this commit:** the **OP-4 probe scripts are authored now**, as
+> owner-run artifacts **committed WITHOUT secrets** (the key is read from the environment and never
+> written, printed, or defaulted). Three probes: **(i)** the advisor probe — one chat completion through
+> the gateway exercising a tool call, reporting **which `usage` fields actually come back**, which
+> settles **M16's absent-usage semantics against reality rather than the README**; **(ii)** the
+> lab-import probe, option (a) — the `file` content part with a base64 PDF, against **both a text PDF and
+> a scanned PDF**, because the two fail differently and only the second needs model vision; **(iii)** the
+> same probe against `/v1/ocr`, option (b), as the recorded fallback. A dated-record template lands under
+> `docs/05-qa/` in the OP-2/OP-3 style. **The 7B ruling follows from that record and not before.**
+>
+> **[2026-08-10] Both probes run bare** — `npm run probe:advisor` and `npm run probe:labimport` — via
+> `scripts/probes/load-env.ts`, which reads the gitignored `.env.local` so the settings need not be pasted
+> onto the command line on every attempt. Three properties make it safe to commit, and each is a
+> deliberate choice rather than a default:
+> **(1) it is an allowlist, not a dotenv loader.** Only names prefixed `OMNIROUTE_` reach `process.env`.
+> The same file carries `SUPABASE_SERVICE_ROLE_KEY`, which §2.3 rule 14 confines to the dev seed script; a
+> general-purpose loader would put it in every probe process for no purpose, and "it was already in the
+> file" is not a purpose. Verified: after loading, `SUPABASE_SERVICE_ROLE_KEY` and
+> `NEXT_PUBLIC_SUPABASE_URL` are both still unset.
+> **(2) it never emits a value.** `summarise()` reports names and their source only, so its line is safe to
+> paste into the probe record verbatim — which is where a leak would otherwise happen, ruling 3 being about
+> the repository but a pasted transcript being just as public.
+> **(3) an explicit shell value wins**, so a one-off override cannot be silently defeated by a stale file.
+> `.env.local` was confirmed ignored by `.gitignore:27` (`.env*.local`) with `git check-ignore` before the
+> loader was written, and it appears in neither `git ls-files --cached` nor `--others --exclude-standard`.
+>
+> **SEQUENCING — the advisor half now; the lab-import half is not written in any file.** U25 splits at
+> the ruling: the client module, the adapter and protocol rewrite, the guard moves and every red-list
+> mutation not touching lab-import are implemented now. `pdf-adapter.ts` is not opened.
+> **Where a shared file forced both halves to be considered, it was stopped on rather than absorbed** —
+> see U25's split note below, which records the two obligations that had to move to the lab-import half
+> (the retired-package assertion, and the single-marker form of the paid-route definition) and why
+> deferring them is the honest reading of constraint (8) rather than a weakening of it.
+
 ---
 
 ## 8. Exit criteria
@@ -929,8 +1348,24 @@ here rather than discovered later.
       read-then-write implementation with the red text recorded in `docs/`. Check: the test exists, its
       mock is stateful, and the red text is in the phase report.
 - [ ] **Both paid-API routes enforce a rate limit and a budget reservation**, where "paid-API route" is
-      defined mechanically as *a tracked `route.ts` whose import graph reaches `@anthropic-ai/sdk`* —
-      today exactly 2. Check: `PAID_API_BUDGET` green with a non-empty inventory; both routes assert 429.
+      defined mechanically as ~~*a tracked `route.ts` whose import graph reaches `@anthropic-ai/sdk`*~~ →
+      **[2026-08-10, effective at U25]** *a tracked `route.ts` whose import graph reaches
+      `src/lib/omniroute/client.ts`, the one module permitted to spend money* — **today exactly 2 under
+      either definition**, and the membership is pinned to those 2 in both. Check: `PAID_API_BUDGET` green
+      with a non-empty inventory; both routes assert 429. *(The original is struck rather than replaced:
+      it was **true when written and is still true until U25 lands**, and a reader needs to see that the
+      definition moved with the provider rather than being loosened. Decision 7A requires the definition,
+      the guard and `CLAUDE.md` §4 row 9 to move in one commit — until that commit, the struck form is the
+      operative one.)*
+- [ ] **No paid call bypasses the one client module, and `@anthropic-ai/sdk` is gone.**
+      *(Added 2026-08-10 by the U25 scope amendment.)* Check: `SOLE_PAID_CLIENT` green and shown red
+      against an inline `fetch` in a route (**M5**); zero tracked `src/` files reference
+      `@anthropic-ai/sdk` and it appears in neither `dependencies` nor `devDependencies`, with the scanned
+      set asserted non-empty.
+- [ ] **A turn whose provider response omits `usage` settles nothing.**
+      *(Added 2026-08-10.)* The reservation stays charged — over-charging by at most one reservation is the
+      safe direction, and estimating is forbidden (§2.2 rule 7: never assert a figure the system did not
+      compute). Check: the pin exists and was shown red against defaulting absent usage to zero (**M16**).
 - [ ] **`CLAUDE.md` §4 row 9 reads `Enforced` and names `PAID_API_BUDGET` in `boundaries.test.ts`.** Check:
       `doc-truth.test.ts` green *(it binds this in both directions already)*.
 - [ ] **Client disconnect terminates the advisor loop and settles its reservation.** Check: two assertions
@@ -982,10 +1417,15 @@ here rather than discovered later.
 
 ## 9. Sizing
 
-**~~23~~ 24 proposed units** (U1–U22, **U24** and **U26**, plus U23 deferred). Rough shape:
-**~~7~~ 8 S/S-M · 12 M · 3 L · 1 M/L**. *(U26 — added 2026-08-10 by GATE C1's discharge — is **S/M**: it
-does not invent an obligation, it names one the ratchet was already asserting. **U11 is cut** as of the same
-date, per cut order #3, so the unit count rises by one while the work in flight does not.)*
+**~~23~~ ~~24~~ 25 proposed units** (U1–U22, **U24**, **U25** and **U26**, plus U23 deferred). Rough shape:
+**~~7~~ 8 S/S-M · 12 M · ~~3~~ 4 L · 1 M/L**. *(U26 — added 2026-08-10 by GATE C1's discharge — is **S/M**:
+it does not invent an obligation, it names one the ratchet was already asserting. **U11 is cut** as of the
+same date, per cut order #3, so the unit count rises by one while the work in flight does not.)*
+*(U25 — added 2026-08-10 by the scope amendment — is **L**: two adapters whose wire protocol is rewritten,
+a new client module, a guard whose detection model changes plus a new ratchet beside it, and **66 measured
+tests** across five files that are rewritten or rewired. It is appended, not inserted, for the same reason
+U24 was.)*
+~~**23 proposed units** (U1–U22 and **U24**, plus U23 deferred). Rough shape: **7 S/S-M · 12 M · 3 L · 1 M/L**.~~
 *(22 and 6 S/S-M before approval; U24 — the S-sized unit ruling 1 created — is the difference. Numbering is
 **append-only**: U24 follows U23 rather than being inserted, so that every U-number already cited elsewhere
 in this document keeps pointing at the same unit. The same reason reference-data IDs are append-only.)*

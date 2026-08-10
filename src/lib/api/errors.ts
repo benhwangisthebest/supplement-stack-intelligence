@@ -36,9 +36,11 @@
  *
  * `publicMessage` is the ONLY field `respond.ts` puts in front of a client, and
  * every construction site must therefore author it deliberately: name the
- * missing setting, never a value, path, host, or driver string. The three sites
- * that exist today name only public variable names (`NEXT_PUBLIC_SUPABASE_URL`,
- * `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `API_ANTHROPIC_KEY`).
+ * missing setting, never a value, path, host, or driver string. Of the three
+ * sites that exist today, only `supabase/env.ts` names variables at all
+ * (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, both public);
+ * the two AI sites share `AI_SERVICE_NOT_CONFIGURED`, which names none — and
+ * that is why Phase 2 U25's provider swap moved no byte of user-facing copy.
  *
  * `src/architecture/not-configured-totality.test.ts` enforces that no *other*
  * error class carries "not configured" text, so this class cannot be bypassed
@@ -56,11 +58,13 @@ export class NotConfiguredError extends Error {
 }
 
 /**
- * The client-facing text for "the Anthropic key is absent" (Phase 2 U6,
- * findings N-9 and N-10).
+ * The client-facing text for "the LLM provider is not configured" (Phase 2 U6,
+ * findings N-9 and N-10). Written for the Anthropic key; **unchanged when U25
+ * swapped the provider**, because it deliberately names no setting — the point
+ * the paragraph below makes, demonstrated by a change it survived.
  *
  * ONE constant, because there were three hand-authored copies of this string —
- * `advisor/route.ts`'s pre-flight, `claude-adapter.ts`'s throw, and
+ * `advisor/route.ts`'s pre-flight, `model-adapter.ts`'s throw, and
  * `lab-import/pdf-adapter.ts`'s — and nothing bound them. Editing one left the
  * others stale, and the pre-flight copy is the one users actually saw.
  *

@@ -564,7 +564,7 @@ describe("T4 — intentionally handled errors keep their public behavior", () =>
 describe("T5 — NOT_CONFIGURED keeps its evidence-backed 503 contract", () => {
   // Decision (R3): unchanged in substance, retyped by Phase 2 U1. The authored
   // strings still name only public variable names — src/lib/supabase/env.ts,
-  // src/lib/advisor/claude-adapter.ts, src/lib/lab-import/pdf-adapter.ts —
+  // src/lib/advisor/model-adapter.ts, src/lib/lab-import/pdf-adapter.ts —
   // carrying no secret value, path, host, or driver text. What changed is HOW
   // the boundary recognises them: `err.message.includes("not configured")`
   // became `err instanceof NotConfiguredError`, so the 503 is opted into at the

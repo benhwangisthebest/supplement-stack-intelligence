@@ -3,7 +3,7 @@ import { LIVE, login } from "./helpers";
 
 // ai-advisor (v6) — Design §8.3 (L2/UI) + §8.4 (L3/E2E).
 // Auth-guard checks run anywhere; the live authed chat flow requires E2E_LIVE
-// (a configured Supabase project + API_ANTHROPIC_KEY + migration 0003 applied).
+// (a configured Supabase project + OMNIROUTE_BASE_URL/OMNIROUTE_API_KEY + migration 0003 applied).
 
 test.describe("L1: advisor API auth guard (no auth)", () => {
   test("POST /api/advisor returns 401 for an anonymous request", async ({ request }) => {
@@ -31,7 +31,7 @@ test.describe("L2: /advisor page requires auth", () => {
 });
 
 test.describe("[LIVE] L3: authed grounded chat", () => {
-  test.skip(!LIVE, "requires live Supabase + API_ANTHROPIC_KEY (set E2E_LIVE=1)");
+  test.skip(!LIVE, "requires live Supabase + OMNIROUTE_BASE_URL/_API_KEY (set E2E_LIVE=1)");
 
   test("sends a question and renders a streamed, grounded answer", async ({ page }) => {
     await login(page);

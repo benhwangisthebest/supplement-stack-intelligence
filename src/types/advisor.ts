@@ -88,7 +88,9 @@ export interface AdvisorTool<I = Record<string, unknown>, O = unknown> {
 // ---- Claude adapter port (Infrastructure boundary) ---------------------------
 // The Domain agent loop depends ONLY on this interface, never on @anthropic-ai/sdk
 // directly — so grounding/refusal logic is unit-testable against a mock adapter.
-// The real implementation lives in lib/advisor/claude-adapter (module-2). §9.4.
+// The real implementation lives in lib/advisor/model-adapter (module-2). §9.4.
+// (Phase 2 U25 renamed that file with the provider swap; this PORT is unchanged
+//  — including its name, deliberately: renaming the type would touch agent.ts.)
 
 /** A turn in the model conversation, in the adapter's neutral shape. */
 export interface AdapterMessage {
