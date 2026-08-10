@@ -74,6 +74,8 @@ const reports: SideEffectReport[] = [0, 1, 2].map((i) => ({
 const listSideEffectReports = vi.fn();
 const listCheckins = vi.fn();
 let capturedDrafts: DraftFlag[] = [];
+/** Set by the persistence-failure test below; see the note on the mock. */
+let replaceFlagsRejects = false;
 
 // These five delegate to mock fns declared further down (with the U12 block
 // that varies them). The factories run at import time, inside a test, so the
@@ -89,10 +91,27 @@ vi.mock("@/lib/db/side-effect-repo", () => ({
 vi.mock("@/lib/db/checkin-repo", () => ({
   listCheckins: (...a: unknown[]) => listCheckins(...a),
 }));
+// THIS MOCK ENCODES `replaceFlags`'s CONTRACT, so it has to track it (Phase 2
+// U8). Before U8 the repo deleted the stack's flags and then inserted the new
+// ones; a mock that only ever resolves describes that implementation and the
+// current one equally well, which is precisely why it could not be left alone
+// when the semantics changed. The two halves of the contract now are:
+//
+//   success  → returns exactly the drafts it was given, with ids assigned
+//   failure  → REJECTS, and the previously persisted flags are still there
+//
+// The second half is what U8 bought and what this file was blind to. The
+// "previously persisted flags are still there" part is proven against a real
+// in-memory table in `src/lib/db/evaluation-flag-repo.test.ts` — it is a
+// property of the repo, not of the service. What belongs HERE is the service's
+// side of it: a persistence failure must not be reported as an evaluation.
 vi.mock("@/lib/db/evaluation-flag-repo", () => ({
   listFlags: vi.fn(async () => []),
   replaceFlags: vi.fn(async (_s: unknown, stackId: string, drafts: DraftFlag[]) => {
     capturedDrafts = drafts; // echo back what the engine produced
+    if (replaceFlagsRejects) {
+      throw Object.assign(new Error("insert failed"), { code: "TEST" });
+    }
     return drafts.map((d, i) => ({
       ...d,
       id: `f${i}`,
@@ -108,6 +127,7 @@ describe("runEvaluation — side-effect rule reachability (G6 guard)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     capturedDrafts = [];
+    replaceFlagsRejects = false;
     getStackMock.mockResolvedValue(stack);
     listItemsMock.mockResolvedValue(items);
     getProfileMock.mockResolvedValue(null);
@@ -238,6 +258,7 @@ describe("runEvaluation — 7/7 context-field reachability (U12)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     capturedDrafts = [];
+    replaceFlagsRejects = false;
     // Baseline: every field empty/neutral. Each case below turns exactly one on.
     getStackMock.mockResolvedValue(stack);
     listItemsMock.mockResolvedValue(items);
@@ -347,5 +368,45 @@ describe("runEvaluation — 7/7 context-field reachability (U12)", () => {
       .filter((s) => s.length > 0);
 
     expect(passed.sort()).toEqual(cases.map((c) => c.field).sort());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// U8 — A FAILED PERSIST IS NOT AN EVALUATION (2026-08-10)
+//
+// `replaceFlags` is now insert-then-delete, so a failure leaves the user's
+// PREVIOUS flags intact rather than destroying them. That guarantee is only
+// worth anything if the caller does not paper over the failure: returning a
+// summary computed from drafts that were never stored would tell the user their
+// evaluation succeeded while the flags they can actually read are the old ones.
+// The repo keeps the old data; the service must not lie about which data it is.
+// ---------------------------------------------------------------------------
+describe("runEvaluation — persistence failure surfaces (U8)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    capturedDrafts = [];
+    replaceFlagsRejects = false;
+    getStackMock.mockResolvedValue(stack);
+    listItemsMock.mockResolvedValue(items);
+    getProfileMock.mockResolvedValue(null);
+    listLabMarkersMock.mockResolvedValue([]);
+    listTimelinePointsMock.mockResolvedValue([]);
+    listSideEffectReports.mockResolvedValue([]);
+    listCheckins.mockResolvedValue([]);
+  });
+
+  it("rejects rather than returning a summary of flags that were never stored", async () => {
+    replaceFlagsRejects = true;
+    const { runEvaluation } = await import("./evaluation");
+    await expect(runEvaluation(supabase, "u1", "s1")).rejects.toThrow("insert failed");
+  });
+
+  it("still reaches the engine first, so the failure is persistence and not evaluation", async () => {
+    // Distinguishes "could not compute" from "could not save" — they need
+    // different remedies, and only the second is retryable as-is.
+    replaceFlagsRejects = true;
+    const { runEvaluation } = await import("./evaluation");
+    await expect(runEvaluation(supabase, "u1", "s1")).rejects.toThrow();
+    expect(capturedDrafts.length).toBeGreaterThan(0);
   });
 });
