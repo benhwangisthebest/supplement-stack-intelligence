@@ -58,11 +58,22 @@ export async function POST(request: NextRequest) {
   // Pre-flight the live-LLM configuration BEFORE committing to a 200 SSE
   // response, so a missing setting still returns a proper 503 (preserves the v7
   // contract). The route always uses the real adapter, which reads these env
-  // vars. Phase 2 U25: both halves are required — a base URL without a key
-  // cannot authenticate, and a key without a base URL has nowhere to go. The
+  // vars. Phase 2 U25: all THREE are required — a base URL without a key cannot
+  // authenticate, a key without a base URL has nowhere to go, and a model id is
+  // a property of the gateway INSTANCE with no portable default (finding N-21;
+  // the first live probe 400'd on the id this code used to fall back to). The
   // client text is unchanged: `AI_SERVICE_NOT_CONFIGURED` names no environment
   // variable, so a provider swap moves no response byte on this path.
-  if (!process.env.OMNIROUTE_API_KEY || !process.env.OMNIROUTE_BASE_URL) {
+  //
+  // Checked here as well as in `resolveModel` on purpose, and the duplication
+  // is the point: this pre-flight runs BEFORE the 200 SSE response is committed,
+  // so an unset id is a 503 status rather than an `error` event inside a stream
+  // that already claimed success.
+  if (
+    !process.env.OMNIROUTE_API_KEY ||
+    !process.env.OMNIROUTE_BASE_URL ||
+    !process.env.OMNIROUTE_MODEL
+  ) {
     return fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503);
   }
 

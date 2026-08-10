@@ -18,7 +18,7 @@
 | **Run by** | |
 | **Commit** | `git rev-parse --short HEAD` |
 | **Gateway host** | *(host only, no path, no key)* |
-| **`OMNIROUTE_ADVISOR_MODEL`** | *(the id requested)* |
+| **`OMNIROUTE_MODEL`** | *(the effective id requested — the probe prints it, and whether it came from the variable or the probe default)* |
 | **Model the gateway echoed** | *(the id actually routed to — these can differ, and the difference is the finding)* |
 
 ---

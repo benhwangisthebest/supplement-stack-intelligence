@@ -25,7 +25,7 @@
  * (so the service-role key in the same file stays out of this process, §2.3
  * rule 14). An explicit shell value still wins over the file:
  *
- *   OMNIROUTE_ADVISOR_MODEL=some-other-model npm run probe:advisor
+ *   OMNIROUTE_MODEL=claude/claude-haiku-4-5-20251001 npm run probe:advisor
  *
  * Paste the output into a copy of
  * `docs/05-qa/omniroute-probe-record.template.md`.
@@ -42,7 +42,20 @@ const LOADED_ENV = loadProbeEnv();
 
 const BASE_URL = process.env.OMNIROUTE_BASE_URL;
 const API_KEY = process.env.OMNIROUTE_API_KEY;
-const MODEL = process.env.OMNIROUTE_ADVISOR_MODEL ?? "claude-haiku-4-5";
+/**
+ * The routed model id. `OMNIROUTE_MODEL` is the SAME name the application reads,
+ * deliberately — a probe reading a different variable is a probe that can pass
+ * while the app fails, and that is exactly how this defect survived: the probe
+ * read `OMNIROUTE_ADVISOR_MODEL`, the operator set `OMNIROUTE_MODEL`, and the
+ * hardcoded fallback answered instead of anything reporting a mismatch.
+ *
+ * The default is a real, provider-namespaced id rather than a bare model name.
+ * Bare `claude-haiku-4-5` 400s on the owner's gateway; ids there are namespaced
+ * by provider. Override it for any other gateway — this is a starting point for
+ * one instance, not a portable value, which is why `src/` now has no default at
+ * all (finding N-21).
+ */
+const MODEL = process.env.OMNIROUTE_MODEL ?? "cc/claude-haiku-4-5-20251001";
 
 /** A question that should make a grounded advisor reach for a tool. */
 const TOOL_BAIT = "Is there an interaction between magnesium and zinc?";
@@ -197,7 +210,11 @@ async function main(): Promise<void> {
   // Names and sources only. Safe to paste into the probe record.
   line("settings", summarise(LOADED_ENV));
   line("base URL host", new URL(cfg.baseUrl).host);
-  line("model requested", MODEL);
+  line("model requested (effective)", MODEL);
+  line(
+    "model source",
+    process.env.OMNIROUTE_MODEL ? "OMNIROUTE_MODEL" : "probe default (OMNIROUTE_MODEL unset)",
+  );
   line("api key", "read from env; not printed, not written");
 
   await rawShape(cfg);

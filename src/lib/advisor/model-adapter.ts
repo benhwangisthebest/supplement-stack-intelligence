@@ -68,23 +68,43 @@ import type {
   ClaudeAdapter,
 } from "@/types/advisor";
 
-/**
- * The routed model. Omniroute takes an OpenAI-style model id and routes it; the
- * default names the same class of small, fast model the Anthropic adapter used,
- * and is overridable per deployment without a code change.
- */
-export const DEFAULT_ADVISOR_MODEL = "claude-haiku-4-5";
 const MAX_TOKENS = 1024;
 
 /**
- * Resolved per call, not at module load, so a test can stub the environment
- * after import — and so a deployment can change the routed model without a
- * rebuild. The id namespace is the GATEWAY's, not Anthropic's; **OP-4 records
- * which model a request is actually routed to**, and until that record exists
- * the default is a documented starting point rather than a verified one.
+ * The routed model id, from `OMNIROUTE_MODEL`. **There is deliberately no
+ * default** — the third required setting, not an optional override.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY THE DEFAULT WAS DELETED RATHER THAN CORRECTED (finding N-21)
+ * ---------------------------------------------------------------------------
+ * This module shipped with `DEFAULT_ADVISOR_MODEL = "claude-haiku-4-5"`,
+ * described as "the same class of small, fast model the Anthropic adapter
+ * used". The first live probe found that id does not exist on the owner's
+ * gateway at all: its Haiku ids are namespaced by provider
+ * (`cc/claude-haiku-4-5-20251001`, `claude/claude-haiku-4-5-20251001`), and a
+ * bare `claude-haiku-4-5` is a 400. With the variable unset — the state a fresh
+ * deployment is in — EVERY advisor turn would have failed, and no test could
+ * have caught it, because a scripted mock accepts whatever id it is handed.
+ *
+ * The general fact is what matters: **a model id is a property of the gateway
+ * INSTANCE, not of the protocol.** The same deployment routed elsewhere has a
+ * different namespace. So a default here is a claim about a system this code
+ * has never contacted — `CLAUDE.md` §2.2 rule 7 — and §8.4's rule applies:
+ * prefer deleting a field over guarding it, so the compiler and the
+ * not-configured path enumerate the consumers instead of a fallback hiding
+ * them.
+ *
+ * Resolved per call, not at module load, so tests can stub the environment
+ * after import and a deployment can change the routed model without a rebuild.
+ *
+ * @throws NotConfiguredError so an unset id fails on the SAME path as a missing
+ *   key or base URL — a 503 carrying `AI_SERVICE_NOT_CONFIGURED`, naming no
+ *   environment variable, rather than a 502 from a rejected upstream call.
  */
 function resolveModel(explicit?: string): string {
-  return explicit ?? process.env.OMNIROUTE_ADVISOR_MODEL ?? DEFAULT_ADVISOR_MODEL;
+  const model = explicit ?? process.env.OMNIROUTE_MODEL;
+  if (!model) throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
+  return model;
 }
 
 /**

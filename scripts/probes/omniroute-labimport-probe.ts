@@ -49,7 +49,8 @@ const LOADED_ENV = loadProbeEnv();
 
 const BASE_URL = process.env.OMNIROUTE_BASE_URL;
 const API_KEY = process.env.OMNIROUTE_API_KEY;
-const MODEL = process.env.OMNIROUTE_EXTRACTION_MODEL ?? "claude-haiku-4-5";
+/** Same variable the application and the advisor probe read. See that probe. */
+const MODEL = process.env.OMNIROUTE_MODEL ?? "cc/claude-haiku-4-5-20251001";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -235,7 +236,11 @@ async function main(): Promise<void> {
   console.log("Omniroute lab-import probe — OP-4(b), decision 7B");
   line("settings", summarise(LOADED_ENV));
   line("base URL host", new URL(cfg.baseUrl).host);
-  line("model requested", MODEL);
+  line("model requested (effective)", MODEL);
+  line(
+    "model source",
+    process.env.OMNIROUTE_MODEL ? "OMNIROUTE_MODEL" : "probe default (OMNIROUTE_MODEL unset)",
+  );
 
   const targets: [string, string][] = [["TEXT PDF", textPdf]];
   if (scannedPdf) targets.push(["SCANNED PDF", scannedPdf]);

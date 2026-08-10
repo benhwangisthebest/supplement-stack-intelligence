@@ -1203,6 +1203,104 @@ describe("architecture boundaries — the real source tree", () => {
     ]);
   });
 
+  // ---- U25 / N-21: NO_PINNED_MODEL_ID -------------------------------------
+  //
+  // Found by the FIRST live probe, not by any test: `model-adapter.ts` shipped
+  // with `DEFAULT_ADVISOR_MODEL = "claude-haiku-4-5"` as a fallback, and that
+  // bare id does not exist on the owner's gateway — whose ids are namespaced by
+  // provider (`cc/…`, `claude/…`). Unset variable ⇒ every advisor turn 400s,
+  // with a green suite, because a scripted mock accepts whatever id it is given.
+  //
+  // The general property: a model id is a property of the gateway INSTANCE, not
+  // of the protocol, so no value hardcoded in `src/` can be correct for a
+  // deployment this repository has never contacted (§2.2 rule 7). The id comes
+  // from the environment or the request fails as NOT_CONFIGURED.
+  //
+  // HONEST LIMITS, in N-14's taxonomy: this matches literal text, so it is
+  // defeated by an id assembled from fragments (`"cc/" + family`), by a family
+  // this list does not name, and by a value read from a non-`OMNIROUTE_` source.
+  // It catches the mistake that actually happened and the obvious repeats of it.
+  //
+  // THE RATCHET. This guard was written for the advisor half and immediately
+  // found a SECOND hardcoded id, in the lab-import half — which decision 7B
+  // blocks from being edited in any file. Rather than weaken the guard to the
+  // advisor's own directory (which would stop it seeing the next new module) or
+  // silently fix a file this unit may not open, the violation is registered:
+  // asserted as an EQUALITY so it can only shrink, with a fourth appearance and
+  // a silently-fixed entry both red. Phase 1 U18's shape.
+  const PINNED_MODEL_ID_RATCHET: Record<string, string> = {
+    'src/lib/lab-import/pdf-adapter.ts: "claude-haiku-4-5-20251001"':
+      "The Anthropic SDK path, still live and still correct TODAY — this is a real Anthropic API " +
+      "id talking to Anthropic directly, where the id namespace IS the protocol's. It becomes a " +
+      "defect the moment lab-import moves behind the gateway, which is exactly U25's lab-import " +
+      "half, blocked on decision 7B. Removed by that unit, not by this one.",
+  };
+
+  it("NO_PINNED_MODEL_ID: the ratchet's entries STILL violate — a fixed one must be removed", () => {
+    const code = fs.readFileSync(
+      path.join(REPO_ROOT, "src/lib/lab-import/pdf-adapter.ts"),
+      "utf8",
+    );
+    expect(
+      code.includes('"claude-haiku-4-5-20251001"'),
+      "The registered lab-import id is gone, so its ratchet row is now an allowlist for\n" +
+        "code that no longer needs one. Delete the row.",
+    ).toBe(true);
+    expect(Object.keys(PINNED_MODEL_ID_RATCHET)).toHaveLength(1);
+  });
+
+  it("NO_PINNED_MODEL_ID: no model identifier is hardcoded anywhere in src/", () => {
+    const FAMILIES = [
+      "claude", "haiku", "sonnet", "opus", "gpt-", "o1-", "o3-",
+      "gemini", "llama", "mistral", "mixtral", "deepseek", "qwen", "grok",
+    ];
+
+    // Comments are stripped FIRST, so prose explaining the retired default —
+    // including this guard's own rationale, which quotes it — is not a hit.
+    const stripComments = (src: string): string =>
+      src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+
+    const found: string[] = [];
+    for (const file of NON_TEST_SRC) {
+      const code = stripComments(fs.readFileSync(path.join(REPO_ROOT, file), "utf8"));
+      for (const [, literal] of code.matchAll(/["'`]([A-Za-z0-9._/-]{4,60})["'`]/g)) {
+        const low = literal.toLowerCase();
+        if (!FAMILIES.some((f) => low.includes(f))) continue;
+        if (!/[-/]/.test(literal)) continue; // a bare word is not an id
+        found.push(`${file}: ${JSON.stringify(literal)}`);
+      }
+    }
+
+    const offenders = found.filter((f) => !(f in PINNED_MODEL_ID_RATCHET)).sort();
+
+    expect(
+      offenders,
+      "NO_PINNED_MODEL_ID: a model identifier is hardcoded in src/. Model ids belong\n" +
+        "to a specific gateway instance and are not portable — the last one shipped as\n" +
+        "a default 400'd on the first real gateway it met (N-21). Read it from\n" +
+        "OMNIROUTE_MODEL and let a missing value be NOT_CONFIGURED:\n  " +
+        offenders.join("\n  "),
+    ).toEqual([]);
+  });
+
+  it("NO_PINNED_MODEL_ID: the model id is read only where it is declared to be", () => {
+    // Same ratchet shape as the key reader pin above, and pinned for the same
+    // reason: each reader is a place that decides which model a paid call goes
+    // to, and a second resolution path is how the probe and the application
+    // came to read two DIFFERENT variables while both looked correct.
+    const readers = NON_TEST_SRC.filter((f) =>
+      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OMNIROUTE_MODEL"),
+    ).sort();
+
+    expect(
+      readers,
+      "NO_PINNED_MODEL_ID: a new module resolves the routed model:\n  " + readers.join("\n  "),
+    ).toEqual([
+      "src/app/api/advisor/route.ts",
+      "src/lib/advisor/model-adapter.ts",
+    ]);
+  });
+
   it("RETIRED_PACKAGE: src/lib/advisor no longer reaches the Anthropic SDK", () => {
     // U25's advisor half. The repository-wide form of this assertion — and the
     // `package.json` clause that goes with it — belong to the LAB-IMPORT half,

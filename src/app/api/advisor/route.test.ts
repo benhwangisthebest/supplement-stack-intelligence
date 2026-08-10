@@ -99,6 +99,8 @@ const BODY = { message: "Does my stack make sense?" };
 // A syntactically valid but obviously fake value. Never a real key.
 const FAKE_KEY = "test-key-not-a-real-credential";
 const FAKE_BASE_URL = "https://gateway.invalid";
+/** Namespaced like a real gateway id, so the fixture cannot re-teach the bare form. */
+const FAKE_MODEL = "test-provider/test-model-not-real";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -106,6 +108,11 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubEnv("OMNIROUTE_API_KEY", FAKE_KEY);
   vi.stubEnv("OMNIROUTE_BASE_URL", FAKE_BASE_URL);
+  // WIRING, not an assertion (U4's precedent): U25's follow-up made the routed
+  // model a third REQUIRED setting after the first live probe found the old
+  // hardcoded fallback 400s on a real gateway (N-21). Without this stub every
+  // test below 503s — which is the pre-flight working, not a regression.
+  vi.stubEnv("OMNIROUTE_MODEL", FAKE_MODEL);
   loadAdvisorContext.mockResolvedValue(CTX);
   enforceRateLimit.mockResolvedValue(null);
   reserveAdvisorTokens.mockResolvedValue(25000);
@@ -191,6 +198,22 @@ describe("POST /api/advisor — guards before the stream", () => {
     // client already believes succeeded.
     getUser.mockResolvedValue(USER);
     vi.stubEnv("OMNIROUTE_BASE_URL", "");
+
+    const res = await POST(req(BODY));
+
+    expect(res.status).toBe(503);
+    expect((await res.json()).error.code).toBe("NOT_CONFIGURED");
+    expect(runAdvisorTurn).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 NOT_CONFIGURED when the model id is absent (N-21)", async () => {
+    // The defect this replaces was not caught by any test: the adapter carried
+    // a hardcoded default, so an unset model id produced a CONFIDENT call with
+    // an id the gateway rejects — a 400 on every turn, from a green suite. A
+    // model id belongs to the gateway instance, so "unset" is now the same
+    // operational state as a missing key rather than a silent wrong guess.
+    getUser.mockResolvedValue(USER);
+    vi.stubEnv("OMNIROUTE_MODEL", "");
 
     const res = await POST(req(BODY));
 

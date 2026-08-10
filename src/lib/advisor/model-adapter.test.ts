@@ -42,6 +42,13 @@ const answer = (text: string): CompletionResult => ({
   usage: { inputTokens: 7, outputTokens: 3 },
 });
 
+/**
+ * Namespaced like a real gateway id. Deliberately NOT a bare vendor name: the
+ * defect N-21 records is precisely that a bare `claude-haiku-4-5` looks valid
+ * and 400s, so no fixture in this file may re-teach that shape.
+ */
+const TEST_MODEL = "test-provider/test-model-not-real";
+
 describe("pure mapping cores", () => {
   it("toOmnirouteTools maps every tool to the function-tool shape", () => {
     const mapped = toOmnirouteTools(ADVISOR_TOOLS);
@@ -153,7 +160,7 @@ describe("AdvisorModelAdapter — stateful threading across a turn", () => {
       },
       answer("final grounded answer"),
     ]);
-    const adapter = new AdvisorModelAdapter({ complete });
+    const adapter = new AdvisorModelAdapter({ complete, model: TEST_MODEL });
 
     const step1 = await adapter.next({
       system: "SYS",
@@ -192,7 +199,7 @@ describe("AdvisorModelAdapter — stateful threading across a turn", () => {
 
   it("reports usage as reported when every step reports it", async () => {
     const { complete } = scripted([answer("a")]);
-    const adapter = new AdvisorModelAdapter({ complete });
+    const adapter = new AdvisorModelAdapter({ complete, model: TEST_MODEL });
 
     await adapter.next({ system: "S", messages: [], tools: [], toolResults: [] });
 
@@ -207,7 +214,7 @@ describe("AdvisorModelAdapter — stateful threading across a turn", () => {
       { text: "", toolCalls: [], usage: null },
       answer("b"),
     ]);
-    const adapter = new AdvisorModelAdapter({ complete });
+    const adapter = new AdvisorModelAdapter({ complete, model: TEST_MODEL });
 
     await adapter.next({ system: "S", messages: [], tools: [], toolResults: [] });
     expect(adapter.usageReported).toBe(false);
@@ -243,5 +250,57 @@ describe("AdvisorModelAdapter — config guard", () => {
     vi.stubEnv("OMNIROUTE_BASE_URL", "");
 
     await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
+  });
+
+  it("throws a 'not configured' error when the MODEL id is absent (N-21)", async () => {
+    // The third required setting, and the one this adapter got wrong. It
+    // shipped with `DEFAULT_ADVISOR_MODEL = "claude-haiku-4-5"`, so an unset
+    // variable produced a confident call with an id the owner's gateway does
+    // not have — a 400 on every advisor turn, from a fully green suite,
+    // undetectable by a mock that accepts whatever id it is handed. The first
+    // live probe found it. A model id is a property of the gateway INSTANCE,
+    // so there is no value this repository could have defaulted to correctly.
+    vi.stubEnv("OMNIROUTE_API_KEY", "k");
+    vi.stubEnv("OMNIROUTE_BASE_URL", "https://gw.example");
+    vi.stubEnv("OMNIROUTE_MODEL", "");
+
+    await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
+  });
+
+  it("sends the id from OMNIROUTE_MODEL verbatim — no normalising, no fallback", async () => {
+    // Reachability (§5.3): the resolved id must actually arrive on the request,
+    // not merely be computed. A gateway id carries a provider namespace, and a
+    // helpful `split("/")` or a lowercase would route the turn somewhere else
+    // or 400 it — so `toEqual` on the whole string, not a substring match.
+    const seen: string[] = [];
+    vi.stubEnv("OMNIROUTE_MODEL", "cc/some-model-4-5-20251001");
+
+    const adapter = new AdvisorModelAdapter({
+      complete: async (req) => {
+        seen.push(req.model);
+        return { text: "ok", toolCalls: [], usage: { inputTokens: 1, outputTokens: 1 } };
+      },
+    });
+    await call(adapter);
+
+    expect(seen).toEqual(["cc/some-model-4-5-20251001"]);
+  });
+
+  it("prefers an explicitly injected model over the environment", async () => {
+    // The probes rely on this: they pass `{ model }` so a one-off id can be
+    // tried against the real gateway without editing a deployment's settings.
+    const seen: string[] = [];
+    vi.stubEnv("OMNIROUTE_MODEL", "env/should-not-win");
+
+    const adapter = new AdvisorModelAdapter({
+      model: "explicit/should-win",
+      complete: async (req) => {
+        seen.push(req.model);
+        return { text: "ok", toolCalls: [], usage: { inputTokens: 1, outputTokens: 1 } };
+      },
+    });
+    await call(adapter);
+
+    expect(seen).toEqual(["explicit/should-win"]);
   });
 });
