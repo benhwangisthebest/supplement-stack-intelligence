@@ -61,8 +61,23 @@ export interface OmnirouteToolCallOut {
   function: { name: string; arguments: string };
 }
 
+/**
+ * A structured user-content part. Added by U25's lab-import half, on decision
+ * 7B's ruling: the OpenAI-compatible surface carries a PDF as a `file` part with
+ * a base64 data URL, which the OP-4 record verified against both a text PDF and
+ * an image-only one (`docs/05-qa/2026-08-10-omniroute-probe-record.md` §4).
+ *
+ * This is the ONLY structured content shape the application sends. Kept narrow
+ * on purpose: the advisor's messages stay plain strings, so a widening here
+ * cannot quietly change what the advisor puts on the wire.
+ */
+export type OmnirouteContentPart =
+  | { type: "text"; text: string }
+  | { type: "file"; file: { filename: string; file_data: string } };
+
 export type OmnirouteMessage =
-  | { role: "system" | "user"; content: string }
+  | { role: "system"; content: string }
+  | { role: "user"; content: string | OmnirouteContentPart[] }
   | {
       role: "assistant";
       content: string | null;

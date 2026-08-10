@@ -906,19 +906,18 @@ describe("architecture boundaries — legal edges stay silent (positive controls
 /**
  * External packages whose use costs money per call.
  *
- * **Phase 2 U25 — this list is now HALF the marker set, and it is shrinking.**
- * The advisor moved to Omniroute, which is reached over plain HTTP: there is no
- * package to import, so an import-graph rule has nothing to match. The marker
- * for that provider is a MODULE (below), not a package.
+ * **EMPTY as of U25's lab-import half, and that is the point.** Both paid routes
+ * now reach their provider over plain HTTP through one module, so there is no
+ * paid package left to import. The union the advisor half introduced has
+ * collapsed back to a single marker exactly as it said it would, and this empty
+ * array is the mechanical proof the last `@anthropic-ai/sdk` import is gone —
+ * paired with `RETIRED_PACKAGE`, which now scans all of `src/` rather than the
+ * advisor alone.
  *
- * `@anthropic-ai/sdk` stays here because `/api/lab-import/extract` still uses
- * it — genuinely, at runtime, today. Removing it now would drop the derived set
- * to one route and redden the `>= 2` anti-vacuity floor: the guard telling the
- * truth about a real paid route it had stopped seeing. It leaves in the
- * lab-import half of U25, in the same commit as the last Anthropic import, and
- * that removal is the mechanical proof the swap finished.
+ * The parameter is kept rather than deleted: a future paid SDK is a package
+ * again, and the walk should not need re-teaching to see one.
  */
-const PAID_PACKAGES = ["@anthropic-ai/sdk"];
+const PAID_PACKAGES: readonly string[] = [];
 
 /**
  * Repository modules whose use costs money per call (Phase 2 U25).
@@ -1115,16 +1114,16 @@ describe("architecture boundaries — the real source tree", () => {
   // other accidentally starts matching both. So each marker is asserted to
   // account for exactly its own route.
   //
-  // WHEN THE LAB-IMPORT HALF LANDS: `PAID_PACKAGES` empties, this test's
-  // package clause becomes `[]`, and the module clause takes both routes. That
-  // edit is the mechanical proof the last Anthropic import is gone — which is
-  // why the assertion is written per-marker rather than as a total.
-  it("PAID_API_BUDGET: each marker accounts for exactly its own route", () => {
-    expect(paidApiRoutes(PAID_PACKAGES, []), "the Anthropic package marker").toEqual([
-      "src/app/api/lab-import/extract/route.ts",
-    ]);
+  // THE LAB-IMPORT HALF HAS LANDED, and this test is where it shows. The
+  // package clause is now `[]` — no package marker matches anything — and the
+  // single module marker accounts for BOTH paid routes. Written this way rather
+  // than as a total because a total of 2 is also what a rotted marker plus an
+  // over-matching one would produce.
+  it("PAID_API_BUDGET: the single module marker accounts for both paid routes", () => {
+    expect(paidApiRoutes(PAID_PACKAGES, []), "no paid package remains").toEqual([]);
     expect(paidApiRoutes([], PAID_MODULES), "the Omniroute module marker").toEqual([
       "src/app/api/advisor/route.ts",
+      "src/app/api/lab-import/extract/route.ts",
     ]);
   });
 
@@ -1200,6 +1199,7 @@ describe("architecture boundaries — the real source tree", () => {
     ).toEqual([
       "src/app/api/advisor/route.ts",
       "src/lib/advisor/model-adapter.ts",
+      "src/lib/lab-import/pdf-adapter.ts",
     ]);
   });
 
@@ -1228,25 +1228,32 @@ describe("architecture boundaries — the real source tree", () => {
   // silently fix a file this unit may not open, the violation is registered:
   // asserted as an EQUALITY so it can only shrink, with a fourth appearance and
   // a silently-fixed entry both red. Phase 1 U18's shape.
+  // Comments are stripped before any model-id match, so prose EXPLAINING a
+  // retired id — including this guard's own rationale and pdf-adapter's — is
+  // not a hit. Only code counts.
+  const stripComments = (src: string): string =>
+    src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+
   const PINNED_MODEL_ID_RATCHET: Record<string, string> = {
-    'src/lib/lab-import/pdf-adapter.ts: "claude-haiku-4-5-20251001"':
-      "The Anthropic SDK path, still live and still correct TODAY — this is a real Anthropic API " +
-      "id talking to Anthropic directly, where the id namespace IS the protocol's. It becomes a " +
-      "defect the moment lab-import moves behind the gateway, which is exactly U25's lab-import " +
-      "half, blocked on decision 7B. Removed by that unit, not by this one.",
+    // EMPTY as of U25's lab-import half. It held exactly one row — pdf-adapter's
+    // `deps.model ?? "claude-haiku-4-5-20251001"` — registered rather than fixed
+    // because decision 7B blocked that file at the time. 7B is ruled, the file is
+    // migrated, the default is gone, and so is the row. A ratchet that empties is
+    // the outcome; one that persists is the warning.
   };
 
-  it("NO_PINNED_MODEL_ID: the ratchet's entries STILL violate — a fixed one must be removed", () => {
-    const code = fs.readFileSync(
-      path.join(REPO_ROOT, "src/lib/lab-import/pdf-adapter.ts"),
-      "utf8",
-    );
+
+  it("NO_PINNED_MODEL_ID: the ratchet is empty and the registered defect is gone", () => {
+    // Both halves asserted. The register being empty is not evidence on its own
+    // — someone could empty it and leave the literal — so the file it named is
+    // checked directly.
+    expect(Object.keys(PINNED_MODEL_ID_RATCHET)).toEqual([]);
     expect(
-      code.includes('"claude-haiku-4-5-20251001"'),
-      "The registered lab-import id is gone, so its ratchet row is now an allowlist for\n" +
-        "code that no longer needs one. Delete the row.",
-    ).toBe(true);
-    expect(Object.keys(PINNED_MODEL_ID_RATCHET)).toHaveLength(1);
+      stripComments(
+        fs.readFileSync(path.join(REPO_ROOT, "src/lib/lab-import/pdf-adapter.ts"), "utf8"),
+      ),
+      "the lab-import hardcoded model id is back",
+    ).not.toContain('"claude-haiku-4-5-20251001"');
   });
 
   it("NO_PINNED_MODEL_ID: no model identifier is hardcoded anywhere in src/", () => {
@@ -1254,11 +1261,6 @@ describe("architecture boundaries — the real source tree", () => {
       "claude", "haiku", "sonnet", "opus", "gpt-", "o1-", "o3-",
       "gemini", "llama", "mistral", "mixtral", "deepseek", "qwen", "grok",
     ];
-
-    // Comments are stripped FIRST, so prose explaining the retired default —
-    // including this guard's own rationale, which quotes it — is not a hit.
-    const stripComments = (src: string): string =>
-      src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 
     const found: string[] = [];
     for (const file of NON_TEST_SRC) {
@@ -1298,20 +1300,51 @@ describe("architecture boundaries — the real source tree", () => {
     ).toEqual([
       "src/app/api/advisor/route.ts",
       "src/lib/advisor/model-adapter.ts",
+      "src/lib/lab-import/pdf-adapter.ts",
     ]);
   });
 
-  it("RETIRED_PACKAGE: src/lib/advisor no longer reaches the Anthropic SDK", () => {
+  it("RETIRED_PACKAGE: the dependency is gone from package.json", () => {
+    // Amendment constraint (8): the dependency leaves in the SAME commit as the
+    // last import. Two clauses, because they fail differently — an import with
+    // no dependency is a broken build, and a dependency with no import is a
+    // paid provider one `import` away from being reachable with nothing to stop
+    // it. Neither clause implies the other, so both are asserted.
+    const pkg = JSON.parse(
+      fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"),
+    ) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+
+    const declared = [
+      ...Object.keys(pkg.dependencies ?? {}),
+      ...Object.keys(pkg.devDependencies ?? {}),
+    ];
+
+    expect(
+      declared.length,
+      "RETIRED_PACKAGE read no dependencies; the assertion would pass vacuously.",
+    ).toBeGreaterThanOrEqual(10);
+
+    expect(
+      declared.filter((d) => d.startsWith("@anthropic-ai/")),
+      "RETIRED_PACKAGE: the Anthropic SDK is declared in package.json again. Nothing\n" +
+        "in src/ imports it, so this is a paid provider sitting one `import` away from\n" +
+        "being reachable with no marker watching for it.",
+    ).toEqual([]);
+  });
+
+  it("RETIRED_PACKAGE: nothing in src/ reaches the Anthropic SDK", () => {
     // U25's advisor half. The repository-wide form of this assertion — and the
     // `package.json` clause that goes with it — belong to the LAB-IMPORT half,
     // because `pdf-adapter.ts` still imports the SDK at runtime and dropping the
     // dependency now would break that route. Constraint (8) of the amendment
     // says the dependency leaves in the same commit as the last import; this is
     // that constraint honoured, scoped to the half that is finished.
-    const advisorFiles = NON_TEST_SRC.filter((f) => inLayer(f, "src/lib/advisor"));
-    expect(advisorFiles.length).toBeGreaterThanOrEqual(5);
+    expect(
+      NON_TEST_SRC.length,
+      "RETIRED_PACKAGE scanned nothing; a guard over an empty set passes vacuously.",
+    ).toBeGreaterThanOrEqual(100);
 
-    const survivors = advisorFiles.filter((f) =>
+    const survivors = NON_TEST_SRC.filter((f) =>
       extractEdges(f, fs.readFileSync(path.join(REPO_ROOT, f), "utf8")).some((e) =>
         e.specifier.startsWith("@anthropic-ai/sdk"),
       ),
@@ -1319,9 +1352,10 @@ describe("architecture boundaries — the real source tree", () => {
 
     expect(
       survivors,
-      "RETIRED_PACKAGE: the advisor was migrated off @anthropic-ai/sdk in Phase 2 U25.\n" +
-        "An import that comes back reintroduces a second paid provider on a route the\n" +
-        "budget guard now governs through a different marker:\n  " + survivors.join("\n  "),
+      "RETIRED_PACKAGE: the whole application was migrated off @anthropic-ai/sdk in\n" +
+        "Phase 2 U25, and the dependency is gone from package.json. An import that comes\n" +
+        "back is a paid provider that no marker sees AND a missing dependency at build\n" +
+        "time:\n  " + survivors.join("\n  "),
     ).toEqual([]);
   });
 });

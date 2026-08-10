@@ -1,13 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseCsv } from "./csv";
 import { parsePaste } from "./paste";
 import { NotConfiguredError } from "@/lib/api/errors";
 import {
   candidatesFromTranscript,
+  extractFromPdf,
   extractFromText,
   ExtractionError,
   EXTRACTION_SYSTEM_PROMPT,
 } from "./pdf-adapter";
+
+afterEach(() => vi.unstubAllEnvs());
 import {
   labCommitSchema,
   parsedCandidateSchema,
@@ -170,21 +173,70 @@ describe("extractFromText (injected transcriber)", () => {
     // told "try CSV or paste", and paste routes through the same absent key, so
     // only the CSV third of that suggestion could ever have worked.
     //
-    // No `transcribe` is injected, so the real key check runs; no network is
-    // reached, because the throw happens before the SDK import.
-    const previous = process.env.API_ANTHROPIC_KEY;
-    delete process.env.API_ANTHROPIC_KEY;
-    try {
-      const rejection = await extractFromText("some lab text").catch((e: unknown) => e);
-      expect(rejection).toBeInstanceOf(NotConfiguredError);
-      expect(rejection).not.toBeInstanceOf(ExtractionError);
-      // And the text it will put in front of a user names no environment
-      // variable — see AI_SERVICE_NOT_CONFIGURED.
-      expect((rejection as NotConfiguredError).publicMessage).not.toMatch(/API_ANTHROPIC_KEY/);
-    } finally {
-      if (previous === undefined) delete process.env.API_ANTHROPIC_KEY;
-      else process.env.API_ANTHROPIC_KEY = previous;
-    }
+    // No `transcribe` is injected, so the real config check runs; no network is
+    // reached, because the throw happens before any fetch.
+    //
+    // U25 lab-import half: the setting names changed (API_ANTHROPIC_KEY →
+    // OMNIROUTE_*) and the ASSERTIONS did not. That is the point of the pin —
+    // it is about the error CLASS crossing the boundary, not about a provider.
+    vi.stubEnv("OMNIROUTE_BASE_URL", "");
+    vi.stubEnv("OMNIROUTE_API_KEY", "");
+    vi.stubEnv("OMNIROUTE_MODEL", "");
+
+    const rejection = await extractFromText("some lab text").catch((e: unknown) => e);
+    expect(rejection).toBeInstanceOf(NotConfiguredError);
+    expect(rejection).not.toBeInstanceOf(ExtractionError);
+    // And the text it will put in front of a user names no environment
+    // variable — see AI_SERVICE_NOT_CONFIGURED.
+    expect((rejection as NotConfiguredError).publicMessage).not.toMatch(
+      /OMNIROUTE|ANTHROPIC|API_KEY|BASE_URL|MODEL/i,
+    );
+  });
+
+  it("refuses a PDF the same way when the gateway is unconfigured", async () => {
+    // The PDF path has its own transcriber factory, so the config check is a
+    // SECOND call site. U25's advisor half proved a half-configured provider is
+    // the easy thing to miss; this pins that the PDF half fails identically
+    // rather than reaching the network with a partial config.
+    vi.stubEnv("OMNIROUTE_BASE_URL", "https://gw.example");
+    vi.stubEnv("OMNIROUTE_API_KEY", "k");
+    vi.stubEnv("OMNIROUTE_MODEL", "");
+
+    const rejection = await extractFromPdf("JVBERi0xLjQK").catch((e: unknown) => e);
+    expect(rejection).toBeInstanceOf(NotConfiguredError);
+    expect(rejection).not.toBeInstanceOf(ExtractionError);
+  });
+
+  it("reads a FENCED transcript — N-23, found by the OP-4 live probe", () => {
+    // The routed model returns correct JSON wrapped in a ```json fence. Before
+    // this, a perfectly good extraction answered 502 EXTRACTION_FAILED: the
+    // model working, reported to the user as the model failing. The fixture is
+    // the probe's own observed output shape.
+    const fenced =
+      '```json\n{"markers":[{"rawLabel":"Vitamin D, 25-OH","value":22.4,' +
+      '"unit":"ng/mL","referenceLow":30,"referenceHigh":100}]}\n```';
+
+    const candidates = candidatesFromTranscript(fenced);
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].rawLabel).toBe("Vitamin D, 25-OH");
+    expect(candidates[0].value).toBe(22.4);
+  });
+
+  it("still reads an UNFENCED transcript unchanged", () => {
+    // The fence strip must not become a precondition. Anthropic-era output was
+    // bare JSON, and a gateway route that returns bare JSON must keep working.
+    const bare = '{"markers":[{"rawLabel":"Ferritin","value":18,"unit":"ng/mL"}]}';
+    expect(candidatesFromTranscript(bare)).toHaveLength(1);
+  });
+
+  it("does NOT salvage prose around a JSON body", () => {
+    // Deliberately narrow (§2.2 rule 7). A parser that hunts for the first `{`
+    // would let a refusing or chatty model's output be read as data. A fence is
+    // removed; nothing else is.
+    expect(() =>
+      candidatesFromTranscript('Here you go: {"markers":[]}'),
+    ).toThrow(ExtractionError);
   });
 });
 

@@ -1,12 +1,16 @@
 // Infrastructure layer — the ONLY non-deterministic module (Design §9.4).
-// Plan SC-3: messy lab PDFs → structured candidates via a Claude extraction
-// adapter. SAFETY: transcription ONLY — the model never judges ranges, never
+// Plan SC-3: messy lab PDFs → structured candidates via a gateway extraction
+// adapter (Omniroute; U25 lab-import half, decision 7B option (a)). SAFETY: transcription ONLY — the model never judges ranges, never
 // diagnoses. Its JSON output MUST pass adapterOutputSchema or we throw
 // EXTRACTION_FAILED (never coerce, never persist). Imported only by the
 // `extract` route; no domain code depends on this.
 import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors";
 import { normalizeMarker } from "@/lib/biomarkers";
 import type { ParsedMarkerCandidate } from "@/types/lab";
+import {
+  createCompletion,
+  type OmnirouteContentPart,
+} from "@/lib/omniroute/client";
 import { adapterOutputSchema } from "./schema";
 
 export class ExtractionError extends Error {
@@ -25,6 +29,7 @@ export type Transcribe = (documentText: string) => Promise<string>;
 
 export interface ExtractDeps {
   transcribe?: Transcribe;
+  baseUrl?: string;
   apiKey?: string;
   model?: string;
 }
@@ -38,6 +43,35 @@ export const EXTRACTION_SYSTEM_PROMPT =
   "Use null for any reference bound not printed. Omit rows without a numeric value.";
 
 /**
+ * Strip a Markdown code fence around a JSON body. PURE.
+ *
+ * FINDING N-23, from the OP-4 live probe. The routed model returns a *correct*
+ * transcription wrapped in ` ```json … ``` `, and the bare `JSON.parse` below
+ * rejected it — so a perfectly good extraction answered **502
+ * EXTRACTION_FAILED**. That is the most misleading failure this swap could have
+ * shipped: the model working correctly, reported to the user as the model
+ * failing. Both live paths feed the transcriber's raw output straight into this
+ * function, so the probe's failure was production's failure, not a probe
+ * artifact — verified before the fix was written.
+ *
+ * Deliberately narrow. It removes a fence and nothing else: no brace-hunting,
+ * no "find the first `{`", no repair of malformed JSON. A parser that salvages
+ * arbitrary prose would let a chatty or refusing model's output be read as
+ * data, and this module's whole contract is that output either passes
+ * `adapterOutputSchema` or is thrown away (§2.2 rule 7 — never assert a value
+ * the system did not compute). Unfenced input is returned untouched.
+ */
+export function stripJsonFence(raw: string): string {
+  const text = raw.trim();
+  if (!text.startsWith("```")) return raw;
+  // Drop the opening fence line (```json, ```JSON, or a bare ```) and, if the
+  // block is closed, everything from the final fence onward.
+  const afterOpen = text.slice(text.indexOf("\n") + 1);
+  const close = afterOpen.lastIndexOf("```");
+  return close === -1 ? afterOpen : afterOpen.slice(0, close);
+}
+
+/**
  * Validate a model/transcript JSON string → review candidates. PURE: no network.
  * This is the unit-tested core (canned transcript in CI). biomarkerId is a
  * normalize() PREVIEW only; the server recomputes it on commit.
@@ -46,7 +80,7 @@ export const EXTRACTION_SYSTEM_PROMPT =
 export function candidatesFromTranscript(rawJson: string): ParsedMarkerCandidate[] {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(rawJson);
+    parsed = JSON.parse(stripJsonFence(rawJson));
   } catch {
     throw new ExtractionError("Adapter returned non-JSON output", "EXTRACTION_FAILED");
   }
@@ -72,7 +106,7 @@ export function candidatesFromTranscript(rawJson: string): ParsedMarkerCandidate
 
 /**
  * Extract candidates from already-extracted lab-report text. Uses the injected
- * transcriber (tests) or the default Claude transcriber (runtime).
+ * transcriber (tests) or the default gateway transcriber (runtime).
  * @throws ExtractionError UNREADABLE_DOCUMENT (empty text) / EXTRACTION_FAILED.
  */
 export async function extractFromText(
@@ -83,7 +117,7 @@ export async function extractFromText(
   if (!text) {
     throw new ExtractionError("No text layer in document", "UNREADABLE_DOCUMENT");
   }
-  const transcribe = deps.transcribe ?? makeClaudeTranscriber(deps);
+  const transcribe = deps.transcribe ?? makeGatewayTranscriber(deps);
   let rawJson: string;
   try {
     rawJson = await transcribe(text);
@@ -107,8 +141,8 @@ export async function extractFromText(
 }
 
 /**
- * Extract candidates from a base64-encoded PDF. The PDF is sent NATIVELY to
- * Claude as a document block (no PDF-text-extraction library needed). The pure
+ * Extract candidates from a base64-encoded PDF. The PDF is sent to the gateway
+ * as a `file` content part (no PDF-text-extraction library needed). The pure
  * `candidatesFromTranscript` core still validates the result.
  * @throws ExtractionError on empty input / transcription / schema failure.
  */
@@ -119,7 +153,7 @@ export async function extractFromPdf(
   if (!base64Pdf.trim()) {
     throw new ExtractionError("Empty PDF payload", "UNREADABLE_DOCUMENT");
   }
-  const transcribe = deps.transcribe ?? makeClaudePdfTranscriber(deps);
+  const transcribe = deps.transcribe ?? makeGatewayPdfTranscriber(deps);
   let rawJson: string;
   try {
     rawJson = await transcribe(base64Pdf);
@@ -142,20 +176,20 @@ export async function extractFromPdf(
   return candidatesFromTranscript(rawJson);
 }
 
-// Minimal structural type for the SDK client we use — avoids a build-time dep.
-type AnthropicLike = {
-  messages: {
-    create: (req: unknown) => Promise<{
-      content: Array<{ type: string; text?: string }>;
-    }>;
-  };
-};
-
-async function loadAnthropic(apiKey: string): Promise<AnthropicLike> {
-  // Lazily imported so the SDK loads only on the live extraction path (server).
-  const mod = await import("@anthropic-ai/sdk");
-  return new mod.default({ apiKey }) as unknown as AnthropicLike;
-}
+// ---------------------------------------------------------------------------
+// The live path — Omniroute, not the Anthropic SDK (U25 lab-import half)
+// ---------------------------------------------------------------------------
+// Decision 7B, ruled 2026-08-10 from the OP-4 record: a PDF reaches the
+// OpenAI-compatible surface as a `file` content part carrying a base64 data
+// URL. Verified against BOTH a text PDF and an image-only one (0 fonts, 0 text
+// operators, a single /DCTDecode JPEG), so the model really reads the page
+// rather than a text layer. `/v1/ocr` — option (b) — answered 400 and is not a
+// fallback that exists on that gateway.
+//
+// With this file's last `@anthropic-ai/sdk` import gone, the package leaves
+// `package.json` in the SAME commit (amendment constraint 8), the
+// `PAID_API_BUDGET` marker union collapses to the single Omniroute module, and
+// `RETIRED_PACKAGE` widens from `src/lib/advisor` to all of `src/`.
 
 /**
  * Phase 2 U1 — typed, and deliberately NOT response-affecting.
@@ -177,53 +211,87 @@ async function loadAnthropic(apiKey: string): Promise<AnthropicLike> {
  * both route through the same absent one. Changing it is a response-byte change
  * U1 did not pre-declare, so it is a follow-up, not a silent fix here.
  */
-function requireKey(deps: ExtractDeps): string {
-  const apiKey = deps.apiKey ?? process.env.API_ANTHROPIC_KEY;
-  if (!apiKey) {
-    throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
-  }
-  return apiKey;
+interface GatewayConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
 }
 
-function firstText(resp: { content: Array<{ type: string; text?: string }> }): string {
-  return resp.content.find((c) => c.type === "text")?.text ?? "";
+/**
+ * Resolve every setting the live path needs, or refuse. Server-only.
+ *
+ * **The model id has NO default (N-21), and this file is where that finding was
+ * found a second time.** It shipped with `deps.model ?? "claude-haiku-4-5-20251001"`
+ * — correct while it spoke to Anthropic directly, where the id namespace IS the
+ * protocol's, and wrong the moment the call goes through a gateway whose ids are
+ * instance-specific. `NO_PINNED_MODEL_ID` registered it in a shrink-only ratchet
+ * rather than let the advisor half silently reach into a blocked file; this unit
+ * removes it, and the ratchet row goes with it.
+ *
+ * All three settings are required for the same reason the advisor requires them:
+ * half-configured is not configured, and guessing any one of them means asserting
+ * something about a system this code has not contacted.
+ *
+ * The `NotConfiguredError` throw is unchanged in kind and in text, so the
+ * behaviour U1/U6 pinned still holds — see the note above `NOT_CONFIGURED`
+ * handling in `extractFromText`.
+ */
+function requireGatewayConfig(deps: ExtractDeps): GatewayConfig {
+  const baseUrl = deps.baseUrl ?? process.env.OMNIROUTE_BASE_URL;
+  const apiKey = deps.apiKey ?? process.env.OMNIROUTE_API_KEY;
+  const model = deps.model ?? process.env.OMNIROUTE_MODEL;
+  if (!baseUrl || !apiKey || !model) {
+    throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
+  }
+  return { baseUrl, apiKey, model };
+}
+
+/** One transcription call. The system prompt is unchanged across the swap. */
+async function transcribeVia(
+  cfg: GatewayConfig,
+  userContent: string | OmnirouteContentPart[],
+): Promise<string> {
+  const result = await createCompletion(
+    { baseUrl: cfg.baseUrl, apiKey: cfg.apiKey },
+    {
+      model: cfg.model,
+      maxTokens: 2048,
+      messages: [
+        // The Anthropic surface took `system` as a top-level string; the
+        // OpenAI-compatible one takes a leading system MESSAGE. Same prompt
+        // text, different envelope — the protocol change U25 is about.
+        { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+        { role: "user", content: userContent },
+      ],
+    },
+  );
+  return result.text;
 }
 
 /** Runtime text transcriber (plain lab-report text → JSON). Server-only. */
-export function makeClaudeTranscriber(deps: ExtractDeps = {}): Transcribe {
-  return async (documentText: string) => {
-    const client = await loadAnthropic(requireKey(deps));
-    const resp = await client.messages.create({
-      model: deps.model ?? "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: documentText }],
-    });
-    return firstText(resp);
-  };
+export function makeGatewayTranscriber(deps: ExtractDeps = {}): Transcribe {
+  return async (documentText: string) =>
+    transcribeVia(requireGatewayConfig(deps), documentText);
 }
 
-/** Runtime PDF transcriber — sends the PDF natively as a document block. */
-export function makeClaudePdfTranscriber(deps: ExtractDeps = {}): Transcribe {
-  return async (base64Pdf: string) => {
-    const client = await loadAnthropic(requireKey(deps));
-    const resp = await client.messages.create({
-      model: deps.model ?? "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: { type: "base64", media_type: "application/pdf", data: base64Pdf },
-            },
-            { type: "text", text: "Transcribe this lab report." },
-          ],
+/**
+ * Runtime PDF transcriber — the PDF travels as a `file` content part.
+ *
+ * The data URL prefix is required: the OP-4 probe sent exactly this shape and
+ * got a correct transcription of an image-only PDF back. No PDF-text-extraction
+ * library is involved, which is the property the Anthropic `document` block used
+ * to provide and decision 7B had to re-establish.
+ */
+export function makeGatewayPdfTranscriber(deps: ExtractDeps = {}): Transcribe {
+  return async (base64Pdf: string) =>
+    transcribeVia(requireGatewayConfig(deps), [
+      {
+        type: "file",
+        file: {
+          filename: "lab-report.pdf",
+          file_data: `data:application/pdf;base64,${base64Pdf}`,
         },
-      ],
-    });
-    return firstText(resp);
-  };
+      },
+      { type: "text", text: "Transcribe this lab report." },
+    ]);
 }

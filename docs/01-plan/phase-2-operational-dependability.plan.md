@@ -240,6 +240,7 @@ a commit message keeps pointing at the same finding.
 | **N-21** | **U25 follow-up (found by the FIRST live probe, 2026-08-10)** | **The shipped advisor half hardcoded a model id, and the id does not exist.** `model-adapter.ts` carried `DEFAULT_ADVISOR_MODEL = "claude-haiku-4-5"` with `resolveModel` falling back to it, described in its own header as "the same class of small, fast model the Anthropic adapter used". The owner's gateway has **no bare `claude-haiku-4-5`** — its Haiku ids are provider-namespaced (`cc/claude-haiku-4-5-20251001`, `claude/claude-haiku-4-5-20251001`). With `OMNIROUTE_ADVISOR_MODEL` unset — the state of a fresh deployment — **every advisor turn would have 400'd**, from a suite that was fully green, because a scripted `complete` accepts whatever id it is handed. The probe read a *different* variable name than the operator set, so the fallback answered silently instead of anything reporting the mismatch | Probe run 2026-08-10: 400, `model requested` stayed at the hardcoded value under `OMNIROUTE_MODEL`; gateway `/v1/models` lists `cc/…` and `claude/…` Haiku ids and no bare form | **CLOSED by the U25 follow-up commit.** The general fact is the finding: **a model id is a property of the gateway INSTANCE, not of the protocol**, so no value hardcoded here can be correct for a gateway this repository has never contacted (§2.2 rule 7). §8.4 applied — the default was **deleted, not corrected**: `OMNIROUTE_MODEL` is now a third REQUIRED setting answering 503 `NOT_CONFIGURED` on the same path as a missing key. Guarded by **`NO_PINNED_MODEL_ID`**, which found a **second** hardcoded id on its first run (`pdf-adapter.ts`) — registered in a shrink-only ratchet rather than fixed, because that file is the lab-import half. Red-proved three ways: restoring the default, dropping the route pre-flight, and "helpfully" stripping the provider namespace |
 | **N-22** | **OP-4 probe record, 2026-08-10** | **An `auto/*` alias can produce a successful tool loop and then an EMPTY answer.** Two aliases tested against the local gateway routed to two different vendors — `auto/best-chat` → `claude-opus-4-6-thinking`, `auto/best-free` → `gemini-3.6-flash-high` — and BOTH returned correctly parsed tool calls followed by a second step with **no text**. The initial "it's a thinking route" hypothesis from the first run is weakened by the second, which is not one | `docs/05-qa/2026-08-10-omniroute-probe-record.md` §2 | **OPEN, and deliberately not worked around in `src/`.** It is an alias/routing behaviour of a gateway instance, not application code, and a guard here would be theatre. **Why it is registered rather than shrugged at:** an empty answer is the worst failure shape this product has — the grounding and `lib/safety` gates all pass on an empty string, so it surfaces as a confident blank rather than an error. If an `auto/*` alias is ever adopted, that is the defect to fix first. The pinned default `cc/claude-haiku-4-5-20251001` does not exhibit it |
 | **N-23** | **OP-4 probe record, 2026-08-10** | **The routed model fences its JSON, and `candidatesFromTranscript` cannot read a fenced transcript.** Option (a) returned a *correct* transcription of both probe PDFs, opening ` ```json ` — and `candidatesFromTranscript` does a bare `JSON.parse` with no fence handling, so `adapterOutputSchema` FAILED on both. Verified before recording that both live paths (`extractFromText`, `extractFromPdf`) pass the transcriber's raw output straight in, so the probe called it exactly as production does — this is a real defect, not a probe artifact | `pdf-adapter.ts:46-52`; record §4 | **CLOSED by U25's lab-import half** (it owns this file). Unhandled it would answer **502 `EXTRACTION_FAILED` on every PDF upload while the model transcribed correctly** — a functional regression wearing the mask of a model failure. **It also corrects a plan premise:** §6 declared behaviour change #6 as prose-only with "no status or envelope change expected"; for lab-import that was wrong, and the measurement wins |
+| **N-24** | **U25 lab-import half, 2026-08-10** | **A red-list entry named a test that MOCKS the module it mutates.** M19 predicted `expected 502 to be 503` at `extract/route.test.ts` for reverting `pdf-adapter.ts`'s `NotConfiguredError` rethrow. Run for real, that route test stayed **green**: it does `vi.mock("@/lib/lab-import/pdf-adapter", …)` and throws `NotConfiguredError` from the double, so no mutation inside the real module can reach it. The rethrow IS guarded — by two unit pins in `lab-import.test.ts` — but not by the test the plan credited | Mutation run 2026-08-10: 2 failures, both `lab-import.test.ts`; `extract/route.test.ts` green. `route.test.ts:27` is the mock | **CLOSED as an instance; the CLASS is registered.** The measurement wins and the attribution is corrected in the red-record below. **Why it matters beyond one row:** a mutation prediction is a claim about *which guard holds a property*, and this one was wrong in the direction that flatters — it named a route-level pin, implying end-to-end coverage, where only a unit pin exists. A red list whose entries are never executed is a list of hypotheses. Every U25 entry marked † or DEFERRED has now been executed rather than reasoned about, which is how this was found |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -878,6 +879,32 @@ dropped or quietly forced:
    is proven free of the SDK — with the repository-wide form and the `package.json` clause named as the
    lab-import half's obligation.
 
+> ### **[2026-08-10] THE SPLIT IS CLOSED. Both obligations discharged in the lab-import commit.**
+> Recorded here rather than in a new section, so the deferral and its discharge sit in one place.
+>
+> **(1) The union collapsed.** `PAID_PACKAGES` is now `[]` and the single module marker
+> `src/lib/omniroute/client.ts` accounts for **both** paid routes — asserted per-marker, not as a total,
+> because a total of 2 is also what a rotted marker plus an over-matching one produces:
+> ```
+> paidApiRoutes(PAID_PACKAGES, [])  →  []                       (no paid package remains)
+> paidApiRoutes([], PAID_MODULES)   →  ["src/app/api/advisor/route.ts",
+>                                       "src/app/api/lab-import/extract/route.ts"]
+> ```
+> The membership pin of exactly **2** is unchanged, so a third ungoverned paid route is still a red build.
+>
+> **(2) The dependency left in the same commit as the last import**, which is what constraint (8) asked
+> for and why it was worth deferring rather than forcing. `RETIRED_PACKAGE` widened from `src/lib/advisor`
+> to **all of `src/`** (with a `>= 100` anti-vacuity floor) and gained the promised **`package.json`
+> clause**. The two clauses are deliberately separate: an import with no dependency is a broken build, a
+> dependency with no import is a paid provider one `import` away from being reachable with no marker
+> watching — neither implies the other. **M11 red-proved the second**, which had never been executed
+> before because it did not exist.
+>
+> **A third obligation was discharged that the split did not anticipate:** `NO_PINNED_MODEL_ID`'s ratchet.
+> The advisor half's guard found a hardcoded model id in `pdf-adapter.ts` and registered it rather than
+> reach into a blocked file. That row is now gone, along with the literal — and the guard asserts **both**,
+> because emptying a register while leaving the code is exactly the failure a register invites.
+
 **`CLAUDE.md` §4 row 9 and §8's criterion are updated to the transitional definition in this commit**, so
 the document describes the guard that exists rather than the one that will exist. Both move again when the
 lab-import half lands. A definition that is briefly a union is honest; a definition that is briefly false
@@ -942,7 +969,7 @@ Where the observed text differs from the prediction, the observed text is what i
 | **M8** | **RED** ×2 forms | Both the literal form (the throw leaves `model-adapter.ts`) and an accidental discovery — wrapping the constant so the identifier is no longer resolvable reddens the same inverse. That second form **is N-14's exact failure mode**, and finding it by accident is the strongest evidence yet that the inverse assertion is the load-bearing half of that guard |
 | **M9** | **RED staged, green unstaged** | `src/lib/omniroute/rogue.ts:2 new Error("OMNIROUTE_API_KEY not configured")` |
 | **M10** | **RED** ×2 | `RETIRED_PACKAGE: … expected [ 'src/lib/advisor/model-adapter.ts' ] to deeply equal []`, **and** the per-marker pin caught it independently (`the Anthropic package marker: expected [ Array(2) ] to deeply equal [ Array(1) ]`) — two unrelated assertions on one regression |
-| **M11** | **DEFERRED** | The `package.json` clause belongs to the lab-import half, which still imports the SDK at runtime. Not run, not claimed |
+| **M11** | **RUN 2026-08-10 — RED as predicted** | Re-added `"@anthropic-ai/sdk"` to `dependencies` → `RETIRED_PACKAGE: the Anthropic SDK is declared in package.json again … expected [ '@anthropic-ai/sdk' ] to deeply equal []`. The clause was newly written for this half, with an anti-vacuity floor (`>= 10` declared dependencies) so an unreadable `package.json` cannot pass it |
 | **M12** | **RED** ×2 | `Test timed out in 5000ms` on both timeout tests. **Recorded honestly as a weaker red than the others**: the mutation makes the promise never settle, so the failure is a suite timeout rather than a named assertion. That is inherent to testing a deadline, and it is still the first red this control has ever had (**N-20**) |
 | **M13** | **RED** ×3, **unedited** | `adapter.next call count: expected 5 to be 1` — U6's pin, re-run against the new adapter without a single change |
 | **M14** | **RED**, **unedited** | `expected "spy" to be called with arguments: [ Array(3) ]` |
@@ -950,7 +977,7 @@ Where the observed text differs from the prediction, the observed text is what i
 | **M16** | **RED** ×4 + ×2 | Client half: `expected { inputTokens: 3, outputTokens: +0 } to be null`. Adapter half (M16b): `expected true to be false` on both the inverted pin and the sticky-flag test. **The most valuable mutation in the unit** — it is the difference between "never estimate" and a free advisor |
 | **M17** | **RED** ×2 | `expected [ { role: 'user', …(1) } ] to deeply equal [ { role: 'tool', …(2) }, …(1) ]` |
 | **M18** | **RED** ×2 | `expected {} to deeply equal { a: 1 }` |
-| **M19** | **DEFERRED** | Lab-import's inverted preservation pin re-runs green in the full suite but its mutation belongs to that half |
+| **M19** | **RUN 2026-08-10 — RED, but NOT where the plan said (N-24)** | Reverting the `NotConfiguredError` rethrow reddened **two `lab-import.test.ts` pins** — `expected ExtractionError: Transcription failed to be an instance of NotConfiguredError` — and left `extract/route.test.ts` **green**, because that file mocks `pdf-adapter` wholesale. The property is guarded; the plan credited the wrong guard. Recorded, not smoothed over |
 | **M20** | **RED** | `DOMAIN_IS_PURE: … expected [ Array(1) ] to deeply equal []` |
 | **M21** | **NO PROOF, as predicted** | A coverage threshold has no mutation. Stated rather than manufactured |
 
