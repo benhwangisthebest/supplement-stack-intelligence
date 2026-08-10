@@ -146,9 +146,15 @@ The document is a fictional panel marked `*** SYNTHETIC TEST DOCUMENT - NOT A RE
 fabricated patient and fabricated values (Vitamin D 22.4, Ferritin 18, B12 642, TSH 2.15, and a duplicate
 Ferritin row to exercise de-duplication).
 
-> **Stated limitation.** `scan.pdf` is a *clean synthetic render* — no skew, no noise, no photographic
-> artefacts, no compression damage from a real scanner. It proves the model reads an image-only PDF; it
-> does **not** establish accuracy on a photographed or faxed report. That remains unmeasured.
+> **Stated limitation — REGISTERED AS N-25.** `scan.pdf` is a *clean synthetic render* — no skew, no
+> noise, no photographic artefacts, no compression damage from a real scanner. It proves the model reads
+> an image-only PDF; it does **not** establish accuracy on a photographed or faxed report. That remains
+> unmeasured.
+>
+> This limitation now carries a **numbered register row** rather than living only here. A limitation
+> stated once inside a record does not travel with the claim: the next summary reads "verified against a
+> scanned PDF" and means more than the evidence supports. N-25 closes on a dated run against a real
+> scanned report appended below — no synthetic substitute counts, because the artefacts are the point.
 
 ### Results
 
@@ -242,4 +248,5 @@ shape this swap could ship. **Registered as N-23** and fixed by U25's lab-import
 | **N-22** | Empty second-step text on `auto/*` aliases — two aliases, two vendors, same shape. Unresolved; a gateway routing behaviour, not application code. Worst-case surface: a confident blank answer that passes every safety gate |
 | **N-23** | Fenced JSON breaks `candidatesFromTranscript`. Owned by U25's lab-import half |
 | **N-18** | Token- vs cost-denominated budget. First measurement: 28 vs 84 input tokens for the same prompt on two routes |
+| **N-25** | PDF transcription accuracy is measured on **clean renders only**. Owner condition: closes on a dated run against a real photographed/scanned report, appended to this record |
 | **OP-5** | The production gateway's provider set must be restricted to API-keyed providers before any real user health data flows. **Not settled by this record** — every run above was against a local instance |
