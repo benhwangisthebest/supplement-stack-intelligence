@@ -54,14 +54,14 @@ Information-rich but organized; layered, never dumbed down.
 **Navigation is exactly three top-level items.** Protocol Builder and Product Match live *inside* Stack Lab.
 Do not add a top-level item without an explicit product decision.
 
-> **[2026-08-06] The shipped UI diverges from this rule, and the rule is NOT being relaxed to match.**
-> `src/components/layout/TopNav.tsx` appends an `Advisor` pill to the same `NavPills` group for signed-in
-> users, so an authed reader sees **four**. The v6 design did record an explicit decision — but for a
-> "top-level-adjacent surface … **not** a 4th main pillar". Rendering it inside the pillar list is an
-> implementation divergence from that decision, not an authorised fourth pillar, and
-> `docs/product-direction.md` still states the three-item rule as permanent. Recorded as **FU-27** for a
-> product decision: move the Advisor out of the pillar group, or change the rule deliberately. Not
-> resolved here — §8.1, name it rather than absorb it.
+> **[2026-08-10] The 2026-08-06 divergence note that sat here is RETIRED — the rule was not relaxed; the
+> code moved to meet it.** `TopNav.tsx` now hands `NavPills` the three-entry `PILLARS` constant
+> **unconditionally**, and the Advisor renders as a sibling of the sign-out control — the
+> "top-level-adjacent surface" the v6 design actually authorised. It stays signed-in-only and stays
+> reachable: this was **placement, not removal**. The rule is now enforced by
+> `src/architecture/nav-pillars.test.ts` rather than by a paragraph here, which is the only reason the
+> paragraph could retire (§3.5). Retired text and its full rationale, per §7:
+> **`docs/archive/retired-nav-divergence-note.md`**.
 
 **It is not:** a magic AI doctor, a cure platform, a supplement quiz, a generic wellness app, an affiliate
 shop, or a replacement for medical care.

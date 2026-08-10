@@ -156,7 +156,10 @@ behaviour this project's review discipline exists to prevent. They land when thi
 > artifact was edited — including **FU-27's row**, which this approval's ruling 1 resolves but which was
 > outside the authorised annotation set. That row therefore still reads "needs a product decision" while
 > §7 decision 1 below records that the decision was taken; the discrepancy is named here rather than
-> silently repaired, and closing it is part of **U24**.
+> silently repaired, and closing it is part of **U24**. **[2026-08-10] CLOSED by U24.** The decision is
+> executed in code, `CLAUDE.md` §1's divergence block is retired, and the rule is now guarded by
+> `src/architecture/nav-pillars.test.ts`. The Phase 1 register's FU-27 row remains a **historical record**
+> and is still not edited — it is certified, and this document is where its resolution lives.
 
 - **FU-2 → CLOSED.** Its condition was fixed by U20 (`execute.ts:147`). Carrying it forward would plan
   work that exists.
@@ -247,6 +250,7 @@ a commit message keeps pointing at the same finding.
 | **N-28** | **OP-6 / N-27 addendum record, 2026-08-10** | **A verification fixture cannot read its own writes inside one statement — so a correct effect and no effect return identical values.** The N-27 addendum put `settle_advisor_tokens(1000, 300, 50)` and two `(select input_tokens … )` "after" reads in the **same `select` target list**. Both `after` columns returned the **`before`** values — `input_after_expect_before_plus_300` = **4345** = `input_before`; `output_after_expect_before_plus_50` = **276** = `output_before`; predicted 4645 and 326. The sub-selects are evaluated against that statement's snapshot, which is the same snapshot the `before` columns read, so no write by a volatile function in the same target list can ever be visible to them | `docs/05-qa/2026-08-10-rate-limit-policy-verification.md` §3.2, §4 | **OPEN — and it carries N-27(i)'s residue: `settle_advisor_tokens`' effect on the ledger is still verified only as SQL text.** **The function is NOT implicated, and the same run contains the control that proves it:** OP-6 check 4 ran six `consume_rate_limit` calls in one statement and got **1,2,3,4,5,0**, so volatile calls **do** observe each other's writes (each statement inside a plpgsql body takes a fresh command snapshot) — writes were landing; only the plain sub-select was blind. **Fix is a shape, not apparatus:** read in a **separate statement inside the same transaction**, still before the `rollback`. Fold into OP-3's sitting. **The class is the lesson, and this is the third of a family:** N-26 was a fixture whose *output* could not discriminate two states, N-27 one whose *input* was over-strong so it passed without exercising the mechanism, N-28 one whose *reads* cannot see its own writes. All three were found by **running** the check, none by reading it — which is the argument against ever recording a predicted output as an observed one. This one was visible only because the `before` and `after` columns were printed adjacent in the same row |
 | **N-29** | **U13, 2026-08-10** | **U13's E2E guard — the only thing in the repository that can see a security header actually arrive — does not run in CI.** `.github/workflows/ci.yml` excludes E2E with a written reason: *"17/23 specs are `E2E_LIVE`-gated and the suite races a single shared seeded user under `fullyParallel`"*. **Neither clause applies to this spec**: it is ungated, credential-free, read-only against the public static Library, and touches no shared account. So the exclusion is correct for the suite as a whole and, for this file, incidental. By §10.3 — *"guardrails that do not run in CI do not exist"* — the config half is enforced on every push and the response-bytes half is enforced only when someone runs it by hand | `.github/workflows/ci.yml` (the `NOT included` block); `tests/e2e/security-headers.spec.ts` is untagged and ungated by construction, which `LIVE_TAGGING` enforces both ways | **OPEN — deliberately NOT fixed in U13.** Wiring E2E into CI **adds a CI step**, which trips **GATE D1** and obliges the §5 declared-chain update in the same commit; it also needs a build-and-serve stage, which is a workflow change well outside a unit whose file list is one config and two tests. Absorbing it would have been the larger sin. **[2026-08-10] RULED BY THE OWNER: DEFERRED TO U14, and the deferral is BINDING rather than advisory.** U14 needs the same build-and-serve CI stage for its own Report-Only evidence — a CSP that reports nothing and a CSP that is absent are indistinguishable without reading response bytes — so **three things land together in U14 or not at all**: (1) the CI stage that builds and serves the app for E2E, (2) its **GATE D1** update to CLAUDE.md §5's declared chain, in the same commit, and (3) `tests/e2e/security-headers.spec.ts` included in what that stage runs. **U14 MAY NOT CLOSE while this row is open**: its closeout must either discharge N-29 or **re-defer it explicitly, in writing, with a named next owner**. Silence is not a disposition — a row that is neither closed nor re-deferred is an unmet obligation, and U14's report is the place it becomes visible. **Until then, state the split honestly:** U13's config guard is CI-enforced; its delivery guard is developer-run. The mutation record in U13's entry is evidence the delivery guard **works**, not evidence that it **runs** |
 | **N-30** | **U13, 2026-08-10** | **Three security headers were considered and deliberately NOT shipped, each for a reason that makes it someone else's decision.** (a) **HSTS `preload`** — the max-age and `includeSubDomains` shipped; `preload` did not. Submission to the browser preload list is outward-facing and slow to reverse, which makes it an operator decision rather than something an agent edits into a config. (b) **`Cross-Origin-Opener-Policy`** — `same-origin` severs `window.opener`, which is how an OAuth popup returns its result. (c) **`Cross-Origin-Embedder-Policy`** — `require-corp` rejects any third-party subresource lacking CORP | `next.config.ts`'s header block enumerates all three with these reasons; `security-headers.test.ts` asserts each stays absent, so re-adding one is a red rather than a silent change | **OPEN as decisions, CLOSED as omissions — the distinction is the point.** U13's own rule is *a header that can break the shipped app is not this unit's*, which is the rule that put CSP in U14; (b) and (c) fail the same test and were held to it rather than waved through because they are fashionable. **This is registered rather than silently omitted because an unexplained absence is indistinguishable from an oversight** — the next reader adding "the standard set" would otherwise re-add all three and discover the breakage in production. (a) is an **owner condition** alongside OP-5; (b) and (c) need a real decision about whether OAuth popups and third-party subresources are in the product's future, which is a product question and not a headers question. **[2026-08-10] DISPOSITIONS ACCEPTED AS RECORDED, by owner ruling.** `preload` **stays an operator decision, beside OP-5** — both are pre-deployment acts the repository can describe but must not perform. COOP/COEP **stay refused and pinned**: the pins in `security-headers.test.ts` are the mechanism, so the refusal survives the next reader who reaches for the standard set. **No further action in Phase 2** unless a product decision moves (b) or (c) |
+| **N-31** | **U24, 2026-08-10** | **Two clauses of the SAME unit's own spec contradict each other, and only one can be satisfied literally at a time.** U24's §5 entry says `CLAUDE.md` §1's divergence block is *"retired … per §7 — **struck with its rationale, not deleted**"*. U24's §7 exit criterion says the check is *"`grep -c 'FU-27' CLAUDE.md` = 0"*. Struck-through text still contains the string, so a literal strikethrough leaves the grep at 2 — measured, not predicted: that is exactly what the first implementation produced | The U24 entry in §5 Group D; the U24 exit criterion in §7; `grep -c 'FU-27' CLAUDE.md` = 2 against the strikethrough version | **CLOSED as an instance by relocation; the CLASS is registered.** Both clauses are satisfiable together if the rationale MOVES rather than staying or vanishing: the struck note and its full "why it existed / does the risk still need controlling" analysis went to `docs/archive/retired-nav-divergence-note.md` — the shape `CLAUDE.md` §0 already uses for `original-mvp-instructions.md` — and §1 keeps the rule plus a dated pointer that does not contain the string. Nothing was gamed and nothing was deleted. **Why it is registered rather than quietly reconciled:** an agent meeting two contradictory clauses can satisfy either one and write a truthful-sounding report, and the reader has no way to know a choice was made. **The class:** a spec clause phrased as a `grep` count is a claim about a FILE, while a clause phrased as "retire, don't delete" is a claim about KNOWLEDGE — they only agree if the knowledge is allowed to live somewhere else, and the spec should say where. Any future exit criterion of the `grep … = 0` shape should name the destination |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -729,6 +733,48 @@ byte changes** — this is the first declared behaviour change in either phase t
 **Not cuttable on size.** It implements a recorded ruling; cutting it silently reverts decision 1 to
 undecided, which is the "absorb it" failure `CLAUDE.md` §8.1 forbids. Cutting it requires re-opening the
 ruling explicitly.
+
+**DONE 2026-08-10** (+10 unit tests → **1141/92**; **zero test changes**, re-verified rather than assumed).
+Baseline before the unit: 1131/91.
+
+**THE "NO TEST CHANGES EXPECTED" CLAIM WAS RE-VERIFIED AT EXECUTION TIME, AS THE RULING REQUIRED, AND IT
+HOLDS.** Measured on `d24a449`, not carried over from `d4f6194`: `git grep -inE
+'navpills|<nav|getByRole\(.navigation' -- tests/` → **no matches**; all five advisor specs reach the page
+by `page.goto("/advisor")`, never by clicking a pill (the single `click.*advisor` hit is a *comment* about
+a provenance chip); `git ls-files '*.test.tsx'` → **empty**, so `HARNESS_GAP`'s constraint is satisfied by
+adding no component-test harness. Confirmed by execution, not inference: the full non-live Playwright suite
+ran **64 passed / 30 skipped**, unchanged, with no spec edited.
+
+**The guard.** `src/architecture/nav-pillars.test.ts`, split deliberately: the **label** half imports
+`PILLARS` and asserts real values (no regex); the **structural** half reads source text, because "the array
+reaches `NavPills` unconditionally" is a fact about JSX and not about any exported value. It also asserts
+`docs/product-direction.md` **still states the three-item rule**, so deliberately relaxing the rule
+(decision 1's option B, not ruled) reddens the guard instead of leaving it enforcing an abandoned rule —
+and asserts the Advisor is **still rendered**, since Option A was placement and a later deletion would
+satisfy every other assertion while quietly losing a shipped surface.
+
+**RED EVIDENCE — four mutations, all executed:**
+
+| # | Mutation | Result |
+|---|---|---|
+| **M1** ★ | Append a fourth entry to `PILLARS` | **RED ×4** — length, labels, hrefs, and the by-value `/advisor` check |
+| **M2** ★ | Restore `user ? [...PILLARS, …] : PILLARS` | **RED ×2** — `expected … to contain '<NavPills items={PILLARS} />'` and `expected … not to match /\[\s*\.\.\.\s*PILLARS/` |
+| **M3** ★ | Rename a pillar (`Stack Lab` → `Lab`) | **RED** — `expected [ 'Library', 'Profile', 'Lab' ] to deeply equal [ …, 'Stack Lab' ]` |
+| **M4** | Delete the Advisor link entirely | **RED ×2** — placement-not-removal. Not named by the plan; added because Option A is a *move* |
+
+★ = the three mutations the plan named. **The guard also caught its own author on the first run**, which is
+recorded because it is the more useful finding: `<NavPills` appeared **twice** in `TopNav.tsx` — once as
+JSX, once inside the header comment *explaining* the FU-27 defect — and "rendered exactly once" counted the
+comment. That is **N-14's audit finding in its inverse shape**: a literal match will accept a mention in a
+comment, and here prose could redden a structural assertion. Fixed by stripping comments before every
+structural match, not by rewording the comment: a guard a file's *prose* can flip is not measuring its
+*structure*.
+
+**§7's retirement clause and the exit criterion's `grep` clause CONFLICT, and the conflict is real —
+registered as N-31.** Resolved by moving the struck note plus its full rationale to
+`docs/archive/retired-nav-divergence-note.md` (the shape `original-mvp-instructions.md` already sets) and
+leaving `CLAUDE.md` §1 with the rule and a dated pointer. `grep -c 'FU-27' CLAUDE.md` = **0**, and no
+historical rationale was deleted. Both clauses are satisfied literally; neither was gamed.
 
 **U25 · Omniroute replaces the Anthropic SDK on both paid routes.** — **DONE 2026-08-10, merged to `main` at `c08bb83`** (see the unit report immediately below). *(§7 decision 7, ruled **full
 replacement** on 2026-08-10 — a rank-2 scope instruction)* **L**, deps **U5, U6, U7** (all DONE). Lands
@@ -1227,6 +1273,10 @@ implementation diverging from the decision that authorised it, not unauthorised 
 > execution time**, not as an established fact. **Not cuttable** (§5 cut list).
 > **Leaves open, deliberately:** FU-27's row in the certified Phase 1 register still reads *"needs a
 > product decision"* — see §4.3's `[2026-08-08]` note. U24 closes that too.
+> **[2026-08-10] RULING FULLY EXECUTED by U24.** Option A shipped: `NavPills` receives the three-entry
+> `PILLARS` unconditionally and the Advisor is a sibling of sign-out. The rule was **not** relaxed. The
+> "no test changes expected" claim was **re-verified at execution time** and held — zero specs touched,
+> 64 passed / 30 skipped unchanged. The `[2026-08-06]` block is retired **in the same commit**.
 
 ### Decision 2 — **U-DEFER-4: Phase 0's one unmet exit criterion, and whether Phase 2 may open**
 
@@ -1537,13 +1587,18 @@ here rather than discovered later.
 - [ ] **A user can export their data and delete all of it across the 12 tables**, with the surviving auth
       identity stated in the response. Check: both route tests green; a test asserts the export payload
       passes through no logging path.
-- [ ] **The navigation pillar group renders exactly the three pillars, signed in and signed out**, and
+- [x] **The navigation pillar group renders exactly the three pillars, signed in and signed out**, and
       `CLAUDE.md` §1's `[2026-08-06]` divergence block is retired in the same commit that changes the code.
       *(Added on approval, 2026-08-08 — decision 1, ruling A.)* Check: the source-level assertion in
       `src/architecture/` is green **and** was shown red against a fourth appended entry; **and**
       `grep -c 'FU-27' CLAUDE.md` = 0 while `git log -1 --name-only` for that commit lists both
       `src/components/layout/TopNav.tsx` and `CLAUDE.md`. *(The second clause is what stops the code and
-      the rule drifting apart again — which is the whole of FU-27.)*
+      the rule drifting apart again — which is the whole of FU-27.)* ✅ **MET 2026-08-10 by U24.** Both
+      clauses checked as written: the source-level assertion is green (10 tests) **and** was shown red
+      against an appended fourth entry (M1, red ×4); `grep -c 'FU-27' CLAUDE.md` = **0**; and the commit
+      lists `src/components/layout/TopNav.tsx` and `CLAUDE.md` together. *(The `grep` clause and §7's
+      "struck, not deleted" clause are jointly satisfiable only by relocating the rationale — see **N-31**
+      and `docs/archive/retired-nav-divergence-note.md`.)*
 - [ ] **`db:migrate` exists, and CI proves the migration set is coherent** by applying every file in
       `supabase/migrations/` in order to a throwaway Postgres and failing on the first error. *(Reworded on
       approval — decision 5. The original said "deployed schema matches migrations, verified in CI", which
