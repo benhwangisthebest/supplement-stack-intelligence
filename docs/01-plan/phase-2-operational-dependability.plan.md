@@ -470,13 +470,101 @@ measured at **3** (`stack_items`, `evaluation_flags`, `advisor_messages` — tra
 **U11 · FU-20 row-type placement.** **S**, deps U5, U9. **Its red proof is genuinely weak** — it is a move,
 and `SCHEMA_DRIFT`'s shape discovery (§6.0.1) is correct either way. Its only proof is the totality
 assertions re-running unedited. Cut candidate; said plainly rather than dressed in a manufactured mutation.
+**— [2026-08-10] CUT, per cut order #3, on the cut list's own stated ground and no other.** The ground is
+quoted rather than paraphrased: *"weak red proof by nature; FU-20 survives as a register row at no cost."*
+Nothing measured since the list was written has changed that: U11 moves a row type between modules, and
+`SCHEMA_DRIFT` discovers the shape from the schema either way, so the move is invisible to every standing
+assertion. **FU-20 is not closed** — it stays a register row, which is exactly the disposition the cut
+list priced. This is a cut, not a deferral: no later unit inherits it.
 
 **U12 · FU-28: one message for both 404s.** **S**, deps none. **Behaviour change #3** (declared): a
 response-body byte change.
+**— [2026-08-10] DEFERRED into the Group D window. Not dropped, and not cut.** It is unstarted at Group C's
+close, and the reason it is deferred rather than done is sequencing, not value: it is a **declared
+behaviour change** (#3, a response-body byte change), and shipping a body-byte change inside the commit
+that closes a *persistence* group would put an unrelated observable change under a gate that says nothing
+about it. Its dependency set is empty, so it carries into Group D at unchanged cost. **The obligation
+survives here in writing**: FU-28 is open, U12 owns it, and Group D's close must either land it or record
+a further dated disposition. It may not evaporate by silence.
 
 > **GATE C1** — every `src/lib/db` module taking a `userId` has a test asserting `.eq("user_id", …)`, or is
 > in `REPO_SCOPING`'s exemption list. **Check:** exemption list length == 3 **and** each entry names a
 > table with no `user_id` column in the migrations.
+>
+> ### **[2026-08-10] GATE C1 — DISCHARGED, with a named remainder.** Clause by clause, re-measured at `9f8f1e6`:
+>
+> **Check (a) — exemption list length == 3. PASS.**
+> ```
+> npx vitest run src/architecture/repo-scoping.test.ts   →  17 passed (17)
+>
+>   "names exactly three tables"  →  stack_items · evaluation_flags · advisor_messages
+> ```
+> Asserted as a sorted **equality** inside the guard, not as a `length` check, so a fourth entry and a
+> swapped entry are both red. Standing, not one-time — which is the property GATE B1 clause (i) turned out
+> to lack, and is registered there as N-16.
+>
+> **Check (b) — each entry names a table with no `user_id` column in the migrations. PASS.** Measured
+> against the migrations, not against the comment beside each entry:
+> ```
+> stack_items:       create-table-stmts=1   with_user_id_column=0
+> evaluation_flags:  create-table-stmts=1   with_user_id_column=0
+> advisor_messages:  create-table-stmts=1   with_user_id_column=0
+> ```
+> The guard asserts both halves — that the table **exists** and that it has **no** `user_id` column — so an
+> exemption for a table that was renamed away, and an exemption for a table that later *gained* an owner
+> column, both go red. N-14's class is the reason the existence half is there.
+>
+> **The property clause — PASS under the shipped quantifier, and the clause's own text is defective in two
+> ways, both found by the units it governs.** Recorded beside it rather than replacing it, per §7.
+>
+> Measured, every `src/lib/db` module that touches the database and takes a `userId` carries owner pins:
+> ```
+> advisor-action-repo 2 · checkin-repo 2 · lab-marker-repo 3 · lab-panel-repo 2
+> profile-repo 2 · side-effect-repo 2 · stack-repo 5
+> mappers.ts   — 0 `.from(` calls; a mapper, outside the persistence set by the guard's own filter
+> seed.ts      — module-exempt, written reason, §2.3 rule 14
+> ```
+> **(1) `.eq("user_id", …)` is not the only way to bind an owner — U9's finding.** Five functions bind it
+> in the **written payload** on an insert/upsert, where there is no filter to assert. Taken literally the
+> clause calls all five defects. The shipped guard counts both forms, and a self-test pins that it does
+> (*"counts a written user_id payload as binding the owner"*).
+>
+> **(2) Quantifying over functions that *take* a `userId` makes the cheapest way to pass the gate the
+> deletion of the parameter it protects — U10's finding.** So quantified, the clause cannot see
+> `getAction` / `markUndone` / `getActionsByBatch`, which touch the user-owned `advisor_actions` and accept
+> no owner **at all**. The shipped guard quantifies over **tables carrying a `user_id` column**, derived
+> from the migrations, which sees them; mutation M46 proves the parameter-deletion cheat goes red.
+>
+> **THE REMAINDER, stated rather than absorbed.** Under the corrected quantifier **four** functions touch a
+> user-owned table without binding the owner. They are not in the exemption list and must not drift into
+> it — a ratchet is not an exemption. They are held in `UNSCOPED_FUNCTIONS`, asserted as an **equality** so
+> the register can only shrink, with a fourth violation and a silently-fixed entry both red:
+> ```
+> src/lib/db/advisor-action-repo.ts::getAction           (read,  by primary key)
+> src/lib/db/advisor-action-repo.ts::markUndone          (WRITE, by primary key)
+> src/lib/db/advisor-action-repo.ts::getActionsByBatch   (read,  by batch id — obscurity, not scoping)
+> src/lib/advisor/repo.ts::appendMessages                (check-then-act; only RLS closes the gap)
+> ```
+> **None is a live defect** — each is reached from a route that has already authenticated, and RLS refuses
+> the row regardless. They are owed because "protected by one mechanism" and "protected by the mechanism
+> this codebase claims to apply" are different statements.
+>
+> **Owed by which unit: `U26`** (appended below; numbering is append-only). Not by U11, which is cut, and
+> not by U12, which is a 404 message. Naming an existing unit would have been the silent narrowing this
+> gate is being read clause by clause to avoid.
+
+**U26 · Bind the owner in the four ratchet functions.** **S/M**, deps U10. Created 2026-08-10 by GATE C1's
+discharge, which is the first document to state what the ratchet actually owes. Add a `userId` parameter to
+`getAction`, `markUndone` and `getActionsByBatch` and apply `.eq("user_id", userId)`; give `appendMessages`
+the owner clause that turns the route's check-then-act pair into a single scoped write. M
+`src/lib/db/advisor-action-repo.ts` · M `src/lib/advisor/repo.ts` · M both test files · **M every caller** —
+the signature change is the work, and §9.4 applies: enumerate them, do not let `tsc` be the enumeration for
+a Supabase call it cannot type-check. M `repo-scoping.test.ts` to **empty** `UNSCOPED_FUNCTIONS`.
+**Red:** the ratchet's own equality is the proof and needs no manufacturing — fix one function without
+removing its row and `every registered function STILL violates` goes red; empty the register while one
+function is unfixed and `reports no unscoped access …` goes red. Both directions already exist.
+**Not cuttable into invisibility:** if it is cut, the register stays and stays asserted, so the debt keeps
+announcing itself on every `npm test`. That is the intended failure mode.
 
 ### Group D — platform and operations
 
@@ -586,7 +674,8 @@ credential-free specs. Live-in-CI is **decision 3**, not an engineering unit.
 ```
 Group A   U1 → U2                                   [error contract]      GATE A1
 Group B   U3 → U4 → U5 → U6 → U7                    [paid-API control]    GATE B1
-Group C   U8 → U9 → U10 → U11 · U12                 [persistence]         GATE C1
+Group C   U8 → U9 → U10 → ~~U11~~ · U12→D            [persistence]         GATE C1 discharged 2026-08-10
+                                                                          remainder → U26
 Group D   U13 → U14 · U15 · U16 → U17 · U18 · U19 · U20 · U24              GATE D1, D2
 Group E   U21 · U22 · U23                           [cuttable]
 ```
@@ -604,7 +693,8 @@ Group E is the cuttable group and U24 is not cuttable (above).
 ### Cut order (first cut at the top)
 1. **U22** — L, headline deliverable blocked on decision 3. Keep the ~S fresh-clone half.
 2. **U23** — residue; the sink is an operational decision.
-3. **U11** — weak red proof by nature; FU-20 survives as a register row at no cost.
+3. **U11** — weak red proof by nature; FU-20 survives as a register row at no cost. **— TAKEN 2026-08-10.
+   Cut on this ground, unmodified. FU-20 remains open as a register row.**
 4. **U21** — real but process-shaped.
 5. **U19** down to formatter + `AdvisorPanel` only.
 6. **U10** — U9's pins cover today's files; the guard's value is over *future* modules.
@@ -892,7 +982,10 @@ here rather than discovered later.
 
 ## 9. Sizing
 
-**23 proposed units** (U1–U22 and **U24**, plus U23 deferred). Rough shape: **7 S/S-M · 12 M · 3 L · 1 M/L**.
+**~~23~~ 24 proposed units** (U1–U22, **U24** and **U26**, plus U23 deferred). Rough shape:
+**~~7~~ 8 S/S-M · 12 M · 3 L · 1 M/L**. *(U26 — added 2026-08-10 by GATE C1's discharge — is **S/M**: it
+does not invent an obligation, it names one the ratchet was already asserting. **U11 is cut** as of the same
+date, per cut order #3, so the unit count rises by one while the work in flight does not.)*
 *(22 and 6 S/S-M before approval; U24 — the S-sized unit ruling 1 created — is the difference. Numbering is
 **append-only**: U24 follows U23 rather than being inserted, so that every U-number already cited elsewhere
 in this document keeps pointing at the same unit. The same reason reference-data IDs are append-only.)*
