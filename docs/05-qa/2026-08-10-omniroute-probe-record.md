@@ -2,6 +2,16 @@
 
 **Status: COMPLETE. Decision 7B is ruled from this record — option (a).**
 
+> ### ⚠️ **[2026-08-10] CORRECTION — §2 and §3's `auto/*` verdicts are WITHDRAWN.**
+> The owner ran `auto/best-free` **end to end in the deployed UI** and it answered. The fault is in this
+> record's own instrument, not in the gateway: step 3's fabricated tool result carries no answerable
+> content while the prompt forbids guessing, so an empty second step is a plausible **correct** response
+> and cannot be read as a failed round trip. **`auto/best-free` is NOT "not viable" — it is unassessed.**
+> It remains **not adopted** (the pinned default is unchanged) for want of evidence, not against it.
+> **OP-4(c)'s protocol clause is unaffected and still passes** — the second request was accepted with
+> usage reported, which is what it actually tested. Details and consequences:
+> `docs/05-qa/2026-08-10-deployed-migration-record.md` §4. Probe defect registered as **N-26**.
+
 This is the dated artifact OP-4 owes. Ruling 3 (2026-08-08) refuses live credentials in a public
 repository, so every claim about the live gateway has to come from a record a person produced against a
 real key. This is that record. Nothing here was inferred from documentation.
@@ -33,7 +43,7 @@ process (verified separately: `SUPABASE_SERVICE_ROLE_KEY` unset after load).
 | 1 | `cc/claude-haiku-4-5-20251001` | probe default | `claude-haiku-4-5-20251001` | **PASS — all clauses** (owner) |
 | 2 | `auto/best-chat` | `OMNIROUTE_MODEL` | `claude-opus-4-6-thinking` | **NOT ADOPTED** — empty second-step text (owner) |
 | 3 | `cc/claude-haiku-4-5-20251001` | probe default | `claude-haiku-4-5-20251001` | **PASS — all clauses** (agent, reproduces run 1) |
-| 4 | `auto/best-free` | `OMNIROUTE_MODEL` | `gemini-3.6-flash-high` | **NOT VIABLE** — empty second-step text |
+| 4 | `auto/best-free` | `OMNIROUTE_MODEL` | `gemini-3.6-flash-high` | ~~**NOT VIABLE**~~ → **UNASSESSED** (see the correction above; works in the deployed UI) |
 | 5 | `cc/claude-haiku-4-5-20251001` | probe default | *(lab-import; not echoed by this probe)* | **Option (a) PASS on both PDFs** |
 
 **The requested id and the echoed id differ in every single run.** `cc/…` echoes back unprefixed;
@@ -121,8 +131,8 @@ default; that property is guarded by `NO_PINNED_MODEL_ID` and is not relaxed by 
 | Id | Verdict |
 |---|---|
 | **`cc/claude-haiku-4-5-20251001`** | **The pinned production/env default.** Passes every clause: usage on both steps, tool round trip with non-empty second-step text, tool-capable echoed model |
-| `auto/best-free` | **NOT viable, not even for dev.** Fails the second-step-text clause of the item-3 test. Recorded here so the question is not re-asked from documentation |
-| `auto/best-chat` | **NOT adopted** (owner, run 2). Same failure |
+| `auto/best-free` | ~~**NOT viable, not even for dev.**~~ **UNASSESSED — verdict withdrawn 2026-08-10.** The second-step-text clause it failed cannot discriminate correct refusal from a broken round trip (N-26), and the owner has since run it end to end in the deployed UI. **Still not adopted**, for want of evidence rather than against it |
+| `auto/best-chat` | **NOT adopted** (owner, run 2). Same clause, so the same withdrawal applies: **unassessed**, not disqualified |
 
 ---
 
