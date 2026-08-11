@@ -255,6 +255,7 @@ a commit message keeps pointing at the same finding.
 | **N-33** | **U14 design, 2026-08-11 (ruled at approval)** | **The Report-Only CSP has no report sink.** There is no `report-uri`/`report-to` directive, so violations go to the browser console and nowhere else. A collector route would live under `src/app/api/**`, where **§2.3 rule 11** requires authentication and a 401 on failure — and a browser-generated CSP report carries no credentials. The route could only exist as a rank-1 exception | `src/lib/security/csp.ts`'s `CSP_DIRECTIVES` contains no reporting directive, and its header comment states the reason | **CLOSED AS A DECISION, OPEN AS A CONDITION ON A FUTURE UNIT. [2026-08-11] RULED BY THE OWNER: no `/api/csp-report` route; the rank-1 exception was asked for and REFUSED.** Under Report-Only the E2E collector is the collector, which is sufficient because the policy blocks nothing and the only question is whether it *would*. **The condition: an eventual ENFORCING flip MUST re-raise this.** An enforced CSP with no sink is blind in production — it breaks things for real users and reports to nobody, which is strictly worse than the present position. Registered so the flip cannot happen without meeting it |
 | **N-34** | **U14 orientation, 2026-08-11** | **`middleware.ts` sat at the repository root and was never compiled, so `updateSession` — the Supabase session refresh of Design §7 — never ran, from `910d773` (2026-06-12) until U27.** Next 15 resolves middleware at `src/middleware.ts` in a project with a `src/` directory. Measured by A/B in a clean clone: at the root the build emits `{"middleware": {}}` and no `ƒ Middleware` line; at `src/` it emits a registered matcher and `ƒ Middleware  87.4 kB`. Confirmed against untouched `main` @ `7cbc5f0`, so it predates U14 | `.next/server/middleware-manifest.json` after a build; `git log --follow` puts the file at the root since the first commit | **CLOSED BY U27, 2026-08-11** — the unit this finding created. Fixed by the move, guarded source-level by `MIDDLEWARE_SCOPE`, and checked for compilation by `npm run verify:middleware`. **The liveness half is developer-run until U14's E2E stage lands** — N-29's shape at a second site, stated in U27's entry rather than glossed. **The class insight, which is the part worth keeping: a guard that names a path asserts nothing about the path the code is actually at.** `TREE_PARTITION`'s comment named `src/middleware.ts` and its exemption list was empty and green, *because the file was somewhere else*. Two more green things missed it: `next build` succeeds when middleware is absent (an absence is not an error), and the E2E's anonymous-redirect assertions are satisfied by page-level `requireUser()`, so they never depended on middleware at all |
 | **N-35** | **U27, 2026-08-11** | **`src/lib/supabase/client.ts` — the browser Supabase client — is imported by no non-test module.** Found while establishing that `connect-src 'self'` is safe for U14's CSP: if nothing in the browser talks to Supabase directly, no external origin needs allowing. `grep` over `src/**` excluding tests returns no importer | `src/lib/supabase/client.ts`; authentication runs server-side through `src/lib/auth/actions.ts` (`"use server"`) and `src/app/auth/callback/route.ts` | **OPEN, CLASSIFIED, NOT ACTED ON. Classification per §8.5: `production-suitable` code that is currently `prototype-only` in status — it is correct, small, and unreferenced.** It is **not** obviously deletable: `createBrowserClient` is the documented other half of the `@supabase/ssr` pairing, and any future client-side realtime, storage upload, or optimistic auth UI would import exactly this file. **Deleting it and re-adding it later are both cheap; guessing wrong about which is not**, so this is registered rather than resolved. **It is load-bearing for one thing today — an argument.** U14's `connect-src 'self'` rests on the claim that the browser never calls Supabase directly, and this file is the thing that would falsify that claim the moment something imports it. **Whoever imports it must revisit U14's `connect-src`.** That coupling is the reason this row exists at all |
+| **N-36** | **U27 smoke run 2, 2026-08-11** | **The middleware matcher is broad enough that non-application requests do Supabase work — and one of them consumed the very refreshes the first smoke was trying to observe.** The matcher excludes only `_next/static`, `_next/image`, `favicon.ico` and a list of image extensions, so **everything else** reaches `updateSession`, which constructs a Supabase client and calls `auth.getUser()`. Measured in the run-2 trace: `/.well-known/appspecific/com.chrome.devtools.json` — a background request DevTools itself issues — went through the middleware and logged `refreshOccurred:true`. **The act of observing consumed the thing being observed**, and the Network tab's Doc filter could not show it | The run-2 trace, recorded in `docs/05-qa/2026-08-11-middleware-activation-smoke.md` §3.2; the matcher in `src/middleware.ts` | **OPEN, NOT FIXED IN U27 — it is a scope question, not a defect in the move.** Two consequences, one measured and one reasoned, kept apart on purpose. **Measured:** a refresh spent on a `.well-known` probe is a refresh the next document load correctly does not perform, so any observer counting `Set-Cookie` on document responses will undercount — which is exactly how run 1 went wrong, and the reason a server-side trace was the only instrument that could settle it. **Reasoned, and therefore not asserted as a cost figure:** every matched non-asset request performs a `getUser()`, and `getUser()` is a network call to the Supabase auth endpoint. Whether that is material depends on real traffic mix, which nothing in this repository measures. **Proposed fix shape:** tighten the matcher to exclude `/.well-known/*` and any other non-application prefix, or invert it to an allow-list of app routes. **Proposed owner: whoever next edits the matcher**; a natural companion to U14, which touches `src/middleware.ts` and would otherwise inherit the same breadth for its CSP header — a Report-Only policy emitted on `.well-known` probes is noise for the same reason. **Deliberately not absorbed here:** narrowing the matcher changes which requests get a session refresh, which is a behaviour change of the same class U27 just spent an owner-run smoke verifying, and it would ride in on the back of that verification without being covered by it |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -661,6 +662,13 @@ promoted to its own unit and sequenced ahead of it.)* M `middleware.ts` → `src
 N `docs/05-qa/2026-08-11-middleware-activation-smoke.md`. **S/M**, deps none.
 **N-29 DOES NOT MOVE — it discharges in U14, not here.**
 
+**DONE 2026-08-11, `c514f50`** — code, guard and procedure; CI green on the branch SHA
+(run `31454137741`, **93 test files**, with `✓ middleware-scope.test.ts (5 tests)` in the log and
+`ƒ Middleware  87.2 kB` in CI's build — the first time either has existed anywhere but one laptop).
+**Activation verified by owner-run smoke, 2026-08-11: `docs/05-qa/2026-08-11-middleware-activation-smoke.md`
+— ACTIVATION CONFIRMED, no redline.** Suite **1141/92 → 1146/93**; non-live E2E 64 passed / 30 skipped,
+unchanged, no spec edited.
+
 **THE DEFECT.** `middleware.ts` sat at the repository root from `910d773` (2026-06-12, MVP v1) and was
 never at `src/middleware.ts`. This project has a `src/` directory, so Next 15 resolves middleware at
 `src/middleware.ts` **only**. The root file was never compiled. **Measured, not inferred** — A/B in an
@@ -746,6 +754,46 @@ repository keeps rediscovering, and it would have shipped had the mutation been 
 run. The read is now lazy and per-assertion; M1 was re-executed against the corrected guard and the numbers
 above are from that run. **This is the strongest argument in the unit for §5.2: a mutation you did not
 execute is not evidence.**
+
+**THE SMOKE TOOK TWO RUNS, AND THE FIRST ONE'S FAILURE IS THE MORE USEFUL RECORD.** Run 1 aborted on what
+looked like path-dependent cookie persistence — `Set-Cookie` on `/library` and `/profile`, none on
+`/stack-lab` and `/advisor`. **Every observation in it was accurate; the inference was not, and neither was
+the first diagnosis offered in response.** Three defects, all recorded in the smoke document:
+
+* **The first procedure had no CONTROL step.** It asked *"did a cookie appear?"* without ever establishing
+  what its absence means — and absence is the **correct** result whenever no refresh is due. So the
+  procedure could not distinguish success from failure on its own central question. Run 2's R3 is the fix
+  and it cost one step: `/stack-lab` with a fresh token (`refreshOccurred:false`, no `Set-Cookie`) beside
+  R5, `/stack-lab` with an expired one (`expiresInSeconds:−37` → refresh, cookie written). Same route,
+  opposite results, ambiguity gone.
+* **The diagnosis wrongly called the instrument miscalibrated.** Run 1's step 3 read `exp − now ≈ −34` and
+  the diagnosis treated a negative value as impossible for a freshly minted token. It is not: the owner
+  supplied the missing timing context — ~2–3 minutes elapsed while learning the devtools workflow — and
+  against a 120s expiry `120 − 154 ≈ −34` is what a **correct** decode reports. **Both run-1 decodes were
+  right.** Elapsed time was read as measurement error. Recorded because a wrong diagnosis that sounds
+  rigorous is more dangerous than an obviously wrong one, and because it was caught only by testimony the
+  trace could not contain.
+* **Step 3's stop condition covered only the `~1 hour` case**, so a negative reading had no stated meaning
+  and the run continued past a step nobody could interpret.
+
+**What the second run changed methodologically:** the owner decodes nothing. A temporary uncommitted probe
+in `updateSession` logged `{path, method, kind, hadSession, expiresInSeconds, refreshOccurred, setAllFired,
+cookiesWritten}` per request — deliberately logging no token, cookie value, user id or email (§2.3 rule 15)
+— and every step carries a stop condition for negative, near-expiry and ~1h readings. **The class of error
+that produced run 1's ambiguity is designed out rather than warned about.** The probe was removed before
+this commit; `git diff --quiet HEAD` verified.
+
+**Two findings the trace produced, beyond the pass.** (1) Supabase refreshes within a **~90-second margin**
+of expiry — visible as refreshes firing at `expiresInSeconds ≈ 88` — so a 120s token leaves only a ~30s
+window in which a load does *not* refresh, which is the whole of run 1's "path-dependence": **visit order,
+not route identity**, exactly as the three eliminated hypotheses implied. (2) The invisible-consumer theory
+was **correct and has a named culprit** — `/.well-known/appspecific/com.chrome.devtools.json`, DevTools'
+own background requests, passed through the middleware and consumed refreshes the Doc filter never showed.
+**The act of observing consumed the thing being observed.** Registered as **N-36**.
+
+**Unscripted confirmation, recorded because it owes nothing to the procedure:** the first trace line of the
+sitting showed run 1's leftover session at `expiresInSeconds:−946` refreshed and persisted on `/`, before
+any scripted step ran.
 
 **U14 · CSP.** **M**, deps U13 (**MET — U13 closed 2026-08-10, `a7f36fd`**) **and U27** (created 2026-08-11
 — U14's middleware design is inert without it; see that entry). **Report-Only first.**
@@ -1322,6 +1370,13 @@ ruling, and cutting a ruling is not a sizing decision — 2026-08-08).
    in the diff, it is in fourteen months of behaviour that was never exercised. No automated check in this
    repository can see it (the 64 non-live specs touch none of these paths; the live half is
    `BLOCKED(env)`), which is why U27 is gated on an owner-run smoke rather than a test.
+   ✅ **SHIPPED 2026-08-11 EXACTLY AS DECLARED (`c514f50`), and verified by the thing that had to verify
+   it.** The owner-run smoke observed an expired token (`expiresInSeconds:−37`) refreshed and persisted on
+   a plain navigation, with `Set-Cookie` on the document response — beside a control on the **same route**
+   with a fresh token showing no refresh and no cookie. Sign-out, the anonymous redirect and every page
+   load were unchanged. **The extra round-trip per matched navigation is real and is not measured**: it is
+   one `auth.getUser()` per matched request, and **N-36** records that the matcher is broad enough for that
+   to include non-application requests.
 8. **U14** *(renumbered from #7 when U27 was created)* — a `Content-Security-Policy-Report-Only` header
    appears on every matched response. Report-Only enforces nothing in a browser, but it is a response-byte
    change and is declared as one.
