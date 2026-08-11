@@ -14,6 +14,7 @@
     "test:boundaries": "vitest run src/architecture/boundaries.test.ts",
     "test:e2e": "playwright test",
     "verify:middleware": "node scripts/verify-middleware-live.mjs",
+    "verify:rendering": "node scripts/verify-rendering.mjs",
     "db:seed": "tsx src/lib/db/seed.ts",
     "probe:advisor": "tsx scripts/probes/omniroute-advisor-probe.ts",
     "probe:labimport": "tsx scripts/probes/omniroute-labimport-probe.ts"

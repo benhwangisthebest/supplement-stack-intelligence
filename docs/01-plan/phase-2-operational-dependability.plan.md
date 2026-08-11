@@ -256,6 +256,8 @@ a commit message keeps pointing at the same finding.
 | **N-34** | **U14 orientation, 2026-08-11** | **`middleware.ts` sat at the repository root and was never compiled, so `updateSession` — the Supabase session refresh of Design §7 — never ran, from `910d773` (2026-06-12) until U27.** Next 15 resolves middleware at `src/middleware.ts` in a project with a `src/` directory. Measured by A/B in a clean clone: at the root the build emits `{"middleware": {}}` and no `ƒ Middleware` line; at `src/` it emits a registered matcher and `ƒ Middleware  87.4 kB`. Confirmed against untouched `main` @ `7cbc5f0`, so it predates U14 | `.next/server/middleware-manifest.json` after a build; `git log --follow` puts the file at the root since the first commit | **CLOSED BY U27, 2026-08-11** — the unit this finding created. Fixed by the move, guarded source-level by `MIDDLEWARE_SCOPE`, and checked for compilation by `npm run verify:middleware`. **The liveness half is developer-run until U14's E2E stage lands** — N-29's shape at a second site, stated in U27's entry rather than glossed. **The class insight, which is the part worth keeping: a guard that names a path asserts nothing about the path the code is actually at.** `TREE_PARTITION`'s comment named `src/middleware.ts` and its exemption list was empty and green, *because the file was somewhere else*. Two more green things missed it: `next build` succeeds when middleware is absent (an absence is not an error), and the E2E's anonymous-redirect assertions are satisfied by page-level `requireUser()`, so they never depended on middleware at all |
 | **N-35** | **U27, 2026-08-11** | **`src/lib/supabase/client.ts` — the browser Supabase client — is imported by no non-test module.** Found while establishing that `connect-src 'self'` is safe for U14's CSP: if nothing in the browser talks to Supabase directly, no external origin needs allowing. `grep` over `src/**` excluding tests returns no importer | `src/lib/supabase/client.ts`; authentication runs server-side through `src/lib/auth/actions.ts` (`"use server"`) and `src/app/auth/callback/route.ts` | **OPEN, CLASSIFIED, NOT ACTED ON. Classification per §8.5: `production-suitable` code that is currently `prototype-only` in status — it is correct, small, and unreferenced.** It is **not** obviously deletable: `createBrowserClient` is the documented other half of the `@supabase/ssr` pairing, and any future client-side realtime, storage upload, or optimistic auth UI would import exactly this file. **Deleting it and re-adding it later are both cheap; guessing wrong about which is not**, so this is registered rather than resolved. **It is load-bearing for one thing today — an argument.** U14's `connect-src 'self'` rests on the claim that the browser never calls Supabase directly, and this file is the thing that would falsify that claim the moment something imports it. **Whoever imports it must revisit U14's `connect-src`.** That coupling is the reason this row exists at all |
 | **N-36** | **U27 smoke run 2, 2026-08-11** | **The middleware matcher is broad enough that non-application requests do Supabase work — and one of them consumed the very refreshes the first smoke was trying to observe.** The matcher excludes only `_next/static`, `_next/image`, `favicon.ico` and a list of image extensions, so **everything else** reaches `updateSession`, which constructs a Supabase client and calls `auth.getUser()`. Measured in the run-2 trace: `/.well-known/appspecific/com.chrome.devtools.json` — a background request DevTools itself issues — went through the middleware and logged `refreshOccurred:true`. **The act of observing consumed the thing being observed**, and the Network tab's Doc filter could not show it | The run-2 trace, recorded in `docs/05-qa/2026-08-11-middleware-activation-smoke.md` §3.2; the matcher in `src/middleware.ts` | **OPEN, NOT FIXED IN U27 — it is a scope question, not a defect in the move.** Two consequences, one measured and one reasoned, kept apart on purpose. **Measured:** a refresh spent on a `.well-known` probe is a refresh the next document load correctly does not perform, so any observer counting `Set-Cookie` on document responses will undercount — which is exactly how run 1 went wrong, and the reason a server-side trace was the only instrument that could settle it. **Reasoned, and therefore not asserted as a cost figure:** every matched non-asset request performs a `getUser()`, and `getUser()` is a network call to the Supabase auth endpoint. Whether that is material depends on real traffic mix, which nothing in this repository measures. **Proposed fix shape:** tighten the matcher to exclude `/.well-known/*` and any other non-application prefix, or invert it to an allow-list of app routes. **Proposed owner: whoever next edits the matcher**; a natural companion to U14, which touches `src/middleware.ts` and would otherwise inherit the same breadth for its CSP header — a Report-Only policy emitted on `.well-known` probes is noise for the same reason. **Deliberately not absorbed here:** narrowing the matcher changes which requests get a session refresh, which is a behaviour change of the same class U27 just spent an owner-run smoke verifying, and it would ride in on the back of that verification without being covered by it |
+| **N-37** | **U14, 2026-08-11 — authored in corrected form by U28** | **`next build` reports `/library/[slug]` as `● SSG` with 15 prerendered paths while emitting ZERO HTML for it.** The build summary — the artifact every reader consults to learn how a page is served — describes something the build did not do. Two runtime observations contradict the label: the served page carries a **per-request nonce** matching that response's CSP header, which a build-time artifact cannot contain, and every response carries `Cache-Control: private, no-cache, no-store` | Credentialed build route table (`● /library/[slug]`, 15 paths) vs `find .next/server/app -name '*.html'` = **0**, and `curl -I` against a production `next start`. **PROVENANCE NOTE, because the first version of this row got it wrong:** it originally cited a three-build A/B across middleware states as proof the behaviour predates U27 and U14. That A/B was **credentialed throughout** — it varied the middleware and held the environment fixed, when the environment was the variable that mattered (**N-38**). The conclusion happens to survive, but it was not established by the evidence cited. The corrected evidence is the both-envs table in U28's entry | **OPEN, NARROWED BY U28.** **U28 answers half of it:** the reason no prerender is served is now known and deliberate — `getUser()` calls `cookies()` from the root layout, so every page is request-dependent, and after U28 that holds in **both** environments by construction rather than by accident. **What remains open is the label itself.** `generateStaticParams` still enumerates 15 slugs that are never prerendered, so the build spends time producing a plan it then discards, and the summary reports a mode the server does not use. **Why it is registered rather than chased:** it breaks nothing, and diagnosing it means understanding Next's static-optimisation bail-out reporting — work with no bearing on whether U14's policy is correct. **Why it must not vanish:** believing a page is static when it is dynamic wastes build time and states a false performance claim; believing it is dynamic when it is cached is a correctness risk for anything user-specific. **Do NOT "fix" it by deleting `generateStaticParams`** without first establishing whether the Library should be static — that would resolve a label mismatch by discarding a capability, which is not an answer. **Proposed owner: a future unit or standalone investigation** |
+| **N-38** | **U14 CI failure, 2026-08-11** | **The app's rendering mode depended on whether Supabase env vars were present at BUILD time, so CI had been building a materially different app from production for as long as CI has existed.** `getUser()` returned `null` on `!isSupabaseConfigured()` **before** reaching `createClient()`, and `createClient()` was the only caller of `cookies()` — the API that opts a route out of static generation. `TopNav` calls `getUser()` from the root layout on every page. Measured on one commit, both ways: credentialed emits **0** prerendered page `.html`; clean-env emits **20** | CI run `31465731188` — U14's E2E reported **72 `script-src-elem` violations** and `no nonce in the rendered HTML`; reproduced locally in a clean clone (header nonce present, **0** nonces in the HTML), against **15** in the credentialed build of the same commit | **CLOSED BY U28, 2026-08-11** — the unit this finding created. Fixed by making the `cookies()` marker unconditional; guarded source-level by `RENDERING_DETERMINISM` and at build level by `npm run verify:rendering`, **which runs in CI — so the fix is verified in exactly the environment that exposed the defect.** **The class insight, and the reason this row outlives its fix: a green CI run is a claim about the app CI BUILT, and nothing was checking that this was the app production runs.** Every CI result before U28 carried that unstated caveat. It surfaced only because U14 shipped the first artifact — a per-request nonce — that a build-time prerender physically cannot contain; **a defect that needs an unrelated unit's accident to become visible is one the guards were never going to find.** **A second lesson, paid for twice:** U14's first measurement reported "zero violations" because it ran with `.env.local` present, which forced dynamic rendering and hid the defect; the clean-env simulation that would have caught it had been run against U27's code *before* CSP existed and was never re-run after. **Hence the both-envs discipline U28 institutes: any measurement whose result could depend on build-time configuration must be taken in BOTH environments, and the two must agree** |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -795,6 +797,111 @@ own background requests, passed through the middleware and consumed refreshes th
 sitting showed run 1's leftover session at `expiresInSeconds:−946` refreshed and persisted on `/`, before
 any scripted step ran.
 
+**U28 · Deterministic rendering.** *(created 2026-08-11 by owner ruling — U14's blocker, split out on
+U27's precedent.)* M `src/lib/auth/session.ts` · N `scripts/verify-rendering.mjs` + `package.json` · N
+`src/architecture/rendering-determinism.test.ts` · M `.github/workflows/ci.yml` · M `CLAUDE.md` §5 · M
+`src/architecture/doc-truth.test.ts`. **S/M**, deps none. **U14 rebases on it.**
+
+**THE DEFECT (N-38).** The app's rendering mode depended on whether Supabase env vars were present **at
+build time**. `getUser()` returned `null` on `!isSupabaseConfigured()` **before** calling `createClient()`,
+and `createClient()` was the only thing that called `cookies()` — the API that opts a route out of static
+generation. `TopNav` calls `getUser()` from the root layout on **every** page. So an unconfigured build
+prerendered pages that a configured build renders per request. **CI has no credentials by design (P-03 —
+this repository is public), so CI had been building a materially different app from production for as long
+as CI has existed.** U14 was simply the first unit whose evidence depended on the difference.
+
+**MEASURED, both ways, same commit — the state before this unit:**
+
+| | credentialed | clean-env (CI) |
+|---|---|---|
+| `/`, `/_not-found`, `/auth/login`, `/auth/signup`, `/library` | `ƒ` Dynamic | **`○` Static** |
+| `/library/[slug]` | `●` SSG, **0 HTML emitted** | `●` SSG, **15 HTML emitted** |
+| prerendered page `.html` under `.next/server/app` | **0** | **20** |
+| `Cache-Control` on `/library/creatine` | `private, no-cache, no-store` | `s-maxage=31536000` |
+
+**A ROUTE-TABLE DIFF ALONE IS NOT SUFFICIENT, and that is measured rather than argued.**
+`/library/[slug]` reports `● SSG` in **both** builds while emitting 15 HTML files in one and none in the
+other — same label, different artifact. So the evidence bar adds the **emitted-artifact set** to the
+route-table diff. Recorded because the weaker check would have passed while the defect survived, which is
+this phase's recurring shape.
+
+**DESIGN — the fix goes at the root cause, not the call sites.**
+* **REJECTED — per-route `export const dynamic = "force-dynamic"`.** Five page files to touch and a list to
+  keep correct forever; cannot cover `/_not-found`; and on `/library/[slug]` it directly contradicts
+  `generateStaticParams`. It treats the symptom, and the fix would itself be the thing that goes stale.
+* **CHOSEN — make the dynamic dependency unconditional in `getUser()`:** call `cookies()` *before* the
+  `isSupabaseConfigured()` short-circuit. The root cause is a *conditional* marker, so the fix is to remove
+  the condition. **It converges on credentialed behaviour by construction rather than by enumeration** — the
+  unconfigured path is made to do exactly what the configured path already did — and it governs every future
+  route automatically, because the marker lives in the layout's dependency rather than a per-page directive.
+  It is also honest: the root layout renders auth-dependent navigation, so every page *is* request-dependent.
+
+**THE GUARD — predicate settled, ordering problem addressed head-on (U27's lesson).** The credentialed build
+hands us an exact invariant, so the predicate is a zero rather than a route list — lists go stale the first
+time someone adds a route:
+
+> **`.next/server/app` must contain no prerendered page `.html`.**
+
+* **Build half — `npm run verify:rendering`, and it runs in CI.** It reads build output, so it cannot be a
+  plain vitest test: the declared chain runs `vitest run` **before** `next build`, and a guard whose easiest
+  green is *"no build present"* is not a guard. It is a CI step after `Production build`, tripping **GATE
+  D1** and carrying the `CLAUDE.md` §5 update in the same commit. **Deliberately NOT deferred to
+  developer-run** — three units in a row had shipped a developer-run half (N-29, then U27's liveness), and
+  this one costs a directory read with no rebuild, so deferring would have been habit rather than constraint.
+* **Source half — `RENDERING_DETERMINISM`, order-safe, runs in today's chain.** Asserts the marker exists,
+  is imported from `next/headers`, is `await`ed, and sits **before** the short-circuit.
+
+**RIDER 1 — the marker's mechanics, checked rather than assumed.** *(a)* No caller invokes `getUser()`
+outside a request scope: `generateStaticParams` in `src/app/library/[slug]/page.tsx` calls
+`getAllSupplements()` and never reaches it; every other call site is a route handler, server component, or
+`TopNav`. A future non-request caller will make `cookies()` **throw** rather than silently revert the app to
+environment-dependent rendering, which is the correct failure direction. *(b)* **Zero test wiring changes,
+and the reason is structural:** 23 test files `vi.mock("@/lib/auth/session")`, so the real `getUser()` never
+executes in the unit suite; the single unmocked reference (`auth-coverage.test.ts:277`) is a string literal
+inside a fixture. No assertion was touched or weakened.
+
+**RIDER 2 — credentialed behaviour is unchanged, asserted not assumed.** Same tree, marker reverted and
+restored, credentialed build both times: **route table UNCHANGED**, **response headers UNCHANGED** (all
+three sampled routes keep `private, no-cache, no-store, max-age=0, must-revalidate`), prerendered `.html`
+**0 → 0**. The working hypothesis from the A/B's cache-control evidence held: **this unit is a no-op where
+production lives.**
+
+**AFTER — the two builds converge:**
+
+| | credentialed | clean-env |
+|---|---|---|
+| route table | — | **IDENTICAL** ✓ |
+| prerendered page `.html` | **0** | **0** ✓ *(was 20)* |
+| `verify:rendering` | OK | OK |
+| non-live E2E | 64 passed / 30 skipped | **64 passed / 30 skipped** ✓ |
+
+**ALTERNATIVE CONSIDERED AND REJECTED, recorded per the ruling: a static-compatible CSP** — dropping the
+nonce for `'unsafe-inline'` or script hashes. It would weaken the policy to accommodate a rendering mode
+production does not use, and `'unsafe-inline'` on `script-src` forecloses the enforcing flip permanently.
+**Rejected as fixing the measurement instead of the app.**
+
+**RED EVIDENCE — six planned mutations plus one added at authoring time, all executed.** Baseline before the
+unit: typecheck clean, **1146/93**, non-live E2E 64/30. After: **1150/94** (+4).
+
+| # | Mutation | Result |
+|---|---|---|
+| **M1** ★ | Revert the `cookies()` marker — **run both ways**, per Rider 2 | **Credentialed: 0 `.html`, guard exit 0 — GREEN. Clean-env: 20 `.html`, `verify:rendering` exit 1 — RED** (`THIS BUILD PRERENDERED 20 PAGE(S) TO STATIC HTML.`). `next build` exit **0** in both: the build never notices. **The credentialed half is what makes the clean-env red meaningful** — it shows the mutation is invisible where production lives, which is exactly why the defect survived unnoticed |
+| **M2** | Delete the marker | **3 failed / 1 passed** — `RENDERING_DETERMINISM: src/lib/auth/session.ts no longer calls cookies().` |
+| **M2b** ★ | *(UNPLANNED — added while authoring.)* Marker present but **after** the short-circuit | **1 failed / 3 passed** — `cookies() is called AFTER the isSupabaseConfigured() short-circuit` |
+| **M3** | Delete the CI step only | **1 failed / 20 passed** — `DOC_TRUTH: §5's declared CI steps and ci.yml's run: steps have diverged.` |
+| **M4** | Change §5's chain only | **1 failed / 20 passed** — same assertion, opposite direction; GATE D1 binds both ways |
+| **M5** ★ | Run `verify:rendering` with no `.next` | **exit 1** — `.next/server/app not found. Run npm run build first.` |
+| **M6** ★ | Stray `.html` on an otherwise-good build | **exit 1**, naming `__mutation.html` — proves the scan looks rather than trusting the build |
+
+**WHY M2b EXISTS, recorded because it is N-14's lesson applied at authoring time rather than caught in
+review.** The first three assertions are file-level: *does the source call `cookies()`*, *is it imported
+from `next/headers`*, *is it awaited*. **All three stay GREEN against a `cookies()` call moved below the
+`isSupabaseConfigured()` short-circuit — which is the original defect, fully reintroduced, while the guard
+reports success.** The marker's *presence* was never the property worth asserting; its *reachability on the
+unconfigured path* is. N-14's audit asks of every guard "what would defeat this matching strategy", and
+here the answer was a two-line reordering. The ordering assertion was written before the mutation was run,
+and M2b then confirmed it reddens — which is the only reason the claim is worth anything.
+
 **U14 · CSP.** **M**, deps U13 (**MET — U13 closed 2026-08-10, `a7f36fd`**) **and U27** (created 2026-08-11
 — U14's middleware design is inert without it; see that entry). **Report-Only first.**
 **U14 additionally inherits U27's liveness obligation:** its E2E must state that the
@@ -1302,7 +1409,7 @@ Group A   U1 → U2                                   [error contract]      GATE
 Group B   U3 → U4 → U5 → U6 → U7                    [paid-API control]    GATE B1
 Group C   U8 → U9 → U10 → ~~U11~~ · U12→D            [persistence]         GATE C1 discharged 2026-08-10
                                                                           remainder → U26
-Group D   U13 → U27 → U14 · U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25  GATE D1, D2
+Group D   U13 → U27 → U28 → U14 · U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25   GATE D1, D2
 Group E   U21 · U22 · U23                           [cuttable]
 ```
 **A precedes B** because U4/U5/U6 all add `catch` blocks under `src/lib/**` and U2's guard is what must see
@@ -1380,6 +1487,13 @@ ruling, and cutting a ruling is not a sizing decision — 2026-08-08).
 8. **U14** *(renumbered from #7 when U27 was created)* — a `Content-Security-Policy-Report-Only` header
    appears on every matched response. Report-Only enforces nothing in a browser, but it is a response-byte
    change and is declared as one.
+9. **U28** *(added 2026-08-11 when the unit was created; append-only numbering, like U-numbers — U28
+   ships BEFORE U14 but was created after it, so it takes the next number rather than forcing a renumber.)*
+   — **clean-env builds stop emitting static HTML.** 20 prerendered pages become server-rendered.
+   **Credentialed builds are unchanged — asserted, not assumed:** route table and response headers were
+   compared before and after on the same tree and are identical. The honest cost: a deployment with no
+   Supabase env vars loses static serving for those routes. That configuration is not production and does
+   not function as an app anyway.
 *Conditional:* **U4** adds a refusal that only manifests under concurrency; **U8** changes behaviour only
 under induced insert failure.
 

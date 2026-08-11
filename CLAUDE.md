@@ -206,8 +206,13 @@ passing, a clean typecheck, and a successful build.
 
 Measured baseline (re-measured **2026-08-06 at Phase 1 close**): typecheck clean · **859/859 unit tests
 across 73 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
-`vitest run` → **coverage thresholds** → `next build`, on **every branch push**, on PRs into `main`, and on
-`workflow_dispatch`). The coverage step was added by Phase 1 U13, between `vitest run` and `next build`; the other four are unchanged. These
+`vitest run` → **coverage thresholds** → `next build` → **rendering determinism**, on **every branch push**, on PRs into `main`, and on
+`workflow_dispatch`). The coverage step was added by Phase 1 U13, between `vitest run` and `next build`; the other four are unchanged.
+**The rendering-determinism step was added by Phase 2 U28, discharging N-38** — `getUser()` used to
+short-circuit before `cookies()` when Supabase was unconfigured, so a clean-env build prerendered pages a
+credentialed build renders per request, and **CI had been building a materially different app from
+production**. The step asserts the build emitted no prerendered page HTML, which is what a credentialed
+build produces. These
 figures are re-measured by every CI run — the authoritative result for any commit is its `push`/`main`
 run, not this line, which is a snapshot and will drift. **[2026-08-03]** CI **is** now a required status:
 `main` requires the `typecheck / test / build` check on the pushed SHA, and ruleset `main-integrity`

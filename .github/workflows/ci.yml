@@ -114,3 +114,20 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      # Phase 2 U28 - N-38. Asserts this build produced the SAME app production
+      # runs (GATE D1: CLAUDE.md §5's declared chain is updated in this commit).
+      #
+      # A credentialed build emits ZERO prerendered page HTML, because getUser()
+      # reaches cookies() from the root layout on every page. A clean-env build
+      # used to emit 20 - so CI, which has no credentials BY DESIGN (P-03, this
+      # repository is public), was building a materially different app from
+      # production for as long as CI has existed. U14's CSP was simply the first
+      # thing whose evidence depended on the difference.
+      #
+      # The predicate is a zero, not a route list: lists go stale the first time
+      # someone adds a route, and this one governs routes nobody has written yet.
+      # Costs a directory read, no rebuild - which is why it runs here rather
+      # than joining verify:middleware in the developer-run pile.
+      - name: Rendering determinism
+        run: npm run verify:rendering

@@ -152,6 +152,8 @@ const DECLARED_STEP_COMMANDS: Record<string, string> = {
   "vitest run": "npm test",
   "coverage thresholds": "npm run test:coverage",
   "next build": "npm run build",
+  // Phase 2 U28 — the build-output guard that discharges N-38.
+  "rendering determinism": "npm run verify:rendering",
 };
 
 const SECTION_4 = section(CLAUDE_MD, 4, 5);
@@ -343,6 +345,9 @@ describe("DOC_TRUTH — CLAUDE.md §5's CI claim vs the workflow", () => {
     expect(pkg.scripts.test).toContain("vitest run");
     expect(pkg.scripts["test:coverage"]).toContain("coverage");
     expect(pkg.scripts.build).toContain("next build");
+    // U28: §5 says "rendering determinism"; CI runs an npm script. Bind it to
+    // the real file so the label cannot point at a renamed or gutted script.
+    expect(pkg.scripts["verify:rendering"]).toContain("verify-rendering");
   });
 });
 
