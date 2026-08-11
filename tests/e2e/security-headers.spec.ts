@@ -83,15 +83,144 @@ test.describe("U13: security headers arrive on real responses", () => {
     }
   });
 
-  test("Content-Security-Policy is NOT shipped by this unit", async ({
+  test("the ENFORCING Content-Security-Policy is still not shipped", async ({
     request,
   }) => {
-    // U14 owns CSP and ships Report-Only first. If a CSP appears here before
-    // that unit lands, it arrived without the nonce work Next 15 needs and is
-    // likely breaking the app silently for some users. Asserted as bytes, since
-    // the risk is a middleware adding it — which no config test would see.
+    // DELIBERATELY FLIPPED BY U14, not incidentally.
+    //
+    // U13 asserted BOTH forms absent. U14 ships the Report-Only form, so the
+    // second half of that assertion moved to the block below and this half
+    // stayed — narrowed, not deleted. The enforcing header remains a red:
+    // flipping Report-Only to enforcing is a separate, evidenced decision that
+    // must also answer N-33 (an enforced policy with no report sink is blind in
+    // production), and it must not arrive as a one-word edit nobody noticed.
     const headers = (await request.get("/library/creatine")).headers();
     expect(headers["content-security-policy"]).toBeUndefined();
-    expect(headers["content-security-policy-report-only"]).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CONTENT SECURITY POLICY — Report-Only (Phase 2 U14).
+// ---------------------------------------------------------------------------
+// THIS BLOCK IS ALSO U27'S LIVENESS PROOF, and that is a load-bearing second
+// job rather than a coincidence.
+//
+// `src/architecture/middleware-scope.test.ts` is source-level: it proves the
+// middleware is at the path Next compiles, not that Next compiled it or that it
+// ran. The build-artifact check (`npm run verify:middleware`) needs a build, so
+// it cannot live in the declared CI chain, where `vitest run` precedes
+// `next build` — it is developer-run. **The header asserted below cannot exist
+// unless the middleware executed**, so once this spec runs in CI, U27's liveness
+// half is CI-enforced by it. If this block is ever deleted or gated, U27 loses
+// its only automated liveness evidence — say so in whatever removes it.
+const CSP_HEADER = "content-security-policy-report-only";
+
+test.describe("U14: Content-Security-Policy (Report-Only) arrives", () => {
+  for (const path of PUBLIC_PATHS) {
+    test(`Report-Only policy is delivered on ${path}`, async ({ request }) => {
+      const response = await request.get(path);
+      expect(response.status()).toBeLessThan(400);
+      const policy = response.headers()[CSP_HEADER];
+
+      expect(
+        policy,
+        `${CSP_HEADER} missing on ${path}. Either the CSP was dropped, or the ` +
+          "middleware did not run at all — see U27/N-34, where a middleware at " +
+          "the wrong path compiled to nothing and every request silently ran none.",
+      ).toBeDefined();
+
+      // Spot-check the directives whose absence would be silent. A policy
+      // string that parses but has lost `frame-ancestors` still looks like a CSP.
+      expect(policy).toContain("default-src 'self'");
+      expect(policy).toContain("frame-ancestors 'none'");
+      expect(policy).toContain("base-uri 'none'");
+      expect(policy).toContain("object-src 'none'");
+      expect(policy).toContain("'strict-dynamic'");
+      expect(policy).toMatch(/script-src [^;]*'nonce-[A-Za-z0-9+/=]+'/);
+    });
+  }
+
+  test("the nonce is fresh per response, not a build-time constant", async ({
+    request,
+  }) => {
+    // A constant nonce is worse than none: it looks enforced and authorises any
+    // injected tag that copies it. Only a response-level check can see this —
+    // the builder's unit test proves generateNonce() varies, not that the
+    // running server calls it per request.
+    const read = async () =>
+      /'nonce-([A-Za-z0-9+/=]+)'/.exec(
+        (await request.get("/library/creatine")).headers()[CSP_HEADER] ?? "",
+      )?.[1];
+    const [a, b] = [await read(), await read()];
+    expect(a).toBeTruthy();
+    expect(a).not.toBe(b);
+  });
+
+  test("the delivered nonce matches the one in the rendered HTML", async ({
+    request,
+  }) => {
+    // THE assertion that decides whether this policy would survive enforcement.
+    // A header nonce that does not match the document's `<script nonce>` blocks
+    // every script the moment Report-Only becomes enforcing — and Report-Only
+    // reports nothing about it, because the browser is not blocking yet.
+    //
+    // Asserted on `/library/creatine` on purpose: the build reports it as ● SSG,
+    // and a build-time prerender cannot carry a per-request nonce. That it
+    // matches here is the measured answer to whether static generation and a
+    // nonce can coexist in this app. See the SSG/runtime-cache finding.
+    const response = await request.get("/library/creatine");
+    const headerNonce = /'nonce-([A-Za-z0-9+/=]+)'/.exec(
+      response.headers()[CSP_HEADER] ?? "",
+    )?.[1];
+    const htmlNonce = /nonce="([^"]+)"/.exec(await response.text())?.[1];
+
+    expect(headerNonce, "no nonce in the delivered policy").toBeTruthy();
+    expect(htmlNonce, "no nonce in the rendered HTML").toBeTruthy();
+    expect(
+      htmlNonce,
+      "the HTML nonce does not match the header nonce — every script would be " +
+        "blocked the moment this policy is enforced, and Report-Only cannot warn you.",
+    ).toBe(headerNonce);
+  });
+
+  test("a real browser reports ZERO violations of the policy", async ({
+    page,
+  }) => {
+    // THE PIN, and the reason the whole unit is worth shipping: Report-Only's
+    // value is entirely in what the browser reports, and nothing else in this
+    // repository can observe that.
+    //
+    // ANTI-VACUITY. A collector that collects nothing passes exactly like one
+    // that finds nothing wrong, so this assertion is only meaningful because it
+    // was shown RED: mutation M10 set `style-src 'none'` and this test reported
+    // `[report] style-src-elem <- /_next/static/css/…css` on every path. That
+    // red output is recorded in the plan's U14 entry. Without it, the zero below
+    // would be an unfalsifiable claim.
+    await page.addInitScript(() => {
+      (window as unknown as { __csp: unknown[] }).__csp = [];
+      document.addEventListener("securitypolicyviolation", (e) => {
+        (window as unknown as { __csp: unknown[] }).__csp.push({
+          directive: e.effectiveDirective || e.violatedDirective,
+          blockedURI: String(e.blockedURI).slice(0, 120),
+          disposition: e.disposition,
+        });
+      });
+    });
+
+    for (const path of PUBLIC_PATHS) {
+      await page.goto(path, { waitUntil: "networkidle" });
+      const found = await page.evaluate(
+        () => (window as unknown as { __csp: unknown[] }).__csp,
+      );
+      expect(
+        found,
+        `${path} violated the Report-Only policy. Under Report-Only nothing is ` +
+          "blocked, so this is a WARNING about what enforcement would break — " +
+          "which is exactly what this unit ships Report-Only to discover.",
+      ).toEqual([]);
+      await page.evaluate(() => {
+        (window as unknown as { __csp: unknown[] }).__csp = [];
+      });
+    }
   });
 });

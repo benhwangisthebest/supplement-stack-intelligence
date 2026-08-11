@@ -206,13 +206,20 @@ passing, a clean typecheck, and a successful build.
 
 Measured baseline (re-measured **2026-08-06 at Phase 1 close**): typecheck clean · **859/859 unit tests
 across 73 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
-`vitest run` → **coverage thresholds** → `next build` → **rendering determinism**, on **every branch push**, on PRs into `main`, and on
+`vitest run` → **coverage thresholds** → `next build` → **rendering determinism** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on
 `workflow_dispatch`). The coverage step was added by Phase 1 U13, between `vitest run` and `next build`; the other four are unchanged.
 **The rendering-determinism step was added by Phase 2 U28, discharging N-38** — `getUser()` used to
 short-circuit before `cookies()` when Supabase was unconfigured, so a clean-env build prerendered pages a
 credentialed build renders per request, and **CI had been building a materially different app from
 production**. The step asserts the build emitted no prerendered page HTML, which is what a credentialed
-build produces. These
+build produces.
+**The last two were added by Phase 2 U14, discharging N-29** — E2E ran nowhere but a developer’s machine
+until then, so by §10.3 the *delivery* half of the security headers did not exist. The stage runs the
+**full** non-live suite (the 30 `E2E_LIVE`-gated specs skip; no credentials are configured and none should
+be). It also carries U27’s middleware-liveness proof: the Report-Only CSP it asserts cannot appear unless
+`src/middleware.ts` actually executed. **U14’s E2E is only meaningful because U28 landed first:** before
+that, CI built a statically prerendered app in which a per-request nonce could not exist, and the stage’s
+first run failed for exactly that reason. These
 figures are re-measured by every CI run — the authoritative result for any commit is its `push`/`main`
 run, not this line, which is a snapshot and will drift. **[2026-08-03]** CI **is** now a required status:
 `main` requires the `typecheck / test / build` check on the pushed SHA, and ruleset `main-integrity`

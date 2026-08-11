@@ -17,8 +17,16 @@ name: CI
 #                       grows as rules are added.
 #   * coverage gate   - per-engine thresholds fail today (P-07); widening scope
 #                       does not imply a global floor is safe (P-08).
-#   * E2E             - 17/23 specs are E2E_LIVE-gated and the suite races a
-#                       single shared seeded user under fullyParallel (P-11).
+#   * (E2E was here)  - NO LONGER EXCLUDED. Phase 2 U14 added the stage below,
+#                       discharging N-29. The original reason - "17/23 specs are
+#                       E2E_LIVE-gated and the suite races a single shared
+#                       seeded user under fullyParallel" (P-11) - was correct for
+#                       the suite as a whole and INCIDENTAL for the specs that
+#                       matter here: without E2E_LIVE those 30 tests skip, and
+#                       the 64 that run are credential-free and read-only against
+#                       the public Library. Verified before wiring, not assumed:
+#                       a clean clone with no .env.local, CI=1, against a
+#                       production build ran 64 passed / 30 skipped.
 #   * secrets         - none required. getSupabaseEnv() reads process.env inside
 #                       the function body and throws at call time, and the only
 #                       generateStaticParams route imports no Supabase client,
@@ -60,7 +68,7 @@ jobs:
   verify:
     name: typecheck / test / build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     env:
       NEXT_TELEMETRY_DISABLED: "1"
@@ -131,3 +139,40 @@ jobs:
       # than joining verify:middleware in the developer-run pile.
       - name: Rendering determinism
         run: npm run verify:rendering
+      # -----------------------------------------------------------------
+      # Phase 2 U14 - E2E, discharging N-29 (GATE D1: CLAUDE.md §5's declared
+      # chain is updated in the SAME commit as these two steps).
+      #
+      # WHY IT EXISTS. `src/architecture/security-headers.test.ts` asserts what
+      # `next.config.ts` DECLARES; only an E2E can see what a client RECEIVES.
+      # U13 shipped that spec and it ran nowhere but a developer's laptop, so by
+      # §10.3 - "guardrails that do not run in CI do not exist" - the delivery
+      # half of the security headers was unenforced. U14 adds a CSP whose whole
+      # evidence is response bytes, so it needs this stage for itself and
+      # inherited N-29 on the same reasoning.
+      #
+      # IT ALSO CARRIES U27'S LIVENESS PROOF. The Report-Only header this suite
+      # asserts cannot exist unless `src/middleware.ts` actually executed, which
+      # is the one thing U27's source-level guard cannot check and its
+      # build-artifact script (`npm run verify:middleware`) cannot check here,
+      # because `vitest run` precedes `next build` in this chain.
+      #
+      # FULL SUITE, not just the headers spec. N-29 requires only
+      # `security-headers.spec.ts`, but the clean-env simulation showed the whole
+      # non-live suite green with no secrets present, so scoping it down would
+      # discard free coverage. The 30 E2E_LIVE-gated specs skip: no credentials
+      # are configured here and none should be (P-03 - this repository is
+      # public).
+      #
+      # THE SECOND BUILD IS REAL AND IS NOT HIDDEN. playwright.config.ts runs
+      # `npm run build && npm run start`, and `reuseExistingServer` is false
+      # under CI by design - which is also what makes CI immune to N-32, the
+      # stale-dev-server hazard that silently substituted itself for a
+      # production build during local measurement. Folding the two builds
+      # together would need a script that hides a step from this file, and an
+      # honest duplicate beats a hidden merge.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E (non-live)
+        run: npm run test:e2e

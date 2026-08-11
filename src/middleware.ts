@@ -1,5 +1,11 @@
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import {
+  buildCsp,
+  generateNonce,
+  CSP_REPORT_ONLY_HEADER,
+  NONCE_REQUEST_HEADER,
+} from "@/lib/security/csp";
 
 // ---------------------------------------------------------------------------
 // Keeps Supabase auth sessions fresh on navigation (Design §7).
@@ -22,8 +28,30 @@ import { updateSession } from "@/lib/supabase/middleware";
 // decision rather than an accident. Logic belongs in a governed module and is
 // called from here.
 // ---------------------------------------------------------------------------
+// TWO THINGS HAPPEN PER REQUEST, and U14 COMPOSES with U27 rather than
+// replacing it — the session refresh is unchanged, still awaited, and still the
+// source of the returned response:
+//   1. `updateSession` refreshes the Supabase auth cookie (Design §7, U27).
+//   2. A fresh per-request nonce is minted and the Report-Only policy built from
+//      it is attached BOTH inward and outward —
+//        * on the forwarded REQUEST, so Next can read the nonce and stamp it on
+//          the inline bootstrap it generates. Request headers never reach the
+//          browser.
+//        * on the RESPONSE, which is the only half a browser or an E2E sees.
+//
+// Order matters and is not incidental: the request headers must carry the nonce
+// BEFORE `updateSession` builds its `NextResponse.next({ request })`, or the
+// forwarded copy will not contain them.
 export async function middleware(request: NextRequest) {
-  return updateSession(request);
+  const nonce = generateNonce();
+  const policy = buildCsp(nonce);
+
+  request.headers.set(NONCE_REQUEST_HEADER, nonce);
+  request.headers.set(CSP_REPORT_ONLY_HEADER, policy);
+
+  const response = await updateSession(request);
+  response.headers.set(CSP_REPORT_ONLY_HEADER, policy);
+  return response;
 }
 
 export const config = {

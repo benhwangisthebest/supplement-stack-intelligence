@@ -85,6 +85,20 @@ export default defineConfig({
         // — is unreachable from any unit test and is OP-4's subject.
         "src/lib/omniroute/**": { lines: 90, functions: 90, branches: 78, statements: 90 },
         "src/lib/product-matcher/**": { lines: 85, functions: 82, branches: 83, statements: 85 },
+        // Phase 2 U14. Measured 2026-08-11 at 100/100/100/100 over
+        // `src/lib/security/csp.ts` alone. Floors are the usual measured−10 and
+        // the branches margin is the full 10 pp D-2 requires — NOT set at the
+        // measured value, because a floor sitting on today's figure turns any
+        // harmless refactor red, which is how coverage gates get deleted.
+        //
+        // Stated because the number flatters, the same caveat U25's entry
+        // carries: this module is completely covered because it is pure, small
+        // and takes its randomness by parameter — not because the policy it
+        // builds is proven correct. Whether that policy actually holds against
+        // a real browser is unreachable from any unit test and is measured
+        // instead by `tests/e2e/security-headers.spec.ts`, whose violation
+        // collector is the only thing that can see it.
+        "src/lib/security/**": { lines: 90, functions: 90, branches: 90, statements: 90 },
         // Phase 2 U5. Measured 2026-08-08 at 100/100/100/100 — a small, wholly
         // pure module (identity parsing + one decision function), so the floor
         // is the usual measured−10 and the branches margin is the full 10 pp

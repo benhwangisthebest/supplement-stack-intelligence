@@ -154,6 +154,12 @@ const DECLARED_STEP_COMMANDS: Record<string, string> = {
   "next build": "npm run build",
   // Phase 2 U28 — the build-output guard that discharges N-38.
   "rendering determinism": "npm run verify:rendering",
+  // Phase 2 U14 — the E2E stage that discharges N-29. Two labels because the
+  // workflow needs two `run:` steps and this binding is an ordered EQUALITY:
+  // folding them into one `run: |` block would make this parser read the
+  // command as "|" and bind §5 to nothing.
+  "playwright browsers": "npx playwright install --with-deps chromium",
+  "E2E (non-live)": "npm run test:e2e",
 };
 
 const SECTION_4 = section(CLAUDE_MD, 4, 5);
@@ -348,6 +354,9 @@ describe("DOC_TRUTH — CLAUDE.md §5's CI claim vs the workflow", () => {
     // U28: §5 says "rendering determinism"; CI runs an npm script. Bind it to
     // the real file so the label cannot point at a renamed or gutted script.
     expect(pkg.scripts["verify:rendering"]).toContain("verify-rendering");
+    // U14: §5 says "E2E (non-live)"; CI runs `npm run test:e2e`. Without this,
+    // the mapping could point at a script that no longer runs Playwright.
+    expect(pkg.scripts["test:e2e"]).toContain("playwright");
   });
 });
 

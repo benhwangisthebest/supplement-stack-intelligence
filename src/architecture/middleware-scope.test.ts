@@ -176,6 +176,15 @@ describe("MIDDLEWARE_SCOPE: the middleware stays thin", () => {
   it("stays short enough to read in one screen", () => {
     // A bound, not a style preference: the exemption above is only defensible
     // while the file is trivially reviewable by eye, since no layer rule reads it.
+    //
+    // THE HEADROOM IS THE MECHANISM, NOT A PROBLEM. U14 brought the file to 23
+    // lines against this 25, and the bound was deliberately NOT raised to make
+    // room — the point is that the next addition either fits in two lines or
+    // goes into a governed module. If some future unit genuinely needs the
+    // middleware to grow, raising this number with a written reason IN THAT
+    // UNIT'S COMMIT is the visible act this guard exists to force. Raising it
+    // pre-emptively, on spec, would remove the only thing making that act
+    // visible.
     const statements = middlewareCode()
       .split("\n")
       .filter((l) => l.trim().length > 0).length;
