@@ -252,7 +252,7 @@ a commit message keeps pointing at the same finding.
 | **N-30** | **U13, 2026-08-10** | **Three security headers were considered and deliberately NOT shipped, each for a reason that makes it someone else's decision.** (a) **HSTS `preload`** — the max-age and `includeSubDomains` shipped; `preload` did not. Submission to the browser preload list is outward-facing and slow to reverse, which makes it an operator decision rather than something an agent edits into a config. (b) **`Cross-Origin-Opener-Policy`** — `same-origin` severs `window.opener`, which is how an OAuth popup returns its result. (c) **`Cross-Origin-Embedder-Policy`** — `require-corp` rejects any third-party subresource lacking CORP | `next.config.ts`'s header block enumerates all three with these reasons; `security-headers.test.ts` asserts each stays absent, so re-adding one is a red rather than a silent change | **OPEN as decisions, CLOSED as omissions — the distinction is the point.** U13's own rule is *a header that can break the shipped app is not this unit's*, which is the rule that put CSP in U14; (b) and (c) fail the same test and were held to it rather than waved through because they are fashionable. **This is registered rather than silently omitted because an unexplained absence is indistinguishable from an oversight** — the next reader adding "the standard set" would otherwise re-add all three and discover the breakage in production. (a) is an **owner condition** alongside OP-5; (b) and (c) need a real decision about whether OAuth popups and third-party subresources are in the product's future, which is a product question and not a headers question. **[2026-08-10] DISPOSITIONS ACCEPTED AS RECORDED, by owner ruling.** `preload` **stays an operator decision, beside OP-5** — both are pre-deployment acts the repository can describe but must not perform. COOP/COEP **stay refused and pinned**: the pins in `security-headers.test.ts` are the mechanism, so the refusal survives the next reader who reaches for the standard set. **No further action in Phase 2** unless a product decision moves (b) or (c) |
 | **N-31** | **U24, 2026-08-10** | **Two clauses of the SAME unit's own spec contradict each other, and only one can be satisfied literally at a time.** U24's §5 entry says `CLAUDE.md` §1's divergence block is *"retired … per §7 — **struck with its rationale, not deleted**"*. U24's §7 exit criterion says the check is *"`grep -c 'FU-27' CLAUDE.md` = 0"*. Struck-through text still contains the string, so a literal strikethrough leaves the grep at 2 — measured, not predicted: that is exactly what the first implementation produced | The U24 entry in §5 Group D; the U24 exit criterion in §7; `grep -c 'FU-27' CLAUDE.md` = 2 against the strikethrough version | **CLOSED as an instance by relocation; the CLASS is registered.** Both clauses are satisfiable together if the rationale MOVES rather than staying or vanishing: the struck note and its full "why it existed / does the risk still need controlling" analysis went to `docs/archive/retired-nav-divergence-note.md` — the shape `CLAUDE.md` §0 already uses for `original-mvp-instructions.md` — and §1 keeps the rule plus a dated pointer that does not contain the string. Nothing was gamed and nothing was deleted. **Why it is registered rather than quietly reconciled:** an agent meeting two contradictory clauses can satisfy either one and write a truthful-sounding report, and the reader has no way to know a choice was made. **[2026-08-10] RATIFIED BY THE OWNER as resolved:** the archive-move is the correct reconciliation, matching the `original-mvp-instructions.md` precedent. **THE CLASS INSIGHT, recorded at the owner's instruction and stated as a rule for future specs: a spec that contains BOTH a file-level `grep` clause AND a knowledge-preservation clause MUST NAME WHERE THE KNOWLEDGE LIVES — or it forces a silent choice.** A `grep … = 0` clause is a claim about a FILE; "retire, don't delete" is a claim about KNOWLEDGE. They are jointly satisfiable only if the knowledge may live somewhere else, and if the spec does not say where, whoever executes it picks — then reports truthfully against whichever clause they picked, and the reader cannot tell a choice was made. **The naming is the fix, and it is cheap:** U24's spec would have cost one clause — *"…retired to `docs/archive/`"* — to remove the contradiction entirely. Any future exit criterion of the `grep … = 0` shape must name the destination |
 | **N-32** | **U14 orientation, 2026-08-11** | **A stale dev server silently substitutes itself for the production build the E2E suite is supposed to judge.** `playwright.config.ts` sets `reuseExistingServer: !process.env.CI`, so a `next dev` process left listening on `:3000` from an earlier session is reused and the config's own `npm run build && npm run start` never runs. Measured: the U14 baseline first reported **12 failed / 52 passed / 30 skipped**, which reads exactly like a code regression on `main`. Re-run against a real `next start` on a free port: **64 passed / 30 skipped**, green. The 12 failures were entirely an artifact of the substituted server | `playwright.config.ts`'s `reuseExistingServer` line, whose neighbouring comment argues at length that `next dev` "is not that app" and that a suite passing only against it "cannot support a claim about the shipped build" — the config states the principle and then reuses whatever is on the port | **OPEN. Proposed owner: whoever next touches `playwright.config.ts`; naturally U14, which is the unit whose entire evidence is response bytes.** NOT fixed in U27 — it shares no file with this unit and absorbing it would repeat the mistake U13 refused with N-29. **CI is immune**: `!process.env.CI` means CI always builds and serves. This is a *local measurement* hazard, and its cost is misdirected debugging plus, in the bad case, a green run that proves nothing. **Proposed fix shape, either is sufficient:** (a) have the reuse path verify the server is a production build before trusting it — a dev server is distinguishable by response (`Cache-Control: no-store` and `?v=` cache-busting on the layout stylesheet were both present in the measured case); or (b) move the suite to a dedicated guard port no dev server would occupy. **The residual after either fix is honesty about which app was measured, which is the actual requirement** |
-| **N-33** | **U14 design, 2026-08-11 (ruled at approval)** | **The Report-Only CSP has no report sink.** There is no `report-uri`/`report-to` directive, so violations go to the browser console and nowhere else. A collector route would live under `src/app/api/**`, where **§2.3 rule 11** requires authentication and a 401 on failure — and a browser-generated CSP report carries no credentials. The route could only exist as a rank-1 exception | `src/lib/security/csp.ts`'s `CSP_DIRECTIVES` contains no reporting directive, and its header comment states the reason | **CLOSED AS A DECISION, OPEN AS A CONDITION ON A FUTURE UNIT. [2026-08-11] RULED BY THE OWNER: no `/api/csp-report` route; the rank-1 exception was asked for and REFUSED.** Under Report-Only the E2E collector is the collector, which is sufficient because the policy blocks nothing and the only question is whether it *would*. **The condition: an eventual ENFORCING flip MUST re-raise this.** An enforced CSP with no sink is blind in production — it breaks things for real users and reports to nobody, which is strictly worse than the present position. Registered so the flip cannot happen without meeting it |
+| **N-33** | **U14 design, 2026-08-11 (ruled at approval)** | **The Report-Only CSP has no report sink.** There is no `report-uri`/`report-to` directive, so violations go to the browser console and nowhere else. A collector route would live under `src/app/api/**`, where **§2.3 rule 11** requires authentication and a 401 on failure — and a browser-generated CSP report carries no credentials. The route could only exist as a rank-1 exception | `src/lib/security/csp.ts`'s `CSP_DIRECTIVES` contains no reporting directive, and its header comment states the reason | **SHIPPED WITH U14 AS A PINNED REFUSAL, 2026-08-11** — `csp.test.ts` asserts the policy contains neither `report-uri` nor `report-to`, so the absence is a red rather than an omission. **CLOSED AS A DECISION, OPEN AS A CONDITION ON A FUTURE UNIT. [2026-08-11] RULED BY THE OWNER: no `/api/csp-report` route; the rank-1 exception was asked for and REFUSED.** Under Report-Only the E2E collector is the collector, which is sufficient because the policy blocks nothing and the only question is whether it *would*. **The condition: an eventual ENFORCING flip MUST re-raise this.** An enforced CSP with no sink is blind in production — it breaks things for real users and reports to nobody, which is strictly worse than the present position. Registered so the flip cannot happen without meeting it |
 | **N-34** | **U14 orientation, 2026-08-11** | **`middleware.ts` sat at the repository root and was never compiled, so `updateSession` — the Supabase session refresh of Design §7 — never ran, from `910d773` (2026-06-12) until U27.** Next 15 resolves middleware at `src/middleware.ts` in a project with a `src/` directory. Measured by A/B in a clean clone: at the root the build emits `{"middleware": {}}` and no `ƒ Middleware` line; at `src/` it emits a registered matcher and `ƒ Middleware  87.4 kB`. Confirmed against untouched `main` @ `7cbc5f0`, so it predates U14 | `.next/server/middleware-manifest.json` after a build; `git log --follow` puts the file at the root since the first commit | **CLOSED BY U27, 2026-08-11** — the unit this finding created. Fixed by the move, guarded source-level by `MIDDLEWARE_SCOPE`, and checked for compilation by `npm run verify:middleware`. **The liveness half is developer-run until U14's E2E stage lands** — N-29's shape at a second site, stated in U27's entry rather than glossed. **The class insight, which is the part worth keeping: a guard that names a path asserts nothing about the path the code is actually at.** `TREE_PARTITION`'s comment named `src/middleware.ts` and its exemption list was empty and green, *because the file was somewhere else*. Two more green things missed it: `next build` succeeds when middleware is absent (an absence is not an error), and the E2E's anonymous-redirect assertions are satisfied by page-level `requireUser()`, so they never depended on middleware at all |
 | **N-35** | **U27, 2026-08-11** | **`src/lib/supabase/client.ts` — the browser Supabase client — is imported by no non-test module.** Found while establishing that `connect-src 'self'` is safe for U14's CSP: if nothing in the browser talks to Supabase directly, no external origin needs allowing. `grep` over `src/**` excluding tests returns no importer | `src/lib/supabase/client.ts`; authentication runs server-side through `src/lib/auth/actions.ts` (`"use server"`) and `src/app/auth/callback/route.ts` | **OPEN, CLASSIFIED, NOT ACTED ON. Classification per §8.5: `production-suitable` code that is currently `prototype-only` in status — it is correct, small, and unreferenced.** It is **not** obviously deletable: `createBrowserClient` is the documented other half of the `@supabase/ssr` pairing, and any future client-side realtime, storage upload, or optimistic auth UI would import exactly this file. **Deleting it and re-adding it later are both cheap; guessing wrong about which is not**, so this is registered rather than resolved. **It is load-bearing for one thing today — an argument.** U14's `connect-src 'self'` rests on the claim that the browser never calls Supabase directly, and this file is the thing that would falsify that claim the moment something imports it. **Whoever imports it must revisit U14's `connect-src`.** That coupling is the reason this row exists at all |
 | **N-36** | **U27 smoke run 2, 2026-08-11** | **The middleware matcher is broad enough that non-application requests do Supabase work — and one of them consumed the very refreshes the first smoke was trying to observe.** The matcher excludes only `_next/static`, `_next/image`, `favicon.ico` and a list of image extensions, so **everything else** reaches `updateSession`, which constructs a Supabase client and calls `auth.getUser()`. Measured in the run-2 trace: `/.well-known/appspecific/com.chrome.devtools.json` — a background request DevTools itself issues — went through the middleware and logged `refreshOccurred:true`. **The act of observing consumed the thing being observed**, and the Network tab's Doc filter could not show it | The run-2 trace, recorded in `docs/05-qa/2026-08-11-middleware-activation-smoke.md` §3.2; the matcher in `src/middleware.ts` | **OPEN, NOT FIXED IN U27 — it is a scope question, not a defect in the move.** Two consequences, one measured and one reasoned, kept apart on purpose. **Measured:** a refresh spent on a `.well-known` probe is a refresh the next document load correctly does not perform, so any observer counting `Set-Cookie` on document responses will undercount — which is exactly how run 1 went wrong, and the reason a server-side trace was the only instrument that could settle it. **Reasoned, and therefore not asserted as a cost figure:** every matched non-asset request performs a `getUser()`, and `getUser()` is a network call to the Supabase auth endpoint. Whether that is material depends on real traffic mix, which nothing in this repository measures. **Proposed fix shape:** tighten the matcher to exclude `/.well-known/*` and any other non-application prefix, or invert it to an allow-list of app routes. **Proposed owner: whoever next edits the matcher**; a natural companion to U14, which touches `src/middleware.ts` and would otherwise inherit the same breadth for its CSP header — a Report-Only policy emitted on `.well-known` probes is noise for the same reason. **Deliberately not absorbed here:** narrowing the matcher changes which requests get a session refresh, which is a behaviour change of the same class U27 just spent an owner-run smoke verifying, and it would ride in on the back of that verification without being covered by it |
@@ -915,6 +915,108 @@ without a nonce threaded through `middleware.ts` — which sits at the **reposit
 so `TREE_PARTITION` does not govern it and **no test covers it**. Putting security logic there recreates
 the C-11 shape at a path C-11's fix does not reach. Design: a pure `src/lib/security/csp.ts` builder
 (unit-tested, thresholded), `middleware.ts` reduced to a call.
+
+**DONE 2026-08-11, `61ad255`** *(rebased onto U28; originally committed as `2c3c19b`, whose CI run went
+**RED** — see below, the record keeps both)*.
+
+**THE BRANCH STORY, because the unit spans two of them.** Work began on `feat/u14-csp` (red first CI run at
+`2c3c19b`), was rebased onto U28 and continued as **`feat/u14-csp-r2`**, because a local plugin hook
+(**bkit ENH-298**) blocks force pushes as a matter of policy and **was respected rather than routed
+around** — the stale remote branch stayed untouched at `2c3c19b` until both were deleted together at merge.
+Deleting the remote ref to re-push would have achieved the same rewrite while evading a guard that was
+actively refusing it, which is the move §10's rules exist to prevent.
+
+Baseline re-measured on the rebased branch, not copied:
+typecheck clean, **1150/94**, non-live E2E 64/30. After: **1175/95** (+25 unit, +6 E2E). Coverage
+`src/lib/security` **100/100/100/100** against floors of 90.
+
+**WHAT SHIPPED.** A pure `src/lib/security/csp.ts` (nonce + directives as data), `src/middleware.ts` reduced
+to a call composing with U27's `updateSession`, and `Content-Security-Policy-Report-Only` on every matched
+response. **The enforcing header stays absent and stays asserted absent** — U13's fifth E2E test was
+*narrowed*, deliberately, not deleted, so an enforcing flip is a red rather than a one-word edit.
+
+**THE FIRST ATTEMPT FAILED IN CI, AND THAT RUN IS THE MOST VALUABLE THING IN THIS ENTRY.** Commit `2c3c19b`
+was pushed green-locally and CI run **`31465731188`** went red at the new E2E stage: **2 failed / 68 passed /
+30 skipped**. `the delivered nonce matches the one in the rendered HTML` → `Error: no nonce in the rendered
+HTML`; `a real browser reports ZERO violations` → **72 `script-src-elem` violations**, every chunk plus six
+inline scripts. The header arrived fine; the nonce never reached the HTML.
+
+**Root cause: CI was building a different app.** Clean-env builds prerendered pages that credentialed builds
+render per request, and a build-time prerender cannot contain a per-request nonce. Registered as **N-38**,
+split out under owner ruling as **U28**, and fixed there. **U14 did not cause it — U14 was the first thing
+whose evidence depended on it**, because a nonce is the first artifact this app ever shipped that a
+prerender physically cannot hold.
+
+**THE MEASUREMENT WAS CONTAMINATED, AND THE ACCOUNT STAYS IN FULL RATHER THAN BEING TIDIED.** Before that
+push, this unit reported to the owner: *rendering mode unchanged, SSG pages do not violate, zero violations,
+nonce matches on every route class.* **The "zero violations" claim was false**, and it was false because
+every CSP measurement was taken with `.env.local` present, which forced `cookies()` and made every route
+dynamic — so no static page was ever served and the failure mode could not appear. **Rider 2 had named this
+exact risk in advance** — *"a per-request nonce cannot reach statically generated pages; the public Library
+is the pillar most likely affected"* — and the answer given was the opposite of the truth.
+
+**The process error is specific and worth more than the bug.** A clean-env simulation existed and had been
+run — for Ruling Q1, against **U27's** code, *before* CSP existed — and was never re-run after the CSP
+landed. The one check that would have caught this was in hand and executed at the wrong time. **Hence the
+both-envs discipline U28 institutes and this unit now follows:** any measurement whose result could depend
+on build-time configuration is taken in BOTH environments and the two must agree.
+
+**RE-MEASURED AFTER U28, BOTH ENVIRONMENTS — clean-env is the load-bearing half, because it is what CI
+judges and what failed:**
+
+| | credentialed | clean-env (CI shape) |
+|---|---|---|
+| prerendered page `.html` | 0 | **0** *(was 20)* |
+| `verify:rendering` | OK | OK |
+| header nonce == HTML nonce on `/library/creatine` | YES | **YES** *(was: no nonce in HTML)* |
+| browser violation set | **0** | **0** *(was 72)* |
+| non-live E2E | **70 passed / 30 skipped** | **70 passed / 30 skipped** |
+
+**TWO DESIGN QUESTIONS ANSWERED BY MEASUREMENT, NOT ASSUMPTION** — and now answered in both environments:
+Next threads the nonce under the **Report-Only** variant (not only the documented enforcing one), and
+`next/font`'s injected `<style>` is nonce'd. Header and HTML nonces match on every route class including the
+`● SSG`-labelled Library detail page.
+
+**N-29 — DISCHARGED IN U14, IN ONE COMMIT, WITH THE DISCHARGE NOT YET COMPLETE.** The three things the
+ruling required land together in `61ad255`: (1) the CI E2E stage, (2) its **GATE D1** update to `CLAUDE.md`
+§5's declared chain in the same commit, (3) `security-headers.spec.ts` inside that stage's run set — and the
+stage runs the **full** non-live suite, not just that spec, because the clean-env simulation showed all 64
+green with no secrets present. **The caveat, stated because it is the whole point of the row: a CI stage
+that has never been green is still a claim about a YAML file.** Run `31465731188` proved the **mechanism**
+works — full suite collected, 30 gated specs skipped, correct failure propagation, **≈39 s** stage
+wall-clock — by failing honestly on a real defect. **The row closes when a green run exists on a pushed
+SHA, and not before.**
+
+**U27's liveness obligation closes here.** `MIDDLEWARE_SCOPE` is source-level, and `verify:middleware` needs
+a build the declared chain lacks when `vitest` runs. The Report-Only header cannot exist unless
+`src/middleware.ts` executed, so the E2E assertion *is* U27's liveness proof — stated in the spec so that
+deleting the block is visibly also a decision about U27.
+
+**RED EVIDENCE — ten mutations, all executed.**
+
+| # | Mutation | Result |
+|---|---|---|
+| **M1** | Drop the nonce substitution | **1 failed / 50 passed** — `expected … not to contain '\'nonce-NONCE\''` |
+| **M2** | `generateNonce` returns a constant | **3 failed / 48 passed** — encoding pin, `expected 1 to be 200` (freshness over 200 calls), `expected [] to deeply equal [ 16 ]` (CSPRNG default no longer called) |
+| **M3** | Emit the **enforcing** header instead of Report-Only | **6 E2E failed** — U13's narrowed absence assertion plus all four Report-Only assertions |
+| **M4** | Remove `frame-ancestors 'none'` | **2 failed / 49 passed** — exact-set and value pins |
+| **M5** | Inline a policy literal into `src/middleware.ts` | **1 failed / 50 passed** — `MIDDLEWARE_SCOPE: logic appeared in the middleware:` |
+| **M6** | Delete the E2E step from `ci.yml` only | **1 failed / 20 passed** — `DOC_TRUTH: §5's declared CI steps and ci.yml's run: steps have diverged.` |
+| **M7** | Change §5's chain only | **1 failed / 20 passed** — same assertion, opposite direction |
+| **M8** ★ | Delete the response-header set in middleware | **Unit suite 25 passed — GREEN. E2E 5 failed.** The config-vs-bytes non-redundancy proof, U13's M1 shape: the builder is provably correct while zero bytes reach a client |
+| **M9** | Add `'unsafe-inline'` to `script-src` | **1 failed / 50 passed** — the pinned refusal |
+| **M10** ★ | `style-src 'none'` — **re-run in CLEAN-ENV after U28** | **Collector RED**, `[report] style-src-elem <- /_next/static/css/…css`. **Re-run deliberately in the environment CI judges**, because the original M10 was taken in the contaminated one |
+
+**M8 and M10 are the two that matter.** M8 proves the unit test cannot see delivery; M10 proves the collector
+can see a violation. Without them the other eight assert things about a system nobody had shown could fail —
+and "zero violations" would be exactly the unfalsifiable claim that this unit already got wrong once.
+
+**PLAN WORK SUPERSEDED IN PART BY U28.** An earlier draft of this entry was written before the red run and
+parked; on resumption it was reconciled piecemeal rather than applied wholesale. Its **N-33** update was
+salvaged (the pinned refusal did ship). Its **N-37** was **discarded**: that row was authored from a
+credentialed-only three-build A/B, and U28 re-authored it on `main` with a corrected evidence cell and an
+explicit provenance note. Its DONE line carried a `<COMMIT1>` placeholder and a success claim that the CI run
+had already falsified, so the entry above was rewritten rather than patched.
 
 **U15 · Migration tooling.** *(roadmap 6)* M `package.json` · N `supabase/config.toml` · N a dated
 deployed-schema record · M `ci.yml` **and `CLAUDE.md` §5 in the same commit** — FU-23 made that binding an
