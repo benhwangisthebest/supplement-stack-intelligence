@@ -251,6 +251,10 @@ a commit message keeps pointing at the same finding.
 | **N-29** | **U13, 2026-08-10** | **U13's E2E guard — the only thing in the repository that can see a security header actually arrive — does not run in CI.** `.github/workflows/ci.yml` excludes E2E with a written reason: *"17/23 specs are `E2E_LIVE`-gated and the suite races a single shared seeded user under `fullyParallel`"*. **Neither clause applies to this spec**: it is ungated, credential-free, read-only against the public static Library, and touches no shared account. So the exclusion is correct for the suite as a whole and, for this file, incidental. By §10.3 — *"guardrails that do not run in CI do not exist"* — the config half is enforced on every push and the response-bytes half is enforced only when someone runs it by hand | `.github/workflows/ci.yml` (the `NOT included` block); `tests/e2e/security-headers.spec.ts` is untagged and ungated by construction, which `LIVE_TAGGING` enforces both ways | **OPEN — deliberately NOT fixed in U13.** Wiring E2E into CI **adds a CI step**, which trips **GATE D1** and obliges the §5 declared-chain update in the same commit; it also needs a build-and-serve stage, which is a workflow change well outside a unit whose file list is one config and two tests. Absorbing it would have been the larger sin. **[2026-08-10] RULED BY THE OWNER: DEFERRED TO U14, and the deferral is BINDING rather than advisory.** U14 needs the same build-and-serve CI stage for its own Report-Only evidence — a CSP that reports nothing and a CSP that is absent are indistinguishable without reading response bytes — so **three things land together in U14 or not at all**: (1) the CI stage that builds and serves the app for E2E, (2) its **GATE D1** update to CLAUDE.md §5's declared chain, in the same commit, and (3) `tests/e2e/security-headers.spec.ts` included in what that stage runs. **U14 MAY NOT CLOSE while this row is open**: its closeout must either discharge N-29 or **re-defer it explicitly, in writing, with a named next owner**. Silence is not a disposition — a row that is neither closed nor re-deferred is an unmet obligation, and U14's report is the place it becomes visible. **Until then, state the split honestly:** U13's config guard is CI-enforced; its delivery guard is developer-run. The mutation record in U13's entry is evidence the delivery guard **works**, not evidence that it **runs** |
 | **N-30** | **U13, 2026-08-10** | **Three security headers were considered and deliberately NOT shipped, each for a reason that makes it someone else's decision.** (a) **HSTS `preload`** — the max-age and `includeSubDomains` shipped; `preload` did not. Submission to the browser preload list is outward-facing and slow to reverse, which makes it an operator decision rather than something an agent edits into a config. (b) **`Cross-Origin-Opener-Policy`** — `same-origin` severs `window.opener`, which is how an OAuth popup returns its result. (c) **`Cross-Origin-Embedder-Policy`** — `require-corp` rejects any third-party subresource lacking CORP | `next.config.ts`'s header block enumerates all three with these reasons; `security-headers.test.ts` asserts each stays absent, so re-adding one is a red rather than a silent change | **OPEN as decisions, CLOSED as omissions — the distinction is the point.** U13's own rule is *a header that can break the shipped app is not this unit's*, which is the rule that put CSP in U14; (b) and (c) fail the same test and were held to it rather than waved through because they are fashionable. **This is registered rather than silently omitted because an unexplained absence is indistinguishable from an oversight** — the next reader adding "the standard set" would otherwise re-add all three and discover the breakage in production. (a) is an **owner condition** alongside OP-5; (b) and (c) need a real decision about whether OAuth popups and third-party subresources are in the product's future, which is a product question and not a headers question. **[2026-08-10] DISPOSITIONS ACCEPTED AS RECORDED, by owner ruling.** `preload` **stays an operator decision, beside OP-5** — both are pre-deployment acts the repository can describe but must not perform. COOP/COEP **stay refused and pinned**: the pins in `security-headers.test.ts` are the mechanism, so the refusal survives the next reader who reaches for the standard set. **No further action in Phase 2** unless a product decision moves (b) or (c) |
 | **N-31** | **U24, 2026-08-10** | **Two clauses of the SAME unit's own spec contradict each other, and only one can be satisfied literally at a time.** U24's §5 entry says `CLAUDE.md` §1's divergence block is *"retired … per §7 — **struck with its rationale, not deleted**"*. U24's §7 exit criterion says the check is *"`grep -c 'FU-27' CLAUDE.md` = 0"*. Struck-through text still contains the string, so a literal strikethrough leaves the grep at 2 — measured, not predicted: that is exactly what the first implementation produced | The U24 entry in §5 Group D; the U24 exit criterion in §7; `grep -c 'FU-27' CLAUDE.md` = 2 against the strikethrough version | **CLOSED as an instance by relocation; the CLASS is registered.** Both clauses are satisfiable together if the rationale MOVES rather than staying or vanishing: the struck note and its full "why it existed / does the risk still need controlling" analysis went to `docs/archive/retired-nav-divergence-note.md` — the shape `CLAUDE.md` §0 already uses for `original-mvp-instructions.md` — and §1 keeps the rule plus a dated pointer that does not contain the string. Nothing was gamed and nothing was deleted. **Why it is registered rather than quietly reconciled:** an agent meeting two contradictory clauses can satisfy either one and write a truthful-sounding report, and the reader has no way to know a choice was made. **[2026-08-10] RATIFIED BY THE OWNER as resolved:** the archive-move is the correct reconciliation, matching the `original-mvp-instructions.md` precedent. **THE CLASS INSIGHT, recorded at the owner's instruction and stated as a rule for future specs: a spec that contains BOTH a file-level `grep` clause AND a knowledge-preservation clause MUST NAME WHERE THE KNOWLEDGE LIVES — or it forces a silent choice.** A `grep … = 0` clause is a claim about a FILE; "retire, don't delete" is a claim about KNOWLEDGE. They are jointly satisfiable only if the knowledge may live somewhere else, and if the spec does not say where, whoever executes it picks — then reports truthfully against whichever clause they picked, and the reader cannot tell a choice was made. **The naming is the fix, and it is cheap:** U24's spec would have cost one clause — *"…retired to `docs/archive/`"* — to remove the contradiction entirely. Any future exit criterion of the `grep … = 0` shape must name the destination |
+| **N-32** | **U14 orientation, 2026-08-11** | **A stale dev server silently substitutes itself for the production build the E2E suite is supposed to judge.** `playwright.config.ts` sets `reuseExistingServer: !process.env.CI`, so a `next dev` process left listening on `:3000` from an earlier session is reused and the config's own `npm run build && npm run start` never runs. Measured: the U14 baseline first reported **12 failed / 52 passed / 30 skipped**, which reads exactly like a code regression on `main`. Re-run against a real `next start` on a free port: **64 passed / 30 skipped**, green. The 12 failures were entirely an artifact of the substituted server | `playwright.config.ts`'s `reuseExistingServer` line, whose neighbouring comment argues at length that `next dev` "is not that app" and that a suite passing only against it "cannot support a claim about the shipped build" — the config states the principle and then reuses whatever is on the port | **OPEN. Proposed owner: whoever next touches `playwright.config.ts`; naturally U14, which is the unit whose entire evidence is response bytes.** NOT fixed in U27 — it shares no file with this unit and absorbing it would repeat the mistake U13 refused with N-29. **CI is immune**: `!process.env.CI` means CI always builds and serves. This is a *local measurement* hazard, and its cost is misdirected debugging plus, in the bad case, a green run that proves nothing. **Proposed fix shape, either is sufficient:** (a) have the reuse path verify the server is a production build before trusting it — a dev server is distinguishable by response (`Cache-Control: no-store` and `?v=` cache-busting on the layout stylesheet were both present in the measured case); or (b) move the suite to a dedicated guard port no dev server would occupy. **The residual after either fix is honesty about which app was measured, which is the actual requirement** |
+| **N-33** | **U14 design, 2026-08-11 (ruled at approval)** | **The Report-Only CSP has no report sink.** There is no `report-uri`/`report-to` directive, so violations go to the browser console and nowhere else. A collector route would live under `src/app/api/**`, where **§2.3 rule 11** requires authentication and a 401 on failure — and a browser-generated CSP report carries no credentials. The route could only exist as a rank-1 exception | `src/lib/security/csp.ts`'s `CSP_DIRECTIVES` contains no reporting directive, and its header comment states the reason | **CLOSED AS A DECISION, OPEN AS A CONDITION ON A FUTURE UNIT. [2026-08-11] RULED BY THE OWNER: no `/api/csp-report` route; the rank-1 exception was asked for and REFUSED.** Under Report-Only the E2E collector is the collector, which is sufficient because the policy blocks nothing and the only question is whether it *would*. **The condition: an eventual ENFORCING flip MUST re-raise this.** An enforced CSP with no sink is blind in production — it breaks things for real users and reports to nobody, which is strictly worse than the present position. Registered so the flip cannot happen without meeting it |
+| **N-34** | **U14 orientation, 2026-08-11** | **`middleware.ts` sat at the repository root and was never compiled, so `updateSession` — the Supabase session refresh of Design §7 — never ran, from `910d773` (2026-06-12) until U27.** Next 15 resolves middleware at `src/middleware.ts` in a project with a `src/` directory. Measured by A/B in a clean clone: at the root the build emits `{"middleware": {}}` and no `ƒ Middleware` line; at `src/` it emits a registered matcher and `ƒ Middleware  87.4 kB`. Confirmed against untouched `main` @ `7cbc5f0`, so it predates U14 | `.next/server/middleware-manifest.json` after a build; `git log --follow` puts the file at the root since the first commit | **CLOSED BY U27, 2026-08-11** — the unit this finding created. Fixed by the move, guarded source-level by `MIDDLEWARE_SCOPE`, and checked for compilation by `npm run verify:middleware`. **The liveness half is developer-run until U14's E2E stage lands** — N-29's shape at a second site, stated in U27's entry rather than glossed. **The class insight, which is the part worth keeping: a guard that names a path asserts nothing about the path the code is actually at.** `TREE_PARTITION`'s comment named `src/middleware.ts` and its exemption list was empty and green, *because the file was somewhere else*. Two more green things missed it: `next build` succeeds when middleware is absent (an absence is not an error), and the E2E's anonymous-redirect assertions are satisfied by page-level `requireUser()`, so they never depended on middleware at all |
+| **N-35** | **U27, 2026-08-11** | **`src/lib/supabase/client.ts` — the browser Supabase client — is imported by no non-test module.** Found while establishing that `connect-src 'self'` is safe for U14's CSP: if nothing in the browser talks to Supabase directly, no external origin needs allowing. `grep` over `src/**` excluding tests returns no importer | `src/lib/supabase/client.ts`; authentication runs server-side through `src/lib/auth/actions.ts` (`"use server"`) and `src/app/auth/callback/route.ts` | **OPEN, CLASSIFIED, NOT ACTED ON. Classification per §8.5: `production-suitable` code that is currently `prototype-only` in status — it is correct, small, and unreferenced.** It is **not** obviously deletable: `createBrowserClient` is the documented other half of the `@supabase/ssr` pairing, and any future client-side realtime, storage upload, or optimistic auth UI would import exactly this file. **Deleting it and re-adding it later are both cheap; guessing wrong about which is not**, so this is registered rather than resolved. **It is load-bearing for one thing today — an argument.** U14's `connect-src 'self'` rests on the claim that the browser never calls Supabase directly, and this file is the thing that would falsify that claim the moment something imports it. **Whoever imports it must revisit U14's `connect-src`.** That coupling is the reason this row exists at all |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -650,7 +654,103 @@ E2E does not run in CI: **N-29**.
 mutation that removes headers cannot make an absent header appear. Its survival is correct, not a gap —
 recorded so the "4/5" is not later read as a partial failure of the mutation.
 
-**U14 · CSP.** **M**, deps U13 (**MET — U13 closed 2026-08-10, `a7f36fd`**). **Report-Only first.**
+**U27 · The middleware has never run.** *(created 2026-08-11 by owner ruling — Option A. U14's blocker,
+promoted to its own unit and sequenced ahead of it.)* M `middleware.ts` → `src/middleware.ts` · M
+`src/architecture/boundaries.test.ts` (`EXEMPT_ROOT_FILES`) · N `src/architecture/middleware-scope.test.ts`
+· N `scripts/verify-middleware-live.mjs` + `package.json` · M `src/lib/supabase/server.ts` (comment only) ·
+N `docs/05-qa/2026-08-11-middleware-activation-smoke.md`. **S/M**, deps none.
+**N-29 DOES NOT MOVE — it discharges in U14, not here.**
+
+**THE DEFECT.** `middleware.ts` sat at the repository root from `910d773` (2026-06-12, MVP v1) and was
+never at `src/middleware.ts`. This project has a `src/` directory, so Next 15 resolves middleware at
+`src/middleware.ts` **only**. The root file was never compiled. **Measured, not inferred** — A/B in an
+isolated clean clone, same file content, only the path changed:
+
+| Path | `middleware-manifest.json` | Build output |
+|---|---|---|
+| `middleware.ts` (root) | `{"middleware": {}, "sortedMiddleware": []}` | no `ƒ Middleware` line |
+| `src/middleware.ts` | `"/"` registered, matchers compiled | `ƒ Middleware  87.4 kB` |
+
+Verified against untouched `main` @ `7cbc5f0`, so it is **pre-existing and not U14's doing**.
+**`updateSession` — the Supabase session refresh of Design §7 — had never executed in this application's
+history.**
+
+**THREE GREEN THINGS THAT ALL MEANT NOTHING**, recorded because the pattern outlives the bug.
+(1) `TREE_PARTITION`'s own comment names *"`src/middleware.ts` — a standard Next.js path that runs on every
+request"*; `EXEMPT_ROOT_FILES` was empty and **passed, because the file was not at that path**. A guard that
+names a path asserts nothing about the path the code is at. (2) `next build` succeeded every time — a
+middleware that is not found is not an error, it is an absence, and absences do not fail builds.
+(3) The E2E suite was green: every anonymous-redirect assertion it makes is satisfied by page-level
+`requireUser()`, so it never depended on middleware running and could not report that it did not.
+
+**WHY SIGNED-IN USAGE WORKED ANYWAY** *(the survival question, answered from evidence — three call sites
+settle it).* `src/components/layout/TopNav.tsx:35` calls `getUser()` and `TopNav` renders in the root layout
+on **every page**, so a refresh is *attempted* on every navigation. `src/lib/supabase/server.ts`'s `setAll`
+wraps `cookieStore.set()` in `try/catch`; in a Server Component that call throws, so refreshed tokens are
+**computed and discarded** — the render is authenticated, nothing is persisted. But all **31** `getUser()`
+call sites under `src/app/api/**` are **Route Handlers**, where `cookies().set()` is permitted, so refreshes
+there **do** persist. **The answer: the API surface refreshed the session, not navigation.** The app's
+client components `fetch()` `/api/*` constantly, so sessions were kept alive by API traffic and were not
+silently expiring in ordinary use. Middleware is still needed: a user who only navigates never persists a
+rotated refresh token, and Supabase rotates them.
+
+**THE SHARPEST EVIDENCE IS A COMMENT.** `server.ts`'s catch read *"safe to ignore when middleware is
+refreshing sessions"* — the invariant that makes swallowing the write safe, and it had never held. The
+comment did not describe the system; it described the system someone intended. **U27 corrects it in the same
+commit that makes it true**, because shipping a fix whose own code still documents the broken premise would
+be the C-11 comment problem a second time.
+
+**THE GUARD, IN TWO HALVES — the ordering problem stated rather than dodged.** *"Manifest non-empty after a
+build"* **cannot** be a plain vitest assertion: the declared CI chain runs `vitest run` **before**
+`next build`, so on a clean checkout it would either fail for the wrong reason or skip and be vacuous, and a
+guard whose easiest green is *"no build present"* is not a guard.
+* **Order-safe half — `MIDDLEWARE_SCOPE`, ships here, runs in today's chain.** Source-level and
+  build-independent: `src/middleware.ts` is tracked; **no** root `middleware.ts` exists (both directions, so
+  a re-added shadow copy is red); it delegates rather than holding logic; and it stays under 25 code lines,
+  which is what an ungoverned file's exemption is worth.
+* **Liveness half — DEFERRED TO U14, developer-run in the interim.** The predicate runs where a build
+  exists: **U14's `Content-Security-Policy-Report-Only` header is itself the liveness proof** — a header
+  that cannot appear unless middleware executed — and U14's E2E stage is already N-29's obligation, so this
+  costs no new CI machinery. **U14's spec must state that its CSP assertion doubles as the
+  middleware-liveness assertion.** Registered here so it is not forgotten.
+* **The interim, stated because it is N-29's exact shape at a second site:** until U14's E2E stage lands,
+  compilation is checked by `npm run verify:middleware` — **developer-run, not CI-enforced**.
+  **`MIDDLEWARE_SCOPE` green does not mean the middleware runs.** It means the file is where Next would
+  find it.
+
+**NOT MERGEABLE WITHOUT AN OWNER-RUN RECORD.** The 64 non-live specs exercise none of the auth paths this
+activates and the live half is `BLOCKED(env)`, so no automated check in this repository can verify it.
+Procedure, forcing step and acceptance criteria:
+`docs/05-qa/2026-08-11-middleware-activation-smoke.md`. **U27 does not merge before that record exists and
+is dated.** Note the smoke's own honesty clause: its anonymous-redirect step is a **regression** check, not
+an activation check, because that redirect is page-level `requireUser()` and passes today with the
+middleware inert.
+
+**RED EVIDENCE — five mutations, all executed, none reasoned about.** Baseline before the unit: typecheck
+clean, **1141/92**, non-live E2E 64 passed / 30 skipped. After: **1146/93** (+5 tests, +1 file).
+
+| # | Mutation | Result |
+|---|---|---|
+| **M1** ★ | Move `src/middleware.ts` back to the repository root | **6 failed / 46 passed.** `MIDDLEWARE_SCOPE` red ×4 + `TREE_PARTITION` red ×2 — `MIDDLEWARE_SCOPE: src/middleware.ts is not tracked…`, `…a middleware file exists at the repository root:`, and `TREE_PARTITION: these root-file exemptions name files that do not exist:`. **This mutation also found a defect in the guard itself — see below** |
+| **M2** | Leave the real file in place and add a **shadow copy** at the root | **1 failed / 51 passed** — `MIDDLEWARE_SCOPE: a middleware file exists at the repository root:`. The direction that matters most: a root file reads as correct, is compiled by nothing, and would leave every other assertion green |
+| **M3** | Empty the `EXEMPT_ROOT_FILES` entry | **1 failed / 46 passed** — `TREE_PARTITION: these files sit directly under src/ and are neither in a scanned layer nor exempt`. The C-11 machinery now governs the file it was written for |
+| **M4** ★ | Build with the file at the root, then run `verify:middleware` | **`next build` exit 0**, zero `ƒ Middleware` lines, and `verify:middleware` **exit 1**: `THE BUILD COMPILED NO MIDDLEWARE.` **This is the proof that the build cannot see this defect and the script can** — the whole reason N-34 survived fourteen months |
+| **M5** | Thin the exemption reason to `"Next needs it here."` | **1 failed / 46 passed** — `src/middleware.ts exemption reason is too thin: expected 19 to be greater than 40` |
+
+**M1 FOUND A DEFECT IN THIS UNIT'S OWN GUARD, and it is recorded rather than quietly fixed.** The first
+version of `middleware-scope.test.ts` read the middleware source at **module scope**. Under M1 the file
+collapsed to a collection error — `0 test`, `Tests no tests` — so the two assertions that matter most, *the
+path is right* and *no shadow copy exists*, **never executed**; the only clean red came from a different
+file. A guard that stops running when the thing it guards is broken is the vacuity failure mode this
+repository keeps rediscovering, and it would have shipped had the mutation been reasoned about instead of
+run. The read is now lazy and per-assertion; M1 was re-executed against the corrected guard and the numbers
+above are from that run. **This is the strongest argument in the unit for §5.2: a mutation you did not
+execute is not evidence.**
+
+**U14 · CSP.** **M**, deps U13 (**MET — U13 closed 2026-08-10, `a7f36fd`**) **and U27** (created 2026-08-11
+— U14's middleware design is inert without it; see that entry). **Report-Only first.**
+**U14 additionally inherits U27's liveness obligation:** its E2E must state that the
+`Content-Security-Policy-Report-Only` assertion doubles as the proof that the middleware executed.
 **U14 ALSO INHERITS N-29 BY OWNER RULING (2026-08-10):** the E2E CI stage, its GATE D1 update to §5's
 declared chain in the same commit, and U13's `security-headers.spec.ts` in that stage's run set. U14
 cannot close without discharging N-29 or re-deferring it explicitly with a named owner. The dependency
@@ -1154,7 +1254,7 @@ Group A   U1 → U2                                   [error contract]      GATE
 Group B   U3 → U4 → U5 → U6 → U7                    [paid-API control]    GATE B1
 Group C   U8 → U9 → U10 → ~~U11~~ · U12→D            [persistence]         GATE C1 discharged 2026-08-10
                                                                           remainder → U26
-Group D   U13 → U14 · U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25        GATE D1, D2
+Group D   U13 → U27 → U14 · U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25  GATE D1, D2
 Group E   U21 · U22 · U23                           [cuttable]
 ```
 **A precedes B** because U4/U5/U6 all add `catch` blocks under `src/lib/**` and U2's guard is what must see
@@ -1197,7 +1297,7 @@ ruling, and cutting a ruling is not a sizing decision — 2026-08-08).
 **Trust boundaries touched:** U3, U4, U5, U7, U9, U10, U12, U14, U16, **U17 (irreversible deletion)**,
 **U25** (it moves every paid call to a different provider and re-defines what the paid-route guard detects).
 
-**Declared behaviour changes — Phase 1 had two and pre-declared both; this phase has ~~five~~ six:**
+**Declared behaviour changes — Phase 1 had two and pre-declared both; this phase has ~~five~~ ~~six~~ eight:**
 1. **U1** — bare `Error("… not configured")` from an unconverted source: 503 → 500.
 2. **U2** — advisor tool-failure text changes → model input changes → answer prose can change.
 3. **U12** — `Item not found.` → one shared message.
@@ -1215,6 +1315,16 @@ ruling, and cutting a ruling is not a sizing decision — 2026-08-08).
    both are to be stopped on, not absorbed:** the PDF content block (**N-19 / decision 7B**, which would
    turn a working 200 into a 502) and an unreported `usage` object (which moves no response byte, only a
    ledger entry — and is therefore the easier of the two to ship without noticing).
+7. **U27** *(added 2026-08-11 when the unit was created)* — **the Supabase session refresh begins running.**
+   For a signed-in user, navigation now persists a refreshed auth cookie instead of computing and silently
+   discarding it, and each matched navigation adds one `supabase.auth.getUser()` round-trip.
+   **The unusual one: this change activates code that already existed and never ran** — so the risk is not
+   in the diff, it is in fourteen months of behaviour that was never exercised. No automated check in this
+   repository can see it (the 64 non-live specs touch none of these paths; the live half is
+   `BLOCKED(env)`), which is why U27 is gated on an owner-run smoke rather than a test.
+8. **U14** *(renumbered from #7 when U27 was created)* — a `Content-Security-Policy-Report-Only` header
+   appears on every matched response. Report-Only enforces nothing in a browser, but it is a response-byte
+   change and is declared as one.
 *Conditional:* **U4** adds a refusal that only manifests under concurrency; **U8** changes behaviour only
 under induced insert failure.
 

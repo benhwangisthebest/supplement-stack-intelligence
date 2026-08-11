@@ -120,7 +120,10 @@ export function isPureEngineFile(fileRel: string): boolean {
  * was governed by nothing at all and no rule could see it (closeout finding
  * C-11). Adding one must now be a conscious entry here, not a silent drop.
  */
-const EXEMPT_ROOT_FILES: Readonly<Record<string, string>> = {};
+const EXEMPT_ROOT_FILES: Readonly<Record<string, string>> = {
+  "src/middleware.ts":
+    "Next.js resolves middleware at this exact path and nowhere else in a project with a src/ directory, so it cannot be moved into a layer without ceasing to exist — measured in Phase 2 U27, where the same file at the repository root compiled to an empty middleware manifest and never ran. It is exempt from the layer rules but not from scrutiny: src/architecture/middleware-scope.test.ts pins it to this path, forbids a shadow copy at the root, and requires it to delegate rather than hold logic.",
+};
 
 const EXEMPT_LAYERS: Readonly<Record<string, string>> = {
   "src/app":
