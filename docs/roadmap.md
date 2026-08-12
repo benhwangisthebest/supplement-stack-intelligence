@@ -369,7 +369,7 @@ the dev seed script.
 - [ ] Client disconnect provably terminates the advisor loop.
 - [ ] `replaceFlags` atomicity test passes under induced insert failure.
 - [ ] ID manifest exists; removing a published ID fails CI.
-- [ ] **[REWORDED 2026-08-08]** `db:migrate` exists, and **CI proves the migration set is coherent** by
+- [x] **[REWORDED 2026-08-08 · MET 2026-08-12 by U15]** `db:migrate` exists, and **CI proves the migration set is coherent** by
       applying every file in `supabase/migrations/` in order to a **throwaway Postgres** and failing on the
       first error. ~~`db:migrate` exists; deployed schema matches migrations, verified in CI.~~
       *Why:* verifying against the **deployed** database needs live credentials in CI, which the 2026-08-08
@@ -384,6 +384,10 @@ the dev seed script.
       > and the dated record** (`docs/05-qa/2026-08-12-deployed-schema-record.md`, owner-run) that
       > discharges the stated residue. A criterion whose CI half has never been green is a claim about a
       > YAML file — U14's N-29 lesson, applied here rather than re-learned.
+      > **[2026-08-12] BOTH CONDITIONS NOW MET, SO THE BOX IS TICKED.** The coherence step is green on runs
+      > `31560224886` and `31560792889` (1–2 s; the Postgres service container adds ~20–24 s), and the
+      > owner-run record `docs/05-qa/2026-08-12-deployed-schema-record.md` is complete — **all three parts
+      > PASS**, discharging the live-database residue and, in the same sitting, **OP-3** and **N-28**.
 - [ ] Security headers present, verified by a response-header test.
 - [ ] **[REWORDED 2026-08-08]** A user can **export their data and delete all of it across the 12 tables**,
       with the **surviving auth identity stated in the response**.

@@ -1,6 +1,8 @@
 # Consolidated owner sitting — 2026-08-12
 
-**STATUS: PROCEDURE WRITTEN, NOT YET RUN.**
+**STATUS: RUN 2026-08-12. ALL THREE PARTS PASS.**
+U15's deployed-schema record and prelude anchors are complete (Option B condition (c) discharged);
+**OP-3 closed**, **N-28 closed**, **N-27 (i) closed**.
 
 Three open obligations that all need the deployed database, gathered into **one sitting** so they clear
 together rather than in three separate visits:
@@ -17,11 +19,20 @@ register rows from §4.6 that have been waiting for a sitting with two backends.
 
 | | |
 |---|---|
-| **Date** | *(fill in at run)* |
+| **Date** | **2026-08-12** |
 | **Run by** | repository owner |
-| **Instance** | deployed Supabase |
-| **Repo state** | `main` @ *(fill in)* |
+| **Instance** | deployed Supabase — server **PostgreSQL 17.6**, reached through the **session pooler on 5432** |
+| **Client** | `psql` **18.0** (Parts 2–3); Supabase SQL editor (Part 1) |
+| **Repo state** | `main` @ **`b8b9970`** *(the U15 branch tip at the time of the sitting; `main` itself was at `c266c4b`)* |
 | **Migrations in the set** | `0001` … `0009` (9 files) |
+| **CI cross-reference** | coherence step green on runs **`31560224886`** and **`31560792889`** |
+
+> **Server 17.6, and CI proves the set against `postgres:16`.** Recorded rather than glossed: the coherence
+> step pins a major version so its result cannot shift underneath the project, and the deployed server is
+> one major ahead. Every object in this set is ordinary SQL with no version-gated syntax, and Part 1 below
+> confirms the deployed schema matches what the set produces — but **the two are not the same Postgres**,
+> and if that ever matters it will matter here first. Bumping the CI image is a deliberate act for a future
+> unit, not a silent drift.
 
 ---
 
@@ -360,34 +371,102 @@ denied and every turn 500s **after the paid call has been made**.
 
 | Check | Expected | Observed | Verdict |
 |---|---|---|---|
-| 1.2 A `auth.users.id` is `uuid` | one row, `id \| uuid` | | |
-| 1.2 B `auth.uid()` returns `uuid` | one row | | |
-| 1.2 C three roles exist | 3 rows | | |
-| 1.2 D real `auth.users` column count | > 1, recorded | | *(measurement)* |
-| 1.3 A table inventory | the 13 named above | | |
-| 1.3 B RLS everywhere | zero rows | | |
-| 1.3 C counter tables SELECT-only | 2 rows, both `SELECT` | | |
-| 1.3 D no omitted-column dependency | no output | | |
+| 1.2 A `auth.users.id` is `uuid` | one row, `id \| uuid` | `id \| uuid` | **PASS** |
+| 1.2 B `auth.uid()` returns `uuid` | one row | `uid \| uuid` | **PASS** |
+| 1.2 C three roles exist | 3 rows | `anon`, `authenticated`, `service_role` | **PASS** |
+| 1.2 D real `auth.users` column count | > 1, recorded | **35** | *(measurement — see below)* |
+| 1.3 A table inventory | the 13 named above | `count(*) = 13` | **PASS** — see the near-miss below |
+| 1.3 B RLS everywhere | zero rows | zero rows | **PASS** |
+| 1.3 C counter tables SELECT-only | 2 rows, both `SELECT` | `read_own_advisor_usage` (SELECT), `read_own_api_rate_limits` (SELECT) | **PASS** |
+| 1.3 D no omitted-column dependency | no output | no output | **PASS** |
+
+**1.2 D — the double reproduces 1 of 35 columns.** That ratio is the point of recording the figure. It is
+sound *only* because 1.3 D confirms no migration references any column but `id`, and the two checks are
+therefore a pair: the day a migration reads `auth.users.email`, 1.3 D goes non-empty and the double needs
+extending. **Neither check is meaningful without the other.**
+
+> ### NEAR-MISS WORTH MORE THAN THE CHECK THAT CAUGHT IT
+>
+> **1.3 A initially *displayed* 12 tables.** The SQL editor's list view cut `advisor_actions` off the top.
+> The owner did not accept the display: `count(*)` returned **13**, and a direct probe
+> (`select … where tablename = 'advisor_actions'`) returned **1 row**. A rendering artifact, not a schema
+> finding — recorded because of what it nearly did.
+>
+> **The Phase 2 exit criterion for U16/U17 says "all 12 tables".** A reading of 12 would have matched the
+> criterion exactly, "confirmed" a number nobody had ever enumerated, and closed the open question U15
+> flagged — in the wrong direction, with a screenshot as evidence. **The two errors would have cancelled,
+> and the cancellation would have looked like agreement.**
+>
+> The general form, and the reason this sits in the record rather than in a footnote: **a check that agrees
+> with a number you already expected deserves more scrutiny than one that disagrees.** What saved it was
+> asking the database to count rather than counting the rows on screen.
 
 ### Part 2 — OP-3, concurrency
 
+Fixture: step 1 found **no row**, so `used = 0`; `AMOUNT = 1000`, `BUDGET = 1000` — room for exactly one.
+
 | Step | Expected | Observed | Verdict |
 |---|---|---|---|
-| 2 A reserves | `1000` | | |
-| 3 B blocks | **hangs** — does not return | | |
-| 4 after A commits, B returns | **`0`** (refused) | | |
-| 5 ledger restored to step-1 values | equal | | |
+| 2 A reserves | `1000` | `a_granted = 1000`, transaction held open | **PASS** |
+| 3 B blocks | **hangs** — does not return | **HUNG** — observed frozen, no return | **PASS** |
+| 4 after A commits, B returns | **`0`** (refused) | released **immediately** on A's commit, returned `b_granted = 0` | **PASS** |
+| 5 ledger restored to step-1 values | equal | `settle_advisor_tokens(1000, 0, 0)` committed; read returned `0 \| 0` | **PASS** |
+
+**OP-3 IS DISCHARGED, and the pass is the two-part one the procedure was rewritten to get.** B blocking
+proves Postgres took the row lock; B returning **`0`** after A's commit proves it **re-evaluated the budget
+predicate against A's committed state** rather than the snapshot it began with. The second half is the one
+that stops two concurrent turns each spending the last of the budget, and it is the half a rollback-based
+procedure could not have shown. Both were **directly observed** by the owner, not inferred from a final
+state.
+
+> **HONEST ARTIFACT — restoration is value-level, not existence-level.** Step 1 found **no row**;
+> A's committed reservation **created one**, and `settle(1000, 0, 0)` returned it to `0 | 0` rather than
+> deleting it. So a zero-valued row now exists where none did before.
+>
+> **This is provably benign, not assumed benign.** `getRemainingBudget` computes
+> `used = row ? row.input_tokens + row.output_tokens : 0` ([`repo.ts:180`](../../src/lib/advisor/repo.ts)),
+> so a `0 | 0` row and an absent row yield the identical result. And `reserve_advisor_tokens` opens with
+> `insert … on conflict do nothing`, so a `0 | 0` row is the *normal* state after any user's first
+> reservation — the sitting produced the same row the next real advisor turn would have.
+>
+> Recorded anyway, because "the ledger was restored" and "the database was restored" are different claims,
+> and only the first one is true.
 
 ### Part 3 — N-28 re-read, and N-27 (i)
 
+Before: `0 | 0`. Statements run **one at a time**, each read its own statement.
+
 | Statement | Expected | Observed | Verdict |
 |---|---|---|---|
-| 2 reserve | `1000` | | |
-| 3 read after reserve | `before_input + 1000` | | |
-| 5 read after settle | `before_input + 300`, `before_output + 50` | | |
-| after rollback | equals `before` | | |
+| 2 reserve | `1000` | `1000` | **PASS** |
+| 3 read after reserve | `before_input + 1000` = `1000 \| 0` | `1000 \| 0` | **PASS — N-28 does not recur** |
+| 5 read after settle | `300 \| 50` | `300 \| 50` | **PASS — N-27 (i) discharged** |
+| after rollback | equals `before` | `0 \| 0` | **PASS** |
 
-**Overall:** *(pending)*
+**N-28 IS CLOSED.** Statement 3 saw the write. The stale-snapshot reading that produced the original defect
+— `4345` where `4645` was predicted — was an artifact of putting the call and the reads in **one** target
+list, and it does not recur when each read is its own statement. **The instrument was broken, not the
+ledger**, which is what N-28 claimed and this confirms.
+
+**N-27 (i) IS CLOSED — `settle_advisor_tokens` has now been executed against the deployed database for the
+first time.** `300 | 50` matches the derivation from the function body exactly:
+`input = greatest(0, 0 + 1000 − 1000 + 300) = 300`, `output = 0 + 50 = 50`. Until this statement, every
+claim about the half of the ledger that can corrupt by *under*-charging rested on `SQL_FUNCTION_REGISTRY`
+reading it as text.
+
+**OVERALL: PASS ON ALL THREE PARTS.** U15's deployed-schema record and prelude anchors are complete
+(Option B condition (c) discharged); **OP-3 closed**; **N-28 closed**; **N-27 (i)** closed as collateral.
+Nothing unexpected arose that was not recorded above.
+
+### Sitting notes — procedure-level, no repo impact
+
+* **`psql` via bash needs the connection URI in SINGLE quotes.** The password contained `!`, and an
+  unquoted or double-quoted URI triggers **history expansion**, mangling the credential before `psql` sees
+  it. The failure looks like an authentication error rather than a shell problem. Worth carrying into the
+  next sitting that uses a URI.
+* **Connection was through the session pooler on port 5432**, which matters for Part 2 specifically: a
+  transaction-mode pooler does not hold a session across statements and would have broken the two-terminal
+  contention test. Session mode is required for OP-3, not merely convenient.
 
 **Anything unexpected is a finding, not a retry.** The value of this record is that it says what the
 deployed database *is*, not what it was supposed to be.
