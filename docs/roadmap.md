@@ -376,6 +376,14 @@ the dev seed script.
       secrets ruling refuses for a public repository — so the original clause was unmeetable, not merely
       hard. **Residue stated, not dropped:** matching the *live* database remains a **dated manual
       record**, exactly like the live-E2E baseline.
+      > **[2026-08-12] HALF DELIVERED BY U15, AND DELIBERATELY NOT TICKED YET.** `db:migrate` exists and
+      > CI proves the set coherent — every file applied in order to a stock `postgres:16` behind a
+      > labelled test double for Supabase's `auth` schema, which the set cannot apply without (10 FKs to
+      > `auth.users`, 43 `auth.uid()` calls; the criterion's own instrument did not exist — **N-39**).
+      > **The box stays unticked until two things exist: a green CI run of the new step on a pushed SHA,
+      > and the dated record** (`docs/05-qa/2026-08-12-deployed-schema-record.md`, owner-run) that
+      > discharges the stated residue. A criterion whose CI half has never been green is a claim about a
+      > YAML file — U14's N-29 lesson, applied here rather than re-learned.
 - [ ] Security headers present, verified by a response-header test.
 - [ ] **[REWORDED 2026-08-08]** A user can **export their data and delete all of it across the 12 tables**,
       with the **surviving auth identity stated in the response**.

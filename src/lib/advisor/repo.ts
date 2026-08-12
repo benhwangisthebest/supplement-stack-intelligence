@@ -262,40 +262,25 @@ export async function settleAdvisorUsage(
   if (error) throw error;
 }
 
-/**
- * Add a turn's usage to today's ledger (upsert + accumulate). SC-8.
+/*
+ * `recordUsage` USED TO LIVE HERE. Deleted by Phase 2 U15, closing N-13.
  *
- * **[Phase 2 U4] No longer on the request path, and it can no longer work.**
- * 0008 removed the user's INSERT/UPDATE/DELETE on `advisor_usage`, so this
- * direct upsert is denied for an end-user client. It is retained only because
+ * It was a direct select-then-upsert against `advisor_usage`. Migration 0008
+ * removed the end user's INSERT/UPDATE/DELETE on that table, so it could no
+ * longer work for any anon-key client, and U4 moved the request path onto
+ * `reserveAdvisorTokens` / `settleAdvisorUsage`.
+ *
+ * U4 kept it, and the reason it gave was: *"retained only because
  * `npm run db:seed` runs under the service-role key, which bypasses RLS — and
- * deleting it would be a change to the seed path under U4's name. The advisor
- * route uses `reserveAdvisorTokens` / `settleAdvisorUsage`.
+ * deleting it would be a change to the seed path under U4's name."*
  *
- * @deprecated for request-path use; see N-2 and 0008.
+ * THAT REASON WAS NOT TRUE — not stale, false when written. `src/lib/db/seed.ts`
+ * has never referenced `advisor_usage`, and at deletion the function had **zero
+ * callers anywhere in `src/` outside its own test file**. It was never seed-path
+ * code, so the §8.1 argument for leaving it alone did not apply to it.
+ *
+ * Recorded rather than quietly removed because the lesson is the transferable
+ * part: a `@deprecated` tag plus a plausible retention story reads exactly like
+ * a considered decision, and nothing in the toolchain checks whether the story
+ * is true. The seed path was one grep away.
  */
-export async function recordUsage(
-  supabase: SupabaseClient,
-  userId: string,
-  usage: { inputTokens: number; outputTokens: number },
-): Promise<void> {
-  const date = today();
-  const { data, error } = await supabase
-    .from("advisor_usage")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("usage_date", date)
-    .maybeSingle();
-  if (error) throw error;
-  const prev = data as UsageRow | null;
-  const next = {
-    user_id: userId,
-    usage_date: date,
-    input_tokens: (prev?.input_tokens ?? 0) + usage.inputTokens,
-    output_tokens: (prev?.output_tokens ?? 0) + usage.outputTokens,
-  };
-  const { error: upsertError } = await supabase
-    .from("advisor_usage")
-    .upsert(next, { onConflict: "user_id,usage_date" });
-  if (upsertError) throw upsertError;
-}

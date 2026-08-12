@@ -206,8 +206,19 @@ passing, a clean typecheck, and a successful build.
 
 Measured baseline (re-measured **2026-08-06 at Phase 1 close**): typecheck clean · **859/859 unit tests
 across 73 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
-`vitest run` → **coverage thresholds** → `next build` → **rendering determinism** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on
+`vitest run` → **coverage thresholds** → **migration coherence** → `next build` → **rendering determinism** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on
 `workflow_dispatch`). The coverage step was added by Phase 1 U13, between `vitest run` and `next build`; the other four are unchanged.
+**The migration-coherence step was added by Phase 2 U15**, delivering the reworded Phase 2 exit criterion.
+Nothing in this repository had ever *applied* a migration — `RLS_COVERAGE` and `SQL_FUNCTION_REGISTRY` read
+the files as **text**, so a migration that parses and then fails on contact with Postgres was green
+everywhere until it reached the only real database this project has, which is production. The step applies
+every file in `supabase/migrations/` in order to a stock `postgres:16` service container behind an
+explicit, checked-in **test double** for Supabase's `auth` schema (`supabase/ci/auth-prelude.sql` — the set
+cannot apply to a bare Postgres: 10 FKs reference `auth.users`, 43 policies call `auth.uid()`). It then
+interrogates the catalog, which is where **N-16** closes: the counter tables must be SELECT-only per
+`pg_policies.cmd` — the command Postgres computed, not the one the SQL declares. **What it does not prove
+is that the deployed database matches**; CI holds no credentials by design (P-03), so that residue is a
+dated manual record under `docs/05-qa/`.
 **The rendering-determinism step was added by Phase 2 U28, discharging N-38** — `getUser()` used to
 short-circuit before `cookies()` when Supabase was unconfigured, so a clean-env build prerendered pages a
 credentialed build renders per request, and **CI had been building a materially different app from

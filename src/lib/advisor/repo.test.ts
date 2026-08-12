@@ -10,7 +10,6 @@ import {
   getMessages,
   getRemainingBudget,
   listConversations,
-  recordUsage,
   reserveAdvisorTokens,
   settleAdvisorUsage,
 } from "./repo";
@@ -77,23 +76,15 @@ describe("getRemainingBudget", () => {
   });
 });
 
-describe("recordUsage", () => {
-  it("accumulates onto an existing row", async () => {
-    const { client, upserts } = fakeSupabase({ input_tokens: 100, output_tokens: 50 });
-    await recordUsage(client, "u1", { inputTokens: 10, outputTokens: 5 });
-    expect(upserts[0]).toMatchObject({
-      user_id: "u1",
-      input_tokens: 110,
-      output_tokens: 55,
-    });
-  });
-
-  it("starts from zero when no row exists", async () => {
-    const { client, upserts } = fakeSupabase(null);
-    await recordUsage(client, "u1", { inputTokens: 8, outputTokens: 4 });
-    expect(upserts[0]).toMatchObject({ input_tokens: 8, output_tokens: 4 });
-  });
-});
+// `recordUsage`'s two tests were deleted with the function itself by Phase 2
+// U15 (finding N-13). They were its ONLY callers — which is what established
+// that U4's stated reason for keeping it ("the seed path uses it") was false:
+// `src/lib/db/seed.ts` has never touched `advisor_usage`.
+//
+// The behaviour they covered is not lost. Accumulation is now the RPC's job and
+// is proven below by the race-2 test, against a stateful ledger rather than an
+// upsert spy — a strictly stronger check, because it also covers the
+// concurrency the old select-then-upsert got wrong.
 
 // ----------------------------------------------- Phase 2 U4 (finding N-2) ---
 

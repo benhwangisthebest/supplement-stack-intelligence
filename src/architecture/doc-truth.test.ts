@@ -151,6 +151,9 @@ const DECLARED_STEP_COMMANDS: Record<string, string> = {
   typecheck: "npm run typecheck",
   "vitest run": "npm test",
   "coverage thresholds": "npm run test:coverage",
+  // Phase 2 U15 — applies the migration set to a real Postgres. Sits before the
+  // build half so the steps above stay byte-identical (U13's additive shape).
+  "migration coherence": "npm run verify:migrations",
   "next build": "npm run build",
   // Phase 2 U28 — the build-output guard that discharges N-38.
   "rendering determinism": "npm run verify:rendering",
@@ -354,6 +357,9 @@ describe("DOC_TRUTH — CLAUDE.md §5's CI claim vs the workflow", () => {
     // U28: §5 says "rendering determinism"; CI runs an npm script. Bind it to
     // the real file so the label cannot point at a renamed or gutted script.
     expect(pkg.scripts["verify:rendering"]).toContain("verify-rendering");
+    // U15: §5 says "migration coherence"; CI runs an npm script. Same binding,
+    // same reason — the label must not survive the script being renamed away.
+    expect(pkg.scripts["verify:migrations"]).toContain("verify-migrations");
     // U14: §5 says "E2E (non-live)"; CI runs `npm run test:e2e`. Without this,
     // the mapping could point at a script that no longer runs Playwright.
     expect(pkg.scripts["test:e2e"]).toContain("playwright");

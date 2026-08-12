@@ -72,6 +72,36 @@ jobs:
 
     env:
       NEXT_TELEMETRY_DISABLED: "1"
+      # Standard libpq variables, read by `psql` inside verify-migrations.mjs.
+      # NOT a secret: this is a throwaway container that exists for one job and
+      # holds no data. P-03 forbids real credentials here and none are used.
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
+    # Phase 2 U15. A real Postgres for the migration-coherence step.
+    #
+    # postgres:16 — pinned to a major version rather than `latest`, so the
+    # coherence result cannot change under us when a new major ships. Stock
+    # Postgres, deliberately NOT a Supabase image: the migration set's
+    # dependency on the `auth` schema is supplied by an explicit, checked-in
+    # test double (supabase/ci/auth-prelude.sql), so what CI relies on is
+    # visible in the repository instead of baked into an image.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        # Without this the job can reach the step before the server accepts
+        # connections, and the failure would look like a broken migration.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout
@@ -119,6 +149,35 @@ jobs:
       # margin, are documented in vitest.config.ts beside the numbers.
       - name: Coverage thresholds
         run: npm run test:coverage
+
+      # Phase 2 U15 - the reworded Phase 2 exit criterion (GATE D1: CLAUDE.md
+      # §5's declared chain is updated in the SAME commit as this step).
+      #
+      # WHY IT EXISTS. Nothing in this repository had ever APPLIED a migration.
+      # `rls-coverage.test.ts` and `SQL_FUNCTION_REGISTRY` read the files as
+      # TEXT, so a migration that parses correctly and fails on contact with
+      # Postgres was green everywhere until it reached a real database - and
+      # the only real database this project has is production.
+      #
+      # WHY IT CAN RUN AT ALL. The migration set cannot apply to a bare
+      # Postgres: 10 FKs reference `auth.users`, 43 policies call `auth.uid()`,
+      # and grants target `authenticated`/`anon`. Measured, not assumed - it
+      # fails at 0001_init.sql line 7. `supabase/ci/auth-prelude.sql` supplies
+      # exactly those four things and is labelled a TEST DOUBLE; its header
+      # states what it is not.
+      #
+      # WHAT A GREEN RUN PROVES: the set is INTERNALLY coherent, and the
+      # counter tables end up SELECT-only (finding N-16, asserted against
+      # `pg_policies.cmd` - the command Postgres computed, not the command the
+      # SQL text declares).
+      # WHAT IT DOES NOT PROVE: that the DEPLOYED database matches. CI holds no
+      # credentials by design (P-03), so that residue is a dated manual record
+      # under docs/05-qa/, exactly as the criterion itself states.
+      #
+      # Placed here, before the build half, so the existing step sequence above
+      # stays byte-identical - U13's additive precedent.
+      - name: Migration coherence
+        run: npm run verify:migrations
 
       - name: Production build
         run: npm run build
