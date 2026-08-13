@@ -166,8 +166,15 @@ behaviour this project's review discipline exists to prevent. They land when thi
 - **FU-17 → re-scope, not close.** Its *owner* question resolved (U8's nullability half shipped,
   `schema-type-drift.test.ts` "agrees on nullability, column by column"), but its *finding* — dead
   defensive coalescing at `mappers.ts:40-42` — is still live. Now unowned and still true.
-- **FU-13 → unowned.** Its candidate owner U14 shipped without binding the §10.1 400-exemption list, which
-  remains prose. **U16 is the trigger to make it executable** (§5).
+- ~~**FU-13 → unowned.** Its candidate owner U14 shipped without binding the §10.1 400-exemption list, which
+  remains prose.~~ **[2026-08-13] CLOSED BY U16 — the list is executable.** `ROUTE_CONTRACT` holds the nine
+  entries with their original reasons plus U16's own, and binds them as a **set equality** against the
+  measured non-validating routes, so the list cannot rot in either direction. It caught a live error on its
+  first run: this unit's own first transcription of the list had **four of nine entries wrong**, written
+  from memory rather than re-derived — which is the failure mode prose had no way to report. Residual
+  disclosed in the guard header: the validating/non-validating split is a `.parse(` literal match (N-14's
+  class), so a hand-rolled validator surfaces as a **false exemption entry someone had to justify** rather
+  than as a silent gap.
 
 > **[2026-08-08] FU-7 → CLOSED by U2** (`4d3a060`). `error-disclosure.test.ts` gained a third inventory,
 > `LIB_MODULES` over `src/lib/**` (81 non-test modules), so a helper reading `err.message` one import away
@@ -259,6 +266,8 @@ a commit message keeps pointing at the same finding.
 | **N-37** | **U14, 2026-08-11 — authored in corrected form by U28** | **`next build` reports `/library/[slug]` as `● SSG` with 15 prerendered paths while emitting ZERO HTML for it.** The build summary — the artifact every reader consults to learn how a page is served — describes something the build did not do. Two runtime observations contradict the label: the served page carries a **per-request nonce** matching that response's CSP header, which a build-time artifact cannot contain, and every response carries `Cache-Control: private, no-cache, no-store` | Credentialed build route table (`● /library/[slug]`, 15 paths) vs `find .next/server/app -name '*.html'` = **0**, and `curl -I` against a production `next start`. **PROVENANCE NOTE, because the first version of this row got it wrong:** it originally cited a three-build A/B across middleware states as proof the behaviour predates U27 and U14. That A/B was **credentialed throughout** — it varied the middleware and held the environment fixed, when the environment was the variable that mattered (**N-38**). The conclusion happens to survive, but it was not established by the evidence cited. The corrected evidence is the both-envs table in U28's entry | **OPEN, NARROWED BY U28.** **U28 answers half of it:** the reason no prerender is served is now known and deliberate — `getUser()` calls `cookies()` from the root layout, so every page is request-dependent, and after U28 that holds in **both** environments by construction rather than by accident. **What remains open is the label itself.** `generateStaticParams` still enumerates 15 slugs that are never prerendered, so the build spends time producing a plan it then discards, and the summary reports a mode the server does not use. **Why it is registered rather than chased:** it breaks nothing, and diagnosing it means understanding Next's static-optimisation bail-out reporting — work with no bearing on whether U14's policy is correct. **Why it must not vanish:** believing a page is static when it is dynamic wastes build time and states a false performance claim; believing it is dynamic when it is cached is a correctness risk for anything user-specific. **Do NOT "fix" it by deleting `generateStaticParams`** without first establishing whether the Library should be static — that would resolve a label mismatch by discarding a capability, which is not an answer. **Proposed owner: a future unit or standalone investigation** |
 | **N-38** | **U14 CI failure, 2026-08-11** | **The app's rendering mode depended on whether Supabase env vars were present at BUILD time, so CI had been building a materially different app from production for as long as CI has existed.** `getUser()` returned `null` on `!isSupabaseConfigured()` **before** reaching `createClient()`, and `createClient()` was the only caller of `cookies()` — the API that opts a route out of static generation. `TopNav` calls `getUser()` from the root layout on every page. Measured on one commit, both ways: credentialed emits **0** prerendered page `.html`; clean-env emits **20** | CI run `31465731188` — U14's E2E reported **72 `script-src-elem` violations** and `no nonce in the rendered HTML`; reproduced locally in a clean clone (header nonce present, **0** nonces in the HTML), against **15** in the credentialed build of the same commit | **CLOSED BY U28, 2026-08-11** — the unit this finding created. Fixed by making the `cookies()` marker unconditional; guarded source-level by `RENDERING_DETERMINISM` and at build level by `npm run verify:rendering`, **which runs in CI — so the fix is verified in exactly the environment that exposed the defect.** **The class insight, and the reason this row outlives its fix: a green CI run is a claim about the app CI BUILT, and nothing was checking that this was the app production runs.** Every CI result before U28 carried that unstated caveat. It surfaced only because U14 shipped the first artifact — a per-request nonce — that a build-time prerender physically cannot contain; **a defect that needs an unrelated unit's accident to become visible is one the guards were never going to find.** **A second lesson, paid for twice:** U14's first measurement reported "zero violations" because it ran with `.env.local` present, which forced dynamic rendering and hid the defect; the clean-env simulation that would have caught it had been run against U27's code *before* CSP existed and was never re-run after. **Hence the both-envs discipline U28 institutes: any measurement whose result could depend on build-time configuration must be taken in BOTH environments, and the two must agree** |
 | **N-39** | **U15 orientation, 2026-08-12** | **A reworded exit criterion named an instrument that does not exist.** Decision 5 replaced *"deployed schema matches migrations, verified in CI"* — unmeetable, it needed live credentials — with *"applying every file in `supabase/migrations/` in order to a **throwaway Postgres**"*. **The migration set cannot apply to a throwaway Postgres.** It depends on objects Supabase's GoTrue creates: **10** FKs to `auth.users`, **43** `auth.uid()` calls, **10** references to the `authenticated`/`anon` roles | Measured before U15 wrote any code: a stock `postgres:16` fails at `0001_init.sql` line 7. The four dependencies are enumerated in `supabase/ci/auth-prelude.sql`'s header | **CLOSED BY U15 the day it was raised** — the instrument was buildable, and building it (a labelled test double, ruled Option B) is most of that unit. **The row exists for the class, not the instance: decision 5 made the criterion measurable IN PRINCIPLE without checking that the thing it named could be obtained — which is the same defect decision 5 was written to fix, one level down.** Phase 1's criterion-1 defect, caught before the unit started, then recurring inside the fix for it. **The general form: rewording a criterion to be measurable is not finished until someone has taken the measurement once.** Cheap here — an afternoon and a `brew install`. It would not have been cheap discovered as a red CI stage, which is exactly where U14 found its equivalent |
+| **N-40** | **U16, 2026-08-13** | **Nothing prevents an error message carrying health data into the logs.** `respond.ts`'s `internalError` records `err.message`, `err.stack` and `err.cause` verbatim to `console.error`. Every route funnels failures through it, including `/api/account/export`, whose payload is the user's complete health record — medications, conditions, lab values, advisor transcripts. If any error raised on that path embeds row data in its message, §2.3 rule 15 is breached by the error contract rather than by the route | `src/lib/api/respond.ts` — the `detail` object built from `err.name/message/stack/cause`, then logged. U16's route test asserts the error path leaks nothing **for an error it throws itself**, which is not the same claim | **OPEN. Stated as STRUCTURAL, not as an observed leak** — no failure carrying row data has been seen, and asserting one would be fabricating an observation. What is established is that **nothing stands between such an error and the log**. **NOT fixed in U16, deliberately (§8.1):** `respond.ts` is a shared trust boundary on all **24** routes, changing what it records is §9.4 caller-enumeration work, and U1/U2 own that contract. **Proposed owner: the unit that next touches the error contract.** The question it must answer is not "does this leak today" but "what would make it impossible" — a redaction pass, a typed safe-detail contract, or a rule that health-bearing paths throw only errors they constructed |
+| **N-41** | **U16, 2026-08-13** | **The data export is unbounded in size.** `GET /api/account/export` assembles every row of twelve tables into one JSON response, with no pagination, streaming, or limit. A user with a long advisor history — `advisor_messages` is the realistic one — receives it all in a single buffered body | `src/lib/db/export-repo.ts`; the route returns `ok(data)` with no chunking. `checkins` and `side_effect_reports` are now read UNWINDOWED by design (a windowed export is silently incomplete — see U16's entry), which removes the only accidental bound that existed | **OPEN, REGISTERED NOT BUILT, by owner ruling at plan approval.** At seed scale this is a non-issue, and inventing a limit nobody asked for would trade a theoretical memory problem for a **certain correctness problem**: any cap makes the export quietly partial, which is the exact failure the unwindowed readers were added to prevent. **Whoever bounds this must keep the export total** — streaming (NDJSON, or a per-table chunked download) rather than truncation, and the `notIncluded[]` field is where any residual omission must be declared. **Proposed owner: a future unit, triggered by a measured payload, not by unease** |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -1254,11 +1263,125 @@ worth carrying forward:
 > probe for `advisor_actions` returned 1 row. **Two errors would have cancelled and looked like
 > agreement.** U16/U17 must enumerate the twelve **by name, from `pg_tables`, counted by the database**,
 > and state which table is excluded and why — not read a list off a screen.
+>
+> **[2026-08-13] ANSWERED BY U16, AND ENFORCED RATHER THAN WRITTEN DOWN.** The twelve are the nine tables
+> with a NOT NULL `user_id` plus the three owned through a parent; the thirteenth, `api_rate_limits`, is
+> excluded because migration 0009 states its `user_id` *"is not the key"* — it is keyed on an opaque
+> `bucket_key`, its owner column is the only nullable one of the thirteen, and a row may describe no user
+> at all. **`EXPORT_COVERAGE` derives that partition from the migrations on every run**, so a future table
+> is red until dispositioned in writing. **U17 inherits the answer and must not re-derive it by eye:** the
+> deletion half should consume the same partition, so export and deletion cannot disagree about what "the
+> user's data" means — two lists would be two chances to be wrong.
 
-**U16 · Data export.** *(roadmap 8, read half)* N `src/app/api/account/export/route.ts` + test. **M**, deps U9.
-Takes no input → **400-exempt**, so it joins the §10.1 list, which is **prose (FU-13)**. This unit is the
-trigger to make that list executable or to knowingly extend prose — it must not do so silently.
-§2.3 rule 15: the payload is health data and must not pass through any logging path. Assert it.
+**U16 · Data export.** *(roadmap 8, read half; half of a named exit criterion)* **M**, deps U9 (**MET —
+DONE 2026-08-10**).
+
+**DONE 2026-08-13, `<COMMIT1>`.** Baseline before: typecheck clean, **1186/96**, non-live E2E 70/30.
+After: **1218/99** (+32: `EXPORT_COVERAGE` 7, `ROUTE_CONTRACT` 10, route 6, `export-repo` 5, repo readers 4).
+
+**U15 STAMP ROW** *(standing disposition):*
+
+| U15 closeout | value |
+|---|---|
+| merged to `main` | **`a045e3f`** |
+| closeout run | **`31563080393`** — green, coherence step included |
+| post-merge `main` run | **`31563281454`** — green, required check satisfied on the merged SHA |
+
+---
+
+**THE TWELVE, ENUMERATED AND ARGUED FROM THE SCHEMA — the unit's first order of business.** The criterion
+says "all 12"; the schema has **13**; which twelve had never been written anywhere.
+
+* **Directly owned (9)** — `user_id uuid NOT NULL references auth.users(id)`: `user_profiles`, `stacks`,
+  `lab_panels`, `lab_markers`, `advisor_conversations`, `advisor_actions`, `advisor_usage`, `checkins`,
+  `side_effect_reports`.
+* **Transitively owned (3)**: `stack_items` → `stacks.user_id`, `evaluation_flags` → `stacks.user_id`,
+  `advisor_messages` → `advisor_conversations.user_id`. *(Independently corroborated: these are exactly
+  `REPO_SCOPING`'s three `EXEMPT_TABLES`, which were derived for a different reason entirely.)*
+
+9 + 3 = **12**. **The thirteenth, `api_rate_limits`, is excluded, and migration 0009 makes the argument
+itself** rather than leaving it to inference: *"`user_id` is kept ALONGSIDE it, nullable, purely so RLS can
+grant the SELECT — **it is not the key**"*. Three structural facts, none true of any of the twelve: the
+primary key is `(bucket_key, window_start)`; its `user_id` is **the only nullable ownership column among
+the thirteen**; and `bucket_key` is deliberately opaque so a future per-IP bucket needs no migration — so a
+row there may describe **no user at all**. It is a limiter's state about a bucket, not a fact about a
+person.
+
+**And the enumeration is enforced, not recorded.** `EXPORT_COVERAGE` derives the partition from the
+migrations — *every table = exported + excluded, nothing in both, nothing in neither* — so a table added by
+a future migration is red until someone decides in writing which side it is on. **"12" is pinned only as a
+snapshot of today's left-hand side, never as the rule.** After the near-miss at the U15 sitting, where a
+scrolled-off list view nearly confirmed the wrong number *because it matched the criterion*, a prose list
+was not a defensible instrument.
+
+**FU-13 CLOSED — §10.1 IS EXECUTABLE.** `ROUTE_CONTRACT` replaces the nine-file prose exemption list with a
+named list carrying every original reason, and asserts: every route has a test; every test asserts **401**;
+every test asserts a success status; every **input-validating** route asserts **400**; and the exemption
+list is **set-equal** to the non-validating routes, so it rots in neither direction. Measured before
+building: **23 routes, 14 validating, 9 exempt, 23/23 on 401 and success, 14/14 on 400** — the guard passes
+today, so the cost was the guard and not a cleanup.
+
+**The residual is disclosed in the guard's header, N-14 style, and accepted on stated terms.** The
+validating/non-validating split is `grep '.parse('` — a literal match. A hand-rolled validator is
+classified non-validating, lands in the exemption list, and **its written reason will be false**. That is a
+visible wrong thing that someone had to author, where prose's failure mode is silence. **It is an
+improvement, not a solution, and the header says so.**
+
+**§2.3 RULE 15 — asserted behaviourally, in two halves, because one was not enough.** Console spies over
+`log`/`error`/`warn`/`info`/`debug`, with real-shaped sentinels (`SENTINEL-WARFARIN-5MG`,
+`SENTINEL-TSH-8.4-MIU-L`) rather than generic markers — a `"x"` would pass a test a drug name fails.
+
+**A TRUNCATION TRAP FOUND WHILE COMPOSING, AND THE UNIT'S ONE FILE-LIST DEVIATION.** `listCheckins` and
+`listSideEffectReports` both default to a **90-day window**. An export built on them returns the last 90
+days and **looks complete** — the failure mode is silence, which is the worst shape for a "download all my
+data" feature. Fixed by adding `listAllCheckins` / `listAllSideEffectReports` (two repo functions and two
+tests beyond the approved list). **Expressing "all of it" as a large `days` argument was rejected: that is
+a lie shaped like a parameter**, and it leaves the window in place for anyone with a longer history. **M11**
+pins it — swapping a windowed reader back in is red.
+
+**SCOPE HONESTY IN THE ARTIFACT, per the rider.** The payload carries a `notIncluded[]` of
+`{what, where, why}`: the **auth identity row** (email and sign-in metadata live in `auth.users`, a schema
+this application does not own) and **rate-limiter state**. A user opening "an export of my data" should not
+have to diff the schema to learn what is not in it. Asserted by both the route test and
+`EXPORT_COVERAGE`.
+
+**RED EVIDENCE — eleven mutations, all executed.**
+
+| # | Mutation | Result |
+|---|---|---|
+| **M1** | Drop `checkins` from the export map | `EXPORT_COVERAGE` red — `expected [ 'checkins' ] to deeply equal []`, plus the 12-count snapshot |
+| **M2** ★ | A 14th user-owned table (`mood_journal`) in a scratch `0010` | red — `expected [ 'mood_journal' ]`. **Cleanup verified: `git status --short` byte-identical to the pre-mutation snapshot** |
+| **M3** | Export the excluded `api_rate_limits` | red both ways — *"both exported and listed as excluded"* **and** *"declares table(s) it never queried"* |
+| **M4** ★ | `console.log(payload)` in the route | red — `§2.3 rule 15 VIOLATION: the medication value … reached a logger` |
+| **M5** ★ | The logging call **one layer down**, inside `export-repo` | **GREEN on the first attempt — the guard was wrong. See below.** Red after correction |
+| **M6** | Break the 400 assertion in a validating route's test | `ROUTE_CONTRACT` red — names `checkins/route.ts` |
+| **M7** | A new non-validating route absent from the exemption list | red — *"no 400 test and no exemption entry"*, plus the missing-test-file assertion |
+| **M8** | Make an exempted route validate input, leaving it listed | red — *"exempted route(s) that now validate request input … the exemption is stale"* |
+| **M9** | Drop the export route's `unauthorized()` | route test red — `expected 500 to be 401` |
+| **M10** | Export a different user's id | red — `expected "spy" to be called with [ Anything, 'u1' ]`, got `"someone-else"` |
+| **M11** | Swap the windowed reader back into the export | red — *"exportUserData bounded a read"* |
+
+**M5 CAUGHT A FALSE CLAIM IN THIS UNIT'S OWN TEST HEADER, WHICH IS THE MOST USEFUL THING IT DID.**
+`route.test.ts` asserted that its console spy covered *"anywhere beneath the route, not merely in
+route.ts"*. **It does not.** The file mocks `@/lib/db/export-repo`, so the real repository never executes
+there — a `console.error` added inside `exportUserData` left it green. The claim was written in good faith
+and was false, and **only running the mutation revealed it; reading the file would not have.** Corrected by
+splitting the coverage and saying what each half sees: `route.test.ts` proves the **route** does not log
+what it received; `export-repo.test.ts` exercises the **real repository** against a stub client and proves
+it does not log what it read. Neither implies the other, and the headers now say so.
+**Second unit running: U15's M4 needed three forms of a guard, U16's M5 needed the coverage restructured.
+Both were guards that looked right and asserted nothing.**
+
+**ONE PROCESS ERROR WORTH RECORDING.** The first draft of `EXEMPT_NO_400` was **transcribed from memory
+rather than from §10.1** and got four of the nine entries wrong — it invented `library/[slug]` and
+`stacks/[id]` and omitted `side-effects` and `stacks/[id]/compare`. The guard caught it immediately, on
+first run, by set-equality against the measured non-validating set. **§10.1's own closing line says
+*"re-derive the 9 with the two commands above rather than trusting the table"*, and that instruction was
+not followed.** The guard now performs that re-derivation on every run, which is precisely the point of
+building it.
+
+**WHAT THIS UNIT DOES NOT CLOSE.** The exit criterion covers export **and deletion**; this is the read half
+only. It is not ticked. **GATE D2** governs U17 and is untouched here.
 
 **U17 · Data deletion.** *(roadmap 8, write half)* N `src/app/api/account/route.ts` (DELETE) + test. **M**,
 deps U9, U16. **Highest-risk new surface in the phase.**

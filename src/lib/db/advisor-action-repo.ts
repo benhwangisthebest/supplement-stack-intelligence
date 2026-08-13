@@ -107,6 +107,28 @@ export async function getActionsByBatch(
   return (data as ActionRow[]).map(toRecord);
 }
 
+/**
+ * Every action this user has ever recorded, oldest first.
+ *
+ * Added by Phase 2 U16 for the data export: the existing readers are
+ * `getActionsByBatch` (one undo batch) and `getAction` (one row), neither of
+ * which can answer "everything of mine". Filters on `user_id` explicitly rather
+ * than leaning on RLS — the belt-and-braces the repo layer applies everywhere,
+ * and what `REPO_SCOPING` requires of a table that has a `user_id` column.
+ */
+export async function listActionsByUser(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<AdvisorActionRecord[]> {
+  const { data, error } = await supabase
+    .from("advisor_actions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data as ActionRow[]).map(toRecord);
+}
+
 /** Fetch one action (RLS scopes it to the caller). */
 export async function getAction(
   supabase: SupabaseClient,

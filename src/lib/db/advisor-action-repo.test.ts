@@ -20,8 +20,7 @@ import {
   getActionsByBatch,
   markUndone,
   recordAction,
-  recordBatch,
-} from "./advisor-action-repo";
+  recordBatch, listActionsByUser } from "./advisor-action-repo";
 
 const actionRow = {
   id: "a1",
@@ -84,5 +83,17 @@ describe("advisor-action-repo — the functions that take NO owner, pinned as th
     const spy = querySpy({ data: [actionRow] });
     await getActionsByBatch(spy.client, "b1");
     expect(spy.filters()).toContainEqual(["batch_id", "b1"]);
+  });
+});
+
+describe("advisor-action-repo — the export reader (U16)", () => {
+  it("listActionsByUser filters by user_id", async () => {
+    // `getActionsByBatch` and `getAction` cannot answer "everything of mine",
+    // which is what an export needs. `advisor_actions` HAS a user_id column, so
+    // REPO_SCOPING requires the filter rather than leaving it to RLS.
+    const spy = querySpy({ data: [] });
+    await listActionsByUser(spy.client, "u1");
+    expect(spy.tables).toEqual(["advisor_actions"]);
+    expect(spy.filters()).toContainEqual(["user_id", "u1"]);
   });
 });

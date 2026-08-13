@@ -12,6 +12,7 @@ import {
   listConversations,
   reserveAdvisorTokens,
   settleAdvisorUsage,
+  listUsageRows,
 } from "./repo";
 
 describe("deriveTitle", () => {
@@ -314,5 +315,37 @@ describe("advisor repo — ownership pins (U9)", () => {
     await getRemainingBudget(spy.client, "u1", 1000);
     expect(spy.tables).toEqual(["advisor_usage"]);
     expect(spy.filters()).toContainEqual(["user_id", "u1"]);
+  });
+});
+
+describe("listUsageRows — the export reader (U16)", () => {
+  /**
+   * A local fake, not the shared `fakeSupabase` above: that one exists for
+   * `maybeSingle` and has no `order`, and widening it would change a helper 22
+   * other assertions depend on (§9.4).
+   */
+  function listClient(rows: unknown[]) {
+    const builder: Record<string, unknown> = {
+      then: (resolve: (v: unknown) => unknown) => resolve({ data: rows, error: null }),
+    };
+    for (const m of ["select", "eq", "order"]) builder[m] = () => builder;
+    return { from: () => builder } as unknown as SupabaseClient;
+  }
+
+  it("returns every daily row for the user, mapped", async () => {
+    // getRemainingBudget reads the same table but returns a COMPUTED number for
+    // today. An export needs the rows: the user's data is what was recorded,
+    // not a derived figure about one day of it.
+    const rows = await listUsageRows(
+      listClient([
+        { user_id: "u1", usage_date: "2026-08-01", input_tokens: 10, output_tokens: 5 },
+        { user_id: "u1", usage_date: "2026-08-02", input_tokens: 20, output_tokens: 7 },
+      ]),
+      "u1",
+    );
+    expect(rows).toEqual([
+      { usageDate: "2026-08-01", inputTokens: 10, outputTokens: 5 },
+      { usageDate: "2026-08-02", inputTokens: 20, outputTokens: 7 },
+    ]);
   });
 });

@@ -9,6 +9,28 @@ import type { CheckinRow } from "./types";
 const CHECKIN_WINDOW_DEFAULT = 90;
 
 /** Recent check-ins, newest first, bounded to a trailing window (days). */
+/**
+ * EVERY check-in this user has, oldest first — no window.
+ *
+ * Added by Phase 2 U16. `listCheckins` below defaults to a 90-DAY WINDOW, which
+ * is right for a dashboard and silently wrong for a data export: it would omit
+ * everything older than 90 days and the response would look complete. Expressing
+ * "all of it" as a large `days` argument would be a lie shaped like a parameter,
+ * so the export gets a reader that has no window to get wrong.
+ */
+export async function listAllCheckins(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<DailyCheckin[]> {
+  const { data, error } = await supabase
+    .from("checkins")
+    .select("*")
+    .eq("user_id", userId)
+    .order("checkin_date", { ascending: true });
+  if (error) throw error;
+  return (data as CheckinRow[]).map(toCheckin);
+}
+
 export async function listCheckins(
   supabase: SupabaseClient,
   userId: string,

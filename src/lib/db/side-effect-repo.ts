@@ -9,6 +9,26 @@ import type { SideEffectReportRow } from "./types";
 const WINDOW_DEFAULT = 90;
 
 /** Recent reports, newest first, bounded to a trailing window (days). */
+/**
+ * EVERY side-effect report this user has, oldest first — no window.
+ *
+ * Added by Phase 2 U16, same reasoning as `listAllCheckins`: the windowed
+ * reader below defaults to 90 days, which would make a data export quietly
+ * incomplete rather than visibly wrong.
+ */
+export async function listAllSideEffectReports(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<SideEffectReport[]> {
+  const { data, error } = await supabase
+    .from("side_effect_reports")
+    .select("*")
+    .eq("user_id", userId)
+    .order("report_date", { ascending: true });
+  if (error) throw error;
+  return (data as SideEffectReportRow[]).map(toSideEffectReport);
+}
+
 export async function listSideEffectReports(
   supabase: SupabaseClient,
   userId: string,

@@ -1,7 +1,7 @@
 // Ownership pins for `side-effect-repo` (Phase 2 U9).
 import { describe, expect, it } from "vitest";
 import { ownerBinding, querySpy } from "./__testing__/query-spy";
-import { listSideEffectReports, replaceReportsForDate } from "./side-effect-repo";
+import { listSideEffectReports, replaceReportsForDate, listAllSideEffectReports } from "./side-effect-repo";
 
 const reportRow = {
   id: "r1",
@@ -55,5 +55,18 @@ describe("side-effect-repo — every function binds the owner", () => {
     const spy = querySpy({ data: [] });
     expect(await replaceReportsForDate(spy.client, "u1", "2026-08-01", [])).toEqual([]);
     expect(spy.calls.some((c) => c.method === "insert")).toBe(false);
+  });
+});
+
+describe("side-effect-repo — the unwindowed reader for the data export (U16)", () => {
+  it("listAllSideEffectReports filters by user_id and applies NO window", async () => {
+    const spy = querySpy({ data: [] });
+    await listAllSideEffectReports(spy.client, "u1");
+    expect(spy.tables).toEqual(["side_effect_reports"]);
+    expect(spy.filters()).toContainEqual(["user_id", "u1"]);
+    expect(
+      spy.calls.some((c) => c.method === "gte" || c.method === "lte" || c.method === "limit"),
+      "an export reader must not bound its result",
+    ).toBe(false);
   });
 });

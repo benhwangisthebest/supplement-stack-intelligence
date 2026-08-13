@@ -262,6 +262,35 @@ export async function settleAdvisorUsage(
   if (error) throw error;
 }
 
+/**
+ * Every daily usage row for this user, oldest first.
+ *
+ * Added by Phase 2 U16 for the data export. `getRemainingBudget` above reads
+ * the same table but returns a COMPUTED number for today, which an export
+ * cannot use: the user's data is the rows, not a derived figure about one day.
+ *
+ * `advisor_usage` is one of the twelve user-owned tables. It is a counter, but
+ * it is a counter ABOUT A PERSON — keyed `(user_id, usage_date)` with a NOT NULL
+ * owner — which is precisely what distinguishes it from `api_rate_limits`, the
+ * thirteenth table and the one the export excludes.
+ */
+export async function listUsageRows(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<Array<{ usageDate: string; inputTokens: number; outputTokens: number }>> {
+  const { data, error } = await supabase
+    .from("advisor_usage")
+    .select("*")
+    .eq("user_id", userId)
+    .order("usage_date", { ascending: true });
+  if (error) throw error;
+  return (data as UsageRow[]).map((r) => ({
+    usageDate: r.usage_date,
+    inputTokens: r.input_tokens,
+    outputTokens: r.output_tokens,
+  }));
+}
+
 /*
  * `recordUsage` USED TO LIVE HERE. Deleted by Phase 2 U15, closing N-13.
  *
