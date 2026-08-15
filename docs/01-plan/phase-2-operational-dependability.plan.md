@@ -313,6 +313,7 @@ that "Phase 2 closed" cannot be read as "these were done".
 | **OP-3** ✅ **DISCHARGED 2026-08-12** — `docs/05-qa/2026-08-12-deployed-schema-record.md` Part 2. **Both halves observed directly, and the second is the one that mattered:** A reserved 1000 of a 1000 budget and held its transaction open; **B hung** — proving Postgres took the row lock, which no JS fake and no single-session run can show — and on A's commit **B released immediately and returned `0`**, proving it **re-evaluated the budget predicate against A's committed state** rather than its own starting snapshot. That second half is what stops two concurrent turns each spending the last of the budget, and a rollback-based procedure could not have demonstrated it. Ledger repaired with `settle_advisor_tokens(1000, 0, 0)` and verified back to `0 \| 0`; the residual zero-valued row is recorded and shown benign in the record. **Two procedure facts worth keeping: it cannot be run in the SQL editor at all, and it needs the pooler in SESSION mode** — transaction mode would have presented as "B didn't block", i.e. as OP-3 failing. ~~**OPEN, and explicitly NOT advanced by OP-2's discharge.**~~ OP-2 ran in **one** session, with both `reserve_advisor_tokens` calls inside a single transaction that then rolled back: no second backend ever contended for the row, so no lock and no serialisation was observed. "The reservation function was tested and capped correctly" is one paraphrase away from being read as this row, which is why the record says so in its own §4 | **Verify the reservation is atomic under real concurrency.** U4's proof is a stateful fake, which establishes that the TypeScript caller has no read-then-write window — not that Postgres serialises the `UPDATE … WHERE … RETURNING` | No database in CI, and a JS fake cannot model row locks | Two concurrent psql sessions calling `reserve_advisor_tokens` against a budget admitting one. **A separate sitting from OP-2** — it needs two sessions, so it could not have been folded into that run. **[2026-08-10] The OP-6 sitting did not advance it either**, and could not have: every block was one session, and `generate_series(1, 6)` is six **sequential** calls in one backend, not contention. **Fold N-28's re-read into the same sitting** — it is one extra statement in a transaction that will already be open. ~~Append to `docs/05-qa/2026-08-10-rate-limit-policy-verification.md` or record alongside it~~ **[2026-08-12] PROCEDURE WRITTEN, AWAITING THE SITTING — `docs/05-qa/2026-08-12-deployed-schema-record.md` Part 2 (OP-3) and Part 3 (N-28 + N-27 (i)), consolidated with U15's deployed-schema record so all three clear in one visit.** Two things the procedure had to settle that this row did not: **OP-3 cannot be run in the Supabase SQL editor at all** — it needs two backends holding transactions open simultaneously, so it is written for two `psql` terminals; and **step 4 must COMMIT rather than roll back**, because a rollback releases the lock and grants B its 1000, which demonstrates the lock but *not* the re-evaluation — and the re-evaluation is the half that stops over-granting. The cost is one repair statement (`settle_advisor_tokens(1000, 0, 0)`), which the procedure includes and verifies against the step-1 reading |
 | **OP-4** ✅ **DISCHARGED 2026-08-10** — `docs/05-qa/2026-08-10-omniroute-probe-record.md` | **A live end-to-end call against real Omniroute credentials** — one advisor turn that calls at least one tool and returns a grounded answer, and one lab extraction, run against a reachable gateway with a real `OMNIROUTE_API_KEY`. It answers three questions no unit test can: (a) does the routed model return `usage.prompt_tokens` / `usage.completion_tokens` **per response**, or does it omit them; (b) does it accept a base64 PDF content part (**decision 7B / N-19**); (c) does the tool-calling round-trip work end to end against the real gateway rather than a scripted mock | **Ruling 3 (2026-08-08) forbids the credentials that would let CI do it**: live E2E needs secrets in a public repository, and that was decided against. So this is owner-run by construction, on the same footing as OP-2/OP-3 and the `[LIVE]` E2E baseline. **No secret enters the repository** — not in `.env.example`, not in a fixture, not in a recorded transcript | Set `OMNIROUTE_BASE_URL` and `OMNIROUTE_API_KEY` in a local `.env.local` (gitignored). Run one advisor turn and one PDF extraction against a running app. Record under `docs/05-qa/` with a date, the model id actually routed to, and **the `usage` object's field names and whether they were populated** — the names, never the key. Per the U17 pattern. **(a) and (c) are entry conditions for U25's advisor half; (b) is the entry condition for its lab-import half** |
 | **OP-5** | **The production gateway's provider set must be restricted to real API-keyed providers before any deployment carries user traffic.** The owner's gateway instance currently exposes mostly **free web front-ends and repackaged coding-subscription providers**. Advisor traffic carries the user's **health context** — medications, conditions, lab values (§2.3 rule 15) — so which upstream a turn is routed to is a data-handling decision, not a cost one. A free front-end has no data-processing agreement, no stated retention, and in several cases trains on submitted text | **Registered, not absorbed (§8.1), and explicitly NOT U25 work.** U25 swaps the client and the protocol; it does not choose or constrain a routing table, and it must not silently acquire a scope that belongs to a deployment decision. Nothing in the codebase can enforce this either — the provider set lives in the gateway's own configuration, outside this repository, so a test here would be theatre | **OWNER CONDITION, PRE-DEPLOYMENT.** Before the advisor is served to any real user from this gateway: restrict the instance's provider set to API-keyed providers with stated retention terms, and record the permitted set and the date under `docs/05-qa/`. Until that record exists, treat any deployed advisor as **development-only, with no real user health data**. Non-negotiable rule §2.3.15 is the authority; this row is its operational form for a routed provider |
+| **OP-7** — **OPEN. U17's blocker: the migration must be deployed BEFORE the code.** | **Deploy `0010_delete_user_data.sql`, then verify the function with SAFE PROBES ONLY.** **THE ORDER IS THE REVERSE OF OP-1's, and the reversal is the point.** OP-1 (0008) was *code first, never the migration alone*. This one is **migration first, never the code alone**: `0010` deployed against old code is a harmless unused function, whereas U17's code deployed without `0010` is a DELETE route whose RPC does not exist. That second case is pinned to fail **honestly** rather than partially — `route.test.ts` asserts a 500 with `data: null`, no counts, and a correlation id, so a user is never told their data was removed when nothing was | CI proves the function applies, is callable, deletes all twelve, and isolates users — but only against a **throwaway** Postgres. Whether the DEPLOYED database has the function, and whether its pins hold there, is exactly what CI structurally cannot see (P-03: no credentials) | **SAFE PROBES ONLY — three statements, none of which delete live data.** (1) **Catalog shape:** `select p.proname, pg_get_function_identity_arguments(p.oid) as args, pg_get_function_result(p.oid) as returns, p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'delete_all_user_data';` → **expect 1 row, `args` EMPTY, returns `jsonb`, `prosecdef = t`**. The empty `args` is the live-side check of the repository's highest-stakes assertion. (2) **search_path:** `select proconfig from pg_proc where proname = 'delete_all_user_data';` → **expect `{search_path=\"\"}`**. (3) **Null-claim refusal, which touches no data:** in a transaction, `set local role authenticated;` with **no** `request.jwt.claims`, then `select public.delete_all_user_data();` → **expect ERROR `28000` \"requires an authenticated caller\"**; `auth.uid()` is null so the function raises before its first delete. `rollback;`. **NO LIVE-DELETION TEST** — the cascade and emptiness proofs live in CI against the throwaway Postgres, which is what U15 was built to make possible. **If the procedure appears to need anything beyond read-only plus the null-claim probe, STOP AND ASK rather than improvising against a production database.** The three statements are also carried in `0010`'s own header, per the 0008/0009 pattern |
 | **OP-6** ✅ **DISCHARGED 2026-08-10** — `docs/05-qa/2026-08-10-rate-limit-policy-verification.md`, hours after this row was opened. All four as `authenticated`: DELETE (**no `WHERE`** — every visible row targeted) removed 0; INSERT raised **`ERROR 42501 new row violates row-level security policy for table "api_rate_limits"`**; SELECT returned the live `:advisor` bucket; `consume_rate_limit('user:op6-test', 60, 5)` × 6 returned **1,2,3,4,5,0**. Test bucket rolled back. **Check 2 is the only one of the eight checks across both records that stands alone** — a raised error cannot be explained by an empty table, where a filtered 0-row result can | **`0009`'s sibling verification block was never run, and had no row here — which is the reason this one exists.** `0009_rate_limits.sql`'s header carries four owner-run statements against `api_rate_limits`: `delete` (denied), `insert` (denied), `select` (own rows), `consume_rate_limit('user:me', 60, 5)` (`1..5` then `0`). It calls itself *"plan §4.6 OP-2's sibling"* — but OP-2's procedure column names `0008`'s statements and only those, so the sibling's absence was invisible at discharge and OP-2 closed without it | Same reason as OP-2: `RLS_COVERAGE` and `SQL_FUNCTION_REGISTRY` read `0009` as **text**. `api_rate_limits` is the schema's **second counter table** (0008's rule, applied at birth rather than in a later migration), so it carries the same hole closed the same way — and verified by nothing. Its `insert` check is also the only one of the eight that can produce the `new row violates` error shape; the `0008` four can only ever produce silent 0-row filtering | The four psql statements in `0009_rate_limits.sql`'s header, **as the `authenticated` role**, same technique as OP-2. Append to `docs/05-qa/2026-08-10-ledger-policy-verification.md`. **Registered rather than folded into OP-2** because §4.6's stated purpose is that these are *"listed here, not buried in a file header"* — a header block with no register row is exactly the burial this section exists to prevent |
 
 **OP-2 now has a dated record (2026-08-10) and `advisor_usage`'s policy is verified against the deployed
@@ -1276,7 +1277,7 @@ worth carrying forward:
 **U16 · Data export.** *(roadmap 8, read half; half of a named exit criterion)* **M**, deps U9 (**MET —
 DONE 2026-08-10**).
 
-**DONE 2026-08-13, `<COMMIT1>`.** Baseline before: typecheck clean, **1186/96**, non-live E2E 70/30.
+**DONE 2026-08-13, `a087715`.** Baseline before: typecheck clean, **1186/96**, non-live E2E 70/30.
 After: **1218/99** (+32: `EXPORT_COVERAGE` 7, `ROUTE_CONTRACT` 10, route 6, `export-repo` 5, repo readers 4).
 
 **U15 STAMP ROW** *(standing disposition):*
@@ -1383,16 +1384,127 @@ building it.
 **WHAT THIS UNIT DOES NOT CLOSE.** The exit criterion covers export **and deletion**; this is the read half
 only. It is not ticked. **GATE D2** governs U17 and is untouched here.
 
-**U17 · Data deletion.** *(roadmap 8, write half)* N `src/app/api/account/route.ts` (DELETE) + test. **M**,
-deps U9, U16. **Highest-risk new surface in the phase.**
+**U17 · Data deletion.** *(roadmap 8, write half; completes a named exit criterion)* **M/L**, deps U9,
+U16 (**both MET**). **Highest-risk new surface in the phase.**
+
+**U16 STAMP ROW** *(standing disposition):*
+
+| U16 closeout | value |
+|---|---|
+| merged to `main` | **`a087715`** |
+| closeout run | **`31662808694`** — green |
+| post-merge `main` run | **`31663090063`** — green, required check satisfied |
+
+---
+
+**THE FINDING THAT RESHAPED THE UNIT, FOUND BEFORE ANY CODE.** `advisor_usage` is **SELECT-only** for the
+end user — migration 0008 removed INSERT/UPDATE/DELETE deliberately in U3, so nobody could reset their own
+token budget. **It is also one of the twelve tables this criterion covers.** Measured against the applied
+schema: 11 tables `ALL`, `advisor_usage` and `api_rate_limits` `SELECT`.
+
+So a client-side deletion loop would delete eleven tables and, on the twelfth, **be filtered to zero rows by
+RLS — silently**. An RLS denial of DELETE is an empty result, not an error (measured, OP-2). The route would
+report success with the user's usage history intact. **A `SECURITY DEFINER` function is therefore not an
+optimisation here; it is the only way one of the twelve can be deleted at all.** It also makes the deletion
+atomic, which a client cannot: `supabase-js` has no transaction API.
+
+**The irony belongs in the record: U3's correct security decision is exactly what blocks the deletion half
+of the criterion, and the definer function is how both properties hold at once.**
+
+**THE SINGLE HIGHEST-STAKES ASSERTION IN THE REPOSITORY.** `delete_all_user_data()` **takes no parameters**
+and derives its owner from `auth.uid()` inside the body. Given a `p_user_id`, any authenticated caller
+could irreversibly erase any other account — RLS is bypassed by construction, and the call would look
+ordinary in every log. `SQL_FUNCTION_REGISTRY` pins it as a **hard zero** rather than "no parameter named
+like a user id", so nobody has to judge which parameters are safe. **M1 is red from the executed mutation,
+and two assertions fired** — the new pin *and* a pre-existing identity-parameter rule already watching for
+this shape.
+
+**WHAT COULD NOT BE TESTED FROM TYPESCRIPT, AND WHERE IT MOVED TO.** The plan specified a wrong-value probe
+per §6.2.2 — `deleteAllForCaller(supabase, "u-other")`. **That mutation would have been a no-op**: the RPC
+takes no arguments, so a user id passed from TypeScript is ignored. §6.2.2's lesson recurring one level
+down, and the reason the repository function takes no user id at all. **The ownership proof moved into
+SQL**: `verify:migrations` seeds two users, deletes as one, and asserts the other's rows survive (**M3**).
+
+**PROVING THE CASCADES INSTEAD OF READING THEM.** The stub's claim was *"cascades verified 12/12
+reachable"* — FK text. U15 put a real Postgres in CI, so U17 **executes** it: seed one row into all twelve,
+call the function, assert every table is empty (**M4**), plus a separate cascade probe (**M5**) and an
+assertion that `advisor_actions.conversation_id` is **`SET NULL`, not cascade** (**M6**) — the distinction
+the FK text makes easy to mis-scan. **No CI step added, so no GATE D1.**
+
+**GATE D2 — asserted as ZERO CALLS, not as a status.** Eight rejection cases (empty body, wrong phrase,
+wrong case, partial, trailing whitespace, non-string, malformed JSON, missing field) each assert the
+repository was **never called**. A route that deleted the data and then returned 400 would satisfy a
+status-only test.
+
+**HONEST SCOPE — TWO retained items, not one.** The stub anticipated the auth identity. The second was
+found by reading `0009`: **`consume_rate_limit` writes `user_id` into `api_rate_limits`** (line 28), so rows
+bearing the user's id outlive deletion — SELECT-only, excluded from the twelve, cascading only from
+`auth.users`, which cannot be deleted here. Both are stated in the response body in U16's `notIncluded`
+shape, with per-table counts so §5.4 has something to bind to.
+
+**RED EVIDENCE — twelve mutations, all executed.**
+
+| # | Mutation | Result |
+|---|---|---|
+| **M1** ★ | `delete_all_user_data(p_user_id uuid)`, used as the owner | **TWO pins red** — `has gained a parameter` and the pre-existing `accepts an identity parameter` |
+| **M2** ★ | Drop the confirmation check | **8 failed / 7 passed** — every GATE D2 case: `the deletion repository was called on a request that failed confirmation` |
+| **M3** ★ | Remove the owner filter from one delete | `CROSS-USER DELETION — calling delete_all_user_data() as one user removed ANOTHER user's rows` |
+| **M4** | Drop `advisor_usage` from the function | `DELETION IS INCOMPLETE — 1 of 12 tables still hold the user's rows: advisor_usage: 1 row(s)` |
+| **M5** | Remove the `stack_items` cascade | cascade probe red — FK violation, diagnosed **(see the script defect below)** |
+| **M6** | Drop the explicit `advisor_actions` delete, assuming conversations cascade | `DELETION IS INCOMPLETE — advisor_actions: 1 row(s)`. `SET NULL` is not `CASCADE` |
+| **M7** | Remove a table from `USER_OWNED_TABLES` | `expected 11 to be 12` — one definition, two consumers |
+| **M8** ★ | `console.log` the counts in the route | `a deletion count reached a logger` |
+| **M9** ★ | The same call one layer down, in `delete-repo` | `the repository logged something during a deletion` — **the two halves U16's M5 taught us to build separately** |
+| **M10** | Drop `set search_path = ''` | `SECURITY DEFINER with no set search_path — a caller-controlled search_path is a privilege-escalation vector` |
+| **M11** | Accept a deletion with a missing table count | 3 failed — `rejects.toThrow(/advisor_usage/)`, `/no count for/` |
+| **M12** | Drop the 401 check | `expected 500 to be 401` |
+
+**TWO DEFECTS IN THIS UNIT'S OWN WORK, both caught by running things rather than reading them.**
+
+*(i)* **`next build` failed and the unit tests did not.** `route.ts` exported `CONFIRMATION_PHRASE` for its
+test; Next type-checks route modules against `{ [x: string]: never }`, so the build refused it —
+*"CONFIRMATION_PHRASE is not a valid Route export field"*. **This is Phase 2 U5's wall at a second site**,
+and it is why §5.10 requires `next build` before declaring work done: 1245 unit tests and a clean typecheck
+had already passed. Fixed by moving the confirmation contract to
+`src/lib/api/deletion-confirmation.ts` — **which is where §4 rule 8 wanted it anyway**, since it is the
+trust boundary for an irreversible operation. The constraint pushed the code somewhere it should already
+have been; the file's header says so rather than presenting the move as a workaround.
+
+*(ii)* **M5 exposed this unit's own script printing a stack trace instead of a diagnosis.** The cascade
+probe's `psql` call was unguarded, so removing a cascade produced an unhandled Node throw. It still exited
+1 — the guard was not vacuous — but `verify:migrations` holds itself to explaining failures, and this one
+did not. Wrapped, with a message naming the likely cause; **M5 re-executed against the corrected script**.
+
+**A THIRD DEFECT, IN U16's SHIPPED WORK, EXPOSED ON FIRST CONTACT.** `ROUTE_CONTRACT`'s N-14 disclosure
+listed the ways its literal `.parse(` match could be defeated, and gave as its example that `safeParse` was
+"matched by the same substring". **`.safeParse(` does not contain `.parse(`.** U17's DELETE route is the
+first route in the repository to validate with `safeParse`; the guard classified a plainly-validating route
+as non-validating and demanded an exemption entry whose written reason would have been false. The matcher
+now names both forms — `/\.(?:safeParse|parse)\s*\(/` — and the header records that its own earlier
+sentence was wrong.
+
+**The lesson is larger than the fix, and is why this is recorded rather than quietly corrected: a residual
+disclosure is itself a claim, and it needs a mutation, not a sentence.** N-14 requires guards to disclose
+what defeats them; nothing required the disclosure to be *true*, and U16's was not — it shipped green,
+because a false statement about a guard's limits fails no test. A guard's stated limits are the part of it
+that nothing executes. The residual as *stated* still stands (a future `.check(` would slip); the
+*example* given for it was the false part.
+
+**WHAT THIS UNIT DOES NOT CLOSE.** The migration must be deployed **before** the code — see **OP-7**, whose
+order is the **reverse** of OP-1's. The exit criterion is not ticked until that sitting is on record.
 **Scope constraint the roadmap does not state:** deleting the `auth.users` row needs the service-role key,
 which §2.3 rule 14 confines to the dev seed script. So this route **cannot** delete the auth identity.
 Honest scope: delete the user's rows across the 12 tables (cascades verified 12/12 reachable), leave the
 identity. "Export and delete their own data end to end" is satisfiable; "delete my account" is not, and the
 difference must be in the plan **and in the response body**, not discovered by a user.
-**Red:** drop the confirmation check → `deleteAllForUser` called when it should not be; scope the delete by
-a body-supplied user id → a **wrong-value probe** (§6.2.2), since Zod would strip it and a
-plausible-attack probe would survive.
+
+> ~~**Red:** drop the confirmation check → `deleteAllForUser` called when it should not be; scope the delete
+> by a body-supplied user id → a **wrong-value probe** (§6.2.2), since Zod would strip it and a
+> plausible-attack probe would survive.~~ **The stub's red plan, superseded and struck rather than deleted
+> (§7).** Its first half became **M2**. Its second half was wrong for a reason the stub could not have
+> known: there is no body-supplied user id to substitute a wrong value into, because the RPC takes no
+> arguments — so the probe would have been a no-op. See *WHAT COULD NOT BE TESTED FROM TYPESCRIPT* above;
+> the ownership proof is **M3**, in SQL.
 
 **U18 · `npm run lint`.** *(roadmap 9)* **M** (configure) / **S** (remove), deps none.
 The load-bearing part is the **anti-vacuity assertion**: assert eslint lints ≥ N files. A misconfigured

@@ -230,6 +230,227 @@ if (definers === 0) {
   );
 }
 
+// --- 4. The deletion probe (Phase 2 U17) -----------------------------------
+// EXECUTES what the FK text only describes. `0010_delete_user_data.sql` deletes
+// nine tables explicitly and relies on CASCADE for three more; the migration's
+// own comment warns that `advisor_actions.conversation_id` is ON DELETE SET
+// NULL rather than cascade, which is exactly the kind of distinction a reader
+// mis-scans. Reading FK definitions cannot tell you whether the deletion is
+// COMPLETE. Running it can.
+//
+// This is only affordable because U15 already put a real Postgres in this step:
+// it costs a few statements against a database that is being thrown away, and
+// adds no CI step (so no GATE D1).
+const PROBE_USER = "11111111-1111-1111-1111-111111111111";
+const OWNED_TABLES = [
+  "user_profiles", "stacks", "stack_items", "evaluation_flags", "lab_panels",
+  "lab_markers", "advisor_conversations", "advisor_messages", "advisor_actions",
+  "advisor_usage", "checkins", "side_effect_reports",
+];
+
+function seedOneRowPerTable() {
+  psql([
+    "-c",
+    `
+    insert into auth.users (id) values ('${PROBE_USER}');
+    insert into public.user_profiles (user_id) values ('${PROBE_USER}');
+    insert into public.stacks (id, user_id, name, intent)
+      values ('22222222-2222-2222-2222-222222222222', '${PROBE_USER}', 'p', 'foundational');
+    insert into public.stack_items (id, stack_id, dose, unit)
+      values ('33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', 1, 'mg');
+    insert into public.evaluation_flags (stack_id, stack_item_id, severity, category, title, explanation, recommendation)
+      values ('22222222-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333', 'info', 'dose', 't', 'e', 'r');
+    insert into public.lab_panels (user_id, collected_at) values ('${PROBE_USER}', current_date);
+    insert into public.lab_markers (user_id, marker, value, unit) values ('${PROBE_USER}', 'tsh', 1.0, 'mIU/L');
+    insert into public.advisor_conversations (id, user_id)
+      values ('44444444-4444-4444-4444-444444444444', '${PROBE_USER}');
+    insert into public.advisor_messages (conversation_id, role, content)
+      values ('44444444-4444-4444-4444-444444444444', 'user', 'hello');
+    insert into public.advisor_actions (user_id, conversation_id, action_type, payload, inverse)
+      values ('${PROBE_USER}', '44444444-4444-4444-4444-444444444444', 'add_item', '{}', '{}');
+    insert into public.advisor_usage (user_id, usage_date) values ('${PROBE_USER}', current_date);
+    insert into public.checkins (user_id, checkin_date) values ('${PROBE_USER}', current_date);
+    insert into public.side_effect_reports (user_id, report_date, effect_label)
+      values ('${PROBE_USER}', current_date, 'nausea');
+    `,
+  ]);
+}
+
+/** Rows visible for the probe user, per table, as superuser (RLS bypassed). */
+function remainingRows() {
+  const parentOf = {
+    stack_items: "stack_id in (select id from public.stacks where user_id = '" + PROBE_USER + "')",
+    evaluation_flags: "stack_id in (select id from public.stacks where user_id = '" + PROBE_USER + "')",
+    advisor_messages:
+      "conversation_id in (select id from public.advisor_conversations where user_id = '" + PROBE_USER + "')",
+  };
+  const counts = {};
+  for (const table of OWNED_TABLES) {
+    const where = parentOf[table] ?? `user_id = '${PROBE_USER}'`;
+    counts[table] = Number(scalar(`select count(*) from public.${table} where ${where}`));
+  }
+  return counts;
+}
+
+try {
+  seedOneRowPerTable();
+} catch (error) {
+  fail(
+    "the deletion probe could not seed its fixture — the schema and the probe have diverged.\n\n" +
+      `${error.stderr ?? error.message}`,
+  );
+}
+
+const seeded = remainingRows();
+const unseeded = Object.entries(seeded).filter(([, n]) => n === 0).map(([t]) => t);
+if (unseeded.length > 0) {
+  // Anti-vacuity: "all twelve are empty afterwards" is trivially true of a table
+  // that was never populated.
+  fail(`the deletion probe seeded no row into: ${unseeded.join(", ")}.`);
+}
+
+try {
+  psql([
+    "-c",
+    `begin;
+     set local role authenticated;
+     set local request.jwt.claims = '{"sub":"${PROBE_USER}"}';
+     select public.delete_all_user_data();
+     commit;`,
+  ]);
+} catch (error) {
+  fail(`delete_all_user_data() failed when called as the owning user.\n\n${error.stderr ?? error.message}`);
+}
+
+const survivors = Object.entries(remainingRows()).filter(([, n]) => n > 0);
+if (survivors.length > 0) {
+  fail(
+    `DELETION IS INCOMPLETE — ${survivors.length} of ${OWNED_TABLES.length} tables still hold the user's rows:\n` +
+      survivors.map(([t, n]) => `    ${t}: ${n} row(s)`).join("\n") +
+      "\n\nEvery one of the twelve user-owned tables must be empty after\n" +
+      "`delete_all_user_data()`. A table left behind here is data a user asked to\n" +
+      "have deleted and was told was deleted.\n\n" +
+      "If the survivor is `advisor_usage`: it is SELECT-only for the end user\n" +
+      "(migration 0008), so it can ONLY be removed from inside this definer\n" +
+      "function — that is the entire reason the function exists.\n" +
+      "If it is stack_items / evaluation_flags / advisor_messages: those also have\n" +
+      "a CASCADE from their parent, so losing both routes at once means the\n" +
+      "explicit delete AND the foreign key changed.",
+  );
+}
+
+// The cascades, proven separately from the function — the function currently
+// deletes those three explicitly, so the cascade is a SAFETY NET whose failure
+// the check above would not notice.
+try {
+  psql([
+  "-c",
+  `insert into auth.users (id) values ('55555555-5555-5555-5555-555555555555');
+   insert into public.stacks (id, user_id, name, intent)
+     values ('66666666-6666-6666-6666-666666666666', '55555555-5555-5555-5555-555555555555', 'c', 'foundational');
+   insert into public.stack_items (id, stack_id, dose, unit)
+     values ('77777777-7777-7777-7777-777777777777', '66666666-6666-6666-6666-666666666666', 1, 'mg');
+   insert into public.advisor_conversations (id, user_id)
+     values ('88888888-8888-8888-8888-888888888888', '55555555-5555-5555-5555-555555555555');
+   insert into public.advisor_messages (conversation_id, role, content)
+     values ('88888888-8888-8888-8888-888888888888', 'user', 'x');
+   insert into public.advisor_actions (user_id, conversation_id, action_type, payload, inverse)
+     values ('55555555-5555-5555-5555-555555555555', '88888888-8888-8888-8888-888888888888', 'add_item', '{}', '{}');
+   delete from public.stacks where id = '66666666-6666-6666-6666-666666666666';
+   delete from public.advisor_conversations where id = '88888888-8888-8888-8888-888888888888';`,
+  ]);
+} catch (error) {
+  // A raw throw here still exits non-zero, but it prints a stack trace instead
+  // of saying what broke — which this script's own standard forbids. The most
+  // likely cause is the interesting one: if a CASCADE was removed, deleting the
+  // parent raises a foreign-key violation rather than silently orphaning rows.
+  fail(
+    "the cascade probe could not delete a parent row.\n\n" +
+      `${error.stderr ?? error.message}\n` +
+      "If that is a FOREIGN KEY VIOLATION on stack_items or advisor_messages, a\n" +
+      "cascade has been removed. Those tables have no `user_id` column, so the\n" +
+      "cascade is their only ownership link: without it, a user's rows become\n" +
+      "permanently unreachable AND undeletable — `delete_all_user_data` would fail\n" +
+      "outright rather than leave them behind, which is at least loud.",
+  );
+}
+
+const orphanItems = Number(
+  scalar("select count(*) from public.stack_items where id = '77777777-7777-7777-7777-777777777777'"),
+);
+const orphanMessages = Number(
+  scalar("select count(*) from public.advisor_messages where conversation_id = '88888888-8888-8888-8888-888888888888'"),
+);
+if (orphanItems > 0 || orphanMessages > 0) {
+  fail(
+    `A CASCADE IS MISSING — deleting a parent left children behind ` +
+      `(stack_items: ${orphanItems}, advisor_messages: ${orphanMessages}).\n` +
+      "Those two tables have no `user_id` column, so a cascade is their only\n" +
+      "ownership link. Without it, deleting a user's stacks would strand their\n" +
+      "items permanently unreachable and undeletable.",
+  );
+}
+
+// CROSS-USER ISOLATION — the assertion that matters most, and the only place it
+// CAN be made. `delete_all_user_data()` takes no arguments and derives its owner
+// from `auth.uid()`, so there is no TypeScript-level "wrong user id" mutation to
+// write: passing one would be ignored, and the probe would pass vacuously. That
+// is Phase 1 §6.2.2's lesson recurring one level down — the protection lives in
+// SQL, so the proof must too.
+//
+// User 5555 still has rows at this point (its stack and conversation were
+// deleted just above, but its advisor_actions row survives by SET NULL). Delete
+// as a THIRD user and assert 5555 is untouched.
+try {
+  psql([
+  "-c",
+  `insert into auth.users (id) values ('99999999-9999-9999-9999-999999999999');
+   insert into public.checkins (user_id, checkin_date)
+     values ('99999999-9999-9999-9999-999999999999', current_date);
+   begin;
+   set local role authenticated;
+   set local request.jwt.claims = '{"sub":"99999999-9999-9999-9999-999999999999"}';
+   select public.delete_all_user_data();
+   commit;`,
+  ]);
+} catch (error) {
+  fail(`the cross-user isolation probe could not run.\n\n${error.stderr ?? error.message}`);
+}
+
+const victimRows = Number(
+  scalar("select count(*) from public.advisor_actions where user_id = '55555555-5555-5555-5555-555555555555'"),
+);
+if (victimRows !== 1) {
+  fail(
+    "CROSS-USER DELETION — calling `delete_all_user_data()` as one user removed ANOTHER\n" +
+      `user's rows (advisor_actions for 5555…: expected 1, found ${victimRows}).\n\n` +
+      "This is the catastrophic failure mode of a SECURITY DEFINER delete: the function\n" +
+      "runs with the definer's privileges and bypasses RLS, so the ONLY thing scoping it\n" +
+      "is `auth.uid()` inside the body. If the function ever takes a user id as a\n" +
+      "parameter, any authenticated caller can erase any account.",
+  );
+}
+const deleterRows = Number(
+  scalar("select count(*) from public.checkins where user_id = '99999999-9999-9999-9999-999999999999'"),
+);
+if (deleterRows !== 0) {
+  fail("the cross-user probe's own caller was not deleted — the probe proves nothing.");
+}
+
+// And the one that is NOT a cascade, asserted so the difference stays true.
+const survivingActions = Number(
+  scalar("select count(*) from public.advisor_actions where user_id = '55555555-5555-5555-5555-555555555555'"),
+);
+if (survivingActions !== 1) {
+  fail(
+    "advisor_actions.conversation_id is ON DELETE SET NULL, not CASCADE, so deleting a\n" +
+      `conversation must LEAVE the action in place — expected 1 row, found ${survivingActions}.\n` +
+      "If this became a cascade, `delete_all_user_data`'s explicit delete of\n" +
+      "advisor_actions would still be correct, but the reverse change — dropping that\n" +
+      "explicit delete because 'conversations cascade' — would silently orphan rows.",
+  );
+}
+
 console.log(
   `verify:migrations — OK. ${applied} migrations applied in order to a real\n` +
     `  Postgres behind the auth test double. ${tables} tables, all with RLS;\n` +

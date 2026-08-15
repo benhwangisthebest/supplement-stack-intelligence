@@ -25,9 +25,16 @@
 //     return fail(...)` — contains no `.parse(` and is classified
 //     non-validating. It then needs an entry in EXEMPT_NO_400 with a written
 //     reason, and the reason will be FALSE.
-//   * A route using a Zod method other than `.parse(` (`safeParse` is matched
-//     by the same substring; a future `.check(` would not be) reads the same
-//     way.
+//   * A route using a Zod method the pattern does not name. THIS IS NOT
+//     HYPOTHETICAL, AND THE FIRST VERSION OF THIS COMMENT GOT IT WRONG: it
+//     claimed `safeParse` was "matched by the same substring". It is not —
+//     `.safeParse(` does not contain `.parse(`. U17's DELETE route validates
+//     with `safeParse`, this guard classified it as non-validating, and
+//     demanded an exemption entry for a route that plainly validates input.
+//     The pattern now names both forms explicitly. A future `.check(` would
+//     still slip, which is the residual as originally stated — but the example
+//     given for it was itself false, which is worth more than the residual:
+//     A DISCLOSURE OF A GUARD'S LIMITS IS ITSELF A CLAIM, AND CAN BE WRONG.
 //
 // THIS RESIDUAL IS ACCEPTED, DELIBERATELY, ON THESE TERMS: the failure mode is
 // a wrong entry that a human had to write a justification for, which is a
@@ -106,7 +113,12 @@ function code(relative: string): string {
 }
 
 const testFileFor = (route: string) => route.replace(/\.ts$/, ".test.ts");
-const validates = (route: string) => code(route).includes(".parse(");
+/**
+ * Both Zod entry points. `.safeParse(` does NOT contain `.parse(` — see the
+ * header; assuming it did is how U17's route was misclassified.
+ */
+const VALIDATION_CALL = /\.(?:safeParse|parse)\s*\(/;
+const validates = (route: string) => VALIDATION_CALL.test(code(route));
 
 describe("ROUTE_CONTRACT: every route has a test, and it covers the contract", () => {
   it("scans a non-empty route set", () => {

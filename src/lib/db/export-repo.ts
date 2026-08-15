@@ -38,6 +38,36 @@ import { listActionsByUser } from "./advisor-action-repo";
 import { listConversations, getMessages, listUsageRows } from "@/lib/advisor/repo";
 
 /**
+ * THE TWELVE. One definition, two consumers.
+ *
+ * The export returns these keys; `delete-repo` requires a deletion count for
+ * each. Keeping two lists would be two chances to disagree about what "the
+ * user's data" means, and the user is the one who would find out — exported
+ * data that deletion misses, or deleted data the export never showed them.
+ *
+ * Derived from ownership in the migrations, and re-derived on every test run by
+ * `EXPORT_COVERAGE`: nine tables carry `user_id uuid NOT NULL references
+ * auth.users(id)`; three are owned through a parent (`stack_items` and
+ * `evaluation_flags` via `stacks`, `advisor_messages` via
+ * `advisor_conversations`). This constant is the shared name for that set, not
+ * an independent claim about it.
+ */
+export const USER_OWNED_TABLES = [
+  "user_profiles",
+  "stacks",
+  "stack_items",
+  "evaluation_flags",
+  "lab_panels",
+  "lab_markers",
+  "advisor_conversations",
+  "advisor_messages",
+  "advisor_actions",
+  "advisor_usage",
+  "checkins",
+  "side_effect_reports",
+] as const;
+
+/**
  * Tables deliberately NOT exported, each with the reason. Asserted against the
  * migrations by `EXPORT_COVERAGE`: an entry naming a table that does not exist
  * is as red as a table that is neither exported nor listed here.

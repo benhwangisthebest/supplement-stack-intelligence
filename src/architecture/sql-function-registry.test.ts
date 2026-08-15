@@ -30,11 +30,11 @@
 //      something revokes it. "The body checks auth.uid()" is a fine second
 //      barrier and a bad only one.
 //
-// SCOPE, measured rather than assumed: the tracked migrations define FOUR
+// SCOPE, measured rather than assumed: the tracked migrations define FIVE
 // functions — `touch_updated_at` (0001, a plain trigger function), U3's
-// `reserve_advisor_tokens` / `settle_advisor_tokens`, and U5's
-// `consume_rate_limit`. Only the last three are SECURITY DEFINER, and only they
-// are subject to the four rules. The trigger's
+// `reserve_advisor_tokens` / `settle_advisor_tokens`, U5's
+// `consume_rate_limit`, and U17's `delete_all_user_data` (0010). Only the last
+// four are SECURITY DEFINER, and only they are subject to the four rules. The trigger's
 // non-definer status is itself pinned, so making it a definer later is a red
 // build rather than a silent inheritance of privileges.
 //
@@ -215,11 +215,16 @@ describe("SQL_FUNCTION_REGISTRY — the real migration set", () => {
     // below iterates DEFINERS. A parser regression that matched nothing would
     // leave all of them green while checking no function at all. U3 defines two.
     expect(MIGRATIONS.length).toBeGreaterThan(0);
-    // 4 today: `touch_updated_at` (0001, a trigger function), U3's two, and
-    // U5's `consume_rate_limit`.
-    expect(FACTS.functions.length).toBeGreaterThanOrEqual(4);
+    // 5 today: `touch_updated_at` (0001, a trigger function), U3's two,
+    // U5's `consume_rate_limit`, and U17's `delete_all_user_data` (0010).
+    expect(FACTS.functions.length).toBeGreaterThanOrEqual(5);
+    // Pinned as an EQUALITY, so a new definer function cannot join the set
+    // without someone deciding it belongs there. `delete_all_user_data` is the
+    // most privileged of the four — it is the only one that DESTROYS data — and
+    // it carries its own dedicated rules below.
     expect(DEFINERS.map((f) => f.name).sort()).toEqual([
       "consume_rate_limit",
+      "delete_all_user_data",
       "reserve_advisor_tokens",
       "settle_advisor_tokens",
     ]);
@@ -294,6 +299,69 @@ describe("SQL_FUNCTION_REGISTRY — the real migration set", () => {
         "  grant execute on function public.<name>(<types>) to authenticated;\n  " +
         open.join("\n  "),
     ).toEqual([]);
+  });
+});
+
+describe("SQL_FUNCTION_REGISTRY — `delete_all_user_data` takes NO user id (Phase 2 U17)", () => {
+  // ==========================================================================
+  // THE HIGHEST-STAKES ASSERTION IN THIS REPOSITORY.
+  // ==========================================================================
+  // `delete_all_user_data()` is SECURITY DEFINER, so it runs with the definer's
+  // privileges and bypasses RLS. The ONLY thing scoping it to one account is
+  // `auth.uid()`, read inside the body.
+  //
+  // Give it a parameter —
+  //
+  //     delete_all_user_data(p_user_id uuid)
+  //
+  // — and any authenticated caller can irreversibly erase any other user's
+  // entire record with one request. There is no recovery, no audit trail in the
+  // application, and nothing else in the stack would object: RLS is bypassed by
+  // construction, the route's own ownership checks are upstream of it, and the
+  // call would look ordinary in every log.
+  //
+  // The rule below is therefore stated as a HARD ZERO rather than as "no
+  // parameter named like a user id". A parameter of any name is a parameter
+  // someone can pass.
+  const DELETER = "delete_all_user_data";
+
+  it("exists, and is the one deleter", () => {
+    // Anti-vacuity: every assertion below is about a function that must be found.
+    const found = FACTS.functions.filter((f) => f.name === DELETER);
+    expect(found.length, `${DELETER} not found in the migration set`).toBe(1);
+  });
+
+  it("accepts NO parameters at all", () => {
+    const fn = FACTS.functions.find((f) => f.name === DELETER)!;
+    expect(
+      fn.params,
+      "SQL_FUNCTION_REGISTRY: `delete_all_user_data` has gained a parameter.\n\n" +
+        "It is SECURITY DEFINER. It bypasses RLS. Its only scope is `auth.uid()` read\n" +
+        "INSIDE the body. A parameter — of ANY name — is a value a caller supplies, and\n" +
+        "a caller-supplied identity on a privileged delete means any authenticated user\n" +
+        "can erase any account, irreversibly.\n\n" +
+        "If you are adding a parameter for some other purpose, it does not matter: the\n" +
+        "rule is a hard zero precisely so that no one has to judge which parameters are\n" +
+        "safe. Derive everything the function needs from auth.uid().",
+    ).toEqual([]);
+  });
+
+  it("derives its owner from auth.uid()", () => {
+    // The other half. Zero parameters and no auth.uid() would delete nothing, or
+    // everything, depending on how the body was written.
+    const fn = FACTS.functions.find((f) => f.name === DELETER)!;
+    expect(
+      fn.readsAuthUid,
+      "SQL_FUNCTION_REGISTRY: `delete_all_user_data` does not read auth.uid(). With no\n" +
+        "parameters and no auth.uid(), it has no notion of whose data it is deleting.",
+    ).toBe(true);
+  });
+
+  it("is SECURITY DEFINER with a pinned search_path, and is revoked from public", () => {
+    const fn = FACTS.functions.find((f) => f.name === DELETER)!;
+    expect(fn.securityDefiner, "it must be definer — `advisor_usage` is unreachable otherwise").toBe(true);
+    expect(fn.setsSearchPath, "an unpinned search_path lets a caller shadow unqualified names").toBe(true);
+    expect(FACTS.revokedFromPublic.has(DELETER), "execute must be revoked from public").toBe(true);
   });
 });
 
