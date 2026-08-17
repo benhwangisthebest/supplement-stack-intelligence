@@ -389,8 +389,21 @@ the dev seed script.
       > owner-run record `docs/05-qa/2026-08-12-deployed-schema-record.md` is complete — **all three parts
       > PASS**, discharging the live-database residue and, in the same sitting, **OP-3** and **N-28**.
 - [ ] Security headers present, verified by a response-header test.
-- [ ] **[REWORDED 2026-08-08]** A user can **export their data and delete all of it across the 12 tables**,
+- [x] **[REWORDED 2026-08-08]** A user can **export their data and delete all of it across the 12 tables**,
       with the **surviving auth identity stated in the response**.
+      > **MET 2026-08-17 — U16 (export, `a087715`) + U17 (deletion, `55c74f6`).** `GET /api/account/export`
+      > returns all twelve tables with a `notIncluded[]` statement of what it omits; `DELETE /api/account`
+      > empties all twelve behind a typed confirmation literal and reports per-table counts plus the two
+      > **retained** items — the `auth.users` identity and the rate-limiter counters — in the response body,
+      > which is the half of the criterion the rewording added.
+      > Deletion completeness, both cascades, the `SET NULL` on `advisor_actions` and **cross-user
+      > isolation** are proved by `npm run verify:migrations` against a real Postgres — CI runs
+      > `31875356506` and `32013610775`, whose summary enumerates each claim because the section that
+      > proved it appended it. The deployed function's shape is the owner-run record
+      > `docs/05-qa/2026-08-17-op7-deletion-function-sitting.md` (**OP-7**, all four steps PASS): no
+      > parameters, empty `search_path`, `28000` on a null `auth.uid()`.
+      > **Not proved anywhere, and deliberately:** no live deletion has been run against the deployed
+      > database, and none should be.
       ~~A user can export and delete their own data end to end.~~
       *Why:* deleting the `auth.users` row needs the service-role key, which `CLAUDE.md` §2.3 rule 14
       confines to the dev seed script — so "end to end" could not be satisfied by any compliant
