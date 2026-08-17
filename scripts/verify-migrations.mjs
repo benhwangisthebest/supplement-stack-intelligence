@@ -83,6 +83,31 @@ function fail(message) {
   process.exit(1);
 }
 
+// ===========================================================================
+// THE PROOF REGISTER — why the success message is DERIVED and not a string
+// ===========================================================================
+// This script's first version ended with a hand-written summary naming what it
+// proved. U17 then added a whole section — deletion completeness, cascades,
+// SET-NULL, cross-user isolation — and the summary did not change. Everything
+// it said stayed TRUE; it became wrong by OMISSION, which is harder to notice
+// than a false statement because nothing about it looks wrong. On the probe's
+// first CI run the step went green and its output gave no indication the probe
+// had run at all; that it HAD could only be established by reading the script's
+// control flow, which is not what CI output is for.
+//
+// So each section records its own claim, at the point where its assertions have
+// actually passed. A section that does not execute cannot append to this list,
+// and the summary therefore cannot claim it. That property is mutation-tested:
+// M13 skips section 4 and asserts the summary stops mentioning deletion.
+//
+// THE REMAINING ASYMMETRY, STATED: a section that runs but forgets to call
+// `proved()` makes the summary UNDER-claim. That is the safe direction — the
+// failure this replaces was over-claiming by inheritance — but it is not
+// nothing, and it is why `proved()` calls sit immediately after the assertions
+// they describe rather than being collected anywhere central.
+const PROVED = [];
+const proved = (claim) => PROVED.push(claim);
+
 // --- 1. The file set -------------------------------------------------------
 // Read from the DIRECTORY, never from a hardcoded list. A literal list is how a
 // new `0010` gets silently skipped while the check still reports success — that
@@ -149,6 +174,7 @@ for (const file of migrations) {
 if (applied !== migrations.length) {
   fail(`applied ${applied} of ${migrations.length} migrations without reporting an error.`);
 }
+proved(`${applied} migrations apply in order to a real Postgres, behind the auth test double`);
 
 // --- 3. Interrogate the catalog --------------------------------------------
 const tables = Number(scalar("select count(*) from pg_tables where schemaname = 'public'"));
@@ -229,6 +255,9 @@ if (definers === 0) {
       "into definer functions; zero of them means those writes have no route.",
   );
 }
+proved(`${tables} tables exist and every one has RLS enabled`);
+proved(`the counter tables are SELECT-only per the catalog (${COUNTER_TABLES.join(", ")})`);
+proved(`${definers} SECURITY DEFINER functions exist`);
 
 // --- 4. The deletion probe (Phase 2 U17) -----------------------------------
 // EXECUTES what the FK text only describes. `0010_delete_user_data.sql` deletes
@@ -338,6 +367,9 @@ if (survivors.length > 0) {
       "explicit delete AND the foreign key changed.",
   );
 }
+proved(
+  `delete_all_user_data() empties all ${OWNED_TABLES.length} user-owned tables, seeded and executed`,
+);
 
 // The cascades, proven separately from the function — the function currently
 // deletes those three explicitly, so the cascade is a SAFETY NET whose failure
@@ -390,6 +422,7 @@ if (orphanItems > 0 || orphanMessages > 0) {
       "items permanently unreachable and undeletable.",
   );
 }
+proved("deleting a parent cascades to stack_items and advisor_messages");
 
 // CROSS-USER ISOLATION — the assertion that matters most, and the only place it
 // CAN be made. `delete_all_user_data()` takes no arguments and derives its owner
@@ -436,6 +469,10 @@ const deleterRows = Number(
 if (deleterRows !== 0) {
   fail("the cross-user probe's own caller was not deleted — the probe proves nothing.");
 }
+proved(
+  "calling delete_all_user_data() as one user leaves another user's rows intact " +
+    "(and does delete the caller's own — the probe is not vacuous)",
+);
 
 // And the one that is NOT a cascade, asserted so the difference stays true.
 const survivingActions = Number(
@@ -450,12 +487,19 @@ if (survivingActions !== 1) {
       "explicit delete because 'conversations cascade' — would silently orphan rows.",
   );
 }
+proved("advisor_actions.conversation_id is SET NULL rather than CASCADE, and behaves that way");
+
+// The register itself must not be empty: a refactor that removed every section
+// would otherwise print a cheerful "OK" with nothing under it.
+if (PROVED.length === 0) {
+  fail("no section recorded a proof. The run asserted nothing and must not report OK.");
+}
 
 console.log(
-  `verify:migrations — OK. ${applied} migrations applied in order to a real\n` +
-    `  Postgres behind the auth test double. ${tables} tables, all with RLS;\n` +
-    `  ${definers} SECURITY DEFINER functions; counter tables SELECT-only\n` +
-    `  (${COUNTER_TABLES.join(", ")}).\n` +
-    "  Proves the SET is coherent. Says nothing about the deployed database —\n" +
-    "  that is the dated record in docs/05-qa/.",
+  "verify:migrations — OK. What this run actually executed and proved:\n" +
+    PROVED.map((claim) => `  · ${claim}`).join("\n") +
+    "\n\n  Each line above was appended by the section that proved it, so a section\n" +
+    "  that does not run cannot be claimed here.\n" +
+    "  Proves the migration SET is coherent. Says nothing about the DEPLOYED\n" +
+    "  database — that is the dated record in docs/05-qa/.",
 );
