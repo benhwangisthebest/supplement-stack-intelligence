@@ -1671,10 +1671,33 @@ implements — added in this commit, per the owner's ruling: a verification list
 is N-29's asymmetry in miniature)*: `npx tsc --noEmit` clean · `npm run lint` **356/356, 0 errors** ·
 `npx vitest run` **1251/103** · `npx vitest run --coverage` exit 0 · `npx next build` succeeds ·
 `npm run verify:rendering` OK · `npx playwright test` **70 passed / 30 skipped**.
-**Not run, and stated rather than implied:** `npm run verify:migrations` (needs a local Postgres; unchanged
-by this unit, and CI runs it) and `npm run verify:middleware`. **First-run discipline applies to the new
-CI `Lint` step** — it has never executed on a runner, and its first CI run is evidence this record does not
-yet contain.
+**Not run locally, and stated rather than implied:** `npm run verify:migrations` (needs a local Postgres;
+unchanged by this unit) and `npm run verify:middleware`. **CI ran the first**, below.
+
+**FIRST-RUN DISCIPLINE ON THE `Lint` STEP — DISCHARGED. CI `32137015633` GREEN ON `a3baa88`**, every one
+of the fourteen steps `success`, job wall-clock **3m 18s**. Per-step:
+
+| step | wall-clock | | step | wall-clock |
+|---|---|---|---|---|
+| Set up job | 1s | | Migration coherence | 2s |
+| Initialize containers | 21s | | Production build | 34s |
+| Checkout | 2s | | Rendering determinism | 0s |
+| Set up Node | 5s | | Install Playwright browser | 23s |
+| Install dependencies | 14s | | E2E (non-live) | 38s |
+| Typecheck | 8s | | Post Set up Node | 5s |
+| **Lint** | **5s** | | Stop containers | 1s |
+| Unit and architecture tests | 16s | | | |
+
+**The step is the cheapest real check in the chain** — 5s against Typecheck's 8s and Coverage's 20s, on a
+job whose setup floor is already ~45s. Placing it beside Typecheck cost nothing measurable, which is what
+that placement was betting on.
+
+**AND IT SETTLED SOMETHING THE LOCAL GATE STRUCTURALLY COULD NOT.** `verify-lint.mjs` shells out to
+`git ls-files`, and every local run of it — including the staged-tree gate — read *this working copy*.
+CI's `actions/checkout` is a real clone on a machine that has never seen this repository, so a green `Lint`
+step there is the first evidence that the derivation holds against a checkout rather than against a
+developer's index. A guard whose scope comes from git had, until this run, only ever been asked about one
+git.
 
 **RAISED:** **N-44** (fixed here), **N-45**, **N-46** (closed here by fix 11).
 
