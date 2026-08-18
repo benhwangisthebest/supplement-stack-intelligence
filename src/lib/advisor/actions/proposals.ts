@@ -21,7 +21,6 @@ import type {
   ProposalDiffLine,
 } from "@/types/advisor-action";
 import type {
-  AdvisorContext,
   AdvisorTool,
   Citation,
   ToolResult,

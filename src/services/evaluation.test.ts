@@ -197,7 +197,6 @@ describe("runEvaluation — side-effect rule reachability (G6 guard)", () => {
 // removing it (the wrong-value probe of §6.2.2).
 // ---------------------------------------------------------------------------
 import type { LabMarker, UserProfile } from "@/types";
-import type { TrendSignal } from "@/types/lab";
 
 const getStackMock = vi.fn();
 const listItemsMock = vi.fn();
@@ -242,17 +241,6 @@ const LAB_MARKER: LabMarker = {
   notes: null,
 };
 
-const TREND: TrendSignal = {
-  biomarkerId: "magnesium-serum",
-  biomarkerName: "Magnesium (serum)",
-  latest: { value: 2.1, unit: "mg/dL", collectedAt: "2026-07-01" },
-  previous: { value: 1.6, unit: "mg/dL", collectedAt: "2026-01-01" },
-  delta: 0.5,
-  pctChange: 31.25,
-  direction: "rising",
-  windowDays: 181,
-  points: 2,
-};
 
 describe("runEvaluation — 7/7 context-field reachability (U12)", () => {
   beforeEach(() => {

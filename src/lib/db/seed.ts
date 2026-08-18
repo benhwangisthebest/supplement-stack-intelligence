@@ -101,8 +101,6 @@ export async function seed(): Promise<void> {
     // Fish oil -> allergy-conflict (profile allergy=fish).
     { stack_id: stackId, supplement_id: "fish-oil", dose: 1000, unit: "mg", timing: "morning", frequency: "daily" },
   ]);
-
-  // eslint-disable-next-line no-console
   console.log(`Seeded demo user ${DEMO_EMAIL} (${userId}) with stack ${stackId}.`);
 }
 
@@ -111,7 +109,6 @@ if (process.argv[1] && process.argv[1].includes("seed")) {
   seed()
     .then(() => process.exit(0))
     .catch((err) => {
-      // eslint-disable-next-line no-console
       console.error(err);
       process.exit(1);
     });

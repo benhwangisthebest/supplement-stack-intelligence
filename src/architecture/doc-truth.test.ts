@@ -149,6 +149,10 @@ export function readWorkflowRunSteps(yml: string): string[] {
 const DECLARED_STEP_COMMANDS: Record<string, string> = {
   "npm ci": "npm ci",
   typecheck: "npm run typecheck",
+  // Phase 2 U18 — roadmap item 9. `npm run lint` is the verify-lint wrapper,
+  // NOT `next lint`; the binding is to the script name either way, so this
+  // mapping stays true if the wrapper is ever replaced.
+  lint: "npm run lint",
   "vitest run": "npm test",
   "coverage thresholds": "npm run test:coverage",
   // Phase 2 U15 — applies the migration set to a real Postgres. Sits before the

@@ -14,6 +14,17 @@ interface SupplementDetailProps {
   related: Supplement[];
 }
 
+// v8: advisor provenance chips deep-link to #effect-{id} / #paper-{id}; this maps
+// those hash prefixes to their tabs so the link lands on the right section (gap G1).
+//
+// HOISTED TO MODULE SCOPE DELIBERATELY (U18). `Tabs` reads this in a mount-only
+// `useEffect` whose `eslint-disable react-hooks/exhaustive-deps` is justified by
+// the comment "anchorTabMap is a stable literal from the parent render". Inline at
+// the call site that sentence was FALSE — a fresh object every render — and the
+// directive was suppressing a real warning on a false premise. At module scope the
+// reference is genuinely stable, so the waiver now says something true.
+const ANCHOR_TAB_MAP = { "effect-": "effects", "paper-": "papers" };
+
 // Design §5.4 — layered depth: Summary → Dose → Effects → Papers → Related.
 export function SupplementDetail({
   supplement,
@@ -35,9 +46,7 @@ export function SupplementDetail({
     { id: "related", label: "Related", content: <RelatedTab related={related} /> },
   ];
 
-  // v8: advisor provenance chips deep-link to #effect-{id} / #paper-{id}; map those
-  // hash prefixes to their tabs so the link lands on the right section (gap G1).
-  return <Tabs items={items} anchorTabMap={{ "effect-": "effects", "paper-": "papers" }} />;
+  return <Tabs items={items} anchorTabMap={ANCHOR_TAB_MAP} />;
 }
 
 function SummaryTab({ supplement }: { supplement: Supplement }) {

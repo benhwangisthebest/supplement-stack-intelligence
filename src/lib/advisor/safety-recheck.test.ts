@@ -6,7 +6,6 @@ import { makeContext } from "./mock-adapter";
 import { diffNewFlags, projectItems, recheckForProposal } from "./safety-recheck";
 import {
   proposeAddItem,
-  proposeAttachProduct,
   proposeEditItem,
   proposeGenerateProtocol,
   proposeRemoveItem,

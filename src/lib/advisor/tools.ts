@@ -18,7 +18,6 @@ import { curatedWatchList } from "@/lib/side-effects";
 import { sideEffectLabel } from "@/lib/side-effects/vocab";
 import type { SideEffectFinding } from "@/types/side-effect";
 import type {
-  AdvisorContext,
   AdvisorTool,
   Citation,
   ToolResult,

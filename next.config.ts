@@ -94,6 +94,34 @@ export const SECURITY_HEADER_SOURCE = "/:path*";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // -------------------------------------------------------------------------
+  // LINTING IS NOT THE BUILD'S JOB — Phase 2 U18
+  // -------------------------------------------------------------------------
+  // WHY IT IS OFF: `next build` would otherwise run a SECOND linter whose file
+  //   set Next resolves for itself, not from `git ls-files`.
+  // WHICH LINTER IS THE AUTHORITY: `npm run lint` (scripts/verify-lint.mjs),
+  //   a blocking CI step. Nothing in this file can make it pass.
+  //
+  // NOT a way to ship past lint errors. `npm run lint` is a blocking CI step
+  // (scripts/verify-lint.mjs) and nothing here can make it pass.
+  //
+  // Before U18 this repository had no ESLint config, so `next build` silently
+  // skipped linting. Creating `eslint.config.mjs` switched that on as a SIDE
+  // EFFECT, and the build immediately became a second linter — one whose file
+  // set Next resolves for itself rather than deriving from `git ls-files`,
+  // which is the one property the whole unit is built around. Two linters with
+  // two different scopes, one of them unadjudicated, is how a config drifts
+  // into disagreeing with its own gate.
+  //
+  // It also collapses two failure modes into one. `ci.yml` keeps the coverage
+  // run separate from `npm test` for exactly this reason: a red build should
+  // mean the app does not compile, not that someone left an unused import. The
+  // Lint step reports lint; the build reports the build.
+  //
+  // Turning this off does not remove enforcement — it removes DUPLICATE, less
+  // well-scoped enforcement, and the plugin warning Next prints about a config
+  // it did not write.
+  eslint: { ignoreDuringBuilds: true },
   async headers() {
     return [
       {

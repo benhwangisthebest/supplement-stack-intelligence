@@ -127,7 +127,7 @@ confines the user to their own row, so no other user's data is reachable. It cos
 | 6 | Migration tooling | **NOT STARTED.** No `db:migrate`, no supabase dep. | → **U15** (criterion needs rewording first — §7) |
 | 7 | Security headers | **NOT STARTED.** `next.config.ts` is `{ reactStrictMode: true }`, no `headers()`. | → **U13** (+ **U14** for CSP) |
 | 8 | Self-service export + deletion | **NOT STARTED.** 23 routes, none account-scoped. | → **U16, U17** (criterion needs rewording — §7) |
-| 9 | Resolve `npm run lint` | **NOT STARTED.** `"lint": "next lint"`, no eslint dep, no config, **4** `eslint-disable` comments naming **2 uninstalled plugins and 1 ESLint core rule** (`react-hooks/exhaustive-deps`, `@typescript-eslint/no-unused-vars`, and `no-console` ×2). | → **U18** |
+| 9 | Resolve `npm run lint` | ~~**NOT STARTED.** `"lint": "next lint"`, no eslint dep, no config, **4** `eslint-disable` comments naming **2 uninstalled plugins and 1 ESLint core rule**~~ → **DONE 2026-08-18 by U18.** The count in the struck text was one of the drifted figures this plan warns about: **5** disable comments, not 4. ESLint 9 + flat config + `scripts/verify-lint.mjs`; **356/356** tracked source files linted, 0 errors; CI `Lint` step live. | **U18 — DONE** |
 
 ### 4.2 Deferred from Phase 1
 
@@ -270,6 +270,13 @@ a commit message keeps pointing at the same finding.
 | **N-41** | **U16, 2026-08-13** | **The data export is unbounded in size.** `GET /api/account/export` assembles every row of twelve tables into one JSON response, with no pagination, streaming, or limit. A user with a long advisor history — `advisor_messages` is the realistic one — receives it all in a single buffered body | `src/lib/db/export-repo.ts`; the route returns `ok(data)` with no chunking. `checkins` and `side_effect_reports` are now read UNWINDOWED by design (a windowed export is silently incomplete — see U16's entry), which removes the only accidental bound that existed | **OPEN, REGISTERED NOT BUILT, by owner ruling at plan approval.** At seed scale this is a non-issue, and inventing a limit nobody asked for would trade a theoretical memory problem for a **certain correctness problem**: any cap makes the export quietly partial, which is the exact failure the unwindowed readers were added to prevent. **Whoever bounds this must keep the export total** — streaming (NDJSON, or a per-table chunked download) rather than truncation, and the `notIncluded[]` field is where any residual omission must be declared. **Proposed owner: a future unit, triggered by a measured payload, not by unease** |
 | **N-42** | **U17 CI first run, 2026-08-15** | **A check's success message inherited its claims from an earlier version of the check, and went green describing work it no longer fully described.** `verify:migrations`' summary was written for U15 and named U15's proofs. U17 added an entire section — deletion completeness, two cascades, `SET NULL`, cross-user isolation — and the summary did not change. **Every word of it stayed true.** It was wrong by OMISSION, which is strictly harder to catch than a false statement, because nothing about it looks wrong. On the deletion probe's FIRST CI execution the step went green in 2s and its output gave no sign the probe had run at all — that it *had* could only be established by reading the script's control flow, which is not what CI output is for | `scripts/verify-migrations.mjs`, the closing `console.log` | **CLOSED IN U17's commit 2 by owner ruling.** The summary is now DERIVED: each section appends its own claim via `proved()` at the point its assertions passed, so a section that does not execute cannot be claimed. **M13 executed both halves** — skipping section 4 drops all four deletion claims; the same skip under a *hand-maintained* widened string still printed *"empties all 12 user-owned tables, cascades hold, and cross-user isolation is enforced"* at exit 0, which is the defect re-hidden. **Stated asymmetry:** a section that runs but forgets `proved()` makes the summary UNDER-claim — the safe direction, and why the calls sit beside the assertions they describe. Generalises past this file: **a check's self-description is the part of it that nothing executes** |
 | **N-43** | **U17 commit preparation, 2026-08-15** | **The pre-commit gate ran against the WORKING TREE while the commit carried a subset of it.** `scripts/verify-migrations.mjs` (+221 lines — the whole deletion probe) was written, executed, and mutation-tested, then never `git add`ed. The full gate passed, the mutation table was real, and the commit request stated a 10-file / +915 diff that was in fact 11 files / +1159. **Green would have looked IDENTICAL with the probes absent from the commit** — CI would have applied ten migrations and asserted nothing about deletion, exiting 0 with a summary that (then) never mentioned deletion anyway. Caught only by re-reading `git status` before committing; nothing in the gate could have caught it, because the gate was measuring a tree the commit did not contain | The §5 gate as described in this plan and in `CLAUDE.md` §5.10 — *"before declaring work done: `tsc`, `vitest run`, `next build`"* — says nothing about WHICH tree those run against | **OPEN as a PROCEDURE CHANGE, not a code defect.** The gate that precedes a commit request must run against the **STAGED** tree, not the working tree: `git stash -u --keep-index` before the gate and restore after, or gate a clean checkout of the index. Anything else measures an artifact that is not the one being proposed. **Related to but distinct from N-42:** N-42 is a check describing itself wrongly, this is a check being pointed at the wrong subject entirely. **Proposed owner: the plan's §5 gate description**, which is where the instruction that produced this actually lives |
+| **N-44** | **U17 commit 3, found at U18 orientation 2026-08-18** | **The two exit-criteria lists tick independently, and nothing binds them.** U17's closeout ticked `docs/roadmap.md`'s copy of the export/delete criterion and left this plan's copy at `[ ]`, with the same evidence available for both. **U18 then found the divergence runs the OTHER way too:** this plan ticks *"Security headers present in the config and in a real response"* ✅ **MET 2026-08-10 by U13**, while `docs/roadmap.md:391` still reads `- [ ] Security headers present, verified by a response-header test.` — and U14 has since landed the CI stage that discharged that criterion's stated non-coverage. So the divergence is **not** a slip in one commit; it is the absence of any binding at all, in both directions, on both criteria anyone has recently closed | `doc-truth.test.ts` binds `CLAUDE.md` §4's rule table and §5's CI chain to reality. It binds **nothing** between `docs/roadmap.md`'s criteria list and this plan's — not the text, not the tick state. Decision 5's own ruling anticipated exactly this when it reworded criteria in one file | **HALF CLOSED IN U18 COMMIT 1, half deferred with its shape written down.** The instance is fixed: this plan's export/delete criterion is now ticked with U17's evidence, in U18's commit, per the standing disposition. **The guard is DEFERRED to Phase 2 closeout**, shape recorded now so deferral is not forgetting: give each criterion a **stable id** present in both files, assert **tick-state parity** across the two lists, and assert **never the text** — the wordings differ *by design* (`roadmap.md` states the user-facing claim, the plan states the mechanical check beside it), so a text binding would force one of them to stop doing its job. **The security-headers instance is deliberately NOT fixed here.** Ticking `roadmap.md`'s copy means re-deriving U13's and U14's evidence, which is not U18's to certify — naming it is §8.1, absorbing it would be the failure §8.1 describes. **THE SECOND INSTANCE IS THE ARGUMENT FOR THE GUARD, NOT A FOOTNOTE TO IT.** The two instances run in
+OPPOSITE directions — one criterion ticked only in `roadmap.md`, one ticked only in the plan — so no
+one-way discipline ("remember to update the plan too") would have caught both. Tick-state **parity** over
+stable ids catches both by construction, which is why the deferred guard is specified that way rather than
+as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
+| **N-45** | **U18 first lint run, 2026-08-18** | **`parseNumber` exists twice, byte-identical, on the two halves of the lab-import path.** `src/lib/lab-import/csv.ts:74-80` and `src/lib/lab-import/paste.ts:16-22` are the same seven lines including the same `no-useless-escape` defect, which is how the duplication surfaced: **one lint finding arrived twice**, from two files, in the same run. The finding is the **divergence hazard**, not the lint line — a future fix to numeric parsing (a thousands separator, a unicode minus, a `<` prefix on a below-detection-limit result) applied to one copy silently gives CSV upload and pasted text two different readings of the same lab value | Both files, and U18's lint output listing `csv.ts:76` and `paste.ts:18` with identical text. §2.2 rule 7 territory: the two paths would compute different numbers from the same source document, and both would render as though computed | **OPEN, OUT OF U18 SCOPE.** U18 fixed the escape at both sites and deliberately did **not** deduplicate: extracting a shared parser is a change to lab-import behaviour on both paths at once, which needs its own red evidence against real fixtures rather than riding in a lint unit. **The lint fix does not reduce the hazard** — it made both copies identical again, which is the state that hides it. **Proposed owner: a lab-import unit, not a cleanup pass** |
+| **N-46** | **U18 first lint run, 2026-08-18** | **A test helper's parameter configures nothing — "a lie shaped like a parameter", at a second site.** `src/lib/advisor/repo.test.ts`'s `statefulLedger(dailyBudget)` ignored its argument entirely and read `args.p_daily_budget` off the RPC call instead. **Five call sites passed a budget** — three `100_000`, two `1000` — and every one of them configured nothing. Any reader would take the two `1000` sites as exercising a tight budget; they were not. This is U16's finding recurring in a different subsystem, and the shape is the danger: an ignored parameter reads as a deliberate test condition, so the test appears to cover a case it never sets up | `repo.test.ts:110` before the fix, and the five call sites at `:159`, `:172`, `:211`, `:231`, `:241` | **CLOSED IN U18 by fix 11** — the parameter is removed and the five call sites now read `statefulLedger()`, which states the truth: the budget comes from the caller of `rpc`, not from the helper. **Registered for the pattern, not the instance.** ESLint found it in seconds; it had been invisible to `tsc`, to 1245 passing tests, and to review, because an unused parameter is well-typed, tested, and reviewable. **That is the argument for this whole unit in one line.** No guard proposed: `@typescript-eslint/no-unused-vars` IS the guard, and it now runs in CI |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -1549,6 +1556,128 @@ unacceptable state, reintroduced by the fix for it.
 **Red:** conditional hook call → `react-hooks/rules-of-hooks`; then `ignores: ["**"]` → `LINT_SCOPE:
 eslint matched 0 files; a linter that lints nothing passes vacuously`.
 
+**U17 STAMP ROW** *(standing disposition):*
+
+| U17 closeout | value |
+|---|---|
+| merged to `main` | **`beab8d9`** — fast-forward |
+| closeout run | **`32041871938`** — green |
+| post-merge `main` run | **`32042081158`** — green, required check satisfied |
+
+**DONE 2026-08-18.** Baseline before: typecheck clean, **1245/102**, `npm run lint` did not exist as a
+check. After: **1251/103** (+6, all `LINT_CONFIG`). **356 of 356** tracked source files linted, **0**
+errors, **0** warnings, **0** exemptions.
+
+**THE FIRST LINT RUN IN THIS REPOSITORY'S HISTORY FOUND 11 ERRORS ACROSS 10 FILES, AND THE COUNT WAS
+WRONG WITHIN THE HOUR — 12 ACROSS 11. TWELVE, ONE OF THEM THE UNIT'S OWN** *(ratified by the owner: the
+twelfth is the same class as five of the eleven, self-inflicted, and leaving it red blocks the unit)*. The twelfth is `scripts/verify-lint.mjs` itself: it carried an
+unused `relative` import, and it entered its own scope the moment the WIP commit made it a tracked file.
+That is not an embarrassment to be footnoted, it is the derivation working — the expected set comes from
+`git ls-files`, so the linter acquired jurisdiction over its own author the instant the author committed.
+A guard deriving its scope from `eslint.config.mjs` would have been silent, because nothing in that file
+mentions `scripts/`. Recorded because the same property is what M1c below proves deliberately, and this
+proved it by accident first.
+
+**WHAT THE ELEVEN WERE, AND WHY NONE OF THEM IS A STYLE COMPLAINT.** Three were `eslint-disable` comments
+that suppressed nothing (`seed.ts` ×2 waiving a `no-console` that is not enabled; `product-matcher/index.ts`
+waiving a `no-unused-vars` its own config option already satisfies) — written, necessarily, by people who
+had never seen the violation they claim to waive, because no linter had ever run here. Five were dead
+imports and fixtures. Two were `no-useless-escape` in a `parseNumber` that exists **twice, byte-identical**
+(**N-45**). The eleventh is **N-46**.
+
+**THE FIVE DISABLE COMMENTS SPLIT 3–2, AND THE TWO SURVIVORS BOTH NEEDED WORK.**
+`export-coverage.test.ts`'s `no-explicit-any` waiver is live and correct. `src/components/ui/Tabs.tsx`'s
+`exhaustive-deps` waiver is live and its **stated reason was false**: *"anchorTabMap is a stable literal
+from the parent render"*, while `SupplementDetail.tsx` passed `{{ "effect-": "effects", … }}` **inline —
+a fresh object every render**. The directive was suppressing a real warning on a premise that did not
+hold. Fixed by hoisting the literal to module scope (`ANCHOR_TAB_MAP`), which makes the sentence true
+rather than deleting the sentence. **Stated honestly: this repair is not test-enforced.** No mutation
+reddens on re-inlining it, because `exhaustive-deps` is a warning and the waiver suppresses it either way.
+It is a correctness repair to a *comment*, and comments are the one thing this phase has no instrument for.
+
+**RED EVIDENCE — twelve rows, all executed** (M1, M1b, M1c and its control, M2–M9; M7/M8 added under §5.2 because `LINT_CONFIG` is a new guard and needed its own red, M9 at owner ruling)**.** Every `eslint.config.mjs` edit is in the config-edit log
+below.
+
+| # | Mutation | Expected | Result |
+|---|---|---|---|
+| **M1** | `ignores: ["**"]` | `LINT_SCOPE` red | **RED**, exit 1 — *"LINT SCOPE — **356 of 356** tracked source files are NOT linted"* |
+| **M1b** | expectation derived from the ESLint config instead of git, then M1 re-applied | plan predicted **GREEN** | **RED, exit 1 — THE PLAN'S PREDICTION WAS WRONG, and the reason matters.** Under `ignores:["**"]` the config-derived expectation collapses to **zero files**, and the independent zero-file net catches it: *"git reports ZERO tracked .ts/.tsx/.mjs files … a guard whose easiest green is 'there was nothing to check' is not a guard."* **M1b as specified does not isolate the variable it was written to isolate** — two guards overlap on it, so its green would have proved nothing and its red proves the wrong thing. See M1c |
+| **M1c** | same config-derived expectation, but a **partial** over-broad ignore (`"src/**"`) so the zero-net cannot fire | the real counterfactual | **GREEN, exit 0** — *"ESLint's configuration lints **39 of 39** tracked source files … no tracked source file is exempt"*, while **317 source files went unlinted**, under a summary whose closing sentence reads *"The expected file set comes from `git ls-files`, NOT from the ESLint config."* A fully green run, saying the true thing, doing the false thing |
+| **M1c control** | the identical ignore, git-derived expectation restored | red | **RED**, exit 1 — *"**317 of 356** tracked source files are NOT linted"*. M1c and its control differ in **one variable**: where the expectation comes from. That is the proof M1b was meant to be |
+| **M2** | conditional `useState` in `Tabs.tsx` | `rules-of-hooks` fires | **RED**, exit 1 — *"React Hook \"useState\" is called conditionally"* |
+| **M3** | `eslint-plugin-react-hooks` block deleted from the config | site 1's waiver becomes an unused directive | **RED**, exit 1 — but by a **different and stronger mechanism than predicted**: *"Definition for rule 'react-hooks/exhaustive-deps' was not found"*. ESLint refuses a directive naming a rule it cannot resolve, so the failure arrives before the unused-directive check. `LINT_CONFIG` reddens independently (1 failed / 5 passed) |
+| **M4** | CI `Lint` step deleted | `DOC_TRUTH` red | **RED** — *"§5's declared CI steps and ci.yml's `run:` steps have diverged"* (1 failed / 20 passed). GATE D1 satisfied: the step and `CLAUDE.md` §5's chain move in one commit |
+| **M5** | `REPO_ROOT` pointed at a directory that does not exist | fails loudly, not a stack trace | **RED**, exit 1 — *"could not list tracked files with `git ls-files` … without git it cannot make its assertion at all — and passing anyway would be exactly the vacuity it exists to prevent"* |
+| **M6** | the removed disable at site 2 restored | unused-directive error | **RED**, exit 1 — *"Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')"* |
+| **M7** | `reportUnusedDisableDirectives` demoted `"error"` → `"warn"` | `LINT_CONFIG` red | **RED** — *"`reportUnusedDisableDirectives` must be \"error\""* (1 failed / 5 passed). **And the complementarity is the point:** with M6 ALSO applied, `npm run lint` exits **0** and prints the inert directive as a warning. The demotion is invisible to the lint gate and visible only here — which is the entire reason `LINT_CONFIG` exists as a separate guard |
+| **M8** | `package.json` `lint` repointed to `next lint` | `LINT_CONFIG` red | **RED** — *"`npm run lint` must run scripts/verify-lint.mjs"*. Without this pin, CI's Lint step goes green having proved nothing: the P-10 vacuity, restored by one word |
+| **M9** | `eslint: { ignoreDuringBuilds: true }` removed **while a real lint error is present** *(added at owner ruling — a build-config change with a real failure mode gets a mutation)* | the second linter is real | **BOTH HALVES SHOWN. (a)** With the setting as shipped and `m9Unused` planted in `product-matcher/index.ts`: `npm run lint` **RED** (*"1 error(s) across 1 file(s)"*) while `next build` printed **✓ Compiled successfully** — the build does not lint, which is the whole claim. **(b)** With the setting removed and the same error present: **`Failed to compile.` — *"43:9 Error: 'm9Unused' is assigned a value but never used"***. The second linter was never hypothetical; it was running, and it is what a green U18 would have shipped alongside the real one |
+
+**AN UNPLANNED DECISION, FORCED BY THE WORK AND FLAGGED RATHER THAN ABSORBED: `next build` SILENTLY
+BECAME A SECOND LINTER.** Creating `eslint.config.mjs` switched on Next's build-time ESLint pass, which
+had been skipping for want of a config. The first build after the config landed **failed on a lint error**
+— in this unit's own new test file. Two problems, not one: (i) Next resolves that pass's file set for
+itself, so the repository would carry two linters with two scopes, one of them never adjudicated, and the
+`git ls-files` derivation would govern only one of them; (ii) it collapses two failure modes, exactly what
+`ci.yml` refuses when it keeps `test:coverage` separate from `npm test` — a red build should mean the app
+does not compile. `next.config.ts` now sets `eslint: { ignoreDuringBuilds: true }` with that reasoning at
+the site, and states in two lines **why it is off** and **which linter is the authority**. **This removes
+duplicate enforcement, not enforcement:** `npm run lint` is a blocking CI step and nothing in
+`next.config.ts` can make it pass. Proved by **M9**, both directions.
+
+**THE ROADMAP'S "ONLY UNACCEPTABLE STATE" HAS A MIRROR IMAGE, AND THIS IS IT.** Roadmap item 9 names one
+failure: *a linter that appears to gate quality but does not*. The fix for it arrives carrying the
+reflection — **two linters with different scopes, only one of them derived from `git ls-files`** — and the
+reflection is worse in one specific way. A single vacuous linter is at least honestly empty; two disagreeing
+linters both report, both look like enforcement, and the one nobody adjudicated silently governs a file set
+nobody wrote down. `LINT_SCOPE` would keep asserting 356 of 356 and stay true, while the build enforced
+something else entirely on its own list. **That is what was declined**, and it is the same defect as the
+original in a different posture: enforcement whose extent no one can state.
+
+**THE JOB NAME IS NOW PINNED IN A COMMENT.** `main`'s required status check is the literal string
+`typecheck / test / build`. Extending it to `typecheck / lint / test / build` — the obvious tidy-up, and
+the one a future reader will reach for — would leave the required check permanently pending and block every
+merge. It is an identifier, not a description; `ci.yml` now says so where the rename would be typed.
+
+**`eslint.config.mjs` EDIT LOG** *(per the standing ruling — config-protection was disabled at the plugin
+level for this unit, and this record is what discharges its purpose; **re-enable it in the merge
+accounting**)*:
+
+| # | Edit | Disposition |
+|---|---|---|
+| 1 | created — flat config as described in its header | kept |
+| 2 | deleted a no-op `{ files: [...], rules: {} }` block; its `no-console` rationale moved to the header, per §8.3 — a placeholder that silently does nothing is a trust defect | kept. **Blocked twice by config-protection before the ruling; the only edit made under it** |
+| 3 | probe: appended a comment to test whether edits were still blocked after the restart | reverted immediately |
+| 4 | **M1** — `ignores: ["**"]` | reverted |
+| 5 | **M1c** — `ignores: ["src/**", …]` | reverted |
+| 6 | **M3** — react-hooks block deleted | reverted |
+| 7 | **M7** — `reportUnusedDisableDirectives: "warn"` | reverted |
+
+Edits 3–7 are mutations; the file is byte-identical to edit 2's result, verified by `git diff`.
+
+**N-43's STAGED-TREE GATE, PRACTISED FOR THE FIRST TIME — AND IT PAID ON THE FIRST RUN.** The gate ran
+against the **index**, not the working tree (`git add` the unit's files, `git stash push -u --keep-index`,
+run, restore). It immediately contradicted a number this entry had already been written with: every
+working-tree run had reported **355 of 355** files linted, and the staged run reported **356 of 356**.
+The difference is `src/architecture/lint-config.test.ts` — *this unit's own new guard*, untracked while it
+was being written, and therefore outside the scope of a check that derives its scope from `git ls-files`.
+**A working-tree gate had been measuring an artifact one file smaller than the one being proposed**, which
+is N-43's defect restated in this unit's own units. Every scope figure above was re-derived against the
+staged tree, and the three scope mutations (M1, M1c, M1c control) were **re-run** rather than
+re-labelled — the mutation table describes the artifact in the commit, or it describes nothing.
+
+**FULL GATE, AGAINST THE STAGED TREE** *(and `npm run lint` is now a member of the §5.10 list this gate
+implements — added in this commit, per the owner's ruling: a verification list that omits a check CI runs
+is N-29's asymmetry in miniature)*: `npx tsc --noEmit` clean · `npm run lint` **356/356, 0 errors** ·
+`npx vitest run` **1251/103** · `npx vitest run --coverage` exit 0 · `npx next build` succeeds ·
+`npm run verify:rendering` OK · `npx playwright test` **70 passed / 30 skipped**.
+**Not run, and stated rather than implied:** `npm run verify:migrations` (needs a local Postgres; unchanged
+by this unit, and CI runs it) and `npm run verify:middleware`. **First-run discipline applies to the new
+CI `Lint` step** — it has never executed on a runner, and its first CI run is evidence this record does not
+yet contain.
+
+**RAISED:** **N-44** (fixed here), **N-45**, **N-46** (closed here by fix 11).
+
 **U19 · F5, correlation ID in the UI.** N `src/lib/api/error-text.ts` + test · M `AdvisorPanel.tsx` · N
 `src/architecture/ui-error-text.test.ts`. **M/S**, deps U1.
 **The only Phase 2 item needing a harness the repo does not have.** `vitest.config.ts` collects
@@ -2475,12 +2604,29 @@ here rather than discovered later.
       (`a1a9fc0`, full non-live suite, 70/30). Both halves are now enforced on every push, so the
       criterion is met **and** CI-enforced — the first time this repository has verified a response byte
       anywhere but on a developer's machine.
-- [ ] **`npm run lint` either lints a non-empty file set or does not exist.** Check: `LINT_SCOPE` asserts
+- [x] **`npm run lint` either lints a non-empty file set or does not exist.** Check: `LINT_SCOPE` asserts
       ≥ N files, or `package.json` has no `lint` script. *(Both branches are acceptable; the unacceptable
-      state is a script that appears to gate and does not.)*
-- [ ] **A user can export their data and delete all of it across the 12 tables**, with the surviving auth
+      state is a script that appears to gate and does not.)* ✅ **MET 2026-08-18 by U18, on the CONFIGURE
+      branch.** `LINT_SCOPE` asserts **356 of 356** tracked source files, **0** exempt, **0** errors, and
+      derives that expected set from `git ls-files` rather than from `eslint.config.mjs` — shown red at
+      **356 of 356 unlinted** against `ignores: ["**"]` (M1). *(The check as written says "≥ N files",
+      which a config-derived guard could satisfy while linting almost nothing: **M1c produced exactly that
+      — a green run reporting "39 of 39" with 316 files unlinted.** The criterion is met by the
+      git-derived form, and the counterfactual is recorded in U18's entry precisely because the criterion's
+      own wording does not exclude the weaker one.)*
+- [x] **A user can export their data and delete all of it across the 12 tables**, with the surviving auth
       identity stated in the response. Check: both route tests green; a test asserts the export payload
-      passes through no logging path.
+      passes through no logging path. ✅ **MET 2026-08-17 by U16 (`a087715`) + U17 (`55c74f6`).**
+      `GET /api/account/export` returns all twelve tables with a `notIncluded[]` statement of what it
+      omits; `DELETE /api/account` empties all twelve behind a typed confirmation literal and reports
+      per-table counts plus the two **retained** items — the `auth.users` identity and the rate-limiter
+      counters — which is the half the 2026-08-08 rewording added. Deletion completeness, both cascades,
+      the `SET NULL` on `advisor_actions` and cross-user isolation are proved by `npm run verify:migrations`
+      against a real Postgres in CI; OP-7 discharged 2026-08-17, `0010` live on the deployed database.
+      **[TICKED 2026-08-18 BY U18 — see N-44.]** `docs/roadmap.md`'s copy of this criterion was ticked by
+      U17's closeout and this one was not, with the same evidence available to both. Nothing binds the two
+      lists, in either direction; the parity guard is deferred to Phase 2 closeout with its shape recorded
+      in N-44.
 - [x] **The navigation pillar group renders exactly the three pillars, signed in and signed out**, and
       `CLAUDE.md` §1's `[2026-08-06]` divergence block is retired in the same commit that changes the code.
       *(Added on approval, 2026-08-08 — decision 1, ruling A.)* Check: the source-level assertion in

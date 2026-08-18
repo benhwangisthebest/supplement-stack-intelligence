@@ -8,8 +8,16 @@ name: CI
 #   npm ci -> typecheck -> unit+architecture tests -> production build
 #
 # NOT included, each for a verified reason:
-#   * lint            - `next lint` has zero eslint dependency and no config,
-#                       so it passes vacuously or fails spuriously (P-10).
+#   * (lint was here) - NO LONGER EXCLUDED. Phase 2 U18 added the step below.
+#                       The original reason - "`next lint` has zero eslint
+#                       dependency and no config, so it passes vacuously or
+#                       fails spuriously" (P-10) - was CORRECT and is exactly
+#                       what U18 fixed: eslint 9 + a flat config are now
+#                       installed, and the step runs `npm run lint` ->
+#                       scripts/verify-lint.mjs, which refuses to report OK
+#                       over a file set it did not derive from `git ls-files`.
+#                       The vacuity P-10 named is now the failure the wrapper
+#                       exists to detect rather than the state it ships in.
 #   * boundary tests  - `src/architecture/boundaries.test.ts` is already collected
 #                       and executed by the standard `vitest run` in the `npm test`
 #                       step below; a separate step would be pure duplication
@@ -66,6 +74,12 @@ concurrency:
 
 jobs:
   verify:
+    # DO NOT RENAME. `main`'s branch protection requires a status check by this
+    # exact string; renaming the job makes the required check permanently
+    # pending and silently unblocks nothing while blocking every merge. The name
+    # has been a subset of what the job runs since U13 and is a stable
+    # IDENTIFIER, not a description - U18 deliberately did not extend it to
+    # "typecheck / lint / test / build" for that reason.
     name: typecheck / test / build
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -126,6 +140,23 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      # Phase 2 U18 - roadmap item 9 (GATE D1: CLAUDE.md §5's declared chain is
+      # updated in the SAME commit as this step).
+      #
+      # `npm run lint` is NOT `next lint`. It runs scripts/verify-lint.mjs,
+      # which lints via the ESLint Node API and - the load-bearing part -
+      # derives the file set it EXPECTS to lint from `git ls-files`, never from
+      # eslint.config.mjs. A misconfigured `ignores` therefore reddens this step
+      # instead of turning it green over zero files, which is the one failure
+      # mode a lint gate must not have: the fix for "lint does not run"
+      # reintroducing "lint runs and asserts nothing".
+      #
+      # Placed beside Typecheck - both are static, both are cheap, and both
+      # fail on the same class of thing. The steps above stay byte-identical
+      # (U13's additive precedent); everything below simply shifts.
+      - name: Lint
+        run: npm run lint
 
       # Includes the architecture-boundary suite - no separate step needed.
       - name: Unit and architecture tests

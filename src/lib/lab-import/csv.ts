@@ -73,7 +73,7 @@ function headerIndex(headerCells: string[]): FieldIndex | null {
 
 function parseNumber(cell: string | undefined): number | null {
   if (cell == null) return null;
-  const cleaned = cell.replace(/[^0-9.\-]/g, "");
+  const cleaned = cell.replace(/[^0-9.-]/g, "");
   if (cleaned === "" || cleaned === "-" || cleaned === ".") return null;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;

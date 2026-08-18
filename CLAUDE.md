@@ -202,12 +202,27 @@ passing, a clean typecheck, and a successful build.
    `playwright.config.ts` (`workers: 1`, `fullyParallel: false` when `E2E_LIVE=1`), because the authed
    specs share one seeded demo account. That serialisation is **not** guarded by anything — removing it
    breaks no test. Tracked as FU-25, whose real fix is per-worker user isolation.
-10. Before declaring work done: `npx tsc --noEmit`, `npx vitest run`, and `npx next build` must all pass.
+10. Before declaring work done: `npx tsc --noEmit`, **`npm run lint`**, `npx vitest run`, and `npx next build` must all pass. *(`npm run lint` added by Phase 2 U18, in the same commit as the CI
+    step. A verification list that omits a check CI runs is N-29's asymmetry in miniature — the gate
+    exists, and the person about to declare done is not told to run it.)*
 
 Measured baseline (re-measured **2026-08-06 at Phase 1 close**): typecheck clean · **859/859 unit tests
-across 73 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck →
+across 73 files** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck → **lint** →
 `vitest run` → **coverage thresholds** → **migration coherence** → `next build` → **rendering determinism** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on
 `workflow_dispatch`). The coverage step was added by Phase 1 U13, between `vitest run` and `next build`; the other four are unchanged.
+**The lint step was added by Phase 2 U18** (roadmap item 9), between typecheck and `vitest run`. Before it,
+`npm run lint` was `next lint` with **no eslint dependency and no config** — and five `eslint-disable`
+comments had accumulated naming rules from tooling that had never been installed, written by people who
+could not have seen the violation they claim to waive. `npm run lint` is now
+`node scripts/verify-lint.mjs`: it lints through the ESLint Node API and derives the file set it expects to
+lint from **`git ls-files`, never from `eslint.config.mjs`**. That asymmetry is the whole design — the
+roadmap names *green over zero files* as the only unacceptable end state, and it is reachable by fixing
+this item carelessly, since a lint config with an over-broad `ignores` passes vacuously. Deriving the
+expectation from the config would make that mutation undetectable; deriving it from git makes narrowing
+what ESLint looks at reden the check instead. A tracked file that genuinely must not be linted goes in
+`EXEMPT_UNLINTED` with a written reason (today: **none**; 356 of 356 tracked source files are linted).
+`eslint-config-next` is deliberately **not** used — see the header of `eslint.config.mjs` for why, and for
+why the runner is pinned to ESLint 9.
 **The migration-coherence step was added by Phase 2 U15**, delivering the reworded Phase 2 exit criterion.
 Nothing in this repository had ever *applied* a migration — `RLS_COVERAGE` and `SQL_FUNCTION_REGISTRY` read
 the files as **text**, so a migration that parses and then fails on contact with Postgres was green

@@ -4,7 +4,6 @@ import { makeContext } from "../mock-adapter";
 import { forwardIntent, inverseIntent, itemToInput } from "./apply";
 import {
   proposeAddItem,
-  proposeAttachProduct,
   proposeEditItem,
   proposeGenerateProtocol,
   proposeRemoveItem,

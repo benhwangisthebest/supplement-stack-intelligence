@@ -40,7 +40,14 @@ export function getProductById(
 
 /** Strips affiliate/display-only fields so the scorer literally cannot read them. */
 function toScorable(p: Product): ScorableProduct {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // DO NOT "fix" this destructure by deleting the unused bindings. Naming
+  // `affiliateLink` and `qualityNotes` here is what REMOVES them from
+  // `scorable`, which is how CLAUDE.md §2.4 rule 17 — ranking provably
+  // independent of affiliate data — is enforced structurally rather than by
+  // policy. The scorer cannot read what it is never handed.
+  //
+  // `ignoreRestSiblings: true` in `eslint.config.mjs` is set EXPLICITLY for
+  // this site, so no disable directive is needed and none should be added.
   const { affiliateLink, qualityNotes, ...scorable } = p;
   return scorable;
 }

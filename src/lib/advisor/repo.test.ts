@@ -107,7 +107,7 @@ describe("getRemainingBudget", () => {
  * at a time. Without that yield the old implementation would pass too, and the
  * test would prove nothing.
  */
-function statefulLedger(dailyBudget: number) {
+function statefulLedger() {
   const state = { input: 0, output: 0 };
   const granted: number[] = [];
 
@@ -156,7 +156,7 @@ describe("reserveAdvisorTokens — the daily cap holds under concurrency (N-2)",
   it("grants only what the budget admits when 5 turns start at once", async () => {
     // Budget 1000, reservation 400 → exactly 2 can be granted. The other 3 must
     // be refused with 0, and the ledger must end at 800, not 2000.
-    const ledger = statefulLedger(1000);
+    const ledger = statefulLedger();
 
     const results = await Promise.all(
       Array.from({ length: 5 }, () => reserveAdvisorTokens(ledger.client, 400, 1000)),
@@ -169,7 +169,7 @@ describe("reserveAdvisorTokens — the daily cap holds under concurrency (N-2)",
   });
 
   it("refuses once the day's budget is already spent", async () => {
-    const ledger = statefulLedger(1000);
+    const ledger = statefulLedger();
     await reserveAdvisorTokens(ledger.client, 1000, 1000);
     expect(await reserveAdvisorTokens(ledger.client, 1, 1000)).toBe(0);
   });
@@ -208,7 +208,7 @@ describe("reserveAdvisorTokens — the daily cap holds under concurrency (N-2)",
 
 describe("settleAdvisorUsage — releases the reservation and charges the truth", () => {
   it("replaces the reserved amount with the actual usage", async () => {
-    const ledger = statefulLedger(100_000);
+    const ledger = statefulLedger();
     const reserved = await reserveAdvisorTokens(ledger.client, 25_000, 100_000);
     expect(ledger.used()).toBe(25_000);
 
@@ -228,7 +228,7 @@ describe("settleAdvisorUsage — releases the reservation and charges the truth"
     //
     // The RPC accumulates in-statement (`output_tokens = output_tokens + n`), so
     // three concurrent settles must all land.
-    const ledger = statefulLedger(100_000);
+    const ledger = statefulLedger();
     await Promise.all([
       settleAdvisorUsage(ledger.client, 0, { inputTokens: 0, outputTokens: 100 }),
       settleAdvisorUsage(ledger.client, 0, { inputTokens: 0, outputTokens: 200 }),
@@ -238,7 +238,7 @@ describe("settleAdvisorUsage — releases the reservation and charges the truth"
   });
 
   it("never drives the ledger negative when actual exceeds nothing", async () => {
-    const ledger = statefulLedger(100_000);
+    const ledger = statefulLedger();
     await settleAdvisorUsage(ledger.client, 25_000, { inputTokens: 0, outputTokens: 0 });
     expect(ledger.used()).toBe(0);
   });
