@@ -6,6 +6,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { errorText } from "@/lib/api/error-text";
 import type { AdvisorConversation, Citation, ProgressEvent } from "@/types/advisor";
 import type { ActionProposal } from "@/types/advisor-action";
 import type { DraftFlag } from "@/types/evaluation";
@@ -245,7 +246,10 @@ async function safeErrorMessage(res: Response): Promise<string> {
     const json = await res.json();
     if (res.status === 401) return "Please sign in to use the advisor.";
     if (res.status === 503) return "The advisor isn't configured on this server yet.";
-    return json?.error?.message ?? "The advisor couldn't answer that request.";
+    return errorText(
+      json?.error?.message ?? "The advisor couldn't answer that request.",
+      json?.error?.correlationId,
+    );
   } catch {
     return "The advisor couldn't answer that request.";
   }
@@ -283,7 +287,13 @@ async function consumeStream(body: ReadableStream<Uint8Array>, h: StreamHandlers
       else if (event === "token") h.onToken(data.delta);
       else if (event === "citations") h.onCitations(data.citations);
       else if (event === "proposals") h.onProposals(data);
-      else if (event === "error") h.onError(data.message ?? "The advisor couldn't answer that request.");
+      else if (event === "error")
+        h.onError(
+          errorText(
+            data.message ?? "The advisor couldn't answer that request.",
+            data.correlationId,
+          ),
+        );
       else if (event === "done") await h.onDone(data);
     }
   }

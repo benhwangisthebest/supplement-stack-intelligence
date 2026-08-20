@@ -134,7 +134,7 @@ confines the user to their own row, so no other user's data is reachable. It cos
 | Item | State | Disposition |
 |---|---|---|
 | **F3** typed `NOT_CONFIGURED` | ~~not started (`respond.ts:247`)~~ → **CLOSED 2026-08-08 by U1** (`c0eb8bf`) | `NotConfiguredError` in `src/lib/api/errors.ts`; `respond.ts` dispatches on `err instanceof NotConfiguredError` and reads `publicMessage`. The substring branch is **deleted**, and `not-configured-totality.test.ts` (18 tests) asserts it stays deleted *and* that no other class carries the text. Evidence: `respond.test.ts` T5 (503 by class, 500 for a bare Error), M4's bypass probe red |
-| **F5** correlation ID in UI | not started — zero `correlationId` in any `.tsx`; `AdvisorPanel.tsx:286` receives one and discards it | → **U19**, formatter-only (§5) |
+| **F5** correlation ID in UI | ~~not started — zero `correlationId` in any `.tsx`; `AdvisorPanel.tsx:286` receives one and discards it~~ → **CLOSED 2026-08-20 by U19**. The row undercounted: the discard was **two** sites (`:286` SSE and `:248` envelope) across a **14-file** surface, not one site in one file | `errorText()` in `src/lib/api/error-text.ts` (100/100/100/100, 11 tests); `AdvisorPanel` converted at both sites; `ui-error-text.test.ts` scans all 65 tracked `.tsx` with a **13-entry shrink-only ratchet** (owner ruling 2026-08-20) and pins the SSE branch separately, since no envelope regex can see it. Evidence: 8 mutations red, incl. M3 `(Reference: undefined)`, M6 green-untracked/red-staged, M7 anti-vacuity |
 | **Slug append-only manifest** (§7 ruling 3) | not started — no `slugs` namespace; **`id === slug` for all 15 supplements**; slugs persisted in **no** DB column | → **U20** (two schema decisions — §7) |
 | **§4 rule 9** budget + rate limit | **UNENFORCED**, no guard | → **U7** |
 | **§4 rule 7** client components take props | UNENFORCED; **7 of 31** would fail. **Denominator defined here, once:** *tracked files under `src/components/**` carrying a `"use client"` directive* = **31** (30 `.tsx` + 1 `.ts`). Measured — `CLAUDE.md` §4 and `project-status.md` both use this figure and neither defines it; a guard for this rule must adopt this predicate or state its own | **Deferred → Phase 3/4.** Correctly marked, and `DOC_TRUTH` now prevents silent relabelling |
@@ -1707,6 +1707,119 @@ git.
 `src/**/*.test.ts`, there is no jsdom/RTL, and `HARNESS_GAP` hard-fails on any tracked `*.test.tsx`. So the
 tested artifact is a **pure formatter** plus a guard asserting no component renders `error.message`
 without it. **This unit must not smuggle in a component-test harness.**
+
+
+**U18 STAMP ROW** *(standing disposition — an entry cites the runs that existed before its final commit;
+the merge SHA and the runs after it are stamped by the next natural docs commit, which is this one):*
+
+| U18 closeout | value |
+|---|---|
+| merged to `main` | **`f8b2cab`** — fast-forward |
+| closeout run | **`32138629746`** — green |
+| post-merge `main` run | **`32138982510`** — green, required check satisfied on the merged SHA |
+
+**AND THE CONFIG-PROTECTION HOOK IS LIVE, VERIFIED BY REFUSAL ON 2026-08-20.** U18 disabled the local
+`pre:config-protection` hook in order to write `eslint.config.mjs`, and the disable's fate was afterwards
+unknown. An audit found the plugin's files pristine against the marketplace copy and no disable in
+`~/.claude/settings.json` — but that is an *absence of evidence*, and this plan does not accept one as
+proof anywhere else. So the loop was closed the only way it can be closed: with the session restarted so
+hooks load fresh, a trivial comment edit to `eslint.config.mjs` was **attempted and BLOCKED**
+(`BLOCKED: Modifying eslint.config.mjs is not allowed…`), and `git status` was clean afterwards — the
+refusal was total, not a partial write. Recorded here rather than dropped because **a guard believed-live
+and a guard shown-live differ by exactly the U18 defect**: five `eslint-disable` comments waiving rules
+from a linter that had never run, written by people who could not have seen what they were waiving. The
+probe had to go through the `Edit` tool, because the hook matches `Write|Edit|MultiEdit` — a shell `sed`
+would have sailed through and proved nothing, which is itself worth knowing.
+
+**DONE 2026-08-20.** Baseline before: typecheck clean, **1251/103**, non-live E2E 70/30, lint 356/356.
+After: **1272/105** (+21 — 11 `ERROR_TEXT`, 10 `UI_ERROR_TEXT`), lint **359/359, 0 errors**, non-live E2E
+**70/30 unchanged with zero specs edited**, confirmed by execution rather than inferred.
+
+**FINDING BEFORE ANY CODE: THE DISCARD IS TWO SITES, NOT ONE, AND THE SURFACE IS FOURTEEN FILES, NOT ONE.**
+The inventory row said `AdvisorPanel.tsx:286` receives a correlation id and discards it. True, and
+incomplete. `:248` — `safeErrorMessage` — discards a *second* one from the JSON envelope, and it is the
+site users actually reach, because it handles every non-streaming failure. Thirteen further components read
+`json?.error?.message` and drop the id sitting beside it in the same object. Measured: **14 files, 14
+occurrences, zero `correlationId` in any `.tsx`.** The second site was found only by reading the stream
+consumer, and **no envelope regex can see it** — the SSE payload is `{message, correlationId}`, not an
+`ApiEnvelope` — so a guard built to the inventory row's description would have reported this unit complete
+with half the defect still live. It is pinned separately for that reason.
+
+**WHAT F5 ACTUALLY IS: a type comment that had been false since Phase 0.** `respond.ts:10-13` documents
+`correlationId` as "safe to render, quote in a support ticket, or paste into an incident report". Nothing
+ever rendered it. The id existed, the server logged it, and the one person who could have quoted it never
+saw it. This unit does not add an observability feature so much as make an existing sentence true.
+
+**THE FORMATTER'S LOAD-BEARING CASE IS THE ABSENT ONE, AND THAT IS WHY IT IS A FUNCTION.**
+`correlationId` is present **only** on unexpected-exception 500s — `respond.test.ts:524,533,540,546` pin it
+*undefined* for 401, 404 and validation failures, which are the errors users actually hit. A template
+literal at each call site is therefore correct on the rare path and renders **"Reference: undefined"** on
+the common one. Centralising the absent case is the entire value; the present case is the easy half. M3
+below is the mutation that proves it, and its red text reads `'Failed to save profile. (Reference: u…' not
+to contain 'undefined'` — the defect verbatim.
+
+**SCOPE RULED BY THE OWNER, 2026-08-20: convert `AdvisorPanel`, ratchet the other thirteen.** Three forms
+were put up. Converting all fourteen keeps the allowlist empty — U1's virtue, "one word, two units of
+consequence" — but turns an **M/S** unit into fourteen user-visible copy changes across all three pillars
+that the approved file list does not cover; absorbing that silently is what `CLAUDE.md` §8.1 forbids.
+Scoping the guard to `AdvisorPanel` alone is the §5 cut form and is nearly vacuous: it governs one file, so
+a new component with a bare read is invisible to it. The ruling took the middle: the guard scans all **65**
+tracked `.tsx`, thirteen carry a written-reason allowlist entry, and **every entry is asserted to still
+violate** — the `DOMAIN_PURITY_ALLOWLIST` ratchet from `boundaries.test.ts:614-625`, borrowed wholesale.
+Fix a file and leave its entry, and this file reddens. **The list can only shrink**, and the thirteen are
+named debt rather than ungoverned surface.
+
+**ANTI-VACUITY IS ASSERTED BEFORE ANYTHING ELSE, BECAUSE THIS GUARD CITES U18 AS ITS PRECEDENT AND COULD
+HAVE REINTRODUCED U18'S DEFECT.** A source-scanning guard whose inventory can quietly empty is green over
+zero files — the one end state the roadmap calls unacceptable. So: the scanned set hard-fails on empty
+inside `trackedTsx`, a floor asserts ≥50 UI files, and a second floor asserts ≥14 envelope reads. That
+second floor is stable across the ratchet closing, which is the non-obvious part: **a converted call site
+still reads `.error.message`** — it just passes the result through `errorText` — so conversion does not
+shrink the inventory it is measured against.
+
+**Statements, not lines.** The one place this guard could be brittle, so it is stated rather than
+discovered at review. The conversion wraps a read in a call and the formatter routinely spreads that across
+four lines; a line-based predicate would call `errorText(\n  json?.error?.message,` a violation. Splitting
+the comment-stripped source on `;` ignores newlines entirely. Known cost: a `for (;;)` header splits into
+empty fragments — harmless, they contain no read. Comments are stripped first per **N-14**, whose audit
+found this repository's guards will match a mention inside a comment, and which fired for real on
+`nav-pillars.test.ts`'s first run.
+
+**RED LIST — eight mutations, every one executed, none predicted.**
+
+| # | Mutation | Observed |
+|---|---|---|
+| M1 | formatter drops the id branch | `ERROR_TEXT` — `expected 'An unexpected internal error occurred.' to be '… (Reference: 3f1c2b0a…)'` |
+| M2 | formatter returns the id without the message | `expected 'Reference: 3f1c…' to be 'An unexpected internal error occurred…'` |
+| M3 | formatter appends the suffix when there is no id | `expected 'Failed to save profile. (Reference: u…' not to contain 'undefined'` |
+| M4 | revert `AdvisorPanel:248` to a bare envelope read | `UI_ERROR_TEXT` names the file **and quotes the offending statement** |
+| M5 | revert `AdvisorPanel:286` to a bare SSE read | SSE block red twice — no `errorText(`, no `correlationId` |
+| M6 | a new component with a bare read | **green untracked, red after `git add -N`** — §4.2's staged-file rule, both directions |
+| M7 | narrow the scan to match nothing | `found zero tracked .tsx files … passes vacuously` — a thrown hard failure, not an assertion |
+| M8 | fix an allowlisted file, leave its entry | `ratchet: the allowlist may only shrink … CompareView.tsx — allowlisted but no longer violates` |
+
+**NO BEHAVIOUR CHANGE IS DECLARED, AND THE REASON IS NOT "IT IS SMALL".** No API response byte changes, no
+status changes, no envelope changes. The client-side copy for advisor errors gains a `(Reference: …)`
+suffix **on unexpected-exception 500s only** — the one class of error where the id exists. Every other
+error renders byte-identical text, which M3 is what proves. No spec asserted the client-side copy: the nine
+`INTERNAL_ERROR_MESSAGE` assertions in the suite are all API-level, on the envelope, which this unit does
+not touch. Re-verified at execution rather than carried over — the full non-live Playwright suite ran
+**70/30, unchanged, with no spec edited**.
+
+**§5.7 — the coverage-threshold question, answered explicitly rather than skipped.** `error-text.ts`
+measures **100 lines / 100 branches / 100 functions / 100 statements**. It gets **no threshold entry**, and
+that is a decision, not an omission: `vitest.config.ts:59-64` excludes `src/lib/{auth,api,supabase}` from
+per-engine floors as infrastructure, and U14/U25's precedent added entries for **new directories**, not new
+files inside excluded ones. Adding `src/lib/api/**` here would rope in `respond.ts`, `rate-limit-guard.ts`,
+`errors.ts` and `deletion-confirmation.ts` and assert a floor over four modules this unit has not measured
+or improved. The number above is recorded so the omission is visible.
+
+**N-12 AND N-15 ARE NOT CLOSED BY THIS UNIT, AND THE REGISTER SHOULD NOT PRETEND OTHERWISE.** Both name
+"U19, which already opens the advisor UI" as candidate owner. U19 opened two lines of it. `getRemainingBudget`
+still has no caller (N-12) and `AdvisorPanel` still does not handle the `aborted` turn status (N-15).
+Neither is in this unit's file list, neither is a correlation-id concern, and claiming them because the
+unit happened to touch the same file is exactly the absorption §8.1 forbids. **Both remain open, owner
+unchanged.**
 
 **U20 · Slug append-only manifest.** *(§7 ruling 3)* M `id-manifest.json`, `id-stability.test.ts`. **S/M**,
 deps none. **Two decisions — §7 decision 6.**
