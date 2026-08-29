@@ -1821,6 +1821,29 @@ Neither is in this unit's file list, neither is a correlation-id concern, and cl
 unit happened to touch the same file is exactly the absorption §8.1 forbids. **Both remain open, owner
 unchanged.**
 
+**U19 CI — run `32366651770`, green on `fdab839`, 18/18 steps.** Every figure this entry claims was
+re-measured by CI independently and matched exactly: lint **359 of 359, 0 errors**; **1272/105**; non-live
+E2E **70 passed / 30 skipped**. Recorded because the entry's numbers were taken on one developer's machine,
+and §5.1 asks what was run, not what was believed.
+
+**WHAT CI PROVED THAT THE LOCAL RUN COULD NOT.** `UI_ERROR_TEXT` is the first artifact in this unit whose
+**scanned set is not a constant**: `trackedTsx` shells out to `git ls-files` at run time, so what it
+governs depends on the worktree it runs in — every other test here computes over its own inputs. CI ran it
+against a **fresh clone's index** rather than a working directory that had been edited all day, and the
+anti-vacuity hard-fail is precisely what makes that safe rather than lucky: had the checkout produced no
+`.tsx`, the guard **throws** `found zero tracked .tsx files … passes vacuously` instead of passing over an
+empty set. That property was written against M7, a mutation the author chose; CI is where it earns its keep
+against an environment nobody controls.
+
+**The lint jurisdiction change is confirmed in CI, not just locally: 356 → 359.** The three new files
+entered `verify-lint.mjs`'s expected set the moment Git knew them — the same self-inflicted jurisdiction U18
+recorded when its own runner acquired an unused import. Staging with `git add -N` before the local run is
+what kept this from being a CI discovery.
+
+**Merge SHA and the post-merge run are not recorded here.** They cannot be: an entry cannot cite the run
+that validates it without a further commit to hold the citation, and this closeout's own run is that
+regress one step out. They ride in the next natural docs commit, per the standing disposition.
+
 **U20 · Slug append-only manifest.** *(§7 ruling 3)* M `id-manifest.json`, `id-stability.test.ts`. **S/M**,
 deps none. **Two decisions — §7 decision 6.**
 **The trap:** `id === slug` for all 15 supplements today, so a naive namespace is a byte-copy and a test

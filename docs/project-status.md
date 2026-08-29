@@ -285,8 +285,11 @@ test" part does not.
   and the error's name/message/stack/cause, with the same ID returned to the client. Non-`Error` throws
   and arbitrary `cause` values are reduced to type metadata so a thrown payload cannot be serialized into
   a log line. That is the whole of it: still **no logging library, no error-reporting service, no request
-  IDs outside the error path, no log aggregation**, and no UI surface where a user can read or quote the
-  correlation ID (follow-up **F5**).
+  IDs outside the error path, no log aggregation**, and ~~no UI surface where a user can read or quote the
+  correlation ID (follow-up **F5**)~~ — **[2026-08-20, U19] the advisor surfaces it.** `errorText()`
+  renders `(Reference: …)` on the two paths `AdvisorPanel` owns. The other **13** components that read
+  the API envelope still drop the id, held in `ui-error-text.test.ts`'s shrink-only ratchet by a recorded
+  ruling rather than by oversight. Every other clause of this sentence is unchanged and still true.
 - **Original finding (2026-07-30), retained:** No logging library, no error reporting, no request IDs. A
   repo-wide grep for `console.` in non-test source matches exactly one dev seed script. `handle()` catches
   every server error and converts it to an HTTP response **without recording anything**.
@@ -450,7 +453,8 @@ content/process issues:
 2. ~~**Single-machine loss risk**~~ — **[2026-08-02] closed.** All guardrails are committed and pushed.
 3. ~~**`main` is a stale two-commit MVP**~~ — **[2026-08-02] closed.** `main` is the working tip.
 4. **Partial observability** — **[2026-08-02]** unexpected API errors are now logged with a correlation
-   ID, but nothing else is instrumented and no UI surfaces the ID (**F5**).
+   ID, but nothing else is instrumented and ~~no UI surfaces the ID (**F5**)~~ **[2026-08-20, U19] one
+   surface now does** — the advisor; 13 further components do not. **Still partial: the label stands.**
 5. ~~**No CI**~~ — **[2026-08-02] closed for existence; [2026-08-03] closed for enforcement.** CI runs on
    every branch push and is green, and is now a **required** status on `main` with force-push and deletion
    forbidden (closeout finding **C-6**, closed — see `docs/01-plan/phase-1-verification-integrity.plan.md`
