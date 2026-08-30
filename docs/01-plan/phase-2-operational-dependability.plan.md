@@ -277,6 +277,7 @@ stable ids catches both by construction, which is why the deferred guard is spec
 as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-45** | **U18 first lint run, 2026-08-18** | **`parseNumber` exists twice, byte-identical, on the two halves of the lab-import path.** `src/lib/lab-import/csv.ts:74-80` and `src/lib/lab-import/paste.ts:16-22` are the same seven lines including the same `no-useless-escape` defect, which is how the duplication surfaced: **one lint finding arrived twice**, from two files, in the same run. The finding is the **divergence hazard**, not the lint line — a future fix to numeric parsing (a thousands separator, a unicode minus, a `<` prefix on a below-detection-limit result) applied to one copy silently gives CSV upload and pasted text two different readings of the same lab value | Both files, and U18's lint output listing `csv.ts:76` and `paste.ts:18` with identical text. §2.2 rule 7 territory: the two paths would compute different numbers from the same source document, and both would render as though computed | **OPEN, OUT OF U18 SCOPE.** U18 fixed the escape at both sites and deliberately did **not** deduplicate: extracting a shared parser is a change to lab-import behaviour on both paths at once, which needs its own red evidence against real fixtures rather than riding in a lint unit. **The lint fix does not reduce the hazard** — it made both copies identical again, which is the state that hides it. **Proposed owner: a lab-import unit, not a cleanup pass** |
 | **N-46** | **U18 first lint run, 2026-08-18** | **A test helper's parameter configures nothing — "a lie shaped like a parameter", at a second site.** `src/lib/advisor/repo.test.ts`'s `statefulLedger(dailyBudget)` ignored its argument entirely and read `args.p_daily_budget` off the RPC call instead. **Five call sites passed a budget** — three `100_000`, two `1000` — and every one of them configured nothing. Any reader would take the two `1000` sites as exercising a tight budget; they were not. This is U16's finding recurring in a different subsystem, and the shape is the danger: an ignored parameter reads as a deliberate test condition, so the test appears to cover a case it never sets up | `repo.test.ts:110` before the fix, and the five call sites at `:159`, `:172`, `:211`, `:231`, `:241` | **CLOSED IN U18 by fix 11** — the parameter is removed and the five call sites now read `statefulLedger()`, which states the truth: the budget comes from the caller of `rpc`, not from the helper. **Registered for the pattern, not the instance.** ESLint found it in seconds; it had been invisible to `tsc`, to 1245 passing tests, and to review, because an unused parameter is well-typed, tested, and reviewable. **That is the argument for this whole unit in one line.** No guard proposed: `@typescript-eslint/no-unused-vars` IS the guard, and it now runs in CI |
+| **N-47** | **U20 orientation, 2026-08-21** | **Two `id-manifest.json` fields are declared, populated with varying values, and asserted by nothing.** `Namespace.dereferenced: boolean` is in the interface and carries real per-namespace values (4 of 9 are `false`, each for a different documented reason) — and `git grep dereferenced -- src/data/id-stability.test.ts` returns **exactly one hit, the declaration**. `manifest.version` is the same: read by no assertion, so U20's own 1 → 2 bump could have been omitted with nothing noticing. This is `CLAUDE.md` §8.3's silent placeholder **in data form** — a field a reader reasonably takes for a governed fact, which is governed by nothing. Worse than an unused variable, because the manifest's entire value is that it is trusted | `grep -c dereferenced src/data/id-stability.test.ts` → **1**; `grep -c 'manifest.version'` → **0** | **OPEN. NOT absorbed into U20** — U20 is a schema change under a recorded ruling, and quietly adding assertions for two unrelated fields is the scope creep §8.1 forbids in the opposite direction. **Owner PROPOSED, not assigned:** whichever unit next opens `id-stability.test.ts`. The fix is not obviously "assert them" — `dereferenced` may be documentation rather than a contract, in which case the honest fix is to say so in the manifest's `purpose`, or delete the field per §8.4 (prefer deleting a field over guarding it) |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -1849,6 +1850,90 @@ deps none. **Two decisions — §7 decision 6.**
 **The trap:** `id === slug` for all 15 supplements today, so a naive namespace is a byte-copy and a test
 comparing them passes for the wrong reason. The real proof is a mutation renaming a **slug only**: the slug
 namespace goes red while `supplements` stays green.
+
+
+**U19 STAMP ROW** *(standing disposition):*
+
+| U19 closeout | value |
+|---|---|
+| merged to `main` | **`1fad2e5`** — fast-forward from `f8b2cab`, 2 commits |
+| code run | **`32366651770`** — green on `fdab839`, 18/18 steps |
+| closeout run | **`33248922631`** — green on `1fad2e5`, 18/18 steps (the merge gate) |
+| post-merge `main` run | **`33249053668`** — green, required check satisfied on the merged SHA |
+| `main` verified | `git ls-remote` = `1fad2e5f42a9d22827db84537543fb8b0ed1ef5a`, remote and local match; branch deleted local + remote |
+
+**DONE 2026-08-21.** Baseline before: typecheck clean, **1272/105**. After: **1276/105** (+4 in
+`id-stability.test.ts`: 43 → 47 — the relaxed surface assertion, the structural `publicSurfaces` assertion,
+and two new per-namespace specs for `supplementSlugs`).
+
+**THE RULING'S PREMISE WAS CHECKED, NOT INHERITED.** Decision 6 rests on *"slugs are persisted in no DB
+column"*. If a stored citation carried an `href`, that would be false and the whole `publicSurfaces` design
+would be unnecessary. Measured: `Citation` is `{kind, refId, label, detail?}` — **there is no `href`
+field**. Hrefs are computed at render time by `citation-href.ts` and never stored. The ruling stands on
+evidence rather than on being a ruling.
+
+**AND THE MANIFEST ALREADY DOCUMENTED THE SLUG'S IMPORTANCE WITHOUT GOVERNING IT.** `effects.dereferencedBy`
+says citations resolve to `/library/{slug}#effect-{id}`; `papers` says the same. So a **slug** rename
+degrades already-stored effect and paper citations to broken links — precisely the failure the manifest
+carefully documents for effect *ids*, arriving through a field nothing watched. That is a stronger argument
+for this namespace than the one in §7, and it was not in the plan. `effects` and `papers` therefore gain
+truthful `publicSurfaces` entries of their own: leaving them `[]` while their own `dereferencedBy` prose
+describes a public URL would be a manifest contradicting itself.
+
+**M1 FOUND A DEFECT IN THE GUARD'S OWN FAILURE MESSAGE, WHICH IS WHY MUTATIONS ARE RUN AND NOT PREDICTED.**
+The first M1 run printed `This orphans existing user rows ()` — **empty parens**. Before U20 every namespace
+was persisted, so that clause was true of all of them; it is **false** for a `publicSurfaces`-only
+namespace, which has no user rows to orphan. A guard that reports the wrong reason is a guard a reader
+learns to discount. The consequence clause is now **derived from the namespace's own surfaces**, and M1
+re-run prints what actually breaks: *"breaks the public surface `/library/{slug}` … a rename 404s every
+existing external link; and breaks the public surface `citationHref()` … the slug is recomputed at render
+time from ALREADY-STORED citations"*. A predicted mutation table would have shipped the empty parens.
+
+**RED LIST — seven mutations, all executed.**
+
+| # | Mutation | Observed |
+|---|---|---|
+| M1 | rename a **slug only**, `id` untouched | **`supplementSlugs` RED, `supplements` GREEN** — the headline proof |
+| M2 | rename an **id only**, `slug` untouched | **`supplements` RED, `supplementSlugs` GREEN** — the converse; two contracts, not one list twice |
+| M3 | extractor reads `.id` instead of `.slug` | **GREEN — recorded as the finding, not as a pass** (below) |
+| M4 | namespace with `persistedAt: []` **and** `publicSurfaces: []` | red — `expected [ 'outcomeCategories' ] to deeply equal []` |
+| M5 | omit `publicSurfaces` from a namespace | red **twice**: the predicted `Cannot read properties of undefined (reading 'length')`, plus the structural assertion naming the namespace |
+| M6 | drop a slug's registration, no tombstone | red — `supplementSlugs: 1 unregistered id(s): creatine` |
+| M7 | tombstone a slug, leave it live in seed | red — resurrect + unregistered, 3 assertions |
+
+**M3 IS GREEN AND THAT IS THE HONEST RESULT, NOT A GAP BEING GLOSSED.** `id === slug` for **15 of 15**
+supplements, so **no assertion over values can distinguish a `.slug` extractor from a `.id` one**. This was
+not merely stated — it was *demonstrated*: M1 was re-run against the wrong extractor and **stayed green**,
+47/47, which is exactly the blindness the plan warned about ("a naive namespace is a byte-copy and a test
+comparing them passes for the wrong reason"). The mitigation is structural, not assertional:
+`LIVE.supplementSlugs` is bound to **`getAllSupplements().map((s) => s.slug)`** — the *identical expression*
+`generateStaticParams` uses at `src/app/library/[slug]/page.tsx:22` — so the namespace tracks the real
+public surface rather than a field someone chose.
+**M3 becomes decidable the day id and slug first diverge for any supplement**, and the first real divergence
+must be accompanied by re-running M3, which will then go **red** against the wrong extractor. Written here
+rather than left to memory, because that is the only moment this hole closes.
+
+**The `@/lib/evidence` import is legal only because test files are unscanned, and that is stated rather than
+leaned on.** `src/data` is a leaf over `src/types` (§4 rule 4, `DATA_IS_A_LEAF`), so this import would be a
+B4 violation in a product file. It is permitted because `boundaries.test.ts:252`'s `isTestPath` excludes
+`*.test.ts` from the layer scan. That exclusion is deliberate and pre-existing, but a unit relying on it
+should say so out loud rather than discover it in review.
+
+**FU-32 — CLOSED BY REMOVING THE COUNT, NOT BY INCREMENTING IT.** The header said "eight namespaces"; there
+were 9; U20 makes 10. **A number in prose that has already rotted once has a third instance queued**, so
+writing "ten" would be the same defect with a fresh date. It now reads *"every namespace registered in
+`id-manifest.json`"*. Recorded as a member of the **counts-written-once** class alongside U15's and U18's
+instances: a figure asserted in prose, true when written, unbound to anything that would notice it changing.
+
+**`version` 1 → 2, with a structural assertion rather than a magic-number check.** Asserting `version === 2`
+would test that a constant equals itself. What actually needed enforcing is that **every namespace declares
+`publicSurfaces`** — M5 shows why: a namespace omitting the key yields `undefined.length`, a TypeError at
+best and a silent inheritance of pre-U20 semantics at worst. The assertion checks key **presence** (an
+`Array.isArray` test, so an empty list is a valid and meaningful declaration), not truthiness.
+
+**RAISED: N-47** — `dereferenced` and `version` are declared, populated, and asserted by nothing. Not fixed
+here: U20 is a schema change under a recorded ruling, and quietly adding assertions for two unrelated fields
+is scope creep in the opposite direction (§8.1). Owner **proposed, not assigned**.
 
 **U24 · FU-27 — the Advisor leaves the pillar group.** *(§7 decision 1, ruled **Option A** on 2026-08-08)*
 M `src/components/layout/TopNav.tsx` · M `CLAUDE.md` §1 (its `[2026-08-06]` divergence block is retired in

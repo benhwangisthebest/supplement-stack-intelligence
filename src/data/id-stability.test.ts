@@ -2,8 +2,9 @@
 // Spec: docs/01-plan/phase-0-integration-enforcement.plan.md (U8)
 // Contract: CLAUDE.md §2.16 — reference-data IDs are an append-only PUBLIC contract.
 //
-// Why this exists: eight namespaces of seed IDs are persisted in user rows with
-// NO foreign key. Postgres cannot refuse a rename, and `tsc` cannot see one — a
+// Why this exists: every namespace registered in `id-manifest.json` holds ids
+// that reach a contract the type system cannot see — most are persisted in user
+// rows with NO foreign key. Postgres cannot refuse a rename, and `tsc` cannot see one — a
 // seed ID is a string literal, and the columns holding it are plain `text` (or
 // jsonb keys / array members). Renaming or deleting one today produces a blank,
 // unevaluable row with no detection anywhere.
@@ -29,6 +30,7 @@ import { SEED_EFFECTS } from "@/data/seed-effects";
 import { SEED_PAPERS } from "@/data/seed-papers";
 import { SEED_INTERACTIONS } from "@/data/seed-interactions";
 import { SEED_FOOD_PAIRINGS } from "@/data/seed-food-pairings";
+import { getAllSupplements } from "@/lib/evidence";
 import { SIDE_EFFECT_VOCAB } from "@/types/side-effect";
 import { OUTCOME_CATEGORIES } from "@/types/primitives";
 
@@ -44,6 +46,15 @@ interface Tombstone {
 interface Namespace {
   source: string;
   persistedAt: string[];
+  /**
+   * Phase 2 U20, §7 decision 6. A surface where the id is PUBLIC rather than
+   * persisted — a URL segment, an anchor. Slugs have no DB column, and
+   * declaring a false `persistedAt` for them would author a provenance claim
+   * the system cannot support (CLAUDE.md §2.2 rule 8) inside a guard whose
+   * whole value is being trusted. §8.4's remedy applies: add the field that
+   * tells the truth rather than guard a lie.
+   */
+  publicSurfaces: string[];
   dereferenced: boolean;
   ids: string[];
   tombstones: Tombstone[];
@@ -79,6 +90,16 @@ const LIVE: Record<string, readonly string[]> = {
   // Both rule sets flow through InteractionFlag.ruleId, so they share one
   // namespace — an id colliding across the two files is a real collision.
   interactionRules: [...SEED_INTERACTIONS, ...SEED_FOOD_PAIRINGS].map((r) => r.id),
+  // U20. THE EXTRACTOR IS THE POINT. `id === slug` for all 15 supplements
+  // today, so `SEED_SUPPLEMENTS.map((s) => s.id)` would pass every assertion
+  // in this file and be blind forever. This is deliberately
+  // `getAllSupplements().map((s) => s.slug)` — the IDENTICAL expression
+  // `generateStaticParams` uses at src/app/library/[slug]/page.tsx:22 — so the
+  // namespace is bound to the real public surface rather than to a field
+  // someone chose. See mutation M3 in the U20 plan entry: while id and slug
+  // coincide, NO value-based assertion can detect the wrong extractor, and the
+  // first supplement whose id and slug diverge makes M3 decidable.
+  supplementSlugs: getAllSupplements().map((s) => s.slug),
   sideEffectLabels: [...SIDE_EFFECT_VOCAB],
   outcomeCategories: [...OUTCOME_CATEGORIES],
 };
@@ -122,12 +143,35 @@ describe("U8 — reference-data ID manifest integrity", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("declares a real persistence site for every namespace it governs", () => {
-    // A namespace with no persisted home does not belong in this contract.
+  it("declares a real surface — persisted or public — for every namespace", () => {
+    // A namespace with no home of either kind does not belong in this contract.
+    //
+    // RELAXED BY U20 (§7 decision 6) FROM `persistedAt.length === 0`, and a
+    // relaxed assertion is exactly how a namespace with NEITHER surface slips
+    // through — so the mutation that matters is a namespace declaring both
+    // lists empty, which must still fail. That is M4 in the U20 entry.
     const offenders = Object.entries(manifest.namespaces)
-      .filter(([, ns]) => ns.persistedAt.length === 0)
+      .filter(([, ns]) => ns.persistedAt.length + ns.publicSurfaces.length === 0)
       .map(([name]) => name);
     expect(offenders).toEqual([]);
+  });
+
+  it("every namespace DECLARES publicSurfaces, even when it is empty", () => {
+    // THE BLIND SPOT THE RELAXATION OPENS, closed structurally rather than by
+    // hoping. The assertion above reads `ns.publicSurfaces.length`; a namespace
+    // that simply OMITS the key yields `undefined.length` — a TypeError at best
+    // and, with a laxer read, a silent inheritance of the pre-U20 semantics.
+    // The schema change is only real if every namespace is held to it, so this
+    // checks key PRESENCE, not truthiness. `version` moved 1 -> 2 for the human
+    // reader; this is what actually enforces the new shape.
+    const missing = Object.entries(manifest.namespaces)
+      .filter(([, ns]) => !Array.isArray((ns as Partial<Namespace>).publicSurfaces))
+      .map(([name]) => name);
+    expect(
+      missing,
+      "These namespaces do not declare `publicSurfaces` as an array. Add it — " +
+        "an empty list is a valid and meaningful declaration:\n  " + missing.join("\n  "),
+    ).toEqual([]);
   });
 
   it("contains no duplicate entry within a namespace, and no id that is also a tombstone", () => {
@@ -167,10 +211,22 @@ describe("U8 — persisted IDs cannot disappear silently", () => {
       const live = new Set(LIVE[name]);
 
       const missing = ns.ids.filter((id) => !live.has(id));
+      // THE CONSEQUENCE CLAUSE IS DERIVED FROM THE NAMESPACE'S OWN SURFACES,
+      // not hardcoded. Before U20 every namespace was persisted, so "this
+      // orphans existing user rows (…)" was true of all of them. It is FALSE
+      // for a publicSurfaces-only namespace, and the first run of mutation M1
+      // printed exactly that: `This orphans existing user rows ()` — empty
+      // parens, asserting a consequence the namespace cannot have. A guard that
+      // reports the wrong reason is a guard a reader learns to discount, so the
+      // message names what actually breaks.
+      const breaks = [
+        ...ns.persistedAt.map((site) => `orphans existing user rows at ${site}`),
+        ...ns.publicSurfaces.map((surf) => `breaks the public surface ${surf}`),
+      ];
       expect(
         missing,
-        `${name}: ${missing.length} persisted id(s) vanished from seed data: ${missing.join(", ")}. ` +
-          `This orphans existing user rows (${ns.persistedAt.join("; ")}). ` +
+        `${name}: ${missing.length} registered id(s) vanished from live data: ${missing.join(", ")}. ` +
+          `This ${breaks.join("; and ")}. ` +
           `If intentional, move each id into "tombstones" in src/data/id-manifest.json with a ` +
           `migration note — and set "supersededBy" if this is a RENAME, not a deletion.`,
       ).toEqual([]);
