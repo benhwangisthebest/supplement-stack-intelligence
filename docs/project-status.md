@@ -220,7 +220,8 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   *shape* drift no longer does. `replaceFlags()` is a
   non-atomic delete-then-insert — a failed insert leaves zero flags. No migration tooling, no `down`
   migrations, no record of what is deployed; migrations are applied by hand.
-- **[2026-08-02] Detection now exists.** `src/data/id-stability.test.ts` (43 tests, 9 namespaces) is
+- **[2026-08-02] Detection now exists.** `src/data/id-stability.test.ts` (~~43 tests, 9 namespaces~~ —
+  **47 tests over 10 namespaces as measured 2026-08-21 at U20**, which added `supplementSlugs`) is
 exactly the missing contract: it fails if a persisted reference ID vanishes from seed data, naming the
 orphaned columns, and it fails on an unregistered new ID. The FK itself is still absent by design (seed
 data is code, not a table), so the *soft-reference* description below stands — the "no detection, no
@@ -305,7 +306,8 @@ test" part does not.
   their inventory from `git ls-files`, so a verdict is a property of the repository rather than of one
   working tree (`a338370`, **R1**). `src/services` and `src/data` are now scanned layers, and every
   top-level `src/*` directory must be scanned or explicitly exempted with a written reason. Reference-ID
-  stability is enforced across **9** manifest namespaces (`77b3c36`, plus `ea5b270` **R2** which added
+  stability is enforced across ~~**9**~~ **10 (measured 2026-08-21; U20 added `supplementSlugs`)** manifest
+  namespaces (`77b3c36`, plus `ea5b270` **R2** which added
   `biomarkerRelevanceRules`). Every guard added in U7, U8, R1, R2, R3 and R3b was mutation-checked at
   execution time — shown red against the defect it targets, as `CLAUDE.md` §5.2 requires. **What is
   durably evidenced in `docs/` differs by unit:** U7/U8's matrices are tabulated by an independent

@@ -1935,6 +1935,24 @@ best and a silent inheritance of pre-U20 semantics at worst. The assertion check
 here: U20 is a schema change under a recorded ruling, and quietly adding assertions for two unrelated fields
 is scope creep in the opposite direction (§8.1). Owner **proposed, not assigned**.
 
+
+**U20 CI — run `33330448415`, green on `08253e5`, 18/18 steps.** Figures re-measured by CI and matched:
+lint **359/359, 0 errors**; **1276/105**; non-live E2E 70/30.
+
+**U20 MADE TWO MORE COUNTS FALSE, IN A THIRD FILE — AND THAT IS THE FU-32 CLASS DEMONSTRATING ITS OWN
+REACH.** `project-status.md:223` said the guard has *"43 tests, 9 namespaces"*; `:308` said stability is
+*"enforced across **9** manifest namespaces"*. Both were true when written and both are now wrong. Removing
+the count from the test header while leaving two more standing counts one file over would have been the
+same defect at a different address, so they are corrected here **in the same commit**.
+
+**They are corrected by DATING them, not by restating them, and the distinction is deliberate.** FU-32's
+remedy was to delete the number, because a guard's header asserting "eight namespaces" is an **undated
+standing claim** — it reads as a permanent property and has no owner. `project-status.md` is a status
+document, where a measurement *is* the content; the honest form there is not silence but a **dated
+observation**: "10, measured 2026-08-21 at U20". A dated measurement that later drifts is visibly stale;
+an undated one is silently wrong. **That is the actual lesson of the counts-written-once class** — the
+defect is not writing numbers, it is writing them as though they were timeless.
+
 **U24 · FU-27 — the Advisor leaves the pillar group.** *(§7 decision 1, ruled **Option A** on 2026-08-08)*
 M `src/components/layout/TopNav.tsx` · M `CLAUDE.md` §1 (its `[2026-08-06]` divergence block is retired in
 the **same commit**, per §7 — struck with its rationale, not deleted) · N a source-level assertion under
