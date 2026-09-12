@@ -265,7 +265,7 @@ describe("POST /api/advisor — the stream", () => {
     await events(await POST(req(BODY)));
 
     expect(createConversation).toHaveBeenCalledWith({}, "u1", expect.any(String));
-    expect(appendMessages).toHaveBeenCalledWith({}, "c-new", [
+    expect(appendMessages).toHaveBeenCalledWith({}, "u1", "c-new", [
       { role: "user", content: BODY.message, citations: [] },
       { role: "assistant", content: "Magnesium may support sleep.", citations: [] },
     ]);

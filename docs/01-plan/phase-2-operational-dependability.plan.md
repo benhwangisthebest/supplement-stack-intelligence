@@ -278,6 +278,8 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-45** | **U18 first lint run, 2026-08-18** | **`parseNumber` exists twice, byte-identical, on the two halves of the lab-import path.** `src/lib/lab-import/csv.ts:74-80` and `src/lib/lab-import/paste.ts:16-22` are the same seven lines including the same `no-useless-escape` defect, which is how the duplication surfaced: **one lint finding arrived twice**, from two files, in the same run. The finding is the **divergence hazard**, not the lint line — a future fix to numeric parsing (a thousands separator, a unicode minus, a `<` prefix on a below-detection-limit result) applied to one copy silently gives CSV upload and pasted text two different readings of the same lab value | Both files, and U18's lint output listing `csv.ts:76` and `paste.ts:18` with identical text. §2.2 rule 7 territory: the two paths would compute different numbers from the same source document, and both would render as though computed | **OPEN, OUT OF U18 SCOPE.** U18 fixed the escape at both sites and deliberately did **not** deduplicate: extracting a shared parser is a change to lab-import behaviour on both paths at once, which needs its own red evidence against real fixtures rather than riding in a lint unit. **The lint fix does not reduce the hazard** — it made both copies identical again, which is the state that hides it. **Proposed owner: a lab-import unit, not a cleanup pass** |
 | **N-46** | **U18 first lint run, 2026-08-18** | **A test helper's parameter configures nothing — "a lie shaped like a parameter", at a second site.** `src/lib/advisor/repo.test.ts`'s `statefulLedger(dailyBudget)` ignored its argument entirely and read `args.p_daily_budget` off the RPC call instead. **Five call sites passed a budget** — three `100_000`, two `1000` — and every one of them configured nothing. Any reader would take the two `1000` sites as exercising a tight budget; they were not. This is U16's finding recurring in a different subsystem, and the shape is the danger: an ignored parameter reads as a deliberate test condition, so the test appears to cover a case it never sets up | `repo.test.ts:110` before the fix, and the five call sites at `:159`, `:172`, `:211`, `:231`, `:241` | **CLOSED IN U18 by fix 11** — the parameter is removed and the five call sites now read `statefulLedger()`, which states the truth: the budget comes from the caller of `rpc`, not from the helper. **Registered for the pattern, not the instance.** ESLint found it in seconds; it had been invisible to `tsc`, to 1245 passing tests, and to review, because an unused parameter is well-typed, tested, and reviewable. **That is the argument for this whole unit in one line.** No guard proposed: `@typescript-eslint/no-unused-vars` IS the guard, and it now runs in CI |
 | **N-47** | **U20 orientation, 2026-08-21** | **Two `id-manifest.json` fields are declared, populated with varying values, and asserted by nothing.** `Namespace.dereferenced: boolean` is in the interface and carries real per-namespace values (4 of 9 are `false`, each for a different documented reason) — and `git grep dereferenced -- src/data/id-stability.test.ts` returns **exactly one hit, the declaration**. `manifest.version` is the same: read by no assertion, so U20's own 1 → 2 bump could have been omitted with nothing noticing. This is `CLAUDE.md` §8.3's silent placeholder **in data form** — a field a reader reasonably takes for a governed fact, which is governed by nothing. Worse than an unused variable, because the manifest's entire value is that it is trusted | `grep -c dereferenced src/data/id-stability.test.ts` → **1**; `grep -c 'manifest.version'` → **0** | **OPEN. NOT absorbed into U20** — U20 is a schema change under a recorded ruling, and quietly adding assertions for two unrelated fields is the scope creep §8.1 forbids in the opposite direction. **Owner PROPOSED, not assigned:** whichever unit next opens `id-stability.test.ts`. The fix is not obviously "assert them" — `dereferenced` may be documentation rather than a contract, in which case the honest fix is to say so in the manifest's `purpose`, or delete the field per §8.4 (prefer deleting a field over guarding it) |
+| **N-48** | **U26 plan, 2026-09-11** (found by the unit's caller enumeration; confirmed independently by ecc:architect) | **`POST /api/advisor` performs NO ownership check on `body.conversationId` before the paid model call — and three standing documents said it did.** The `UNSCOPED_FUNCTIONS` reason for `appendMessages`, GATE C1's discharge block, and the comment in `advisor/repo.test.ts` all cite "the route checks ownership first via `conversationBelongsToUser`". Its **only** caller is `GET /api/advisor/conversations/:id`. In POST the id flows into `getMessages` (RLS returns an empty history for a foreign id), **the paid model call runs**, and only then does the write fail — under RLS before U26, under the repo's owner clause after it — inside the committed stream, as a generic `error` event with a correlation id. **The cost dimension is what makes this a finding and not a nit: a foreign `conversationId` spends a paid model call before the ownership failure surfaces.** That is paid-API control — §4 rule 9's spirit — not only error hygiene. Nothing unauthorised is read or written (§2.3 rule 13 preserved; the empty history is RLS working), so this is not a live data defect | `grep -rn conversationBelongsToUser src/app` → one call site, `conversations/[id]/route.ts:41`; `src/app/api/advisor/route.ts:59-60,105` passes `body.conversationId` unchecked | **OPEN → owned by U29** (appended to Group D by owner ruling 2026-09-11). **Not absorbed into U26**: a pre-spend 404 is a declared behaviour change, and U26's named scope is the four repo functions. U26 corrected the three false statements in the same commit that made the repo clause true. **Depends on U12**, so the 404 inherits the unified message rather than authoring a third string |
+| **N-49** | **ecc:security-reviewer during U26 review, 2026-09-11** | **`confirmAndApply` writes a caller-supplied `conversation_id` into the caller's own `advisor_actions` row without checking the conversation is theirs.** `POST /api/advisor/actions` passes `body.conversationId` through `src/services/advisor-actions.ts` into `recordBatch`'s `NewAction.conversationId`; `conversationBelongsToUser` exists and is never called on this path. The row's **owner** is bound (`user_id` is the authenticated caller — U9's payload pin), so no cross-tenant read or mutation follows: no reader dereferences `advisor_actions.conversation_id` to expose another table. It is an **unvalidated foreign-key reference on write** — the caller can point their own audit row at any existing conversation, including someone else's — i.e. a data-integrity gap, not an ownership bypass. Registered so U26's "every function binds the owner" is not misread as covering it: the function binds the *owner*, not the *reference* | `src/app/api/advisor/actions/route.ts:39` → `services/advisor-actions.ts:39` → `advisor-action-repo.ts::recordBatch`; `grep -rn conversationBelongsToUser src/services` → 0 | **OPEN → owned by U29** (owner ruling 2026-09-11, at commit 1 of U26). **Not absorbed into U26** — a service-layer validation is outside the four repo functions. U29 now owns the conversation-ownership predicate at **both** sites: the `POST /api/advisor` pre-spend check (N-48) and `confirmAndApply`'s `conversation_id` reference (this row). **Sizing rule, by the same ruling:** if U29 exceeds S when it is planned, it splits into U29/U30 rather than growing. Cost of leaving it: an audit row that claims a conversation it never belonged to |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -643,6 +645,161 @@ removing its row and `every registered function STILL violates` goes red; empty 
 function is unfixed and `reports no unscoped access …` goes red. Both directions already exist.
 **Not cuttable into invisibility:** if it is cut, the register stays and stays asserted, so the debt keeps
 announcing itself on every `npm test`. That is the intended failure mode.
+
+> ### **[2026-09-11] U26 PLAN — approved by the owner before any source edit.**
+>
+> **Problem.** Under the corrected quantifier, four functions touch a user-owned table without binding
+> the owner and rely on RLS alone. They are held in `UNSCOPED_FUNCTIONS`, which asserts itself as an
+> equality on every `npm test`. **RLS already isolates tenants at the database (`CLAUDE.md` §2.3 rule
+> 12); U26 is defence in depth at the repository layer, so a bug in `src/` cannot rely on RLS to save
+> it.** No vulnerability RLS already prevents is claimed here.
+>
+> **Approach.** Add `userId: string` in the second position — the `(supabase, userId, …)` shape
+> `recordAction`, `listActionsByUser` and `conversationBelongsToUser` already use — and apply
+> `.eq("user_id", userId)`. Then empty the register.
+>
+> **Design decision, `appendMessages`.** `advisor_messages` has **no** `user_id` column (0003; it is one
+> of GATE C1's three exemptions), so the owner binds as a **filter on the parent conversation**, not as
+> a column on the message row. The order changes: the owner-scoped `updated_at` bump runs **first** with
+> `.select("id")`, a zero-row result throws, and only then are the messages inserted. Check and act are
+> one scoped write, and it fails before any side effect. Cost, stated: if the insert then fails,
+> `updated_at` leads the newest message. Chosen over insert-then-scoped-bump because that order writes
+> the rows first and discovers the conversation is not the caller's second — which, on any path where
+> RLS is not the enforcing mechanism, is persisted unauthorised rows.
+>
+> **Finding before any code — N-48.** The register's reason for `appendMessages`, the GATE C1 block
+> above, and the comment in `advisor/repo.test.ts` all say the route checks ownership first via
+> `conversationBelongsToUser`. **`POST /api/advisor` never calls it.** Its only caller is
+> `GET /api/advisor/conversations/:id`. In POST, `body.conversationId` flows into `getMessages` (RLS
+> returns an empty history for a foreign id), the **paid model call runs**, and only then does the
+> insert fail under RLS inside the committed stream. So U26's owner clause on `appendMessages` is not
+> defence in depth *behind* a route check — it is the only application-layer ownership check on that
+> write path. Registered in §4.5 as **N-48** with the cost dimension stated (paid-API control, §4 rule 9's
+> spirit, not only error hygiene) and owned by **U29**, appended to Group D by the same ruling. U26 does
+> **not** add the pre-spend check; that is a declared behaviour change and U29's.
+>
+> **Caller enumeration (§9.4) — grep across `src/`, `tests/`, `e2e/`; the graph oriented, grep
+> enumerated.** `tsc` cannot enumerate callers of a Supabase call, so this list is the enumeration:
+>
+> | # | Site | Passes today | Will pass |
+> |---|---|---|---|
+> | 1 | `api/advisor/actions/[id]/undo/route.ts:31` | `getAction(supabase, id)` | `getAction(supabase, user.id, id)` |
+> | 2 | `…/undo/route.ts:39` | `getActionsByBatch(supabase, action.batchId)` | `(supabase, user.id, action.batchId)` |
+> | 3 | `…/undo/route.ts:47` | `markUndone(supabase, rows[i].id)` | `(supabase, user.id, rows[i].id)` |
+> | 4 | `api/advisor/route.ts:179` | `appendMessages(supabase, conversationId, msgs)` | `(supabase, user.id, conversationId, msgs)` |
+> | 5 | `…/undo/route.test.ts:121,140` | asserts `({}, "a1")`; reads `c[1]` | `({}, "u1", "a1")`; `c[2]` |
+> | 6 | `api/advisor/route.test.ts:268` | asserts `({}, "c-new", […])` | `({}, "u1", "c-new", […])` |
+> | 7 | `lib/db/advisor-action-repo.test.ts:67-86` | three "pinned as they are" tests asserting **no** owner filter | rewritten as owner pins |
+> | 8 | `lib/advisor/repo.test.ts:292-310` | two `appendMessages` tests | rewritten: owner filter + zero-row throw |
+>
+> **A premise in the unit brief was wrong and is not acted on:** `src/lib/advisor/actions/execute.ts`
+> and `src/services/advisor-actions.ts` do **not** call `markUndone`. The rollback path replays inverses
+> through `executeIntent`; the service imports only `recordBatch`. `export-repo.ts` imports only
+> `listActionsByUser`, already scoped. None of the three changes.
+>
+> **Files touched.** M `src/lib/db/advisor-action-repo.ts` · M `src/lib/advisor/repo.ts` · M the two
+> routes · M the four test files above · M `src/architecture/repo-scoping.test.ts` (empty the register,
+> drop the hardcoded `toHaveLength(4)`, correct the header) · M this document · M
+> `docs/project-status.md` §2.5 · N `docs/01-plan/features/u26-bind-owner.plan.md` (bkit cycle artifact,
+> subordinate, no status of its own) · M `CLAUDE.md` §9's bkit note.
+>
+> **Risks.** (1) Three adjacent `string` parameters make a transposed call site type-clean — M4 and the
+> positional route-test assertions are the mitigation, and the hazard already exists in
+> `conversationBelongsToUser`. (2) The ratchet's `toHaveLength(4)` is a count written once; left behind,
+> the empty register is red for the wrong reason.
+>
+> **Success criteria.** Register empty; M1–M4 shown red with verbatim output; four gate commands green;
+> suite count re-measured; CI green on the pushed SHA; N-48 registered; standing claims dated.
+>
+> **ecc:architect, one question — does `userId` in these signatures cross a §4 boundary or move the
+> trust boundary's owner (§4 rule 8)?** **(1) PASS.** No import edge changes; `advisor/repo.ts` stays
+> green under `DOMAIN_IS_PURE` because it receives the client as a parameter; the change moves it toward
+> the shape the db repos already use. **(2) PASS WITH NOTE.** The boundary relocates from "nothing —
+> RLS only" into a testable module, leaving routes only the response decision; bump-first was judged the
+> better-aligned ordering because it fails before any side effect and, for the first time, makes the
+> `advisor_messages` exemption's stated reason true of this call path. The note is N-48, found
+> independently by the reviewer.
+>
+> **Baseline before (measured 2026-09-11, not copied):** typecheck clean · **1276/105** · graph rebuilt
+> (it was 27 days stale).
+>
+> **bkit revived for this unit** — feature `u26-bind-owner`, state in `.bkit/state/pdca-status.json`,
+> cycle artifact at `docs/01-plan/features/u26-bind-owner.plan.md`, subordinate to this entry.
+
+**DONE 2026-09-11.** Baseline before: typecheck clean, **1276/105**, lint 359/359. After: **1278/105**
+(+2 — one transposition pin in `advisor-action-repo.test.ts`, one zero-row pin in `advisor/repo.test.ts`;
+the ratchet file stays at 17), lint **359/359, 0 errors**, build succeeds. All four re-measured after the
+last edit, none copied.
+
+| U26 | before | after |
+|---|---|---|
+| `UNSCOPED_FUNCTIONS` | 4 entries, asserted as equality | **`{}`**, asserted as equality and `toHaveLength(0)` |
+| `advisor_actions` functions binding the owner | 3 of 6 | **6 of 6** |
+| application-layer ownership checks on the advisor **write** path | 0 (route never called `conversationBelongsToUser`; RLS only) | 1 — `appendMessages`' owner-scoped bump, before any insert |
+| unit tests | 1276 / 105 | **1278 / 105** |
+
+**Files touched in the code commit.** M `src/lib/db/advisor-action-repo.ts` · M `src/lib/advisor/repo.ts`
+· M `src/app/api/advisor/actions/[id]/undo/route.ts` · M `src/app/api/advisor/route.ts` · M the four
+test files · M `src/architecture/repo-scoping.test.ts` · M this document (plan block, this entry, N-48,
+N-49, U29, §5 sequence, §9 sizing) · N `docs/01-plan/features/u26-bind-owner.plan.md`. **Deferred to the
+closeout commit, by U19's shape and not by omission:** `docs/project-status.md` §2.5 and `CLAUDE.md` §9's
+bkit note — the plan block above lists them under "files touched" for the *unit*, and ecc:code-reviewer's
+one advisory was that they were not yet in the working tree at review time. Correct, and intended: the
+closeout commit is where U19 and U20 put their status-claim corrections, and the §9 note retires in the same
+commit as the closeout entry that states where bkit's state now lives.
+
+**RED LIST — four mutations, every one executed, verbatim.** M1 ran against the **full** register before it
+was emptied; M2–M4 against the empty one.
+
+| # | Mutation | Observed |
+|---|---|---|
+| M1 | fix `getAction` alone, leave its register row | `every registered function STILL violates — a fixed one must be removed` → `expected [ …(3) ] to deeply equal [ …(4) ]` with the diff naming it: `-   "src/lib/db/advisor-action-repo.ts::getAction",` |
+| M2 | register emptied, revert `markUndone`'s owner clause | `reports no unscoped access to a user-owned table outside the ratchet` → `+ "src/lib/db/advisor-action-repo.ts::markUndone touches "advisor_actions" (a user-owned table) without binding the owner — it takes a userId and never applies it"` (backticks around `userId` elided from the quote) |
+| M3 | same revert, `markUndone`'s own pin | `expected [ [ 'id', 'a1' ] ] to deep equally contain [ 'user_id', 'u1' ]` |
+| M4 | pass a second user's id (`"u2"`) to `getAction` in its pin | `expected [ [ 'id', 'a1' ], [ 'user_id', 'u2' ] ] to deep equally contain [ 'user_id', 'u1' ]` — the pin checks the **value**, so a transposed or foreign id cannot stay green |
+
+Both ratchet directions the U26 spec predicted ("both already exist") were exercised rather than trusted:
+M1 is fix-without-deregistering, M2 is deregister-without-fixing. The initial red — ten failures across
+the four rewritten test files before any source edit — is the TDD half and is not counted as a mutation.
+
+**NO BEHAVIOUR CHANGE IS DECLARED.** No response byte, status, or envelope changes. The one client-visible
+path this unit touches — a foreign `conversationId` in `POST /api/advisor` — ends today exactly where it
+ended yesterday: a generic `error` event with a correlation id inside the committed stream, raised now by
+the repo's owner clause instead of by RLS, after the same paid call (N-48). The undo route's 404 for a
+foreign action id is unchanged in bytes: `getAction` returns `null` for a row the caller does not own,
+which is what RLS made it return before.
+
+**§5.7 — no new engine, so no threshold entry.** Two existing modules gained a parameter. Their coverage is
+governed by the thresholds already in `vitest.config.ts`, which are unchanged.
+
+**ecc:code-reviewer — VERDICT: APPROVE — 1 finding (0 blocking, 1 advisory).** Traced every call site;
+confirmed a transposed implementation fails on column-plus-value; confirmed §2.3 rule 13 holds at both
+call sites (the new throw is caught by `reportInternalError` / `internalError` and never reaches a client);
+confirmed no vacuous pin. The advisory is the "files touched" note answered above.
+
+**ecc:security-reviewer, one question — any remaining path in `src/` by which an authenticated user reads
+or mutates another user's `advisor_actions` or `advisor_messages` row? VERDICT: NO REMAINING PATH — 1
+finding (0 blocking, 1 advisory).** Every reader and writer of both tables was enumerated. The advisory is a
+**new** finding, registered as **N-49** and not absorbed: `confirmAndApply` stamps its own new
+`advisor_actions` row with a caller-supplied `conversation_id` that is never checked against
+`conversationBelongsToUser`. The row's *owner* is bound (it is the caller's); its *conversation reference*
+is not. No reader follows that FK to expose anything, so it is a data-integrity gap, not a cross-tenant
+read — and it is exactly the kind of thing "every function binds the owner" could be misread as covering.
+
+**U12 disposition (required by its 2026-08-10 deferral): LANDING, not re-deferred.** Owner ruling
+2026-09-11: U12 lands in its own commit after this unit's closeout commit, with its own entry and its own
+red-evidence table, and precedes U29 so U29 inherits the unified 404 message.
+
+**bkit PDCA, revived for U26 and driven through the cycle:** feature `u26-bind-owner` in
+`.bkit/state/pdca-status.json` (**gitignored** — `.gitignore:68` — so the state is local to this machine and
+the tracked record is the artifact); the cycle artifact is `docs/01-plan/features/u26-bind-owner.plan.md`,
+subordinate to this entry by ruling; the design decision (bump-first) is recorded in the artifact's design
+section rather than in a separate design document, because the unit has one decision and a 3-option
+design document for it would be ceremony. `CLAUDE.md` §9's "stale tooling" note retires in the closeout
+commit.
+
+**What CI must add before this entry is complete:** the run id on the pushed SHA, in the closeout commit.
+Figures above were taken on one developer's machine.
 
 ### Group D — platform and operations
 
@@ -2382,6 +2539,22 @@ Where the observed text differs from the prediction, the observed text is what i
    and cached it; the new one resolves configuration per call. That is invisible behaviourally (both are
    per-turn instances) and is recorded only so nobody later reads the rename as a pure move.
 
+**U29 · The conversation-ownership predicate, at both sites.** *(created 2026-09-11 by owner ruling, on
+N-48; widened the same day to N-49 at U26's commit 1)* M `src/app/api/advisor/route.ts` · M
+`src/services/advisor-actions.ts` · M both tests. **S**, deps **U12**. **Two sites, one predicate:**
+(a) the pre-spend check in `POST /api/advisor` below; (b) `confirmAndApply` refuses a `conversationId`
+that is not the caller's before `recordBatch` stamps it into the audit row (N-49 — the row's owner was
+bound, its conversation reference was not). **If U29 exceeds S when it is planned, it splits into
+U29/U30 rather than growing** — ruling, not preference. **Behaviour change (declared), site (a):**
+a foreign or non-existent `conversationId` answers **404 before the paid model call**, using U12's unified
+404 message, instead of a generic `error` event inside a committed stream after the spend. Call
+`conversationBelongsToUser` — the function the three corrected statements wrongly said this route already
+called — between validation and `reserveAdvisorTokens`, so no reservation is taken and no model call is
+made for a conversation the caller does not own. **Red:** a route test with `conversationBelongsToUser`
+mocked `false` must see 404 and `runAdvisorTurn` never called; delete the check and it goes green on the
+wrong side. **Sequenced after U12** so the 404 inherits one message rather than authoring a third. **Not
+implemented in the U26 session, by ruling.**
+
 ### Group E — cuttable
 
 **U21 · FU-24, cited artifacts must be tracked.** N `src/architecture/cited-artifact.test.ts`. **S**.
@@ -2404,8 +2577,8 @@ credential-free specs. Live-in-CI is **decision 3**, not an engineering unit.
 Group A   U1 → U2                                   [error contract]      GATE A1
 Group B   U3 → U4 → U5 → U6 → U7                    [paid-API control]    GATE B1
 Group C   U8 → U9 → U10 → ~~U11~~ · U12→D            [persistence]         GATE C1 discharged 2026-08-10
-                                                                          remainder → U26
-Group D   U13 → U27 → U28 → U14 → U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25   GATE D1, D2
+                                                                          remainder → U26 — CLOSED 2026-09-11
+Group D   U13 → U27 → U28 → U14 → U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25 · U26 · U12 → U29   GATE D1, D2
 Group E   U21 · U22 · U23                           [cuttable]
 ```
 **A precedes B** because U4/U5/U6 all add `catch` blocks under `src/lib/**` and U2's guard is what must see
@@ -2921,8 +3094,9 @@ here rather than discovered later.
 
 ## 9. Sizing
 
-**~~23~~ ~~24~~ 25 proposed units** (U1–U22, **U24**, **U25** and **U26**, plus U23 deferred). Rough shape:
-**~~7~~ 8 S/S-M · 12 M · ~~3~~ 4 L · 1 M/L**. *(U26 — added 2026-08-10 by GATE C1's discharge — is **S/M**:
+**~~23~~ ~~24~~ ~~25~~ 26 proposed units** (U1–U22, **U24**, **U25**, **U26** and **U29**, plus U23 deferred). Rough shape:
+**~~7~~ ~~8~~ 9 S/S-M · 12 M · ~~3~~ 4 L · 1 M/L**. *(U29 — added 2026-09-11 by owner ruling on N-48 — is **S**: one
+call inserted before the reservation, one route test, one declared behaviour change.)* *(U26 — added 2026-08-10 by GATE C1's discharge — is **S/M**:
 it does not invent an obligation, it names one the ratchet was already asserting. **U11 is cut** as of the
 same date, per cut order #3, so the unit count rises by one while the work in flight does not.)*
 *(U25 — added 2026-08-10 by the scope amendment — is **L**: two adapters whose wire protocol is rewritten,

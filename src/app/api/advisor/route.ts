@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
         const conversationId =
           requestedConversationId ??
           (await createConversation(supabase, user.id, deriveTitle(message))).id;
-        await appendMessages(supabase, conversationId, [
+        await appendMessages(supabase, user.id, conversationId, [
           { role: "user", content: message, citations: [] },
           { role: "assistant", content: result.answer, citations: result.citations },
         ]);

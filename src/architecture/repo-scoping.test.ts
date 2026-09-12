@@ -10,11 +10,13 @@
 //
 // The obvious phrasing is the one GATE C1 uses: "every module taking a `userId`
 // applies it". U9 found why that phrasing is not enough. `advisor_actions` has
-// a `user_id` column, and `getAction(supabase, id)` and `markUndone(supabase,
-// id)` take no owner at all — so a rule quantified over functions that ACCEPT an
-// owner cannot see them, and the cheapest way to satisfy such a rule is to
-// delete the parameter it protects. A guard whose easiest green is "remove the
-// thing being checked" is not a guard.
+// a `user_id` column, and — until Phase 2 U26 — `getAction(supabase, id)` and
+// `markUndone(supabase, id)` took no owner at all — so a rule quantified over
+// functions that ACCEPT an owner could not see them, and the cheapest way to
+// satisfy such a rule is to delete the parameter it protects. A guard whose
+// easiest green is "remove the thing being checked" is not a guard. The
+// phrasing stays over tables after U26 for the same reason: the next function
+// written without an owner parameter must be seen the day it is written.
 //
 // So the rule here is quantified over TABLES instead:
 //
@@ -173,8 +175,10 @@ const EXEMPT_TABLES: Record<string, string> = {
   evaluation_flags:
     "Owned through `stacks`, same policy shape. Scoped by `stack_id`; see evaluation-flag-repo.test.ts.",
   advisor_messages:
-    "Owned through `advisor_conversations`. Scoped by `conversation_id`; the route establishes " +
-    "ownership first via `conversationBelongsToUser` (Phase 1 U21).",
+    "Owned through `advisor_conversations`. Scoped by `conversation_id`; since Phase 2 U26 " +
+    "`appendMessages` binds the owner as a filter on the parent conversation BEFORE inserting, " +
+    "so the write path checks ownership itself. (This reason used to cite the route's " +
+    "`conversationBelongsToUser` — which only the GET conversations route calls; N-48.)",
 };
 
 /**
@@ -187,35 +191,26 @@ const EXEMPT_MODULES: Record<string, string> = {
 };
 
 /**
- * THE RATCHET — functions that touch a user-owned table today without binding
- * the owner, relying on RLS alone.
+ * THE RATCHET — functions that touch a user-owned table without binding the
+ * owner, relying on RLS alone.
  *
  * This is the Phase 1 U18 shape: every entry is asserted to STILL violate, and
- * the register is compared as an EQUALITY, so the list can only shrink. A fourth
- * unscoped function is a red build; fixing one of these without removing its row
- * is also a red build, which is what stops the register outliving the problem.
+ * the register is compared as an EQUALITY, so the list can only shrink. A new
+ * unscoped function is a red build; fixing one of these without removing its
+ * row is also a red build, which is what stops the register outliving the
+ * problem.
  *
- * None of these is a live defect: each is reached from a route that has already
- * established the caller's identity, and RLS refuses the row regardless. They
- * are here because "protected by one mechanism" and "protected by the mechanism
- * this codebase claims to apply" are different statements, and because each is
- * one `SECURITY DEFINER` refactor away from having no protection at all.
+ * [2026-09-11] EMPTY, closed by Phase 2 U26. It held four from U10 (2026-08-10)
+ * until then — `getAction`, `markUndone`, `getActionsByBatch` in
+ * `src/lib/db/advisor-action-repo.ts`, and `appendMessages` in
+ * `src/lib/advisor/repo.ts` — none a live defect, each reached from a route that
+ * had already authenticated, with RLS refusing the row regardless. They were
+ * here because "protected by one mechanism" and "protected by the mechanism
+ * this codebase claims to apply" are different statements. The register stays,
+ * empty and asserted, so the next unscoped function lands here with a written
+ * reason rather than in the exemption list — a ratchet is not an exemption.
  */
-const UNSCOPED_FUNCTIONS: Record<string, string> = {
-  "src/lib/db/advisor-action-repo.ts::getAction":
-    "Reads `advisor_actions` by primary key with no owner clause. Fixing it means adding a " +
-    "`userId` parameter and updating callers — a signature change U9/U10 did not own.",
-  "src/lib/db/advisor-action-repo.ts::markUndone":
-    "Updates `advisor_actions` by primary key with no owner clause. Same remedy as `getAction`, " +
-    "and the higher-stakes of the two: it is a write.",
-  "src/lib/db/advisor-action-repo.ts::getActionsByBatch":
-    "Reads `advisor_actions` by `batch_id`. The batch id is generated per user action and is not " +
-    "guessable, but that is obscurity, not scoping.",
-  "src/lib/advisor/repo.ts::appendMessages":
-    "Bumps `advisor_conversations.updated_at` by conversation id with no owner clause. The route " +
-    "checks ownership first (`conversationBelongsToUser`), so this is a check-then-act pair whose " +
-    "gap only RLS closes.",
-};
+const UNSCOPED_FUNCTIONS: Record<string, string> = {};
 
 const PERSISTENCE_MODULES = tracked(
   "src/lib",
@@ -325,10 +320,11 @@ describe("REPO_SCOPING: the ratchet can only shrink", () => {
     }
   });
 
-  it("the ratchet is the only thing standing between here and GATE C1", () => {
-    // Stated as an assertion so the count cannot drift out of the report: four
-    // functions, all reached from routes that have already authenticated.
-    expect(Object.keys(UNSCOPED_FUNCTIONS)).toHaveLength(4);
+  it("the ratchet is EMPTY — GATE C1's named remainder closed (U26)", () => {
+    // Stated as an assertion so the count cannot drift out of the report. This
+    // used to read `toHaveLength(4)`, a count written once; U26 is what changed
+    // it, and a fifth-then-first entry must change it back on purpose.
+    expect(Object.keys(UNSCOPED_FUNCTIONS)).toHaveLength(0);
   });
 });
 

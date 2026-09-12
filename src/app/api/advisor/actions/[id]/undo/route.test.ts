@@ -118,7 +118,9 @@ describe("POST /api/advisor/actions/:id/undo", () => {
       stackId: "s1",
       itemId: "i1",
     });
-    expect(markUndone).toHaveBeenCalledWith({}, "a1");
+    // U26: the owner travels with every repo call, in the second position.
+    expect(getAction).toHaveBeenCalledWith({}, "u1", "a1");
+    expect(markUndone).toHaveBeenCalledWith({}, "u1", "a1");
     expect(getActionsByBatch).not.toHaveBeenCalled();
   });
 
@@ -137,7 +139,9 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     expect(body.data).toEqual({ id: "a1", undone: true, batchId: "b1", count: 2 });
     // Newest first — the same invariant executeBatch holds on the forward path.
     expect(executeIntent.mock.calls.map((c) => c[2].itemId)).toEqual(["second", "first"]);
-    expect(markUndone.mock.calls.map((c) => c[1])).toEqual(["a2", "a1"]);
+    expect(getActionsByBatch).toHaveBeenCalledWith({}, "u1", "b1");
+    expect(markUndone.mock.calls.map((c) => c[2])).toEqual(["a2", "a1"]);
+    expect(markUndone.mock.calls.every((c) => c[1] === "u1")).toBe(true);
   });
 
   it("skips siblings already undone", async () => {

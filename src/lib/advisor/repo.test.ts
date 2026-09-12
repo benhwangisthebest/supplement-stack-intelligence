@@ -289,24 +289,42 @@ describe("advisor repo — ownership pins (U9)", () => {
     expect(spy.filters()).toContainEqual(["conversation_id", "c1"]);
   });
 
-  it("appendMessages stamps the conversation on every row and touches only that conversation", async () => {
-    // Pinned as it is, and worth reading beside `advisor-action-repo.test.ts`:
-    // the `advisor_conversations` bump is addressed by `id` alone on a table
-    // that HAS a `user_id`. Safe today because the route establishes ownership
-    // first (U21's `conversationBelongsToUser`) and RLS backs it — but the check
-    // and the act are two statements, and only RLS closes the gap between them.
-    const spy = querySpy({ data: null });
-    await appendMessages(spy.client, "c1", [
+  it("appendMessages binds the owner on the conversation bump and inserts the rows under it", async () => {
+    // U26. `advisor_messages` has no `user_id` column — ownership derives from
+    // the parent conversation, one of GATE C1's three exemptions — so the owner
+    // is bound as a FILTER on `advisor_conversations`, and that scoped write
+    // runs FIRST: check and act are one statement, and it fails before any
+    // message row exists. (Until U26 the bump was addressed by `id` alone, and
+    // the only application-layer ownership check on this path was… none: the
+    // POST route never called `conversationBelongsToUser` — N-48.)
+    const spy = querySpy({ data: [{ id: "c1" }] });
+    await appendMessages(spy.client, "u1", "c1", [
       { role: "user", content: "hi", citations: [] },
     ]);
-    expect(spy.tables).toEqual(["advisor_messages", "advisor_conversations"]);
-    expect(spy.payloads.every((r) => r.conversation_id === "c1" || "updated_at" in r)).toBe(true);
+    expect(spy.tables).toEqual(["advisor_conversations", "advisor_messages"]);
     expect(spy.filters()).toContainEqual(["id", "c1"]);
+    expect(spy.filters()).toContainEqual(["user_id", "u1"]);
+    expect(ownerBinding(spy, "u1")).toBe("filter");
+    expect(spy.payloads.filter((r) => "role" in r).every((r) => r.conversation_id === "c1")).toBe(true);
+  });
+
+  it("appendMessages writes NO message row when the owner-scoped bump matches nothing", async () => {
+    // The zero-row result is authoritative: not this user's conversation (or
+    // no such conversation). Insert-then-bump would have persisted the rows
+    // first and found out second.
+    const spy = querySpy({ data: [] });
+    await expect(
+      appendMessages(spy.client, "u1", "c-other", [
+        { role: "user", content: "hi", citations: [] },
+      ]),
+    ).rejects.toThrow();
+    expect(spy.tables).toEqual(["advisor_conversations"]);
+    expect(spy.calls.some((c) => c.method === "insert")).toBe(false);
   });
 
   it("appendMessages writes nothing at all for an empty batch", async () => {
     const spy = querySpy({ data: null });
-    await appendMessages(spy.client, "c1", []);
+    await appendMessages(spy.client, "u1", "c1", []);
     expect(spy.tables).toEqual([]);
   });
 

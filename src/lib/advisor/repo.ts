@@ -136,13 +136,46 @@ export interface NewMessage {
   citations: Citation[];
 }
 
-/** Append messages to a conversation and bump its updated_at. */
+/**
+ * Append messages to one of THIS user's conversations and bump its updated_at.
+ *
+ * ORDER MATTERS, and it is the U26 design decision. `advisor_messages` has no
+ * `user_id` column — ownership derives from the parent conversation — so the
+ * owner is bound as a FILTER on `advisor_conversations`, and that owner-scoped
+ * write runs FIRST. Its row count is the ownership check: zero rows means the
+ * conversation is not this user's (or does not exist), and nothing is inserted.
+ * Check and act are one statement, and it fails before any side effect. The
+ * alternative — insert, then scoped bump — persists the rows first and finds
+ * out second, which on any path where RLS is not the enforcing mechanism is
+ * unauthorised rows in someone else's conversation.
+ *
+ * Stated cost: if the insert then fails, `updated_at` leads the newest message.
+ *
+ * Until U26 this was the only application-layer ownership check MISSING from
+ * the advisor turn path: `POST /api/advisor` never calls
+ * `conversationBelongsToUser` (finding N-48, owned by U29 for the pre-spend
+ * half). RLS still isolates tenants at the database (§2.3 rule 12).
+ */
 export async function appendMessages(
   supabase: SupabaseClient,
+  userId: string,
   conversationId: string,
   messages: NewMessage[],
 ): Promise<void> {
   if (messages.length === 0) return;
+  const { data: owned, error: touchError } = await supabase
+    .from("advisor_conversations")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", conversationId)
+    .eq("user_id", userId)
+    .select("id");
+  if (touchError) throw touchError;
+  if (!Array.isArray(owned) || owned.length === 0) {
+    // Caught by the route's stream handler and reported through
+    // `reportInternalError`: the client sees the generic text plus a
+    // correlation id, never this message (§2.3 rule 13).
+    throw new Error("appendMessages: conversation is not owned by this user");
+  }
   const rows = messages.map((m) => ({
     conversation_id: conversationId,
     role: m.role,
@@ -151,11 +184,6 @@ export async function appendMessages(
   }));
   const { error } = await supabase.from("advisor_messages").insert(rows);
   if (error) throw error;
-  const { error: touchError } = await supabase
-    .from("advisor_conversations")
-    .update({ updated_at: new Date().toISOString() })
-    .eq("id", conversationId);
-  if (touchError) throw touchError;
 }
 
 // ---- Token budget ------------------------------------------------------------
