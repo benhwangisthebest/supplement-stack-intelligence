@@ -348,9 +348,20 @@ rule from expired scaffolding. Do not repeat it.
 7. **Update `docs/project-status.md`** when a subsystem's classification changes, and `docs/roadmap.md`'s
    phase status when a phase starts or completes.
 
-Note: the bkit PDCA tooling state is stale (`bkit_pdca_status` tracks zero features as of 2026-06-15). The
+~~Note: the bkit PDCA tooling state is stale (`bkit_pdca_status` tracks zero features as of 2026-06-15). The
 `docs/archive/*/_INDEX.md` files are the reliable status record. Either revive the tooling deliberately or
-retire it — do not half-use it.
+retire it — do not half-use it.~~ **[2026-09-11] RETIRED — the tooling was revived deliberately, by Phase 2
+U26, on the owner's instruction.** The note existed because a half-used tracker reads like a status record
+and is not one; the risk it controlled — an agent trusting `bkit_pdca_status` as the project's state — is
+controlled **only while every unit from U26 onward registers with bkit** and is driven plan → design → do →
+check → report. That is a condition, not a fact: a unit that ships without registering reinstates this
+note as written, because a tracker that is current for some units and silent for others is the half-use
+the note forbade. **Where the state lives:** `.bkit/state/pdca-status.json`, which is
+**gitignored** (`.gitignore:68`), so it is local to the machine that ran the unit; the tracked, versioned
+record of a unit's cycle is its artifact under `docs/01-plan/features/<feature>.plan.md`, which is
+**subordinate** to the approved phase plan and carries no approval status of its own. The
+`docs/archive/*/_INDEX.md` files remain the reliable record for the archived v2–v13 features. Rationale
+for retiring rather than deleting: §7.
 
 ---
 

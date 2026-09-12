@@ -198,7 +198,7 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   every turn from a green suite). Live evidence: `docs/05-qa/2026-08-10-omniroute-probe-record.md`.
   **Open against this path:** N-22 — an `auto/*` alias can complete a tool loop and return an **empty**
   answer, which every safety and grounding gate passes.
-- **Persistence:** conversations, messages, usage, actions — all persisted with RLS.
+- **Persistence:** conversations, messages, usage, actions — all persisted with RLS. **[2026-09-11]** And, since U26, owner-bound at the repository layer as well: `getAction`, `markUndone`, `getActionsByBatch` and `appendMessages` filter on the owner, so RLS is the last line rather than the only one. Two findings registered, not absorbed: `POST /api/advisor` spends a paid call before any ownership failure for a foreign `conversationId` (N-48), and `confirmAndApply` stamps an unchecked `conversation_id` (N-49) — both owned by U29.
 - **Classification: B.** Architecture sound; ~~write path needs tests, logging, timeout, extraction~~ →
   **[2026-08-06]** tests, logging and extraction are done; **timeout** and the non-atomic budget check
   are what still hold it at B (the latter is CLAUDE.md §4.9, which remains unenforced).
@@ -215,7 +215,13 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   `src/architecture/schema-type-drift.test.ts` (U8, 23 tests) binds all 12 migration tables to their 12
   row types, totally in both directions. **The gap that remains is the repository layer:** the nine
   `src/lib/db/*-repo.ts` modules are at **0 %** and `src/lib/advisor/repo.ts` at ~37 %, exercised only
-  through route tests — tracked as **FU-16**. `mappers.ts` still casts (`row.intent as StackIntent`)
+  through route tests — tracked as **FU-16**. **[2026-09-11] That repository-layer gap is closed, in three
+  dated steps:** Phase 2 U9 pinned every `src/lib/db/*-repo.ts` and `advisor/repo.ts` function's owner
+  binding (row-fixture pins via `query-spy.ts`); U10 added `REPO_SCOPING`, which derives the user-owned
+  tables from the migrations and held the four functions that bound no owner in a shrink-only ratchet; and
+  U26 (`66b6322`, CI `34664914852`) bound the owner in those four and emptied the ratchet, asserted at
+  `toHaveLength(0)`. Every function touching a table with a `user_id` column now filters or stamps it —
+  the repository half of §2.3 rule 12, beside RLS rather than instead of it. `mappers.ts` still casts (`row.intent as StackIntent`)
   against plain `text` columns with no CHECK constraint, so *value* drift stays silent even though
   *shape* drift no longer does. `replaceFlags()` is a
   non-atomic delete-then-insert — a failed insert leaves zero flags. No migration tooling, no `down`

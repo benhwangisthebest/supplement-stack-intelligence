@@ -542,7 +542,7 @@ of low value. The property worth pinning is that **every repo function taking a 
 argument and §4 rule 8; the coverage rises as a by-product, not as the goal.
 **Red:** delete `.eq("user_id", userId)` from `getStack` → `expected "eq" to have been called with [ 'user_id', 'u1' ]`.
 
-**U10 · `REPO_SCOPING` guard.** — **DONE 2026-08-10** (see the unit report). The exemption list is the predicted **3** tables and each is asserted against the migrations rather than against its own comment. **The rule had to be re-quantified, and that is U10's finding:** phrased as GATE C1 phrases it — over functions that *take* a `userId` — it cannot see `getAction`/`markUndone`, which touch the user-owned `advisor_actions` and accept no owner at all, so the cheapest way to satisfy such a rule is to delete the parameter it protects. Quantified over **tables carrying a `user_id` column** instead (derived from the migrations), it catches them, and mutation M46 proves the parameter-deletion cheat still goes red. Four functions violate today; they are held in a **ratchet register** asserted as an equality, per Phase 1 U18, so it can only shrink. Also delivered N-14's audit table.
+**U10 · `REPO_SCOPING` guard.** — **DONE 2026-08-10** (see the unit report). The exemption list is the predicted **3** tables and each is asserted against the migrations rather than against its own comment. **The rule had to be re-quantified, and that is U10's finding:** phrased as GATE C1 phrases it — over functions that *take* a `userId` — it cannot see `getAction`/`markUndone`, which touch the user-owned `advisor_actions` and accept no owner at all, so the cheapest way to satisfy such a rule is to delete the parameter it protects. Quantified over **tables carrying a `user_id` column** instead (derived from the migrations), it catches them, and mutation M46 proves the parameter-deletion cheat still goes red. Four functions violate today; they are held in a **ratchet register** asserted as an equality, per Phase 1 U18, so it can only shrink. **[2026-09-11] Zero — U26 emptied it, and the register stays asserted at `toHaveLength(0)`.** Also delivered N-14's audit table.
 N `src/architecture/repo-scoping.test.ts`. **M**, deps U9. Exemption list
 measured at **3** (`stack_items`, `evaluation_flags`, `advisor_messages` — transitively owned, no
 `user_id` column), each with a written reason.
@@ -572,6 +572,7 @@ a further dated disposition. It may not evaporate by silence.
 > table with no `user_id` column in the migrations.
 >
 > ### **[2026-08-10] GATE C1 — DISCHARGED, with a named remainder.** Clause by clause, re-measured at `9f8f1e6`:
+> ### **[2026-09-11] — and the named remainder is CLOSED by U26, `66b6322`.** The block below is kept as written; the dated note at its end says what changed.
 >
 > **Check (a) — exemption list length == 3. PASS.**
 > ```
@@ -632,6 +633,15 @@ a further dated disposition. It may not evaporate by silence.
 > **Owed by which unit: `U26`** (appended below; numbering is append-only). Not by U11, which is cut, and
 > not by U12, which is a 404 message. Naming an existing unit would have been the silent narrowing this
 > gate is being read clause by clause to avoid.
+>
+> **[2026-09-11] CLOSED by U26 (`66b6322`, CI run `34664914852`).** `UNSCOPED_FUNCTIONS` is `{}`, asserted as
+> an equality and `toHaveLength(0)`; all four bind the owner as a filter. Two corrections to the text above,
+> dated rather than rewritten: **(i)** the `appendMessages` line says "check-then-act" — the *check* half
+> never existed on the route that calls it. `POST /api/advisor` never called `conversationBelongsToUser`;
+> only the GET conversations route does. That is **N-48**, owned by U29. **(ii)** "None is a live defect"
+> stands, and for the reason given (RLS refused the row regardless), but the sentence "each is reached
+> from a route that has already authenticated" was doing more work than it could: authenticated is not
+> the same as owner-checked, and for `appendMessages` the second never happened at the route.
 
 **U26 · Bind the owner in the four ratchet functions.** **S/M**, deps U10. Created 2026-08-10 by GATE C1's
 discharge, which is the first document to state what the ratchet actually owes. Add a `userId` parameter to
@@ -798,8 +808,39 @@ section rather than in a separate design document, because the unit has one deci
 design document for it would be ceremony. `CLAUDE.md` §9's "stale tooling" note retires in the closeout
 commit.
 
-**What CI must add before this entry is complete:** the run id on the pushed SHA, in the closeout commit.
-Figures above were taken on one developer's machine.
+**U26 CI — run `34664914852`, green on `66b6322`, 18/18 steps.** Every figure this entry claims was
+re-measured by CI independently and matched exactly: lint **359 of 359, 0 errors**; **1278/105**; non-live
+E2E **70 passed / 30 skipped**, unchanged with zero specs edited. Recorded because the entry's numbers were
+taken on one developer's machine, and §5.1 asks what was run, not what was believed. The SHA reached
+`main` by the repository's own path: pushed to `feat/u26-bind-owner`, CI green there, `main` fast-forwarded
+to the already-green SHA — a direct push of a new commit to `main` is refused by construction
+(`strict: true`, `enforce_admins: true`), which U19 and U20 also went through.
+
+**U26 STAMP ROW** *(standing disposition):*
+
+| U26 closeout | value |
+|---|---|
+| merged to `main` | **`66b6322`** — fast-forward from `6ec3734`, 1 commit |
+| code run | **`34664914852`** — green on `66b6322`, 18/18 steps, on `feat/u26-bind-owner` |
+| post-merge `main` run | **`34665120379`** — green on `66b6322`, required check satisfied on the merged SHA |
+
+**THE COUNTS-WRITTEN-ONCE SWEEP (FU-32 class) — every standing claim U26 made false, corrected by dating,
+not restating.** Nine sites; two were corrected in the code commit because they sit beside the code:
+
+| # | Site | Claim made false | Correction |
+|---|---|---|---|
+| 1 | this document, GATE C1 heading (`DISCHARGED, with a named remainder`) | the remainder is open | dated clause appended: remainder closed by U26 |
+| 2 | this document, GATE C1 "THE REMAINDER" block, incl. `appendMessages … (check-then-act; only RLS closes the gap)` | four functions unscoped; a route-side check exists | dated note after "Owed by which unit": closed, and the "check" half never existed on POST (N-48) |
+| 3 | this document, U10 entry: "Four functions violate today; they are held in a ratchet register" | four | dated clause: zero since U26 |
+| 4 | this document, §5 sequence line "remainder → U26" | open | **already dated in `66b6322`**: "CLOSED 2026-09-11" |
+| 5 | this document, §6 "Trust boundaries touched" list | omits U26 | U26 appended |
+| 6 | `src/architecture/repo-scoping.test.ts` header and `advisor_messages` exemption reason | "take no owner at all"; "the route establishes ownership first via `conversationBelongsToUser`" | **already dated in `66b6322`** |
+| 7 | `docs/project-status.md` §2.5: "The gap that remains is the repository layer … exercised only through route tests — tracked as FU-16" | unpinned repo layer | dated paragraph: pinned by U9, guarded by U10, ratchet emptied by U26 |
+| 8 | `docs/project-status.md` §2.4: "all persisted with RLS" | true, but the only mechanism | dated clause: owner-bound at the repo layer too since U26 |
+| 9 | `CLAUDE.md` §9 note: "the bkit PDCA tooling state is stale … either revive the tooling deliberately or retire it" | tooling unrevived | **retired per §7** — struck with rationale, replaced by where the state lives |
+
+`docs/roadmap.md` was grepped for `REPO_SCOPING`, `GATE C1`, `UNSCOPED` and `bkit`: no hit, nothing to
+correct. `.claude/CLAUDE.md` is rank 8 and was not touched.
 
 ### Group D — platform and operations
 
@@ -2618,7 +2659,7 @@ ruling, and cutting a ruling is not a sizing decision — 2026-08-08).
 
 ## 6. Risks
 
-**Trust boundaries touched:** U3, U4, U5, U7, U9, U10, U12, U14, U16, **U17 (irreversible deletion)**,
+**Trust boundaries touched:** U3, U4, U5, U7, U9, U10, U12, U14, U16, **U17 (irreversible deletion)**, U26 *(added 2026-09-11)*,
 **U25** (it moves every paid call to a different provider and re-defines what the paid-route guard detects).
 
 **Declared behaviour changes — Phase 1 had two and pre-declared both; this phase has ~~five~~ ~~six~~ eight:**
