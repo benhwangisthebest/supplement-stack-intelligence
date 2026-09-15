@@ -306,7 +306,10 @@ test" part does not.
 
 ### 2.9 Testing infrastructure — **B**
 - **[2026-08-06] Updated at Phase 1 close:** **859 unit tests across 73 files** (was 524/42 at Phase 0
-  close). **Seven** executable architecture specs, not two: `boundaries.test.ts` (**36**),
+  close). **Seven** executable architecture specs, not two **[2026-09-14, observed at U12: **20**, the
+  directory count — the figure below is the 2026-08-06 measurement and stays as written; the thirteen
+  added since are Phase 2's, most recently `not-found-uniformity.test.ts` (U12) and the specs added by
+  U13–U28]**: `boundaries.test.ts` (**36**),
   `error-disclosure.test.ts` (**30**), `schema-type-drift.test.ts` (**23**), `doc-truth.test.ts` (**21**),
   `rls-coverage.test.ts` (**14**), `auth-coverage.test.ts` (**13**) and `e2e-live-tagging.test.ts` (**11**). Six of the seven derive
   their inventory from `git ls-files`, so a verdict is a property of the repository rather than of one
@@ -443,7 +446,9 @@ What compounds debt is not the shape but **the coverage of enforcement**: ~~two 
 purity is unenforced, the presentation layer is untestable-by-config, and none of it runs automatically.~~
 **[2026-08-06] Three of those four are closed** — `src/services` and `src/data` are scanned layers,
 `DOMAIN_IS_PURE` is enforced as a ratchet (U18), and all seven architecture specs run on every push via
-CI (including a coverage gate). **The presentation layer is still untestable by config**: `include` is
+CI (including a coverage gate) **[2026-09-14, observed at U12: **20**, and the "all" is the load-bearing
+word — it was true when written and is still true, because CI runs the whole suite rather than a named
+list; only the count aged]**. **The presentation layer is still untestable by config**: `include` is
 `src/**/*.test.ts` with `environment: "node"`, so a `.test.tsx` cannot run — though since U13 a tracked
 `.test.tsx` at least fails loudly via `HARNESS_GAP` instead of being silently skipped. Plus two
 content/process issues:

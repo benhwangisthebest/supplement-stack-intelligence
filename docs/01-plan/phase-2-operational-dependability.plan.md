@@ -281,7 +281,7 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-48** | **U26 plan, 2026-09-11** (found by the unit's caller enumeration; confirmed independently by ecc:architect) | **`POST /api/advisor` performs NO ownership check on `body.conversationId` before the paid model call — and three standing documents said it did.** The `UNSCOPED_FUNCTIONS` reason for `appendMessages`, GATE C1's discharge block, and the comment in `advisor/repo.test.ts` all cite "the route checks ownership first via `conversationBelongsToUser`". Its **only** caller is `GET /api/advisor/conversations/:id`. In POST the id flows into `getMessages` (RLS returns an empty history for a foreign id), **the paid model call runs**, and only then does the write fail — under RLS before U26, under the repo's owner clause after it — inside the committed stream, as a generic `error` event with a correlation id. **The cost dimension is what makes this a finding and not a nit: a foreign `conversationId` spends a paid model call before the ownership failure surfaces.** That is paid-API control — §4 rule 9's spirit — not only error hygiene. Nothing unauthorised is read or written (§2.3 rule 13 preserved; the empty history is RLS working), so this is not a live data defect | `grep -rn conversationBelongsToUser src/app` → one call site, `conversations/[id]/route.ts:41`; `src/app/api/advisor/route.ts:59-60,105` passes `body.conversationId` unchecked | **OPEN → owned by U29** (appended to Group D by owner ruling 2026-09-11). **Not absorbed into U26**: a pre-spend 404 is a declared behaviour change, and U26's named scope is the four repo functions. U26 corrected the three false statements in the same commit that made the repo clause true. **Depends on U12**, so the 404 inherits the unified message rather than authoring a third string |
 | **N-49** | **ecc:security-reviewer during U26 review, 2026-09-11** | **`confirmAndApply` writes a caller-supplied `conversation_id` into the caller's own `advisor_actions` row without checking the conversation is theirs.** `POST /api/advisor/actions` passes `body.conversationId` through `src/services/advisor-actions.ts` into `recordBatch`'s `NewAction.conversationId`; `conversationBelongsToUser` exists and is never called on this path. The row's **owner** is bound (`user_id` is the authenticated caller — U9's payload pin), so no cross-tenant read or mutation follows: no reader dereferences `advisor_actions.conversation_id` to expose another table. It is an **unvalidated foreign-key reference on write** — the caller can point their own audit row at any existing conversation, including someone else's — i.e. a data-integrity gap, not an ownership bypass. Registered so U26's "every function binds the owner" is not misread as covering it: the function binds the *owner*, not the *reference* | `src/app/api/advisor/actions/route.ts:39` → `services/advisor-actions.ts:39` → `advisor-action-repo.ts::recordBatch`; `grep -rn conversationBelongsToUser src/services` → 0 | **OPEN → owned by U29** (owner ruling 2026-09-11, at commit 1 of U26). **Not absorbed into U26** — a service-layer validation is outside the four repo functions. U29 now owns the conversation-ownership predicate at **both** sites: the `POST /api/advisor` pre-spend check (N-48) and `confirmAndApply`'s `conversation_id` reference (this row). **Sizing rule, by the same ruling:** if U29 exceeds S when it is planned, it splits into U29/U30 rather than growing. Cost of leaving it: an audit row that claims a conversation it never belonged to |
 | **N-50** | **U12 planning, 2026-09-11** (raised by the first draft of U12's plan block; ruled out of U12 by the owner the same day) | **Should every API 404 carry one uniform `error.message`?** Today `notFound(what)` renders `<What> not found.` at fourteen route sites and `services/advisor-actions.ts` hand-writes three more (one ownership, two echoing a caller-supplied supplement id). The first U12 draft proposed one constant everywhere, on a rule-13 reading. **The owner's ruling:** rule 13 governs *internal* error text, not resource names; a single-resource route has no oracle because foreign and nonexistent ids already answer identically; flattening fourteen sites is a product-wide UX regression bought for no security property. U12 was re-scoped to the per-route defect class (`NOT_FOUND_UNIFORMITY`). What remains is a **product** question — is a resource-named 404 the product's voice, or should the API speak one 404? — plus one sub-case the scan deliberately does not decide: `POST /api/advisor/actions` receives three distinct 404 literals from its service (`Stack not found.` and two `Supplement "<id>" not found.`), and whether that is a per-route oracle or an input-validation echo of public reference data (ecc:architect's part-2 reasoning) is part of this question | fourteen `notFound(` sites in `src/app/api/**/route.ts`; `services/advisor-actions.ts:74,82,89` | **OPEN — owner UNASSIGNED.** A product decision (`CLAUDE.md` §6 rank 4 territory), not a Phase 2 unit; recorded so the option-B draft is not re-proposed from scratch by the next reader. Not a defect: no path in it discloses another user's data |
-| **N-51** | **ecc:security-reviewer during U12 review, 2026-09-11** | **A malformed `id` path segment answers 500, not 404 — a syntax oracle, not an ownership one.** `stacks/[id]/items/[itemId]/route.ts` passes `id` unvalidated into `getStack`'s `.eq("id", id)` against a `uuid` column; a non-UUID fails at PostgREST, `getStack` throws, and `handle()` answers the generic 500 with a correlation id. `itemId` has no equivalent gap (compared in JS via `Array.prototype.some`, never cast). A caller can therefore tell "malformed id" (500) from "well-formed and not mine / nonexistent" (404) — which does **not** reopen FU-28's three-way distinguishability, because reaching the item branch already requires an owned, well-formed stack id. It is a 500 logged with a correlation id for what is really a 400, on every route that takes a UUID path param without a schema | `route.ts:61-64,77-80`; `src/lib/validation/schemas.ts` has no path-param schema; `stack-repo.ts:26-33` | **OPEN — owner UNASSIGNED.** Not absorbed into U12 (it is a validation shape across many routes, not a 404-message concern). Likely shape: a shared `uuidParam` Zod schema applied by `handle()` or at each route, answering `validationError` (400). Counting the routes that take a UUID path param is the first step of whichever unit takes it |
+| **N-51** | **ecc:security-reviewer during U12 review, 2026-09-11** | **A malformed `id` path segment answers 500, not 404 — a syntax oracle, not an ownership one.** `stacks/[id]/items/[itemId]/route.ts` passes `id` unvalidated into `getStack`'s `.eq("id", id)` against a `uuid` column; a non-UUID fails at PostgREST, `getStack` throws, and `handle()` answers the generic 500 with a correlation id. `itemId` has no equivalent gap (compared in JS via `Array.prototype.some`, never cast). A caller can therefore tell "malformed id" (500) from "well-formed and not mine / nonexistent" (404) — which does **not** reopen FU-28's three-way distinguishability, because reaching the item branch already requires an owned, well-formed stack id. It is a 500 logged with a correlation id for what is really a 400, on every route that takes a UUID path param without a schema | `route.ts:61-64,77-80`; `src/lib/validation/schemas.ts` has no path-param schema; `stack-repo.ts:26-33` | **OPEN — for the Group E / closeout ruling** (owner ruling 2026-09-14: a decision point, not an owner). Not absorbed into U12 (it is a validation shape across many routes, not a 404-message concern). Likely shape: a shared `uuidParam` Zod schema applied by `handle()` or at each route, answering `validationError` (400). Counting the routes that take a UUID path param is the first step of whichever unit takes it. **The ruling this needs is take-or-defer**, not who: it is cheap and mechanical if taken with Group E, and a Phase 3 inheritance if not — what it must not do is stay a row with neither an owner nor a date at which someone decided |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -744,12 +744,49 @@ written in prose rots (the closeout sweep, below).
 
 **bkit:** feature `u12-one-404-message` at `check`, `matchRate` 100; artifact subordinate to this entry.
 
-**What CI must add before this entry is complete:** the run id on the pushed SHA, in the closeout commit.
-Figures above were taken on one developer's machine. **Closeout sweep, pre-enumerated:**
-`docs/project-status.md:309` ("**Seven** executable architecture specs") and `:445` ("all seven
-architecture specs run on every push") — both already false before U12 (the directory held **19**) and
-now off by thirteen; `CLAUDE.md` §4/§5 enumerate specs by name, not by count, and `doc-truth.test.ts`
-binds the §4 table's file names, not a count — nothing to correct there.
+**U12 CI — run `34919261813`, green on `324ebda`, 18/18 steps.** Every figure this entry claims was
+re-measured by CI independently and matched exactly: lint **360 of 360, 0 errors**; **1294/106**; non-live
+E2E **70 passed / 30 skipped** — unchanged from U26's baseline with zero specs edited, which is the
+evidence that behaviour change #3 moved no byte any E2E asserts. Recorded because the entry's numbers were
+taken on one developer's machine, and §5.1 asks what was run, not what was believed.
+
+**U12 STAMP ROW** *(standing disposition):*
+
+| U12 closeout | value |
+|---|---|
+| merged to `main` | **`324ebda`** — fast-forward from `dda046a`, 1 commit |
+| code run | **`34919261813`** — green on `324ebda`, 18/18 steps, on `feat/u12-one-404-message` |
+| post-merge `main` run | **`34919508198`** — green on `324ebda`, required check satisfied on the merged SHA |
+
+**THE COUNTS-WRITTEN-ONCE SWEEP (FU-32 class).** A new architecture spec is a magnet for this class, and
+the unit predicted two sites. **The sweep found three, and the third is the finding:** it was not in the
+pre-enumeration, and it lives in the design document `CLAUDE.md` §4 points readers to. Corrected by dating
+beside the original, never by rewriting it:
+
+| # | Site | Claim made false | Correction |
+|---|---|---|---|
+| 1 | `docs/project-status.md:309` — "**Seven** executable architecture specs, not two" | seven | dated observation appended: **20**, measured 2026-09-14 at U12 |
+| 2 | `docs/project-status.md:445` — "all seven architecture specs run on every push" | seven | same dated observation |
+| 3 | `docs/02-design/architecture-boundaries.md:254` — `npm test  # includes all seven executable specs` | seven | same dated observation. **Not pre-enumerated by this unit** — found only because the sweep grepped `docs/` rather than trusting the list |
+| 4 | this document, the U12 entry's own pre-enumerated sweep line | "nothing to correct" outside the two `project-status` sites | struck and dated: the pre-enumeration was itself a count written once, and it was wrong |
+
+**All three were already false before U12** — the directory held **19** specs and the claim said seven, so
+the drift began long before this unit and U12 is merely the commit that had to notice. Stated plainly
+rather than implied: U12 did not break these; it inherited them and is the first unit since 2026-08-06
+whose own work required counting the directory.
+
+**Checked and deliberately NOT changed:** `docs/04-report/phase-1-verification-integrity.report.md:278`
+("Seven executable architecture specs, **counts measured 2026-08-06**") and
+`docs/04-report/phase-0-integration-enforcement.report.md:29,188`. These are dated historical records of
+what was true when each phase closed, and §7 forbids editing historical rationale — a dated claim that
+says when it was measured has not rotted, it has aged. `CLAUDE.md` §4/§5 enumerate specs **by name**, not
+by count, and `doc-truth.test.ts` binds the §4 table's file names rather than a total, so a new spec makes
+nothing there false; both re-checked at this commit rather than carried forward from the pre-enumeration.
+
+**The transferable lesson, since this is the class's fourth appearance (FU-32 · U19 · U20 · here):** the
+pre-enumeration of a sweep is itself a count written once. U12 wrote its expected sweep into the entry
+*before* running it, which is the right order — and the entry was then wrong by one site. The check that
+caught it was grepping `docs/` for the claim's words, not re-reading the list.
 
 > **GATE C1** — every `src/lib/db` module taking a `userId` has a test asserting `.eq("user_id", …)`, or is
 > in `REPO_SCOPING`'s exemption list. **Check:** exemption list length == 3 **and** each entry names a
