@@ -18,6 +18,13 @@
 // background job — inherits no protection from the policy at all.
 //
 // A mismatch answers 404, not 403: a 403 would confirm the item exists.
+//
+// Phase 2 U12 (FU-28): BOTH failures answer the same message, "Stack item not
+// found." Until then the stack branch said "Stack not found." and the item
+// branch "Item not found." — same status, same code, and a message (one byte
+// of Content-Length, too) that told the caller which check failed. The message
+// is pinned equal and equal-length in the test, and NOT_FOUND_UNIFORMITY
+// (src/architecture) forbids any route from answering two 404 literals.
 import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth/session";
@@ -53,8 +60,8 @@ export async function PUT(
     if (!user) return unauthorized();
     const { id, itemId } = await params;
     const supabase = await createClient();
-    if (!(await getStack(supabase, user.id, id))) return notFound("Stack");
-    if (!(await belongsToStack(supabase, id, itemId))) return notFound("Item");
+    if (!(await getStack(supabase, user.id, id))) return notFound("Stack item");
+    if (!(await belongsToStack(supabase, id, itemId))) return notFound("Stack item");
     const input = stackItemInputSchema.parse(await request.json());
     return ok(await updateItem(supabase, itemId, input));
   });
@@ -69,8 +76,8 @@ export async function DELETE(
     if (!user) return unauthorized();
     const { id, itemId } = await params;
     const supabase = await createClient();
-    if (!(await getStack(supabase, user.id, id))) return notFound("Stack");
-    if (!(await belongsToStack(supabase, id, itemId))) return notFound("Item");
+    if (!(await getStack(supabase, user.id, id))) return notFound("Stack item");
+    if (!(await belongsToStack(supabase, id, itemId))) return notFound("Stack item");
     await deleteItem(supabase, itemId);
     return ok({ id: itemId });
   });

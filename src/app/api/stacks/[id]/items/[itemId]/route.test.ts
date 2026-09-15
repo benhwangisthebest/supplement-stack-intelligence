@@ -216,13 +216,17 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
     expect(deleteItem).not.toHaveBeenCalled();
   });
 
-  it("reports the same status and NOT_FOUND code for a foreign stack and a foreign item", async () => {
-    // Both answer 404 with the same error code, so neither the status nor the
-    // code is an existence oracle. NOTE (FU-28): the human-readable
-    // `error.message` DOES still differ — "Stack not found." vs "Item not
-    // found." — and this test does not pin it. The title used to claim the two
-    // were reported "identically", which was stronger than what is asserted
-    // here; corrected at Phase 1 closeout rather than left overstated.
+  it("reports the same status, code, message AND byte length for a foreign stack and a foreign item (FU-28)", async () => {
+    // Both answer 404 with the same code — and, since Phase 2 U12, the same
+    // `error.message` and the same body length. Until U12 the message DID
+    // differ ("Stack not found." vs "Item not found."), by one byte of
+    // Content-Length as well as by text, and this test did not pin it; its
+    // title had claimed "identically" until Phase 1 closeout narrowed the title
+    // to match the assertion. U12 widened the assertion to match the original
+    // claim instead. Byte length is asserted separately from message equality
+    // on purpose: it is the property an on-the-wire observer sees, and a future
+    // refactor that kept the message but added a per-branch `details` field
+    // would pass a message-only pin.
     getUser.mockResolvedValue(USER);
     listItems.mockResolvedValue([ITEM]);
 
@@ -232,7 +236,40 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
     getStack.mockResolvedValue({ id: "s1" });
     const foreignItem = await DELETE(new Request("http://localhost"), ctx("s1", "i-nope"));
 
+    const stackText = await foreignStack.text();
+    const itemText = await foreignItem.text();
+    const stackBody = JSON.parse(stackText);
+    const itemBody = JSON.parse(itemText);
+
     expect(foreignStack.status).toBe(foreignItem.status);
-    expect((await foreignStack.json()).error.code).toBe((await foreignItem.json()).error.code);
+    expect(stackBody.error.code).toBe(itemBody.error.code);
+    expect(stackBody.error.message).toBe(itemBody.error.message);
+    expect(Buffer.byteLength(stackText, "utf8")).toBe(Buffer.byteLength(itemText, "utf8"));
+  });
+
+  it("answers the same message on PUT as on DELETE for both branches (FU-28)", async () => {
+    // The pair exists twice — once per handler. A fix applied to DELETE alone
+    // would leave PUT as the oracle it was.
+    getUser.mockResolvedValue(USER);
+    listItems.mockResolvedValue([ITEM]);
+    const body = () =>
+      new Request("http://localhost", {
+        method: "PUT",
+        body: JSON.stringify({ supplementId: "magnesium", dose: 200, unit: "mg" }),
+        headers: { "content-type": "application/json" },
+      }) as unknown as NextRequest;
+
+    getStack.mockResolvedValue(null);
+    const putStack = (await (await PUT(body(), ctx("s-not-mine", "i1"))).json()).error.message;
+    getStack.mockResolvedValue({ id: "s1" });
+    const putItem = (await (await PUT(body(), ctx("s1", "i-nope"))).json()).error.message;
+    getStack.mockResolvedValue(null);
+    const delStack = (await (await DELETE(new Request("http://localhost"), ctx("s-not-mine", "i1"))).json()).error.message;
+    getStack.mockResolvedValue({ id: "s1" });
+    const delItem = (await (await DELETE(new Request("http://localhost"), ctx("s1", "i-nope"))).json()).error.message;
+
+    // All four call sites — two branches × two handlers — in one assertion, so
+    // the title claims no more than this test alone establishes.
+    expect(new Set([putStack, putItem, delStack, delItem]).size).toBe(1);
   });
 });

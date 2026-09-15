@@ -280,6 +280,8 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-47** | **U20 orientation, 2026-08-21** | **Two `id-manifest.json` fields are declared, populated with varying values, and asserted by nothing.** `Namespace.dereferenced: boolean` is in the interface and carries real per-namespace values (4 of 9 are `false`, each for a different documented reason) — and `git grep dereferenced -- src/data/id-stability.test.ts` returns **exactly one hit, the declaration**. `manifest.version` is the same: read by no assertion, so U20's own 1 → 2 bump could have been omitted with nothing noticing. This is `CLAUDE.md` §8.3's silent placeholder **in data form** — a field a reader reasonably takes for a governed fact, which is governed by nothing. Worse than an unused variable, because the manifest's entire value is that it is trusted | `grep -c dereferenced src/data/id-stability.test.ts` → **1**; `grep -c 'manifest.version'` → **0** | **OPEN. NOT absorbed into U20** — U20 is a schema change under a recorded ruling, and quietly adding assertions for two unrelated fields is the scope creep §8.1 forbids in the opposite direction. **Owner PROPOSED, not assigned:** whichever unit next opens `id-stability.test.ts`. The fix is not obviously "assert them" — `dereferenced` may be documentation rather than a contract, in which case the honest fix is to say so in the manifest's `purpose`, or delete the field per §8.4 (prefer deleting a field over guarding it) |
 | **N-48** | **U26 plan, 2026-09-11** (found by the unit's caller enumeration; confirmed independently by ecc:architect) | **`POST /api/advisor` performs NO ownership check on `body.conversationId` before the paid model call — and three standing documents said it did.** The `UNSCOPED_FUNCTIONS` reason for `appendMessages`, GATE C1's discharge block, and the comment in `advisor/repo.test.ts` all cite "the route checks ownership first via `conversationBelongsToUser`". Its **only** caller is `GET /api/advisor/conversations/:id`. In POST the id flows into `getMessages` (RLS returns an empty history for a foreign id), **the paid model call runs**, and only then does the write fail — under RLS before U26, under the repo's owner clause after it — inside the committed stream, as a generic `error` event with a correlation id. **The cost dimension is what makes this a finding and not a nit: a foreign `conversationId` spends a paid model call before the ownership failure surfaces.** That is paid-API control — §4 rule 9's spirit — not only error hygiene. Nothing unauthorised is read or written (§2.3 rule 13 preserved; the empty history is RLS working), so this is not a live data defect | `grep -rn conversationBelongsToUser src/app` → one call site, `conversations/[id]/route.ts:41`; `src/app/api/advisor/route.ts:59-60,105` passes `body.conversationId` unchecked | **OPEN → owned by U29** (appended to Group D by owner ruling 2026-09-11). **Not absorbed into U26**: a pre-spend 404 is a declared behaviour change, and U26's named scope is the four repo functions. U26 corrected the three false statements in the same commit that made the repo clause true. **Depends on U12**, so the 404 inherits the unified message rather than authoring a third string |
 | **N-49** | **ecc:security-reviewer during U26 review, 2026-09-11** | **`confirmAndApply` writes a caller-supplied `conversation_id` into the caller's own `advisor_actions` row without checking the conversation is theirs.** `POST /api/advisor/actions` passes `body.conversationId` through `src/services/advisor-actions.ts` into `recordBatch`'s `NewAction.conversationId`; `conversationBelongsToUser` exists and is never called on this path. The row's **owner** is bound (`user_id` is the authenticated caller — U9's payload pin), so no cross-tenant read or mutation follows: no reader dereferences `advisor_actions.conversation_id` to expose another table. It is an **unvalidated foreign-key reference on write** — the caller can point their own audit row at any existing conversation, including someone else's — i.e. a data-integrity gap, not an ownership bypass. Registered so U26's "every function binds the owner" is not misread as covering it: the function binds the *owner*, not the *reference* | `src/app/api/advisor/actions/route.ts:39` → `services/advisor-actions.ts:39` → `advisor-action-repo.ts::recordBatch`; `grep -rn conversationBelongsToUser src/services` → 0 | **OPEN → owned by U29** (owner ruling 2026-09-11, at commit 1 of U26). **Not absorbed into U26** — a service-layer validation is outside the four repo functions. U29 now owns the conversation-ownership predicate at **both** sites: the `POST /api/advisor` pre-spend check (N-48) and `confirmAndApply`'s `conversation_id` reference (this row). **Sizing rule, by the same ruling:** if U29 exceeds S when it is planned, it splits into U29/U30 rather than growing. Cost of leaving it: an audit row that claims a conversation it never belonged to |
+| **N-50** | **U12 planning, 2026-09-11** (raised by the first draft of U12's plan block; ruled out of U12 by the owner the same day) | **Should every API 404 carry one uniform `error.message`?** Today `notFound(what)` renders `<What> not found.` at fourteen route sites and `services/advisor-actions.ts` hand-writes three more (one ownership, two echoing a caller-supplied supplement id). The first U12 draft proposed one constant everywhere, on a rule-13 reading. **The owner's ruling:** rule 13 governs *internal* error text, not resource names; a single-resource route has no oracle because foreign and nonexistent ids already answer identically; flattening fourteen sites is a product-wide UX regression bought for no security property. U12 was re-scoped to the per-route defect class (`NOT_FOUND_UNIFORMITY`). What remains is a **product** question — is a resource-named 404 the product's voice, or should the API speak one 404? — plus one sub-case the scan deliberately does not decide: `POST /api/advisor/actions` receives three distinct 404 literals from its service (`Stack not found.` and two `Supplement "<id>" not found.`), and whether that is a per-route oracle or an input-validation echo of public reference data (ecc:architect's part-2 reasoning) is part of this question | fourteen `notFound(` sites in `src/app/api/**/route.ts`; `services/advisor-actions.ts:74,82,89` | **OPEN — owner UNASSIGNED.** A product decision (`CLAUDE.md` §6 rank 4 territory), not a Phase 2 unit; recorded so the option-B draft is not re-proposed from scratch by the next reader. Not a defect: no path in it discloses another user's data |
+| **N-51** | **ecc:security-reviewer during U12 review, 2026-09-11** | **A malformed `id` path segment answers 500, not 404 — a syntax oracle, not an ownership one.** `stacks/[id]/items/[itemId]/route.ts` passes `id` unvalidated into `getStack`'s `.eq("id", id)` against a `uuid` column; a non-UUID fails at PostgREST, `getStack` throws, and `handle()` answers the generic 500 with a correlation id. `itemId` has no equivalent gap (compared in JS via `Array.prototype.some`, never cast). A caller can therefore tell "malformed id" (500) from "well-formed and not mine / nonexistent" (404) — which does **not** reopen FU-28's three-way distinguishability, because reaching the item branch already requires an owned, well-formed stack id. It is a 500 logged with a correlation id for what is really a 400, on every route that takes a UUID path param without a schema | `route.ts:61-64,77-80`; `src/lib/validation/schemas.ts` has no path-param schema; `stack-repo.ts:26-33` | **OPEN — owner UNASSIGNED.** Not absorbed into U12 (it is a validation shape across many routes, not a 404-message concern). Likely shape: a shared `uuidParam` Zod schema applied by `handle()` or at each route, answering `validationError` (400). Counting the routes that take a UUID path param is the first step of whichever unit takes it |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -566,6 +568,188 @@ that closes a *persistence* group would put an unrelated observable change under
 about it. Its dependency set is empty, so it carries into Group D at unchanged cost. **The obligation
 survives here in writing**: FU-28 is open, U12 owns it, and Group D's close must either land it or record
 a further dated disposition. It may not evaporate by silence.
+
+> ### **[2026-09-11] U12 PLAN — opened after U26's closeout, per the owner's disposition; REVISED to option C by owner ruling the same day; awaiting plan approval before any source edit.**
+>
+> **Problem (FU-28, verbatim from the Phase 1 register).** *"The route answers `notFound("Stack")` vs
+> `notFound("Item")`, and `notFound` writes `` `${what} not found.` `` into the client-facing
+> `error.message`. The pin asserts equal status and equal error code only, so the messages differ and are
+> unpinned."* Residual disclosure is minor — learning "the item isn't in it" implies the stack *is* yours —
+> but a message that varies with which check failed **within one route** is a small oracle, and the pin
+> that claimed "identically" was weaker than its title until Phase 1 closeout corrected the title rather
+> than the code.
+>
+> **The defect class, stated precisely (owner ruling 2026-09-11).** Rule 13 governs *internal* error
+> text, not resource names. A single-resource route has no oracle: `Stack not found.` on
+> `GET /api/stacks/:id` distinguishes nothing, because a foreign id and a nonexistent id already answer
+> identically there. The defect is **per-route distinguishability** — one route, two ownership checks,
+> two messages — and the fix is scoped to exactly that shape. The first draft of this block proposed
+> flattening all fourteen `notFound(what)` sites to one constant; that was **ruled out**: a product-wide
+> UX regression bought for no security property, and U29 does not need a shared constant because its
+> pre-spend check is a single-resource 404. The product question it raised is registered as **N-50**,
+> open, owner unassigned — a product decision, not a Phase 2 unit.
+>
+> **Every 404 site, enumerated (grep `notFound(` and `"NOT_FOUND"` across `src/`; graphify oriented on
+> `respond.ts`'s callers).** Current text is what `notFound(what)` renders today:
+>
+> | # | Site | Today | After U12 (option C) |
+> |---|---|---|---|
+> | 1 | `api/stacks/[id]/items/[itemId]/route.ts:56` (PUT, stack not caller's) | `Stack not found.` | **`Stack item not found.`** |
+> | 2 | `…/items/[itemId]/route.ts:57` (PUT, item not in stack) — **FU-28's pair with #1** | `Item not found.` | **`Stack item not found.`** |
+> | 3 | `…/items/[itemId]/route.ts:72` (DELETE, stack) | `Stack not found.` | **`Stack item not found.`** |
+> | 4 | `…/items/[itemId]/route.ts:73` (DELETE, item) — **FU-28's pair with #3** | `Item not found.` | **`Stack item not found.`** |
+> | 5–7 | `api/stacks/[id]/route.ts:20,34,49` | `Stack not found.` | unchanged |
+> | 8 | `api/stacks/[id]/evaluate/route.ts:17` | `Stack not found.` | unchanged |
+> | 9 | `api/stacks/[id]/items/route.ts:19` | `Stack not found.` | unchanged |
+> | 10 | `api/stacks/[id]/compare/route.ts:19` | `Stack not found.` | unchanged |
+> | 11 | `api/products/match/route.ts:21` | `Stack not found.` | unchanged |
+> | 12 | `api/protocol/generate/route.ts:27` | `Stack not found.` | unchanged |
+> | 13 | `api/advisor/conversations/[id]/route.ts:42` | `Conversation not found.` | unchanged |
+> | 14 | `api/advisor/actions/[id]/undo/route.ts:33` | `Action not found.` | unchanged |
+> | 15 | `services/advisor-actions.ts:82` — `fail("NOT_FOUND", "Stack not found.", 404)` | `Stack not found.` | unchanged (a service, not a `route.ts`; one 404 shape reaches its route from here — see the scan's scope) |
+> | 16–17 | `services/advisor-actions.ts:74,89` — `` `Supplement "${id}" not found.` `` | names the **caller-supplied** reference id | unchanged |
+> | — | `app/library/[slug]/page.tsx:42`, `app/stack-lab/[stackId]/page.tsx:23` | Next's `notFound()` — renders the 404 page, not an envelope | out of scope, different function |
+>
+> **Every site other than #1–#4 is untouched.** `notFound(what)` keeps its parameter.
+>
+> **Tests that pin today's text and must move with it:** only the FU-28 pin,
+> `api/stacks/[id]/items/[itemId]/route.test.ts:219-235`, which gains the assertion its title once
+> promised. `lib/api/respond.test.ts:538` and `api/advisor/actions/route.test.ts:206,218` are **unchanged**
+> under C — they pin sites this unit does not touch. No file under `src/components`, `e2e/` or `tests/`
+> matches `not found` — no client copy or spec binds the text.
+>
+> **Design — option C: A's scope with B's enforcement.**
+> 1. The two FU-28 pairs (#1–#4) answer one message, `Stack item not found.`, on both PUT and DELETE.
+> 2. The FU-28 pin asserts equal **message and byte length** across each pair, not only status and code.
+>    (ecc:architect's part-1 verdict below is why length is named: the two bodies today differ by one
+>    byte of Content-Length.)
+> 3. **`NOT_FOUND_UNIFORMITY`**, N `src/architecture/not-found-uniformity.test.ts`: for every tracked
+>    `src/app/api/**/route.ts`, every `notFound(…)` / `fail("NOT_FOUND", …)` call site **within that one
+>    file** must resolve to the same message literal. That is the mechanical form of the defect class —
+>    per-route distinguishability — and it needs **no allowlist today**: no other route answers two
+>    different 404 literals. The inventory of scanned routes is asserted non-empty (anti-vacuity), and
+>    the inventory of routes with ≥1 404 site is asserted non-empty too, so a regex that stops matching
+>    is red rather than green. Comments are stripped first (N-14's class). `services/**` is outside the
+>    scan by construction — the rule is *per route*, and #15–#17 reach one route (`api/advisor/actions`)
+>    from a service; whether that route's three distinct 404 literals (one ownership, two caller-echo)
+>    are a per-route oracle is part of **N-50**, stated there rather than silently decided here.
+>
+> **Behaviour change #3 — DECLARED, explicitly, and now sized correctly: two response bodies, not
+> fourteen.** `error.message` on the stack-item route's PUT and DELETE 404s changes from `Stack not
+> found.` / `Item not found.` to `Stack item not found.`. Status (404), code (`NOT_FOUND`), envelope shape,
+> and the absence of `correlationId` on 404 (`respond.test.ts:524-546`) do not move. **User-visible
+> consequence, stated:** the components that render `json?.error?.message` show the new text on those
+> two paths only. No spec asserts it.
+>
+> **Red (C).** **M1:** restore `notFound("Stack")` at #1 alone → the FU-28 pin red on message inequality
+> (and on length). **M2:** add a second distinct 404 literal to any route (e.g. `notFound("Nope")` beside
+> an existing `notFound("Stack")`) → `NOT_FOUND_UNIFORMITY` red, naming the route and both literals.
+> **M3:** empty the scan's inventory (narrow the pathspec to match nothing) → anti-vacuity red, a thrown
+> hard failure rather than a green run.
+>
+> **Files (C).** M `src/app/api/stacks/[id]/items/[itemId]/route.ts` (four call sites) · M its test (the
+> FU-28 pin) · N `src/architecture/not-found-uniformity.test.ts` · M this document · M
+> `docs/01-plan/features/u12-one-404-message.plan.md` (bkit artifact, subordinate). `respond.ts` and
+> `services/advisor-actions.ts` are **not touched**.
+>
+> **Not in U12:** any change to *which* check runs first; the other twelve `notFound` sites; the
+> service-level 404s; the two page-level `notFound()`s; any 403; the N-50 question.
+>
+> **ecc:architect, one question — does unifying the message leave any way to tell which of the two
+> cases occurred (rule 13's direction)?** Asked against the first draft (option B); **part 1 holds
+> unchanged under C**, because C makes the same two branches byte-identical. **(1) PASS WITH NOTE.** With
+> one message, the two branches emit byte-identical bodies — `fail` passes `details`/`correlationId` as
+> `undefined` and `JSON.stringify` drops them, so status, key set, headers **and Content-Length** match
+> (today the two messages differ by one byte, a weak oracle even under TLS that the change removes; the
+> pin's length assertion is there because of this). The sensitive pair is collapsed at the source, not
+> only at the message: `getStack(supabase, user.id, id)` returns `null` identically for "no such stack"
+> and "someone else's stack" — one query, no branch. The residual is a round-trip/timing channel: the
+> item branch answers after a second query. It distinguishes only "you own this stack" from "you do not",
+> a fact about the caller's own resource already readable from `GET /api/stacks/:id`; no query for a
+> foreign item is ever issued. Check ordering in PUT is safe: body validation runs *after* both ownership
+> checks, so a malformed body cannot turn one branch into a 400. **(2)** — asked about keeping the
+> supplement-id messages distinct under B; **moot under C** (those sites are untouched), and its
+> substance is carried into N-50 rather than lost: the reviewer's reasoning was that rule 13 governs
+> *internal* text and those messages echo bounded, Zod-parsed caller input about public append-only
+> reference data (§2.4 rule 16). **One premise corrected by the reviewer:** the two handlers at #1–#4 are
+> **PUT** and **DELETE**, not PATCH and DELETE; the table's line numbers stand.
+
+**DONE 2026-09-11.** Baseline before: typecheck clean, **1278/105**, lint 359/359 (U26's close, re-measured
+by CI run `34665397790`). After: **1294/106** (+16 — 15 in `not-found-uniformity.test.ts`: 5 rules + 10
+self-tests; +1 net in the route test, where one status-and-code pin became two pins), lint **360/360, 0
+errors**, build succeeds. All four re-measured after the last edit, none copied.
+
+| U12 | before | after |
+|---|---|---|
+| 404 literals in `stacks/[id]/items/[itemId]/route.ts` | 2 (`Stack not found.` · `Item not found.`) | **1** (`Stack item not found.`) |
+| FU-28 pin asserts | status, code | status, code, **message, body byte length**, across both handlers |
+| routes answering two 404 literals | 1 | **0**, and `NOT_FOUND_UNIFORMITY` makes the next one a red build |
+| unit tests | 1278 / 105 | **1294 / 106** |
+
+**Files touched in the code commit.** M `src/app/api/stacks/[id]/items/[itemId]/route.ts` (four call
+sites, header note) · M its test (the FU-28 pin, now two) · N `src/architecture/not-found-uniformity.test.ts`
+· M this document (plan block, this entry, N-50, N-51) · N `docs/01-plan/features/u12-one-404-message.plan.md`.
+`respond.ts` and `services/advisor-actions.ts` are **untouched**, as option C specified. **Deferred to the
+closeout commit, by U19's shape:** the spec-count corrections in `docs/project-status.md` §2.9 (below).
+
+**RED LIST — five mutations, every one executed against the FINAL detector, verbatim.** M1–M3 were also run
+against the first draft; M4 and M5 exist because review found the first draft unsound (below).
+
+| # | Mutation | Observed |
+|---|---|---|
+| M1 | restore `notFound("Stack")` at the **PUT** stack site alone | scan: `+ "src/app/api/stacks/[id]/items/[itemId]/route.ts answers 2 different 404 messages: \"Stack item not found.\" · \"Stack not found.\""`; cross-handler pin: `expected 2 to be 1`. **The DELETE-only byte-length pin stayed green** — a PUT-only regression is invisible to it, which is why the second pin exists |
+| M2 | a second distinct literal in another route (`notFound("Nope")` beside `notFound("Stack")` in `evaluate/route.ts`) | `+ "src/app/api/stacks/[id]/evaluate/route.ts answers 2 different 404 messages: \"Nope not found.\" · \"Stack not found.\""` |
+| M3 | narrow the inventory to a pathspec matching nothing | `Error: NOT_FOUND_UNIFORMITY found zero tracked route files under src/app/api/nowhere. A guard that scans nothing passes vacuously, so this is a hard failure rather than a silent green.` — thrown, `Test Files 1 failed` |
+| M4 | FU-28 hidden behind a variable: `{ const msg = "Stack"; return notFound(msg); }` in one branch, `"Item"` in the other | `+ "…/[itemId]/route.ts has a 404 whose message is not a string literal at the call site: \"msg\" · \"msg\""` |
+| M5 | `import { notFound as nf }` | `+ "…/[itemId]/route.ts aliases the 404 helper: notFound as nf"` |
+
+The initial red — three failures across the new spec and the strengthened pin before any source edit, the
+scan naming the route and both literals — is the TDD half and is not counted as a mutation.
+
+**THE FIRST DRAFT OF THE DETECTOR WAS UNSOUND, AND REVIEW FOUND IT, NOT THE AUTHOR.** ecc:code-reviewer's
+first pass returned **REQUEST CHANGES — 4 findings (1 blocking, 3 advisory)**. The blocking one: a
+non-literal argument resolved to an opaque token built from its *source text*, so two branches that each
+wrote `const msg = …; return notFound(msg)` collapsed to one token and read as uniform — **FU-28 exactly,
+hidden behind a name** — and `notFound(c ? "A" : "B")` was one call site with two outcomes the scan never
+saw. Fixed by making the only sound rule for a textual scan explicit: **the message must be a string
+literal at the call site**; anything else is a violation, not a token. The three advisories were taken
+too: an aliased import (`notFound as nf`) made a call invisible — now a rule; the `fail("NOT_FOUND", …)`
+capture stopped at the first comma inside a message — now a full string-literal capture; and the
+PUT/DELETE pin's title claimed four sites while asserting three — now four. Each has a self-test and a
+mutation (M4, M5). **Second pass: APPROVE — 0 findings outstanding, 1 new low note**, recorded and *not*
+taken: the scan does not strip string-literal contents before matching, so prose inside a string that
+happened to contain `notFound(` would register a phantom site. The direction is a spurious **red**, never a
+silent green, and stripping strings would remove the very literals the scan resolves; left as a stated
+limitation of a textual scan rather than half-fixed.
+
+**ecc:security-reviewer, one question — does the unified message or the byte-length equality leave any way,
+other than the noted timing channel, to distinguish "stack not yours" from "item absent" on PUT/DELETE?
+VERDICT: NO REMAINING CHANNEL — 1 finding (0 blocking, 1 advisory).** Headers: uniform, no per-branch
+logic, middleware sets the same CSP headers on every response, no caching headers. Envelope: `fail` passes
+`details`/`correlationId` as `undefined`, dropped by `JSON.stringify`, so both bodies serialise identically
+— now pinned byte-for-byte. Validation: body parsing sits *after* both checks and is never reached on either
+404 branch (pinned by the existing "checks membership BEFORE parsing the body" test). Thrown repo errors:
+both branches map to the same generic 500 with a per-request random correlation id, not derivable from the
+branch. The advisory is **N-51**, outside U12 and registered, not absorbed.
+
+**Behaviour change #3 — DECLARED, as two response bodies.** `error.message` on this route's PUT and
+DELETE 404s: `Stack not found.` / `Item not found.` → `Stack item not found.`. Status, code, envelope shape,
+and the absence of `correlationId` are unchanged. No other route's bytes move. Re-verified rather than
+assumed: the full non-live E2E suite is CI's to re-measure on the pushed SHA; no spec matches `not found`.
+
+**§5.7 — no new engine; a new architecture spec.** `not-found-uniformity.test.ts` is a test file, excluded
+from coverage like its siblings. It is registered by inclusion: `boundaries.test.ts` already governs
+`src/architecture` as a directory, so a new spec needs no registry entry — and that is why a spec count
+written in prose rots (the closeout sweep, below).
+
+**bkit:** feature `u12-one-404-message` at `check`, `matchRate` 100; artifact subordinate to this entry.
+
+**What CI must add before this entry is complete:** the run id on the pushed SHA, in the closeout commit.
+Figures above were taken on one developer's machine. **Closeout sweep, pre-enumerated:**
+`docs/project-status.md:309` ("**Seven** executable architecture specs") and `:445` ("all seven
+architecture specs run on every push") — both already false before U12 (the directory held **19**) and
+now off by thirteen; `CLAUDE.md` §4/§5 enumerate specs by name, not by count, and `doc-truth.test.ts`
+binds the §4 table's file names, not a count — nothing to correct there.
 
 > **GATE C1** — every `src/lib/db` module taking a `userId` has a test asserting `.eq("user_id", …)`, or is
 > in `REPO_SCOPING`'s exemption list. **Check:** exemption list length == 3 **and** each entry names a
