@@ -208,6 +208,12 @@ behaviour this project's review discipline exists to prevent. They land when thi
 
 **Dispositioned into units:** ~~FU-5 (→U3)~~ **FU-5 CLOSED**, FU-6 (→U3, partially), ~~FU-7 (→U2)~~ **FU-7 CLOSED**, FU-16 (→U9, reframed),
 FU-20 (→U11), FU-24 (→U21), FU-25/FU-26 (→U22), FU-28 (→U12).
+**[2026-09-14, decision 8]** Five of those dispositions changed and the line above is kept as written so
+the change is visible: **FU-20** — U11 cut (2026-08-10), stays a register row · **FU-24** — U21 **cut**,
+stays a register row, measured at 21 citations across 11 files · **FU-25** — split off from U22 and now a
+**dated register row**, deferred to whichever phase adds a live E2E job (ruling 3 keeps that out of this
+repository's CI) · **FU-26** — now U22's whole scope, **S** · **FU-28** — **CLOSED by U12** (`324ebda`,
+2026-09-14).
 
 **Remaining open, deliberately unscheduled:** FU-1, FU-4, FU-8, FU-9, FU-10, FU-11, FU-12, FU-14, FU-15,
 FU-17, FU-18, FU-19, FU-21, FU-22. Each carries its own written reason in Phase 1 plan §12; none is a live
@@ -281,7 +287,7 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-48** | **U26 plan, 2026-09-11** (found by the unit's caller enumeration; confirmed independently by ecc:architect) | **`POST /api/advisor` performs NO ownership check on `body.conversationId` before the paid model call — and three standing documents said it did.** The `UNSCOPED_FUNCTIONS` reason for `appendMessages`, GATE C1's discharge block, and the comment in `advisor/repo.test.ts` all cite "the route checks ownership first via `conversationBelongsToUser`". Its **only** caller is `GET /api/advisor/conversations/:id`. In POST the id flows into `getMessages` (RLS returns an empty history for a foreign id), **the paid model call runs**, and only then does the write fail — under RLS before U26, under the repo's owner clause after it — inside the committed stream, as a generic `error` event with a correlation id. **The cost dimension is what makes this a finding and not a nit: a foreign `conversationId` spends a paid model call before the ownership failure surfaces.** That is paid-API control — §4 rule 9's spirit — not only error hygiene. Nothing unauthorised is read or written (§2.3 rule 13 preserved; the empty history is RLS working), so this is not a live data defect | `grep -rn conversationBelongsToUser src/app` → one call site, `conversations/[id]/route.ts:41`; `src/app/api/advisor/route.ts:59-60,105` passes `body.conversationId` unchecked | **OPEN → owned by U29** (appended to Group D by owner ruling 2026-09-11). **Not absorbed into U26**: a pre-spend 404 is a declared behaviour change, and U26's named scope is the four repo functions. U26 corrected the three false statements in the same commit that made the repo clause true. **Depends on U12**, so the 404 inherits the unified message rather than authoring a third string |
 | **N-49** | **ecc:security-reviewer during U26 review, 2026-09-11** | **`confirmAndApply` writes a caller-supplied `conversation_id` into the caller's own `advisor_actions` row without checking the conversation is theirs.** `POST /api/advisor/actions` passes `body.conversationId` through `src/services/advisor-actions.ts` into `recordBatch`'s `NewAction.conversationId`; `conversationBelongsToUser` exists and is never called on this path. The row's **owner** is bound (`user_id` is the authenticated caller — U9's payload pin), so no cross-tenant read or mutation follows: no reader dereferences `advisor_actions.conversation_id` to expose another table. It is an **unvalidated foreign-key reference on write** — the caller can point their own audit row at any existing conversation, including someone else's — i.e. a data-integrity gap, not an ownership bypass. Registered so U26's "every function binds the owner" is not misread as covering it: the function binds the *owner*, not the *reference* | `src/app/api/advisor/actions/route.ts:39` → `services/advisor-actions.ts:39` → `advisor-action-repo.ts::recordBatch`; `grep -rn conversationBelongsToUser src/services` → 0 | **OPEN → owned by U29** (owner ruling 2026-09-11, at commit 1 of U26). **Not absorbed into U26** — a service-layer validation is outside the four repo functions. U29 now owns the conversation-ownership predicate at **both** sites: the `POST /api/advisor` pre-spend check (N-48) and `confirmAndApply`'s `conversation_id` reference (this row). **Sizing rule, by the same ruling:** if U29 exceeds S when it is planned, it splits into U29/U30 rather than growing. Cost of leaving it: an audit row that claims a conversation it never belonged to |
 | **N-50** | **U12 planning, 2026-09-11** (raised by the first draft of U12's plan block; ruled out of U12 by the owner the same day) | **Should every API 404 carry one uniform `error.message`?** Today `notFound(what)` renders `<What> not found.` at fourteen route sites and `services/advisor-actions.ts` hand-writes three more (one ownership, two echoing a caller-supplied supplement id). The first U12 draft proposed one constant everywhere, on a rule-13 reading. **The owner's ruling:** rule 13 governs *internal* error text, not resource names; a single-resource route has no oracle because foreign and nonexistent ids already answer identically; flattening fourteen sites is a product-wide UX regression bought for no security property. U12 was re-scoped to the per-route defect class (`NOT_FOUND_UNIFORMITY`). What remains is a **product** question — is a resource-named 404 the product's voice, or should the API speak one 404? — plus one sub-case the scan deliberately does not decide: `POST /api/advisor/actions` receives three distinct 404 literals from its service (`Stack not found.` and two `Supplement "<id>" not found.`), and whether that is a per-route oracle or an input-validation echo of public reference data (ecc:architect's part-2 reasoning) is part of this question | fourteen `notFound(` sites in `src/app/api/**/route.ts`; `services/advisor-actions.ts:74,82,89` | **OPEN — owner UNASSIGNED.** A product decision (`CLAUDE.md` §6 rank 4 territory), not a Phase 2 unit; recorded so the option-B draft is not re-proposed from scratch by the next reader. Not a defect: no path in it discloses another user's data |
-| **N-51** | **ecc:security-reviewer during U12 review, 2026-09-11** | **A malformed `id` path segment answers 500, not 404 — a syntax oracle, not an ownership one.** `stacks/[id]/items/[itemId]/route.ts` passes `id` unvalidated into `getStack`'s `.eq("id", id)` against a `uuid` column; a non-UUID fails at PostgREST, `getStack` throws, and `handle()` answers the generic 500 with a correlation id. `itemId` has no equivalent gap (compared in JS via `Array.prototype.some`, never cast). A caller can therefore tell "malformed id" (500) from "well-formed and not mine / nonexistent" (404) — which does **not** reopen FU-28's three-way distinguishability, because reaching the item branch already requires an owned, well-formed stack id. It is a 500 logged with a correlation id for what is really a 400, on every route that takes a UUID path param without a schema | `route.ts:61-64,77-80`; `src/lib/validation/schemas.ts` has no path-param schema; `stack-repo.ts:26-33` | **OPEN — for the Group E / closeout ruling** (owner ruling 2026-09-14: a decision point, not an owner). Not absorbed into U12 (it is a validation shape across many routes, not a 404-message concern). Likely shape: a shared `uuidParam` Zod schema applied by `handle()` or at each route, answering `validationError` (400). Counting the routes that take a UUID path param is the first step of whichever unit takes it. **The ruling this needs is take-or-defer**, not who: it is cheap and mechanical if taken with Group E, and a Phase 3 inheritance if not — what it must not do is stay a row with neither an owner nor a date at which someone decided |
+| **N-51** | **ecc:security-reviewer during U12 review, 2026-09-11** | **A malformed `id` path segment answers 500, not 404 — a syntax oracle, not an ownership one.** `stacks/[id]/items/[itemId]/route.ts` passes `id` unvalidated into `getStack`'s `.eq("id", id)` against a `uuid` column; a non-UUID fails at PostgREST, `getStack` throws, and `handle()` answers the generic 500 with a correlation id. `itemId` has no equivalent gap (compared in JS via `Array.prototype.some`, never cast). A caller can therefore tell "malformed id" (500) from "well-formed and not mine / nonexistent" (404) — which does **not** reopen FU-28's three-way distinguishability, because reaching the item branch already requires an owned, well-formed stack id. It is a 500 logged with a correlation id for what is really a 400, on every route that takes a UUID path param without a schema | `route.ts:61-64,77-80`; `src/lib/validation/schemas.ts` has no path-param schema; `stack-repo.ts:26-33` | **TAKEN AS `U30`** — decision 8(d), 2026-09-14. *(This row read "OPEN — for the Group E / closeout ruling" between U12's closeout and that ruling; noted because a finding that got a decision point and then a unit on the same day is the register working rather than accumulating.)* Not absorbed into U12 (it is a validation shape across many routes, not a 404-message concern). Likely shape: a shared `uuidParam` Zod schema applied by `handle()` or at each route, answering `validationError` (400). Counting the routes that take a UUID path param is the first step of whichever unit takes it. **The ruling this needs is take-or-defer**, not who: it is cheap and mechanical if taken with Group E, and a Phase 3 inheritance if not — what it must not do is stay a row with neither an owner nor a date at which someone decided |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -2817,21 +2823,59 @@ mocked `false` must see 404 and `runAdvisorTurn` never called; delete the check 
 wrong side. **Sequenced after U12** so the 404 inherits one message rather than authoring a third. **Not
 implemented in the U26 session, by ruling.**
 
+**U30 · Malformed path params answer 400, not 500.** *(created 2026-09-14 by decision 8(d), on N-51;
+numbering append-only)* N a `uuidParam` schema export · M **12 handler entry points across 8 route files**
+· M their tests · N a source scan in `src/architecture/`. **S**, deps none. **Scheduled after U29**, and
+**not folded into it**: U29 is an ownership check on one route and U30 is a validation shape across eight,
+and merging them would put a twelve-file mechanical change under a gate that says nothing about it.
+**Behaviour change (declared):** a malformed path parameter answers **400 `VALIDATION_ERROR`** where it
+answers 500 today — so a 500 that is currently logged with a correlation id stops being logged at all,
+which is the point: it was never an internal error. **Shape:** one exported `uuidParam` schema, a
+`.parse()` at each handler after `await params`, and the existing `handle()` → `ZodError` →
+`validationError` path carries the 400 with no new machinery. **The scan:** every tracked
+`src/app/api/**/route.ts` that reads `params` must parse through `uuidParam`. **Red:** remove one
+`.parse()` → the scan names that file; **anti-vacuity** on both inventories (routes scanned, routes
+reading `params`), so a regex that stops matching is red rather than green. **Stated non-coverage:**
+`itemId` in the stack-item route is compared in JavaScript and never cast, so it is not a 500 risk; whether
+it should still be validated for shape is a question U30 answers by validating it anyway (one schema, no
+per-parameter judgement) rather than by carving an exception.
+
 ### Group E — cuttable
 
-**U21 · FU-24, cited artifacts must be tracked.** N `src/architecture/cited-artifact.test.ts`. **S**.
+**U21 · FU-24, cited artifacts must be tracked.** ~~N `src/architecture/cited-artifact.test.ts`. **S**.~~
+**— [2026-09-14] CUT, per decision 8(a), on this entry's own stated precondition.** The predicate it
+required *before starting* cannot be written in one sentence; measured, the inventory is **21 citations
+across 11 non-archive `docs/` files**, at least 5 of them dated historical records §7 forbids rewriting.
+**FU-24 stays open as a register row.** Original entry preserved below, unmodified, per §7.
 **The counting predicate must be stated before this unit starts, or its inventory is undefined.** A first
 pass counted 4 live citations; the claim→observed pass found **≥5** documents citing the untracked
 `test-results/…/error-context.md` under a looser reading. Proposed predicate: *a non-archive `docs/` file
 citing a `test-results/` path as primary evidence for a present-tense claim* — then re-measure. Either
 way the guard needs a dated-record exemption, or it demands rewriting history, which §7 forbids.
 
-**U22 · FU-25 / FU-26.** **L**. A *live* CI E2E job needs secrets in a public repo (`phase-0-plan-review.md` §P-03). Achievable
+**U22 · ~~FU-25 / FU-26~~ → FU-26 only: a fresh clone can run the E2E suite.** ~~**L**. A *live* CI E2E job needs secrets in a public repo (`phase-0-plan-review.md` §P-03). Achievable
 scope: FU-26 (fresh-clone runnability) + per-worker seeded accounts + a **non-live** CI E2E job over the 59
-credential-free specs. Live-in-CI is **decision 3**, not an engineering unit.
+credential-free specs.~~ Live-in-CI is **decision 3**, not an engineering unit.
+**— [2026-09-14] RE-SCOPED, not cut, per decision 8(b).** The struck text is struck for a reason worth
+stating: **one third of its "achievable scope" was delivered by U14**, which added the non-live CI E2E
+stage, and the "59 credential-free specs" figure was true when written and is **82 specs / 19
+`[LIVE]`-tagged** as measured 2026-09-14 (CI: 70 passed / 30 skipped). A cut-order entry that prices work
+already done prices nothing.
+**The re-scoped U22 is FU-26 alone.** M `package.json` (a script) · M `README.md`. **S**, deps none. A new
+clone cannot run the suite today: `npx playwright install --with-deps chromium` exists **only** in
+`ci.yml`, and the failure presents as dozens of specs failing at once, which reads like an application
+regression rather than a missing binary. **FU-25 (per-worker user isolation) is now a dated register
+row** — every authed spec still logs in as the single `DEMO_EMAIL` account — deferred to whichever phase
+adds a live E2E job, which **ruling 3** keeps out of this repository's CI. That is a consequence of an
+existing ruling, not a new deferral.
 
-**U23 · Roadmap item 1's residue.** M `respond.ts` (add `path`, `userId`; a real sink). **S/M**. Deferred:
+**U23 · Roadmap item 1's residue.** ~~M `respond.ts` (add `path`, `userId`; a real sink). **S/M**.~~ Deferred:
 "target a real sink" implies a logging dependency and an operational decision this plan does not take.
+**— [2026-09-14] CUT, per decision 8(c), on that ground unchanged and re-verified:** `respond.ts` still
+logs through `console.error` with a code and a correlation id, no `path`, no `userId`, no sink; nothing
+since 2026-08-10 touched that line. **The residue is carried to the Phase 2 closeout as stated residue**,
+exactly as the deployed-database residue was under decision 5, and **named there as an input to the next
+operational phase**. A cut that leaves a roadmap item's residue unnamed is how the item disappears.
 
 ### Sequence
 
@@ -2841,8 +2885,14 @@ Group B   U3 → U4 → U5 → U6 → U7                    [paid-API control]  
 Group C   U8 → U9 → U10 → ~~U11~~ · U12→D            [persistence]         GATE C1 discharged 2026-08-10
                                                                           remainder → U26 — CLOSED 2026-09-11
 Group D   U13 → U27 → U28 → U14 → U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25 · U26 · U12 → U29   GATE D1, D2
-Group E   U21 · U22 · U23                           [cuttable]
+Group E   ~~U21~~ · U22 · ~~U23~~                     [cuttable — DISSOLVED 2026-09-14, decision 8]
+          U29 → U30 → U22(re-scoped, FU-26 only) → CLOSEOUT      [decision 8's path]
 ```
+**[2026-09-14] Group E is dissolved by decision 8.** Two of its three entries are cut (U21, U23) and the
+third is re-scoped to **S** and moves into the run to closeout, so the phase's remaining path is exactly
+**U29 → U30 → U22 → closeout**. The group's heading and entries stay where they are, struck rather than
+deleted (§7): the cut order's reasoning is the record of *why* each was cuttable, and one of them
+(U22) turned out not to be.
 **A precedes B** because U4/U5/U6 all add `catch` blocks under `src/lib/**` and U2's guard is what must see
 them. **B precedes C** for merge hygiene (U5 and U11 both edit `db/types.ts` and `BINDING`). **D** is
 independent except U19←U1. **U24 sits in D on dependency logic, not affinity**: it has no dependencies at
@@ -2859,10 +2909,18 @@ detects, and letting the other D units land first keeps that change isolated in 
 
 ### Cut order (first cut at the top)
 1. **U22** — L, headline deliverable blocked on decision 3. Keep the ~S fresh-clone half.
+   **— [2026-09-14] NOT TAKEN AS A CUT; RE-SCOPED instead, per decision 8(b) — and this list itself named
+   the outcome: "keep the ~S fresh-clone half" is precisely what U22 now is.** What the list could not know
+   is that U14 would deliver the non-live CI E2E job, which is why re-scoping beat cutting.
 2. **U23** — residue; the sink is an operational decision.
+   **— [2026-09-14] TAKEN, per decision 8(c). Cut on this ground, unmodified. Roadmap item 1's residue is
+   carried to the Phase 2 closeout as stated residue and named as an input to the next operational phase.**
 3. **U11** — weak red proof by nature; FU-20 survives as a register row at no cost. **— TAKEN 2026-08-10.
    Cut on this ground, unmodified. FU-20 remains open as a register row.**
 4. **U21** — real but process-shaped.
+   **— [2026-09-14] TAKEN, per decision 8(a). Cut on this ground plus a measurement the list did not have:
+   21 citations across 11 non-archive files, at least 5 of them dated historical records. FU-24 remains
+   open as a register row.**
 5. **U19** down to formatter + `AdvisorPanel` only.
 6. **U10** — U9's pins cover today's files; the guard's value is over *future* modules.
 7. **U14** — keep U13's headers, defer CSP. CSP is the one header that can break the shipped app.
@@ -2948,7 +3006,7 @@ under induced insert failure.
 
 ---
 
-## 7. Decisions needed — **six ruled 2026-08-08; a seventh raised 2026-08-10, half of it still open**
+## 7. Decisions needed — **six ruled 2026-08-08; a seventh raised 2026-08-10, half of it still open; an eighth ruled 2026-09-14**
 
 > **The options below are preserved as written, unchanged.** Each decision now carries a **RULING** block
 > stating what was chosen and what it obliges. Preserving the rejected options is deliberate (§7): a
@@ -2964,6 +3022,8 @@ under induced insert failure.
 > | 6 | Slug manifest schema | **Approved** — add `publicSurfaces` | **U20** |
 > | **7A** | Omniroute replaces the Anthropic SDK | **Full replacement, no fallback** — instructed 2026-08-10 | **U25** |
 > | **7B** | How a PDF reaches an OpenAI-compatible endpoint | **RULED 2026-08-10 — option (a), from the OP-4 record** | Unblocks U25's lab-import half; closes N-19; raises N-23 |
+| **8** | Group E's disposition, and N-51 | **RULED 2026-09-14** — U21 cut · U22 re-scoped to FU-26 · U23 cut · **N-51 taken as U30** | **U30** (new), **U22** (re-scoped); FU-24/FU-25 and roadmap item 1's residue become register rows |
+| **8** | Group E's disposition, and N-51 | **RULED 2026-09-14** — U21 cut · U22 re-scoped to FU-26 · U23 cut · **N-51 taken as U30** | **U30** (new), **U22** (re-scoped); FU-24/FU-25 and roadmap item 1's residue become register rows |
 
 ### Decision 1 — **FU-27: the fourth nav pill** *(product decision; blocks nothing, but it is a live contradiction between a rank-3 rule and shipped code)*
 
@@ -3238,6 +3298,59 @@ would settle the question by implementation, which is how the answer stops being
 
 ---
 
+### Decision 8 — **Group E's disposition, and whether N-51 is taken** *(raised 2026-09-14 by U12's closeout; ruled the same day)*
+
+**Why it was a decision and not a sizing call.** Group E is the cuttable group, and a cut list written on
+2026-08-10 had by 2026-09-14 been overtaken in two directions at once: one entry's work was partly
+delivered by a *different* unit, and a new finding (N-51) arrived with no owner. Cutting or keeping on the
+old reasoning would have been cutting against figures that no longer held. The orientation report that
+preceded this ruling is read-only and its measurements are recorded beside each clause below, so the next
+reader does not re-derive them.
+
+> ### **RULING — 2026-09-14, by the owner. Four clauses.**
+>
+> **(a) U21 — CUT.** Ground, stated rather than paraphrased: **the counting predicate cannot be stated in
+> one sentence.** U21's own entry made that its precondition — *"the counting predicate must be stated
+> before this unit starts, or its inventory is undefined"* — and the attempt to state it fails on two
+> undecidable terms in the plan's own proposal ("primary evidence", "present-tense claim"): neither can be
+> read off the text by a scanner. **Measured 2026-09-14:** **21 citations of a `test-results/` path across
+> 11 non-archive `docs/` files** — against the entry's predicted 4 on a first pass and ≥5 on a looser
+> reading. At least 5 of those 11 are **dated historical records** (the Phase 0 and Phase 1 reports, the
+> two closeout checks, the live-E2E baseline) which §7 forbids rewriting. So a guard here needs an
+> exemption list longer than its violation list, or it demands rewriting history. **FU-24 survives as a
+> register row** — the finding is real, only the guard is not worth building. *(If a future phase wants it,
+> the honest form is narrower: forbid a **new** citation to an untracked path and grandfather today's 21 by
+> date. Recorded as a suggestion, not a commitment.)*
+>
+> **(b) U22 — RE-SCOPED, not cut.** Its **L** entry is struck below with its reason: **U14 delivered the
+> non-live CI E2E job**, one of the three things U22's "achievable scope" named, and the entry's "59
+> credential-free specs" was true when written and is **82 specs / 19 `[LIVE]`-tagged** as measured
+> 2026-09-14, with CI reporting 70 passed / 30 skipped. **The re-scoped U22 is FU-26 only** — fresh-clone
+> runnability: a script and a README step so a new clone can run the non-live E2E suite without reading
+> `ci.yml`, which is the only place `npx playwright install --with-deps chromium` exists today. **Size S,
+> deps none.** **FU-25 (per-worker user isolation) becomes a dated register row**, deferred to whichever
+> phase adds a live E2E job — which **ruling 3** keeps out of this repository's CI, so the deferral is a
+> consequence of an existing ruling rather than a new one.
+>
+> **(c) U23 — CUT.** Deferral ground **unchanged and re-verified 2026-09-14**: `respond.ts` still logs
+> through `console.error` with a code and a correlation id, no `path`, no `userId`, and no sink exists;
+> nothing since 2026-08-10 touched that line. Roadmap item 1's residue (`path`, `userId`, a real sink) is
+> **carried to the Phase 2 closeout as stated residue** — exactly as the deployed-database residue was
+> under decision 5 — and **named there as an input to the next operational phase**. A cut that leaves a
+> roadmap item's residue unnamed is how an item disappears; this one is named.
+>
+> **(d) N-51 — TAKEN, as `U30`.** Not folded into U29, and not left as a register row. **Measured
+> 2026-09-14:** **8 route files, 12 handler entry points**, every one parsing its path parameter inline as
+> `const { id } = await params` with **no schema and no shared helper**; **7 of the 8** pass that value
+> into a Supabase filter on a `uuid` primary key, so a malformed id throws at PostgREST and surfaces as a
+> **500 with a correlation id** for what is really a 400. (`itemId` in the stack-item route is the
+> exception — compared in JavaScript, never cast.) It is taken because the fix is mechanical and the
+> plumbing already exists: `handle()` catches `ZodError` and maps it to `validationError`, so one schema
+> plus one `.parse()` per handler needs no new machinery. **Validating inside `handle()` does not work** and
+> the reason is recorded so nobody re-proposes it: `handle()` receives a closure and never sees `params`.
+
+---
+
 ## 8. Exit criteria
 
 Written with Phase 1 criterion 1's lesson in mind: **every clause must be mechanically checkable, and the
@@ -3356,8 +3469,12 @@ here rather than discovered later.
 
 ## 9. Sizing
 
-**~~23~~ ~~24~~ ~~25~~ 26 proposed units** (U1–U22, **U24**, **U25**, **U26** and **U29**, plus U23 deferred). Rough shape:
-**~~7~~ ~~8~~ 9 S/S-M · 12 M · ~~3~~ 4 L · 1 M/L**. *(U29 — added 2026-09-11 by owner ruling on N-48 — is **S**: one
+**~~23~~ ~~24~~ ~~25~~ ~~26~~ 27 proposed units** (U1–U22, **U24**, **U25**, **U26**, **U29** and **U30**, plus U23 deferred). Rough shape:
+**~~7~~ ~~8~~ ~~9~~ 11 S/S-M · 12 M · ~~3~~ ~~4~~ 3 L · 1 M/L**.
+*(**[2026-09-14, decision 8]** U30 is **S**, and **U22 falls from L to S** on re-scoping — the one **L**
+that leaves this count. **Cut to date: U11, U21, U23.** Of 27 proposed, **24 are live**. The gross count
+rises while the work in flight falls, which is what append-only numbering does, and why the live count is
+stated beside it rather than left to subtraction.)* *(U29 — added 2026-09-11 by owner ruling on N-48 — is **S**: one
 call inserted before the reservation, one route test, one declared behaviour change.)* *(U26 — added 2026-08-10 by GATE C1's discharge — is **S/M**:
 it does not invent an obligation, it names one the ratchet was already asserting. **U11 is cut** as of the
 same date, per cut order #3, so the unit count rises by one while the work in flight does not.)*
