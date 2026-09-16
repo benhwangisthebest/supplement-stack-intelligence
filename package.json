@@ -13,6 +13,7 @@
     "test:coverage": "vitest run --coverage",
     "test:boundaries": "vitest run src/architecture/boundaries.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
     "verify:middleware": "node scripts/verify-middleware-live.mjs",
     "verify:rendering": "node scripts/verify-rendering.mjs",
     "verify:migrations": "node scripts/verify-migrations.mjs",

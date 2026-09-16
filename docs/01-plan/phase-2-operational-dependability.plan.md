@@ -288,6 +288,7 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-49** | **ecc:security-reviewer during U26 review, 2026-09-11** | **`confirmAndApply` writes a caller-supplied `conversation_id` into the caller's own `advisor_actions` row without checking the conversation is theirs.** `POST /api/advisor/actions` passes `body.conversationId` through `src/services/advisor-actions.ts` into `recordBatch`'s `NewAction.conversationId`; `conversationBelongsToUser` exists and is never called on this path. The row's **owner** is bound (`user_id` is the authenticated caller — U9's payload pin), so no cross-tenant read or mutation follows: no reader dereferences `advisor_actions.conversation_id` to expose another table. It is an **unvalidated foreign-key reference on write** — the caller can point their own audit row at any existing conversation, including someone else's — i.e. a data-integrity gap, not an ownership bypass. Registered so U26's "every function binds the owner" is not misread as covering it: the function binds the *owner*, not the *reference* | `src/app/api/advisor/actions/route.ts:39` → `services/advisor-actions.ts:39` → `advisor-action-repo.ts::recordBatch`; `grep -rn conversationBelongsToUser src/services` → 0 | **OPEN → owned by U29** (owner ruling 2026-09-11, at commit 1 of U26). **Not absorbed into U26** — a service-layer validation is outside the four repo functions. U29 now owns the conversation-ownership predicate at **both** sites: the `POST /api/advisor` pre-spend check (N-48) and `confirmAndApply`'s `conversation_id` reference (this row). **Sizing rule, by the same ruling:** if U29 exceeds S when it is planned, it splits into U29/U30 rather than growing. Cost of leaving it: an audit row that claims a conversation it never belonged to |
 | **N-50** | **U12 planning, 2026-09-11** (raised by the first draft of U12's plan block; ruled out of U12 by the owner the same day) | **Should every API 404 carry one uniform `error.message`?** Today `notFound(what)` renders `<What> not found.` at fourteen route sites and `services/advisor-actions.ts` hand-writes three more (one ownership, two echoing a caller-supplied supplement id). The first U12 draft proposed one constant everywhere, on a rule-13 reading. **The owner's ruling:** rule 13 governs *internal* error text, not resource names; a single-resource route has no oracle because foreign and nonexistent ids already answer identically; flattening fourteen sites is a product-wide UX regression bought for no security property. U12 was re-scoped to the per-route defect class (`NOT_FOUND_UNIFORMITY`). What remains is a **product** question — is a resource-named 404 the product's voice, or should the API speak one 404? — plus one sub-case the scan deliberately does not decide: `POST /api/advisor/actions` receives three distinct 404 literals from its service (`Stack not found.` and two `Supplement "<id>" not found.`), and whether that is a per-route oracle or an input-validation echo of public reference data (ecc:architect's part-2 reasoning) is part of this question | fourteen `notFound(` sites in `src/app/api/**/route.ts`; `services/advisor-actions.ts:74,82,89` | **OPEN — owner UNASSIGNED.** A product decision (`CLAUDE.md` §6 rank 4 territory), not a Phase 2 unit; recorded so the option-B draft is not re-proposed from scratch by the next reader. Not a defect: no path in it discloses another user's data |
 | **N-51** | **ecc:security-reviewer during U12 review, 2026-09-11** | **A malformed `id` path segment answers 500, not 404 — a syntax oracle, not an ownership one.** `stacks/[id]/items/[itemId]/route.ts` passes `id` unvalidated into `getStack`'s `.eq("id", id)` against a `uuid` column; a non-UUID fails at PostgREST, `getStack` throws, and `handle()` answers the generic 500 with a correlation id. `itemId` has no equivalent gap (compared in JS via `Array.prototype.some`, never cast). A caller can therefore tell "malformed id" (500) from "well-formed and not mine / nonexistent" (404) — which does **not** reopen FU-28's three-way distinguishability, because reaching the item branch already requires an owned, well-formed stack id. It is a 500 logged with a correlation id for what is really a 400, on every route that takes a UUID path param without a schema | `route.ts:61-64,77-80`; `src/lib/validation/schemas.ts` has no path-param schema; `stack-repo.ts:26-33` | **TAKEN AS `U30`** — decision 8(d), 2026-09-14. *(This row read "OPEN — for the Group E / closeout ruling" between U12's closeout and that ruling; noted because a finding that got a decision point and then a unit on the same day is the register working rather than accumulating.)* Not absorbed into U12 (it is a validation shape across many routes, not a 404-message concern). Likely shape: a shared `uuidParam` Zod schema applied by `handle()` or at each route, answering `validationError` (400). Counting the routes that take a UUID path param is the first step of whichever unit takes it. **The ruling this needs is take-or-defer**, not who: it is cheap and mechanical if taken with Group E, and a Phase 3 inheritance if not — what it must not do is stay a row with neither an owner nor a date at which someone decided |
+| **N-52** | **ecc:code-reviewer during U22 review, 2026-09-15** | **`README.md:26` states per-spec test counts that are stale by 11 and 1.** It says `boundaries.test.ts` (**36** tests) and `error-disclosure.test.ts` (**30**); measured 2026-09-15 they are **47** and **31**. The same line's "**seven** executable architecture specs" is dated by U22 to **21**, but the two per-file counts beside it were not, because U22's scope was the "seven" claim and the new row — correcting figures the unit did not touch would be the absorption §8.1 forbids. This is the counts-written-once class (FU-32) at its fifth site, and the first one in a file a **reader outside the project** sees first | `grep -c 'it(' src/architecture/boundaries.test.ts` → 47 vs README's 36; `error-disclosure.test.ts` → 31 vs 30 | **OPEN — owner UNASSIGNED.** Cheap, and the honest fix is probably not "update the numbers": a per-file test count in prose rots by construction, so either drop the counts and keep the file names, or bind them mechanically the way `doc-truth.test.ts` binds §4's table. **Deciding which is the work** |
 
 #### N-14's audit — every guard's matching strategy, and what would defeat it
 
@@ -2868,6 +2869,143 @@ regression rather than a missing binary. **FU-25 (per-worker user isolation) is 
 row** — every authed spec still logs in as the single `DEMO_EMAIL` account — deferred to whichever phase
 adds a live E2E job, which **ruling 3** keeps out of this repository's CI. That is a consequence of an
 existing ruling, not a new deferral.
+
+> ### **[2026-09-15] U22 PLAN — first unit after decision 8; awaiting plan approval before any edit.**
+>
+> **Problem, measured rather than restated.** FU-26 says a fresh clone cannot run the E2E suite. Measured
+> 2026-09-15: `npx playwright install --with-deps chromium` appears in **exactly one tracked file**,
+> `.github/workflows/ci.yml:265`. `package.json` has **no** install script — `test:e2e` is bare
+> `playwright test` — and `README.md:56` documents `npm run test:e2e` with no prerequisite beside it. So
+> the only way to learn the step is to read the CI workflow, and the failure when you do not is dozens of
+> specs failing at once, which U17 recorded as reading like "a catastrophic application regression rather
+> than a missing binary". **The original observation is sharper than "not installed" and is worth keeping:**
+> the cache held `chromium-1234` while `@playwright/test` wanted `-1223` — **newer, not older** — so
+> "my browsers are installed" was actively misleading. This machine still shows both (`1223` and `1234`),
+> so the condition is reproducible here.
+>
+> **Scope, per decision 8(b): FU-26 only.** The non-live CI E2E job is U14's and already exists; FU-25 is
+> a register row. **S**, deps none.
+>
+> **Design — three parts, and one deliberate non-part.**
+> 1. **`package.json`: `"test:e2e:install": "playwright install chromium"`.** Note **no `--with-deps`**,
+>    and that asymmetry with CI is the one real design decision here. `--with-deps` installs OS packages
+>    through the system package manager; it is correct on a disposable Linux runner and wrong on a
+>    developer's machine, where it needs sudo and may prompt or fail. Documenting CI's exact string would
+>    hand developers a command that fails precisely when they most need it. **The guard therefore compares
+>    the browser, not the command** (below).
+> 2. **`README.md`:** one row beside the existing `test:e2e` row, naming the install script as a
+>    first-run prerequisite. The run table at `:55-56` is where a reader already looks.
+> 3. **`E2E_BROWSER_PARITY`** — N `src/architecture/e2e-browser-parity.test.ts`. Asserts that the browser
+>    named by `package.json`'s install script and the browser named by `ci.yml`'s install step are the
+>    **same string**, that the README names the script, and that both inventories are non-empty. Without
+>    it this unit is a README edit, and §3.5 is explicit that a documented rule nothing runs will rot —
+>    this repository has already proved it 16 times.
+>
+> **The non-part, stated because FU-26 proposed it:** the register's own suggestion was *"a `postinstall`
+> or a documented `npx playwright install chromium` step"*. **A `postinstall` is deliberately not taken**,
+> on FU-26's own stated ground — *"adding a `postinstall` download to `npm ci` would change CI's install
+> step, which needs its own behaviour-compatibility proof"* — and that ground is stronger now than when it
+> was written, because CI's install step is load-bearing for four stages that did not exist then. It would
+> also download a browser for every `npm ci` that never runs a test.
+>
+> **Behaviour change: NONE, and the reason is not "it is small".** No application code, no response byte,
+> no status, no envelope, no CI step. `test:e2e` itself is unchanged, so no existing invocation moves.
+> The additions are one script, one README row, one test file.
+>
+> **Red (planned).** **M1:** change the script's browser to `firefox` → parity guard red, naming both
+> strings. **M2:** delete the README row → guard red on the "README names the script" clause. **M3:** point
+> the guard's `ci.yml` reader at a path that matches nothing → anti-vacuity red, thrown, not a green run
+> over an empty inventory. ~~**M4:** the honest one — **empty the browser cache and run `npm run test:e2e`
+> before and after the documented command.**~~ **[2026-09-15, owner substitution before execution]** The
+> shared cache must not be emptied — the U31 worktree depends on it. **M4 instead points
+> `PLAYWRIGHT_BROWSERS_PATH` at an empty scratch directory** and runs the suite before and after the
+> documented install with that variable set. Same claim, no shared-state side effect, and **reproducible
+> by the next reader**, which the cache-emptying form was not.
+>
+> **Files.** M `package.json` · M `README.md` · N `src/architecture/e2e-browser-parity.test.ts` · M this
+> document · N `docs/01-plan/features/u22-fresh-clone-e2e.plan.md` (bkit artifact, subordinate).
+> **`ci.yml` is not touched**, so GATE D1 does not apply.
+>
+> **Sequencing, per the owner 2026-09-15:** U29 and U30 wait for U31, because all three edit the same
+> route files. U22 touches none of them, so it runs now and is independent of the U31 worktree.
+>
+> **Risk, stated:** the README's run table at `:26` says "**seven** executable architecture specs" — a
+> count this unit makes falser still (20 → 21). It is the same counts-written-once class U12 hit, it is
+> **in the file this unit edits**, and it is therefore in scope for this unit's closeout sweep rather
+> than a later one.
+
+**DONE 2026-09-15.** Baseline before: typecheck clean, **1294/106**, lint 360/360 (U12's close, CI-verified
+at run `34919261813`). After: **1302/107** (+8, all in `e2e-browser-parity.test.ts`: 4 rules + 4
+self-tests), lint **361/361, 0 errors**, build succeeds. Re-measured after the last edit, none copied.
+
+| U22 | before | after |
+|---|---|---|
+| tracked files naming the browser install | **1** (`ci.yml:265` only) | **3** — `ci.yml`, `package.json`, `README.md` |
+| a fresh clone running `npm run test:e2e` | **37 failed** / 29 skipped / 34 passed, exit 1 | after one documented command: **70 passed / 30 skipped**, exit 0 |
+| what binds the documented step to CI's | nothing | `E2E_BROWSER_PARITY`, 4 rules + 4 self-tests |
+| unit tests | 1294 / 106 | **1302 / 107** |
+
+**Files touched.** M `package.json` (one script) · M `README.md` (one run-table row + one dated
+observation) · N `src/architecture/e2e-browser-parity.test.ts` · M this document · N
+`docs/01-plan/features/u22-fresh-clone-e2e.plan.md`. **`.github/workflows/ci.yml` is NOT touched**, so
+GATE D1 does not apply — verified by `git diff` showing zero lines against it.
+
+**RED LIST — four mutations, every one executed, verbatim.**
+
+| # | Mutation | Observed |
+|---|---|---|
+| M1 | script installs `firefox`, CI installs `chromium` | `package.json installs ["firefox"] but ci.yml installs ["chromium"]. A developer following the documented step would install a different browser from the one CI runs the suite on.` |
+| M2 | delete the README row | `README.md does not mention the install script, so the fresh-clone reader is back to reading ci.yml — which is the whole of FU-26.: expected [] to deeply equal [ 'test:e2e:install' ]` |
+| M3 | CI inventory matches nothing | `found no \`playwright install <browser>\` step in ci.yml. A parity check with nothing to compare against passes vacuously.: expected [] to have a length of 1` |
+| M4 | **the claim, not the guard** — `PLAYWRIGHT_BROWSERS_PATH` at an empty scratch directory, suite run before and after the documented install | **before:** `37 failed · 29 skipped · 34 passed`, exit **1**, with `Error: browserType.launch: Executable doesn't exist at …/chromium_headless_shell-1223/chrome-headless-shell-mac-arm64/chrome-headless-shell` ×37 · **after** `npm run test:e2e:install` (exit 0) with the same variable set: **`70 passed · 30 skipped`**, exit **0**, launch errors **0** |
+
+The TDD red came first and is not counted as a mutation: the guard on the unmodified repository failed
+2 of 8, naming FU-26 — *"no script in package.json installs a Playwright browser, so a fresh clone can
+only learn the command by reading .github/workflows/ci.yml"*.
+
+**M4 IS THE ONE THAT MATTERS, AND TWO THINGS ABOUT IT ARE WORTH RECORDING.** First, its **after** figure
+— 70 passed / 30 skipped — is **exactly CI's**, which is the strongest available evidence that a fresh
+clone following the README now runs the same suite CI runs, rather than something adjacent to it.
+Second, **the first attempt at reading M4's own output was wrong, and the method is why.** A filtered
+`tail -30 | grep` reported *"29 skipped, 34 passed"* with no failure line, because the failed-spec list
+is longer than 30 lines and pushed the `37 failed` summary out of the window. Two runs of the same
+command appeared to disagree. The run was redone with the full output captured to a file, and the
+before-state is `37 failed`. **A measurement taken through a filter that can hide the thing being
+measured is not a measurement** — the same class as this phase's counts-written-once, arriving through
+the tooling rather than the prose. One incidental datum it surfaced: before the install 29 specs skip,
+after it 30, because one spec skips at runtime only once a browser exists to evaluate the condition.
+
+**`--with-deps` IS DELIBERATELY ABSENT FROM THE SCRIPT, AND THE GUARD IS SHAPED AROUND THAT.** CI runs
+`playwright install --with-deps chromium`; the script runs `playwright install chromium`. The flag
+installs OS packages through the system package manager — correct on a disposable Linux runner, wrong on
+a developer machine where it needs sudo and may prompt or fail. Asserting command equality would force
+one of the two to be wrong, so the guard compares **which browser**, which is the thing that actually has
+to agree.
+
+**NO BEHAVIOUR CHANGE, and no security review — stated rather than skipped silently.** No application
+code moves: the diff is one `package.json` script, one README row, one test file. There is no request
+path, no response byte, no envelope, no trust boundary, and nothing an authenticated caller can reach, so
+`ecc:security-reviewer` was **not** run, by the owner's instruction and for that reason. `test:e2e`
+itself is unchanged, so no existing invocation moves.
+
+**ecc:code-reviewer — VERDICT: APPROVE — 0 blocking, 2 advisory.** It independently reproduced M1–M3 on
+temp copies, confirmed `package.json` stays valid JSON in the file's existing style, and probed five
+bypass shapes the plan named — composite action, YAML block scalar, variable-named browser, comment-only
+mention, bare `playwright install` — finding that **every one degrades to a loud failure rather than a
+silent pass**, which is the property this kind of parity check needs. It did **not** reproduce M4
+(expensive and network-dependent) and said so; M4's figures are this session's, recorded as such.
+**Advisory 1 TAKEN:** the block-scalar limitation of `workflowRunLines` is now a written comment in the
+file, saying which side needs widening if CI's step is ever rewritten that way. **Advisory 2 NOT
+absorbed** — registered as **N-52**.
+
+**bkit:** feature `u22-fresh-clone-e2e`; artifact subordinate to this entry.
+
+**What CI must add before this entry is complete:** the run id on the pushed SHA, in the closeout commit.
+**Closeout sweep, pre-enumerated** *(and U12's lesson applies — this list is itself a count written once,
+so the sweep greps rather than trusting it)*: `README.md:26`'s per-spec test counts (**N-52**), and any
+`docs/` claim about the number of architecture specs, which U12 dated at 20 and this unit moves to 21 —
+`docs/project-status.md:309` and `:445` and `docs/02-design/architecture-boundaries.md:254` all carry a
+`[2026-09-14, observed at U12: 20]` note that is now off by one.
 
 **U23 · Roadmap item 1's residue.** ~~M `respond.ts` (add `path`, `userId`; a real sink). **S/M**.~~ Deferred:
 "target a real sink" implies a logging dependency and an operational decision this plan does not take.

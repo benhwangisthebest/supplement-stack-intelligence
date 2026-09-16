@@ -23,7 +23,7 @@ Evidence-based supplement education, stack building, and product matching for he
 
 ### Enforced module boundaries
 
-These are not conventions — they run on `npm test` via **seven** executable architecture specs under [`src/architecture/`](src/architecture), including [`boundaries.test.ts`](src/architecture/boundaries.test.ts) (36 tests) and [`error-disclosure.test.ts`](src/architecture/error-disclosure.test.ts) (30 tests), and are specified in [`docs/02-design/architecture-boundaries.md`](docs/02-design/architecture-boundaries.md):
+These are not conventions — they run on `npm test` via **seven** executable architecture specs **[2026-09-15, observed at U22: **21**, the directory count; the figure here is the 2026-08-06 measurement and stays as written]** under [`src/architecture/`](src/architecture), including [`boundaries.test.ts`](src/architecture/boundaries.test.ts) (36 tests) and [`error-disclosure.test.ts`](src/architecture/error-disclosure.test.ts) (30 tests), and are specified in [`docs/02-design/architecture-boundaries.md`](docs/02-design/architecture-boundaries.md):
 
 - `src/types/` is a **dependency-free Domain leaf** — it imports no packages and nothing outside `src/types/`.
 - `src/types/index.ts` is a **pure barrel**; it declares nothing, and no sibling may import it (shared primitives live in `src/types/primitives.ts`).
@@ -53,6 +53,7 @@ npm run dev                  # http://localhost:3000
 | `npm run build` | Production build |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest unit suite |
+| `npm run test:e2e:install` | **Run once per clone** — installs the pinned Playwright browser. Without it the suite fails as dozens of specs at once, which looks like an application regression rather than a missing binary (FU-26). A cache holding a *newer* browser than the pin wants fails the same way, so "my browsers are installed" is not the check. |
 | `npm run test:e2e` | Playwright (set `E2E_LIVE=1` for authed flows) |
 | `npm run db:seed` | Seed demo data (needs Supabase env) |
 
