@@ -20,18 +20,22 @@
  *
  *   npm run probe:advisor
  *
- * `OMNIROUTE_*` settings are loaded from a gitignored `.env.local` — names
+ * `OPENAI_*` settings are loaded from a gitignored `.env.local` — names
  * only are reported, never values, and nothing outside that prefix is exported
  * (so the service-role key in the same file stays out of this process, §2.3
  * rule 14). An explicit shell value still wins over the file:
  *
- *   OMNIROUTE_MODEL=claude/claude-haiku-4-5-20251001 npm run probe:advisor
+ *   OPENAI_MODEL=claude/claude-haiku-4-5-20251001 npm run probe:advisor
  *
  * Paste the output into a copy of
  * `docs/05-qa/omniroute-probe-record.template.md`.
  */
 import { loadProbeEnv, summarise } from "./load-env";
-import { completionsUrl, createCompletion } from "@/lib/omniroute/client";
+import {
+  buildCompletionBody,
+  completionsUrl,
+  createCompletion,
+} from "@/lib/openai/client";
 import { AdvisorModelAdapter } from "@/lib/advisor/model-adapter";
 import { ADVISOR_TOOLS } from "@/lib/advisor/tools";
 
@@ -40,22 +44,47 @@ import { ADVISOR_TOOLS } from "@/lib/advisor/tools";
 // reads a setting at module load, so this is the earliest useful point.
 const LOADED_ENV = loadProbeEnv();
 
-const BASE_URL = process.env.OMNIROUTE_BASE_URL;
-const API_KEY = process.env.OMNIROUTE_API_KEY;
+const BASE_URL = process.env.OPENAI_BASE_URL;
+const API_KEY = process.env.OPENAI_API_KEY;
 /**
- * The routed model id. `OMNIROUTE_MODEL` is the SAME name the application reads,
+ * The routed model id. `OPENAI_MODEL` is the SAME name the application reads,
  * deliberately — a probe reading a different variable is a probe that can pass
  * while the app fails, and that is exactly how this defect survived: the probe
  * read `OMNIROUTE_ADVISOR_MODEL`, the operator set `OMNIROUTE_MODEL`, and the
  * hardcoded fallback answered instead of anything reporting a mismatch.
  *
- * The default is a real, provider-namespaced id rather than a bare model name.
- * Bare `claude-haiku-4-5` 400s on the owner's gateway; ids there are namespaced
- * by provider. Override it for any other gateway — this is a starting point for
- * one instance, not a portable value, which is why `src/` now has no default at
- * all (finding N-21).
+ * ---------------------------------------------------------------------------
+ * [2026-09-14, U31] THE DEFAULT IS GONE — it was the last hardcoded model id in
+ * the repository.
+ * ---------------------------------------------------------------------------
+ * It held `"cc/claude-haiku-4-5-20251001"`: a real id, but an *Omniroute*-
+ * namespaced *Claude* id, on a probe that now talks to OpenAI. It survived U25
+ * only because `NO_PINNED_MODEL_ID` scans `src/` and this file is in `scripts/`.
+ *
+ * It is DELETED rather than re-pointed at an OpenAI id, for N-21's reason
+ * exactly: a default here is a claim about an account this code has never
+ * contacted, and the probe exists precisely to find out whether such a claim
+ * holds. A probe that falls back to a guess can report success for a model the
+ * operator never configured — which is the failure the paragraph above already
+ * describes once. Unset now fails loudly, the same way `src/` does.
  */
-const MODEL = process.env.OMNIROUTE_MODEL ?? "cc/claude-haiku-4-5-20251001";
+const MODEL = requireModel();
+
+/**
+ * Hoisted so `MODEL` above is typed `string`, not `string | undefined` — a
+ * module-level `if` does not narrow a const inside later function bodies.
+ */
+function requireModel(): string {
+  const model = process.env.OPENAI_MODEL;
+  if (!model) {
+    console.error(
+      "OPENAI_MODEL is not set. There is deliberately no default (U31; see N-21).\n" +
+        "Set it to an id from your account's /v1/models and re-run.",
+    );
+    process.exit(1);
+  }
+  return model;
+}
 
 /** A question that should make a grounded advisor reach for a tool. */
 const TOOL_BAIT = "Is there an interaction between magnesium and zinc?";
@@ -67,7 +96,7 @@ function line(label: string, value: unknown): void {
 function requireConfig(): { baseUrl: string; apiKey: string } {
   if (!BASE_URL || !API_KEY) {
     console.error(
-      "OMNIROUTE_BASE_URL and OMNIROUTE_API_KEY must both be set.\n" +
+      "OPENAI_BASE_URL and OPENAI_API_KEY must both be set.\n" +
         `Looked in .env.local and the shell — ${summarise(LOADED_ENV)}\n` +
         "Neither value is ever printed by this script.",
     );
@@ -93,12 +122,20 @@ async function rawShape(cfg: { baseUrl: string; apiKey: string }): Promise<void>
       "Content-Type": "application/json",
       Authorization: `Bearer ${cfg.apiKey}`,
     },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [{ role: "user", content: "Reply with the single word: ok" }],
-      max_tokens: 16,
-      stream: false,
-    }),
+    // [2026-09-18, U31 / N-58] BUILT BY PRODUCTION, NOT BY THIS FILE.
+    // This body used to be hand-rolled here and still said `max_tokens`, which
+    // U31 replaced with `max_completion_tokens`; it 400'd on 2026-09-18 while
+    // steps 2 and 3 — which go through the client — passed. A raw step exists to
+    // bypass the PARSER, not the REQUEST BUILDER, and re-authoring the body made
+    // it measure this file's staleness instead of the provider.
+    // Red evidence: `docs/05-qa/2026-09-18-u31-openai-probe-record.md` §2.
+    body: JSON.stringify(
+      buildCompletionBody({
+        model: MODEL,
+        messages: [{ role: "user", content: "Reply with the single word: ok" }],
+        maxTokens: 16,
+      }),
+    ),
   });
 
   line("http status", response.status);
@@ -132,7 +169,7 @@ async function rawShape(cfg: { baseUrl: string; apiKey: string }): Promise<void>
 
 /** STEP 2 — the application's own client, on the same call. */
 async function throughClient(cfg: { baseUrl: string; apiKey: string }): Promise<void> {
-  console.log("\n── STEP 2 · through src/lib/omniroute/client.ts ──");
+  console.log("\n── STEP 2 · through src/lib/openai/client.ts ──");
 
   const result = await createCompletion(cfg, {
     model: MODEL,
@@ -206,15 +243,16 @@ async function toolRoundTrip(): Promise<void> {
 async function main(): Promise<void> {
   const cfg = requireConfig();
 
-  console.log("Omniroute advisor probe — OP-4(a) and OP-4(c)");
+  console.log("OpenAI advisor probe — U31 (shape inherited from OP-4(a)/(c))");
   // Names and sources only. Safe to paste into the probe record.
   line("settings", summarise(LOADED_ENV));
   line("base URL host", new URL(cfg.baseUrl).host);
   line("model requested (effective)", MODEL);
-  line(
-    "model source",
-    process.env.OMNIROUTE_MODEL ? "OMNIROUTE_MODEL" : "probe default (OMNIROUTE_MODEL unset)",
-  );
+  // Not a conditional: `requireModel()` exits 1 when OPENAI_MODEL is unset, so
+  // the false branch was unreachable AND named a "probe default" that U31
+  // deleted (N-53). An unreachable string asserting a behaviour the code does
+  // not have is §2.2 rule 7 at diagnostic scale. Matches the lab-import probe.
+  line("model source", "OPENAI_MODEL (there is no probe default — U31)");
   line("api key", "read from env; not printed, not written");
 
   await rawShape(cfg);

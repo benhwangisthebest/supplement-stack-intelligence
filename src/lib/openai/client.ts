@@ -9,10 +9,19 @@
 // `PAID_API_BUDGET` derives the set of routes it governs by walking the import
 // graph for a marker. While the marker was the package `@anthropic-ai/sdk`, the
 // package WAS the boundary — you could not spend money without importing it.
-// Omniroute is reached over plain HTTP, so there is no package to match and an
-// import-graph rule has nothing to bind to. Concentrating the call here
+// Omniroute was reached over plain HTTP, so there was no package to match and an
+// import-graph rule had nothing to bind to. Concentrating the call here
 // recreates the boundary the package used to provide: "routes that reach this
 // file" is once again exactly "routes that can spend money".
+//
+// [2026-09-14, U31] THE PROVIDER CHANGED AGAIN — Omniroute → OpenAI's
+// first-party API — AND THE REASONING ABOVE IS WHY NOTHING ELSE HAD TO. OpenAI
+// is also reached over plain HTTP, so the module marker is still the only thing
+// a paid boundary can bind to here, and decision 9 keeps the call on plain
+// `fetch` rather than the `openai` package for exactly that reason: a package
+// would not restore the old boundary, it would add a second one to keep in
+// sync. The Omniroute history is retained rather than rewritten (`CLAUDE.md`
+// §7) because it is the argument for the current shape, not dead background.
 //
 // That property is only as good as the assertion that nothing bypasses it,
 // which is why `SOLE_PAID_CLIENT` ships in the same commit. Its honest limits
@@ -22,17 +31,18 @@
 // ---------------------------------------------------------------------------
 // ZERO IMPORTS, DELIBERATELY
 // ---------------------------------------------------------------------------
-// `src/lib/omniroute` is inside `DOMAIN_IS_PURE`'s scope (ruling D-4: all of
+// `src/lib/openai` is inside `DOMAIN_IS_PURE`'s scope (ruling D-4: all of
 // `src/lib` except auth/api/supabase/db). It must reach neither persistence nor
 // `next/*`. It imports nothing at all, so it cannot acquire either edge, and it
 // carries no key resolution: the caller hands it a resolved base URL and key.
 // The `NotConfiguredError` throw stays in the adapters, where
 // `NOT_CONFIGURED_TOTALITY`'s sanctioned-site inverse can see it.
 //
-// PROTOCOL: OpenAI-compatible chat completions. Omniroute publishes `/v1/*` as
-// OpenAI-compatible and no Anthropic `/v1/messages` surface, so the wire shapes
-// here are OpenAI's, not Anthropic's. Mapping the advisor's neutral adapter
-// types onto them is `advisor/model-adapter.ts`'s job, not this file's.
+// PROTOCOL: OpenAI chat completions. This was already true before U31 — the
+// module was written against Omniroute's OpenAI-compatible `/v1/*` surface — and
+// it is the single reason the provider swap was a rename rather than a second
+// wire-protocol rewrite. Mapping the advisor's neutral adapter types onto these
+// shapes is `advisor/model-adapter.ts`'s job, not this file's.
 
 /**
  * The completions path. Exported as a named constant AND asserted to be the
@@ -46,7 +56,7 @@ export const DEFAULT_TIMEOUT_MS = 60_000;
 
 // ---- Wire shapes (structural; no dependency on any vendor SDK) ---------------
 
-export interface OmnirouteFunctionTool {
+export interface OpenAIFunctionTool {
   type: "function";
   function: {
     name: string;
@@ -55,7 +65,7 @@ export interface OmnirouteFunctionTool {
   };
 }
 
-export interface OmnirouteToolCallOut {
+export interface OpenAIToolCallOut {
   id: string;
   type: "function";
   function: { name: string; arguments: string };
@@ -71,29 +81,47 @@ export interface OmnirouteToolCallOut {
  * on purpose: the advisor's messages stay plain strings, so a widening here
  * cannot quietly change what the advisor puts on the wire.
  */
-export type OmnirouteContentPart =
+export type OpenAIContentPart =
   | { type: "text"; text: string }
   | { type: "file"; file: { filename: string; file_data: string } };
 
-export type OmnirouteMessage =
+export type OpenAIMessage =
   | { role: "system"; content: string }
-  | { role: "user"; content: string | OmnirouteContentPart[] }
+  | { role: "user"; content: string | OpenAIContentPart[] }
   | {
       role: "assistant";
       content: string | null;
-      tool_calls?: OmnirouteToolCallOut[];
+      tool_calls?: OpenAIToolCallOut[];
     }
   | { role: "tool"; tool_call_id: string; content: string };
 
 export interface CompletionRequest {
   model: string;
-  messages: OmnirouteMessage[];
-  tools?: OmnirouteFunctionTool[];
+  messages: OpenAIMessage[];
+  tools?: OpenAIFunctionTool[];
   maxTokens?: number;
+  /**
+   * The model's reasoning budget, passed through to `reasoning_effort`.
+   *
+   * TYPED `string`, NOT A UNION, AND THAT IS DELIBERATE (U31, decision 9B).
+   * A union — `"none" | "low" | "medium" | "high"` — would be this repository
+   * asserting which values a provider it has never contacted accepts. That is
+   * N-21's failure one field to the left: a hardcoded claim about a remote
+   * system, green in every test, wrong on the first live call. `CLAUDE.md`
+   * §2.2 rule 7. The value comes from the environment and the provider is the
+   * authority on whether it is valid.
+   *
+   * OMITTED FROM THE BODY ENTIRELY when undefined — never sent as
+   * `reasoning_effort: undefined`. `JSON.stringify` drops an undefined value,
+   * so the two are indistinguishable on the wire today; the conditional spread
+   * below makes the intent explicit and testable, so a future refactor that
+   * serialises differently cannot silently start sending a null effort.
+   */
+  reasoningEffort?: string;
 }
 
 /** A tool call as it came off the wire. `argumentsJson` is RAW — see below. */
-export interface OmnirouteToolCall {
+export interface OpenAIToolCall {
   id: string;
   name: string;
   /**
@@ -106,7 +134,7 @@ export interface OmnirouteToolCall {
 
 export interface CompletionResult {
   text: string;
-  toolCalls: OmnirouteToolCall[];
+  toolCalls: OpenAIToolCall[];
   /**
    * Token usage, or **`null` meaning THE PROVIDER DID NOT REPORT IT**.
    *
@@ -126,7 +154,7 @@ export interface CompletionResult {
   usage: { inputTokens: number; outputTokens: number } | null;
 }
 
-export type OmnirouteFailureKind = "timeout" | "aborted" | "http" | "malformed";
+export type OpenAIFailureKind = "timeout" | "aborted" | "http" | "malformed";
 
 /**
  * A transport failure. Carries NO response body and no upstream error text —
@@ -134,14 +162,14 @@ export type OmnirouteFailureKind = "timeout" | "aborted" | "http" | "malformed";
  * here into a generic message plus a correlation id (§2.3 rule 13), and the
  * cheapest way to guarantee nothing leaks is to never read the body at all.
  */
-export class OmnirouteError extends Error {
+export class OpenAIError extends Error {
   constructor(
     message: string,
-    readonly kind: OmnirouteFailureKind,
+    readonly kind: OpenAIFailureKind,
     readonly status?: number,
   ) {
     super(message);
-    this.name = "OmnirouteError";
+    this.name = "OpenAIError";
   }
 }
 
@@ -171,7 +199,7 @@ export function readUsage(raw: unknown): CompletionResult["usage"] {
 
 /**
  * OpenAI-compatible completion body → neutral result. PURE.
- * @throws OmnirouteError("malformed") when there is no first choice message.
+ * @throws OpenAIError("malformed") when there is no first choice message.
  */
 export function parseCompletion(body: unknown): CompletionResult {
   const root = (body ?? {}) as Record<string, unknown>;
@@ -180,8 +208,8 @@ export function parseCompletion(body: unknown): CompletionResult {
   const message = first?.message as Record<string, unknown> | undefined;
 
   if (!message) {
-    throw new OmnirouteError(
-      "Omniroute returned no choice message",
+    throw new OpenAIError(
+      "The model returned no choice message",
       "malformed",
     );
   }
@@ -189,7 +217,7 @@ export function parseCompletion(body: unknown): CompletionResult {
   const content = message.content;
   const rawCalls = Array.isArray(message.tool_calls) ? message.tool_calls : [];
 
-  const toolCalls: OmnirouteToolCall[] = rawCalls
+  const toolCalls: OpenAIToolCall[] = rawCalls
     .map((c) => c as Record<string, unknown>)
     .map((c) => {
       const fn = (c.function ?? {}) as Record<string, unknown>;
@@ -205,6 +233,59 @@ export function parseCompletion(body: unknown): CompletionResult {
     text: typeof content === "string" ? content : "",
     toolCalls,
     usage: readUsage(root.usage),
+  };
+}
+
+/**
+ * `CompletionRequest` → the exact object that is serialised onto the wire. PURE.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY THIS IS A SEPARATE, EXPORTED FUNCTION (U31, and it is a guard, not tidying)
+ * ---------------------------------------------------------------------------
+ * `JSON.stringify` DELETES keys whose value is `undefined`. So
+ * `{reasoning_effort: undefined}` and an omitted `reasoning_effort` produce
+ * byte-identical bodies, and any test that inspects the PARSED body cannot tell
+ * them apart. U31's first attempt at the "omitted when unset" guard did exactly
+ * that, and its mutation — sending the field unconditionally — stayed GREEN.
+ *
+ * A test that cannot go red against the bug it names is not a guard
+ * (`CLAUDE.md` §5 rule 2). Building the body here, before serialisation, makes
+ * key PRESENCE observable with `in`, so the intent — "the field is absent, not
+ * present-and-undefined" — is finally the thing being asserted.
+ *
+ * Why the distinction is worth a guard at all, given the wire is identical
+ * today: it stops being identical the moment anything serialises differently.
+ * `?? null` instead of a conditional spread puts an explicit `null` on the
+ * wire; so does a custom replacer, a proxy, or a provider SDK that normalises
+ * undefined to null. Each of those is a plausible future edit, and each sends a
+ * field this repository decided not to send.
+ */
+export function buildCompletionBody(
+  request: CompletionRequest,
+): Record<string, unknown> {
+  return {
+    model: request.model,
+    messages: request.messages,
+    ...(request.tools && request.tools.length > 0
+      ? { tools: request.tools, tool_choice: "auto" }
+      : {}),
+    // `max_completion_tokens`, NOT `max_tokens` (U31). OpenAI's GPT-5-era
+    // models reject the older field outright, so this is a correctness change
+    // and not a rename — and it is a one-way bet on model era, registered as R2
+    // in the unit plan rather than guarded with a fallback that would hide
+    // which field the deployment is using.
+    ...(request.maxTokens
+      ? { max_completion_tokens: request.maxTokens }
+      : {}),
+    // Present only when configured. See `reasoningEffort` on the request type.
+    ...(request.reasoningEffort
+      ? { reasoning_effort: request.reasoningEffort }
+      : {}),
+    // The advisor route streams its OWN answer to the browser AFTER the safety
+    // gate has run. Streaming from the provider would put model tokens on a
+    // socket before that gate, which is the one thing the design forbids
+    // (§2.1 rule 5). Explicit rather than defaulted.
+    stream: false,
   };
 }
 
@@ -249,7 +330,7 @@ export async function createCompletion(
   // this makes "spend nothing for an absent caller" a property of this module
   // rather than a behaviour inherited from the runtime.
   if (config.signal?.aborted) {
-    throw new OmnirouteError("Caller disconnected before the request", "aborted");
+    throw new OpenAIError("Caller disconnected before the request", "aborted");
   }
 
   const controller = new AbortController();
@@ -270,19 +351,7 @@ export async function createCompletion(
         "Content-Type": "application/json",
         Authorization: `Bearer ${config.apiKey}`,
       },
-      body: JSON.stringify({
-        model: request.model,
-        messages: request.messages,
-        ...(request.tools && request.tools.length > 0
-          ? { tools: request.tools, tool_choice: "auto" }
-          : {}),
-        ...(request.maxTokens ? { max_tokens: request.maxTokens } : {}),
-        // The advisor route streams its OWN answer to the browser AFTER the
-        // safety gate has run. Streaming from the provider would put model
-        // tokens on a socket before that gate, which is the one thing the
-        // design forbids (§2.1 rule 5). Explicit rather than defaulted.
-        stream: false,
-      }),
+      body: JSON.stringify(buildCompletionBody(request)),
       signal: controller.signal,
     });
   } catch (transportFailure) {
@@ -290,8 +359,8 @@ export async function createCompletion(
     // disclosure read under `error-disclosure.test.ts`, and would put upstream
     // wording one `throw` away from a client. The rethrow is untouched.
     if (timedOut) {
-      throw new OmnirouteError(
-        `Omniroute request timed out after ${timeoutMs}ms`,
+      throw new OpenAIError(
+        `Model request timed out after ${timeoutMs}ms`,
         "timeout",
       );
     }
@@ -304,8 +373,8 @@ export async function createCompletion(
   if (!response.ok) {
     // The body is deliberately NOT read. An upstream 401 body can contain a key
     // fragment, and an error we never read is an error we cannot leak.
-    throw new OmnirouteError(
-      `Omniroute request failed with status ${response.status}`,
+    throw new OpenAIError(
+      `Model request failed with status ${response.status}`,
       "http",
       response.status,
     );

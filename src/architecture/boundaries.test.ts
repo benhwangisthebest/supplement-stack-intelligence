@@ -926,7 +926,7 @@ const PAID_PACKAGES: readonly string[] = [];
  * Repository modules whose use costs money per call (Phase 2 U25).
  *
  * A path marker rather than a package one, because the paid boundary is no
- * longer drawn by a dependency. `src/lib/omniroute/client.ts` is the only
+ * longer drawn by a dependency. `src/lib/openai/client.ts` is the only
  * module in `src/` that may POST to the gateway, so "routes reaching it" is
  * once again exactly "routes that can spend money" — the property the package
  * marker used to provide for free.
@@ -937,7 +937,7 @@ const PAID_PACKAGES: readonly string[] = [];
  * inline `fetch` is invisible to an import graph. The two assertions are one
  * control in two halves; neither is sufficient alone.
  */
-const PAID_MODULES = ["src/lib/omniroute/client.ts"];
+const PAID_MODULES = ["src/lib/openai/client.ts"];
 
 /**
  * Tracked API routes whose import graph reaches a paid package OR a paid module
@@ -946,7 +946,7 @@ const PAID_MODULES = ["src/lib/omniroute/client.ts"];
  * A depth-first walk following resolvable `@/` specifiers, so a route that
  * reaches a marker three modules away is found — which both real ones do:
  * NEITHER reaches its provider directly. `/api/advisor` goes through
- * `model-adapter.ts` → `omniroute/client.ts`; `/api/lab-import/extract` goes
+ * `model-adapter.ts` → `openai/client.ts`; `/api/lab-import/extract` goes
  * through `pdf-adapter.ts`, which `await import("@anthropic-ai/sdk")`s lazily.
  * A direct-import check would report zero paid routes and pass.
  */
@@ -1110,7 +1110,8 @@ describe("architecture boundaries — the real source tree", () => {
 
   // ---- U25: the marker set is a union during the provider transition -------
   //
-  // Two providers are live at once: the advisor is on Omniroute (a MODULE
+  // [HISTORICAL — the state U25 shipped into; see the U31 note below.]
+  // Two providers were live at once: the advisor on Omniroute (a MODULE
   // marker, because there is no package to import), lab-import is still on the
   // Anthropic SDK (a PACKAGE marker). Pinning only the union would let either
   // half rot silently — the union stays 2 if one marker stops matching and the
@@ -1122,9 +1123,16 @@ describe("architecture boundaries — the real source tree", () => {
   // single module marker accounts for BOTH paid routes. Written this way rather
   // than as a total because a total of 2 is also what a rotted marker plus an
   // over-matching one would produce.
+  //
+  // [2026-09-14, U31] The module marker is now `src/lib/openai/client.ts`. The
+  // union above is HISTORY, not current state — it is retained because it is
+  // the argument for why a module marker exists at all, and that argument has
+  // now survived two provider changes. The shape of this test did not move: a
+  // provider swap between two HTTP APIs changes which file the marker names,
+  // never whether a package or a module is the right kind of marker.
   it("PAID_API_BUDGET: the single module marker accounts for both paid routes", () => {
     expect(paidApiRoutes(PAID_PACKAGES, []), "no paid package remains").toEqual([]);
-    expect(paidApiRoutes([], PAID_MODULES), "the Omniroute module marker").toEqual([
+    expect(paidApiRoutes([], PAID_MODULES), "the OpenAI module marker").toEqual([
       "src/app/api/advisor/route.ts",
       "src/app/api/lab-import/extract/route.ts",
     ]);
@@ -1178,9 +1186,9 @@ describe("architecture boundaries — the real source tree", () => {
       "SOLE_PAID_CLIENT: the paid endpoint is reachable from more than one module,\n" +
         "or from none. `PAID_API_BUDGET` derives its governed set from the import\n" +
         "graph, so a call written anywhere else is a paid endpoint no budget rule\n" +
-        "can see. Route it through `createCompletion` in src/lib/omniroute/client.ts:\n  " +
+        "can see. Route it through `createCompletion` in src/lib/openai/client.ts:\n  " +
         holders.join("\n  "),
-    ).toEqual(["src/lib/omniroute/client.ts"]);
+    ).toEqual(["src/lib/openai/client.ts"]);
   });
 
   it("SOLE_PAID_CLIENT: the gateway key is read only where it is declared to be", () => {
@@ -1190,7 +1198,7 @@ describe("architecture boundaries — the real source tree", () => {
     // list depends on it); the route reads it for the pre-flight that keeps a
     // missing key a 503 instead of an error event on a committed stream.
     const readers = NON_TEST_SRC.filter((f) =>
-      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OMNIROUTE_API_KEY"),
+      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OPENAI_API_KEY"),
     ).sort();
 
     expect(
@@ -1221,7 +1229,7 @@ describe("architecture boundaries — the real source tree", () => {
   //
   // HONEST LIMITS, in N-14's taxonomy: this matches literal text, so it is
   // defeated by an id assembled from fragments (`"cc/" + family`), by a family
-  // this list does not name, and by a value read from a non-`OMNIROUTE_` source.
+  // this list does not name, and by a value read from a non-`OPENAI_` source.
   // It catches the mistake that actually happened and the obvious repeats of it.
   //
   // THE RATCHET. This guard was written for the advisor half and immediately
@@ -1283,7 +1291,7 @@ describe("architecture boundaries — the real source tree", () => {
       "NO_PINNED_MODEL_ID: a model identifier is hardcoded in src/. Model ids belong\n" +
         "to a specific gateway instance and are not portable — the last one shipped as\n" +
         "a default 400'd on the first real gateway it met (N-21). Read it from\n" +
-        "OMNIROUTE_MODEL and let a missing value be NOT_CONFIGURED:\n  " +
+        "OPENAI_MODEL and let a missing value be NOT_CONFIGURED:\n  " +
         offenders.join("\n  "),
     ).toEqual([]);
   });
@@ -1294,7 +1302,7 @@ describe("architecture boundaries — the real source tree", () => {
     // to, and a second resolution path is how the probe and the application
     // came to read two DIFFERENT variables while both looked correct.
     const readers = NON_TEST_SRC.filter((f) =>
-      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OMNIROUTE_MODEL"),
+      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OPENAI_MODEL"),
     ).sort();
 
     expect(

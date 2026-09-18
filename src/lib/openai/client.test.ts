@@ -5,11 +5,12 @@
 // delegated to an SDK option — see finding N-20.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  buildCompletionBody,
   COMPLETIONS_PATH,
   createCompletion,
   completionsUrl,
   DEFAULT_TIMEOUT_MS,
-  OmnirouteError,
+  OpenAIError,
   parseCompletion,
   readUsage,
 } from "./client";
@@ -118,8 +119,8 @@ describe("pure cores", () => {
     ["an empty body", {}],
     ["no choices", { choices: [] }],
     ["a choice with no message", { choices: [{}] }],
-  ])("parseCompletion throws a malformed OmnirouteError for %s", (_l, body) => {
-    expect(() => parseCompletion(body)).toThrow(OmnirouteError);
+  ])("parseCompletion throws a malformed OpenAIError for %s", (_l, body) => {
+    expect(() => parseCompletion(body)).toThrow(OpenAIError);
     expect(() => parseCompletion(body)).toThrow(/no choice message/);
   });
 });
@@ -173,12 +174,88 @@ describe("createCompletion — the request it puts on the wire", () => {
     );
     expect(body.tools).toHaveLength(1);
     expect(body.tool_choice).toBe("auto");
-    expect(body.max_tokens).toBe(1024);
+    expect(body.max_completion_tokens).toBe(1024);
+  });
+
+  // ---- U31 · the two body facts the provider swap turns on ------------------
+
+  it("sends max_completion_tokens, and NOT the legacy max_tokens (U31/M2)", async () => {
+    // GPT-5-era models reject `max_tokens` outright, so this is a correctness
+    // assertion and not a naming preference. Both halves are asserted: sending
+    // the new field is not enough if the old one rides along beside it, and a
+    // request carrying both is rejected just as hard as one carrying only the
+    // old one.
+    const fetchImpl = vi.fn(async () => jsonResponse(ANSWER));
+
+    await createCompletion({ ...CONFIG, fetchImpl: fetchImpl as never }, {
+      ...REQ,
+      maxTokens: 2048,
+    });
+
+    const body = JSON.parse(
+      (fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
+    );
+    expect(body.max_completion_tokens).toBe(2048);
+    expect(body).not.toHaveProperty("max_tokens");
+  });
+
+  it("omits reasoning_effort ENTIRELY when unset — the KEY is absent (U31/M3)", async () => {
+    // ASSERTED PRE-SERIALISATION, and that is the whole point of this test.
+    //
+    // The first version of this guard inspected the PARSED body and stayed
+    // GREEN under its own mutation, because `JSON.stringify` deletes undefined
+    // values: `{reasoning_effort: undefined}` and an omitted key are identical
+    // once they have been through JSON. The test was decorative.
+    //
+    // `in` over `buildCompletionBody`'s output sees the difference the wire
+    // cannot. `toHaveProperty` is NOT used here either — it reports false for a
+    // key that exists with an undefined value, which is exactly the state being
+    // ruled out.
+    expect("reasoning_effort" in buildCompletionBody(REQ)).toBe(false);
+
+    // …and the wire half, which catches the mutation JSON *can* see: a `?? null`
+    // refactor sends an explicit null rather than nothing.
+    const fetchImpl = vi.fn(async () => jsonResponse(ANSWER));
+    await createCompletion({ ...CONFIG, fetchImpl: fetchImpl as never }, REQ);
+    const body = JSON.parse(
+      (fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
+    );
+    expect(body).not.toHaveProperty("reasoning_effort");
+  });
+
+  it("buildCompletionBody omits max_completion_tokens when no cap is set (U31)", () => {
+    // Same class as the reasoning-effort key, asserted the same way. Without
+    // this, the cap field's conditional spread has no pre-serialisation guard
+    // at all and could regress to `?? null` unnoticed.
+    expect("max_completion_tokens" in buildCompletionBody(REQ)).toBe(false);
+    expect(
+      "max_completion_tokens" in buildCompletionBody({ ...REQ, maxTokens: 10 }),
+    ).toBe(true);
+  });
+
+  it("sends reasoning_effort verbatim when supplied (U31)", async () => {
+    // VERBATIM, and with a value this repository does not otherwise name. The
+    // client must not normalise, lowercase, or validate against a known set:
+    // which efforts exist is the provider's fact, not ours (§2.2 rule 7), and
+    // a union type here would be N-21 one field to the left. The string below
+    // is deliberately not a plausible real effort value — if the client ever
+    // starts filtering to a known set, this test goes red, which is the point.
+    const fetchImpl = vi.fn(async () => jsonResponse(ANSWER));
+
+    await createCompletion({ ...CONFIG, fetchImpl: fetchImpl as never }, {
+      ...REQ,
+      reasoningEffort: "zzz-not-a-real-effort",
+    });
+
+    const body = JSON.parse(
+      (fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
+    );
+    expect(body.reasoning_effort).toBe("zzz-not-a-real-effort");
   });
 });
 
 describe("createCompletion — failure paths disclose nothing", () => {
-  it("throws an http OmnirouteError carrying the status and NOT the body", async () => {
+  it("throws an http OpenAIError carrying the status and NOT the body", async () => {
     const json = vi.fn(async () => ({ error: "invalid api key sk-SECRET" }));
     const fetchImpl = vi.fn(
       async () => ({ ok: false, status: 401, json }) as unknown as Response,

@@ -106,13 +106,13 @@ beforeEach(() => {
   vi.clearAllMocks();
   adapterState.usageReported = true;
   vi.spyOn(console, "error").mockImplementation(() => {});
-  vi.stubEnv("OMNIROUTE_API_KEY", FAKE_KEY);
-  vi.stubEnv("OMNIROUTE_BASE_URL", FAKE_BASE_URL);
+  vi.stubEnv("OPENAI_API_KEY", FAKE_KEY);
+  vi.stubEnv("OPENAI_BASE_URL", FAKE_BASE_URL);
   // WIRING, not an assertion (U4's precedent): U25's follow-up made the routed
   // model a third REQUIRED setting after the first live probe found the old
   // hardcoded fallback 400s on a real gateway (N-21). Without this stub every
   // test below 503s — which is the pre-flight working, not a regression.
-  vi.stubEnv("OMNIROUTE_MODEL", FAKE_MODEL);
+  vi.stubEnv("OPENAI_MODEL", FAKE_MODEL);
   loadAdvisorContext.mockResolvedValue(CTX);
   enforceRateLimit.mockResolvedValue(null);
   reserveAdvisorTokens.mockResolvedValue(25000);
@@ -176,7 +176,7 @@ describe("POST /api/advisor — guards before the stream", () => {
 
   it("returns 503 NOT_CONFIGURED before committing to a stream", async () => {
     getUser.mockResolvedValue(USER);
-    vi.stubEnv("OMNIROUTE_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
 
     const res = await POST(req(BODY));
 
@@ -197,7 +197,7 @@ describe("POST /api/advisor — guards before the stream", () => {
     // adapter, turning an operational 503 into an error event on a stream the
     // client already believes succeeded.
     getUser.mockResolvedValue(USER);
-    vi.stubEnv("OMNIROUTE_BASE_URL", "");
+    vi.stubEnv("OPENAI_BASE_URL", "");
 
     const res = await POST(req(BODY));
 
@@ -213,7 +213,7 @@ describe("POST /api/advisor — guards before the stream", () => {
     // model id belongs to the gateway instance, so "unset" is now the same
     // operational state as a missing key rather than a silent wrong guess.
     getUser.mockResolvedValue(USER);
-    vi.stubEnv("OMNIROUTE_MODEL", "");
+    vi.stubEnv("OPENAI_MODEL", "");
 
     const res = await POST(req(BODY));
 
@@ -227,11 +227,17 @@ describe("POST /api/advisor — guards before the stream", () => {
     // configuration. The constant survived the provider swap unchanged, so this
     // pins that the swap did not reintroduce an env name into user-facing copy.
     getUser.mockResolvedValue(USER);
-    vi.stubEnv("OMNIROUTE_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
 
     const body = await (await POST(req(BODY))).json();
 
-    expect(body.error.message).not.toMatch(/OMNIROUTE|ANTHROPIC|API_KEY|BASE_URL/i);
+    expect(body.error.message).not.toMatch(
+      // OPENAI is the LIVE prefix (U31) and must lead. OMNIROUTE and ANTHROPIC are
+      // retired prefixes kept deliberately: a guard that only knows today's names
+      // stops covering a variable the moment it is renamed, which is exactly what
+      // U31's rename did to this line before it was caught.
+      /OPENAI|OMNIROUTE|ANTHROPIC|API_KEY|BASE_URL/i,
+    );
   });
 });
 

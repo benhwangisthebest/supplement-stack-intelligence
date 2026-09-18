@@ -32,6 +32,28 @@
 > exactly as they applied to the old one. **One half of U25 is blocked on decision 7B** and must not be
 > written until that is ruled.
 >
+> **[2026-09-14] SCOPE AMENDMENT — U31, the LLM provider swap, again.** The repository owner instructed,
+> as a rank-2 explicit instruction under `CLAUDE.md` §6, that **OpenAI's first-party API replaces the
+> Omniroute gateway for both paid routes** — full replacement, no gateway fallback, and no `openai`
+> package: the call stays on plain `fetch`. Appended as **U31** in §5 Group D (numbering is append-only —
+> U31 follows U30, it is not inserted), with **decision 9** in §7. A rank-2 instruction changes *what* is
+> built; it suspends nothing in §2 of `CLAUDE.md`, and U31 is written so that it does not: §2.1's safety
+> gate and §2.2's grounding rules apply to the new provider exactly as they applied to the previous two.
+>
+> **The instruction carried two rulings**, recorded in §7 beside decision 9: **9A** — the module, its
+> settings and its probes are renamed to `OPENAI_*` in full, rather than left describing a gateway that is
+> gone; **9B** — `reasoning_effort` is carried as an environment variable with **no default**, omitted
+> from the request body entirely when unset, so no value this repository has never seen a provider accept
+> is written into `src/`.
+>
+> **U31 inherits U25's honest limit, and it is the point of the unit's shape:** a model id and a
+> reasoning-effort value are properties of the provider account, not of the protocol, so
+> `NO_PINNED_MODEL_ID` forbids either from appearing in `src/` and **no test in this repository can prove
+> the swap works**. A scripted mock accepts whatever it is handed. Acceptance is an owner-run live probe
+> against `GET /v1/models` plus both probe scripts, recorded dated under `docs/05-qa/` — the OP-4 pattern,
+> reused because it is the only thing that caught N-21. The unit's detail is in
+> `docs/01-plan/features/u31-openai-first-party.plan.md`, which is **subordinate** to this entry.
+>
 > **Authored:** 2026-08-06, at Phase 1 close (`d4f6194`, suite 859/73).
 > **Scope authority:** `docs/roadmap.md` "Phase 2 — Operational dependability" (rank 6, sequencing).
 > **Predecessor:** `docs/04-report/phase-1-verification-integrity.report.md` ·
@@ -2867,6 +2889,15 @@ implemented in the U26 session, by ruling.**
 > **Not a blocker for U31, and stated so it is not mistaken for one:** nothing here asks U31 to change
 > anything. U31 lands first, by the same ruling.
 
+
+> **[2026-09-18, U31] COLUMN CONFIRMED against U31's own diff, exactly as this block asked.** Every row
+> is correct. The three it marks **YES** are in U31's diff (`advisor/route.ts`, `advisor/route.test.ts`,
+> `boundaries.test.ts`); every row marked "not seen" is genuinely absent from it. **One addition the
+> block could not have known:** U31 also touches `src/lib/api/errors.ts` (one line) — adjacent to U30's
+> `respond.ts` row rather than overlapping it, and worth a glance when U30 is written.
+> **`reserveAdvisorTokens` did not move and was not renamed** — U31's entire edit to that route is one
+> hunk renaming three env reads in the `NOT_CONFIGURED` gate — so U29's insertion point is intact and
+> the conditional in the paragraph above does not fire.
 **U30 · Malformed path params answer 400, not 500.** *(created 2026-09-14 by decision 8(d), on N-51;
 numbering append-only)* N a `uuidParam` schema export · M **12 handler entry points across 8 route files**
 · M their tests · N a source scan in `src/architecture/`. **S**, deps none. **Scheduled after U29**, and
@@ -2883,6 +2914,49 @@ reading `params`), so a regex that stops matching is red rather than green. **St
 `itemId` in the stack-item route is compared in JavaScript and never cast, so it is not a 500 risk; whether
 it should still be validated for shape is a question U30 answers by validating it anyway (one schema, no
 per-parameter judgement) rather than by carving an exception.
+
+**U31 · The LLM provider becomes OpenAI's first-party API.** *(created 2026-09-14 by the scope amendment
+in this document's header and decision 9; numbering append-only — U31 follows U30, it is not inserted)*
+M `src/lib/omniroute/**` → **`src/lib/openai/**`** (git mv, 2 files) · M `model-adapter.ts` ·
+M `pdf-adapter.ts` · M both paid `route.ts` · M **5 guard sites** in `boundaries.test.ts` · M the
+`vitest.config.ts` coverage key · M `.env.example`, both probes, `load-env.ts`, `probe:*` scripts, 3 E2E
+specs · M `CLAUDE.md` §4's rule-9 row · M `docs/project-status.md` · N one dated probe record.
+**M**, deps none. **Not folded into anything**: it is a provider swap, and U25 is the precedent for
+giving one its own unit.
+
+**Why it is M and not L, unlike U25.** U25 was L because it rewrote a wire protocol. **This unit rewrites
+none** — `client.ts` was written to OpenAI's shapes on day one (its own header says so), so the protocol
+survives and the work is a rename plus two body fields. Sizing that honestly matters: an L label here
+would license scope this unit does not have.
+
+**Behaviour changes (declared), three:** (i) the request body's cap field becomes
+`max_completion_tokens` — GPT-5-era models reject `max_tokens`; (ii) an optional `reasoning_effort`
+appears **only** when `OPENAI_REASONING_EFFORT` is set, never as `undefined`; (iii) **a deployment that
+does not update its environment answers 503 `AI_SERVICE_NOT_CONFIGURED`** on both paid paths rather than
+calling a gateway that is gone. (iii) is the intended direction: a fallback to the old variable names
+would leave a half-migrated repository claiming to be migrated, which is what `RETIRED_PACKAGE` exists to
+prevent.
+
+**Order of work, and it is the unit's one real risk control: GUARDS BEFORE THE RENAME.** Re-point
+`PAID_MODULES`, `SOLE_PAID_CLIENT`'s key literal and reader pin, `NO_PINNED_MODEL_ID`'s reader pin and the
+coverage key **first**, observe them **red** against the still-stale module path, then `git mv` and watch
+them go green. A rename done first would make every guard green throughout and prove nothing — which is
+precisely how a guard comes to scan an empty set.
+
+**Red:** M1 stale `PAID_MODULES` → `PAID_API_BUDGET`'s governed set empties and its non-vacuity assertion
+fires; M2 revert the cap field → the new client body test; M3 send `reasoning_effort` as `undefined` →
+the key-absent test; M4 a fourth `OPENAI_API_KEY` reader → `SOLE_PAID_CLIENT`; M5 a hardcoded `gpt-` id →
+`NO_PINNED_MODEL_ID` (whose `FAMILIES` already lists `gpt-`, so this confirms the re-point did not blind
+it). **Anti-vacuity** on both pinned inventories, observed against the new paths with their counts
+reported.
+
+**Stated non-coverage, and it is the whole acceptance story.** No test here can prove the swap works: a
+scripted mock accepts any model id and any effort value, and `NO_PINNED_MODEL_ID` forbids either from
+living in `src/`. Acceptance is an **owner-run live probe** — `GET /v1/models` confirming the configured
+id appears verbatim, then both probe scripts — recorded dated under `docs/05-qa/` beside U25's two, which
+are historical and not edited. **The `ClaudeAdapter` port keeps its name**: renaming it opens `agent.ts`
+and `src/types/advisor.ts` for zero behavioural gain. That name is now **two providers stale** and is
+registered as a follow-up rather than absorbed (§8.1).
 
 ### Group E — cuttable
 
@@ -3112,7 +3186,7 @@ Group A   U1 → U2                                   [error contract]      GATE
 Group B   U3 → U4 → U5 → U6 → U7                    [paid-API control]    GATE B1
 Group C   U8 → U9 → U10 → ~~U11~~ · U12→D            [persistence]         GATE C1 discharged 2026-08-10
                                                                           remainder → U26 — CLOSED 2026-09-11
-Group D   U13 → U27 → U28 → U14 → U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25 · U26 · U12 → U29   GATE D1, D2
+Group D   U13 → U27 → U28 → U14 → U15 · U16 → U17 · U18 · U19 · U20 · U24 · U25 · U26 · U12 → U29 → U30 → U31   GATE D1, D2
 Group E   ~~U21~~ · U22 · ~~U23~~                     [cuttable — DISSOLVED 2026-09-14, decision 8]
           U29 → U30 → U22(re-scoped, FU-26 only) → CLOSEOUT      [decision 8's path]
 ```
@@ -3121,6 +3195,22 @@ third is re-scoped to **S** and moves into the run to closeout, so the phase's r
 **U29 → U30 → U22 → closeout**. The group's heading and entries stay where they are, struck rather than
 deleted (§7): the cut order's reasoning is the record of *why* each was cuttable, and one of them
 (U22) turned out not to be.
+> ### ~~**[2026-09-14] THE TWO 2026-09-14 RULINGS WERE MADE INDEPENDENTLY AND THEIR SEQUENCES HAVE NOT BEEN RECONCILED.**~~
+> **[2026-09-18] RETIRED — they were reconciled, and by the owner rather than by an editor.** The note is
+> kept because its reasoning is the record of why the order was left open (§7): where U31 sat relative to
+> U22 was a decision neither ruling had made, and inventing one here would have been the silent narrowing
+> §8.1 forbids. **It was made** — see the SEQUENCING ADDENDUM of 2026-09-15 in §7, which supersedes both
+> lines: **decision-8 docs → U22 → U31 → U29 → U30 → closeout.** U22 landed 2026-09-15 (`13cd0fd`), so
+> the decision-8 path line above — `U29 → U30 → U22 → CLOSEOUT` — is itself now stale in its U22 term and
+> is left struck-in-place rather than rewritten. Original text follows.
+>
+> **[2026-09-14] THE TWO 2026-09-14 RULINGS WERE MADE INDEPENDENTLY AND THEIR SEQUENCES HAVE NOT BEEN
+> RECONCILED.** Decision 8 ruled the run to closeout as **U29 → U30 → U22 → closeout** and did not know
+> U31 existed; decision 9 appended **U31** to Group D and did not know U22 had been re-scoped into that
+> run. Both lines are left standing above, unmerged and dated, because **where U31 sits relative to U22 is
+> a sequencing decision neither ruling made** — it is the owner's, not an editor's, and inventing an order
+> here would be exactly the silent narrowing §8.1 forbids. What *is* settled by both: U29 precedes U30,
+> and the phase does not close until U22 and U31 have both landed or been dispositioned.
 **A precedes B** because U4/U5/U6 all add `catch` blocks under `src/lib/**` and U2's guard is what must see
 them. **B precedes C** for merge hygiene (U5 and U11 both edit `db/types.ts` and `BINDING`). **D** is
 independent except U19←U1. **U24 sits in D on dependency logic, not affinity**: it has no dependencies at
@@ -3234,7 +3324,7 @@ under induced insert failure.
 
 ---
 
-## 7. Decisions needed — **six ruled 2026-08-08; a seventh raised 2026-08-10, half of it still open; an eighth ruled 2026-09-14**
+## 7. Decisions needed — **six ruled 2026-08-08; a seventh raised 2026-08-10, half of it still open; an eighth and a ninth ruled 2026-09-14**
 
 > **The options below are preserved as written, unchanged.** Each decision now carries a **RULING** block
 > stating what was chosen and what it obliges. Preserving the rejected options is deliberate (§7): a
@@ -3579,6 +3669,76 @@ reader does not re-derive them.
 
 ---
 
+### Decision 9 — **OpenAI's first-party API replaces Omniroute on both paid routes** *(raised and ruled 2026-09-14 by owner instruction)*
+
+**Why it is a decision and not a sizing call.** The provider behind the paid boundary is changing for the
+**second** time in this phase. U25 moved it from a package marker (`@anthropic-ai/sdk`) to a module marker
+(`src/lib/omniroute/client.ts`) because a gateway reached over HTTP has no package to bind an import-graph
+rule to. That reasoning is unchanged by this swap — OpenAI's API is also plain HTTP — so the question is
+not *whether* the boundary survives but **what the boundary is named**, and that is a decision because
+five guards and one coverage key are pinned to the literal string `omniroute`.
+
+> ### **RULING — 2026-09-14, by the owner. Two clauses.**
+>
+> **9A — Full rename.** `src/lib/omniroute/` → `src/lib/openai/`; `OMNIROUTE_*` → `OPENAI_*`; both probe
+> scripts, their npm script names, `.env.example`, the three E2E specs, `CLAUDE.md` §4's rule-9 row and
+> `docs/project-status.md` all move with it. **Rejected: keeping the old names for a smaller diff.** A
+> repository whose env vars, module path and file headers describe a gateway it no longer contacts is
+> lying in the one place §4 rule 9 asks a reader to trust. The two dated U25 probe records under
+> `docs/05-qa/` are **historical and are not edited** (§7 of `CLAUDE.md`: retire, do not erase).
+>
+> **9B — `reasoning_effort` is environment-carried, with no default, omitted when unset.** The owner's
+> instruction named `reasoning effort: none`. That value is **not** written into `src/`. **Rejected:
+> defaulting the field to `"none"` in code** — it would hardcode a claim about which values a provider
+> this repository has never contacted accepts, which is N-21's exact failure one field to the left, and
+> `CLAUDE.md` §2.2 rule 7 forbids it. `CompletionRequest.reasoningEffort` is typed `string`, not a union,
+> for the same reason. The cost of 9B is stated rather than hidden: **an unset variable silently gets the
+> model's own default effort**, which may cost more per turn than the owner intends. That is a deployment
+> fact, surfaced in `.env.example`, not something a code default should paper over.
+>
+> **No `openai` package** (confirmed by the same instruction). The call stays on plain `fetch`: the module
+> marker *is* the paid boundary, and `src/lib/openai/client.ts` must keep its zero imports to stay inside
+> `DOMAIN_IS_PURE`.
+
+**What this ruling does NOT license, stated because the previous swap needed it said too.** A rank-2
+instruction changes what is built. It does not suspend §2.1's safety gate (`stream: false` stays explicit
+— model tokens must not reach a socket before the gate), §2.2 rule 7, or the `usage: null` contract that
+keeps an unreported turn from settling the ledger to zero.
+
+> ### **SEQUENCING ADDENDUM — 2026-09-15, by the owner.**
+>
+> **Two rulings were made on 2026-09-14 by two sessions that did not know about each other.** Decision 8
+> re-scoped **U22** to FU-26 only and created **U30**; decision 9 (above) created **U31**. Neither ruling
+> could account for the other, so neither §5 sequence line as written by either session is correct on its
+> own. This addendum is the reconciliation and it supersedes both.
+>
+> **Order:** decision-8 docs commit → **U22** → **U31** → **U29** → **U30** → closeout.
+>
+> **Why U31 goes before U29 and U30 rather than after.** U29 (the conversation-ownership predicate) and
+> U30 (path-param validation across 12 handler entry points) both edit route files U31 also edits —
+> `src/app/api/advisor/route.ts` and `src/app/api/lab-import/extract/route.ts` among them. U31's edits to
+> those files are a **rename of four environment reads**, mechanical and already complete; U29's and U30's
+> are behaviour changes with their own declared response-shape consequences. Landing the rename first means
+> those two units are written once against the final variable names, instead of being written against
+> `OMNIROUTE_*` and then rebased onto a rename. **U29 and U30 wait for U31.**
+>
+> **This does not renumber anything.** Numbering stays append-only; only the execution order moves. U30
+> remains decision 8(d)'s unit and U31 remains decision 9's, whatever order they land in.
+>
+> **Landing constraint for U31's branch.** U31 is developed on `feat/u31-openai-first-party` in a separate
+> worktree. Once the decision-8 docs commit reaches `main`, the branch is rebased onto it **before** its CI
+> run. **This document will conflict** — both sessions edited §5, §7 and §9. The resolution is the merged
+> version already held on the U31 branch, which contains **both** rulings: decision 8 with its U30 entry
+> and clause (d), and decision 9 with U31. Neither ruling is dropped in favour of the other.
+> `CLAUDE.md` §10 rule 4 does not forbid this rebase — it protects the historical **v2–v13 chain**, not an
+> unmerged feature branch.
+
+**Obliges:** **U31** (§5, Group D), the sequence line in §5, and the sizing line in §9. **Inherits U25's
+honest limit:** no test in this repository can prove the swap works, because a scripted mock accepts any
+model id and any effort value. Acceptance is the owner-run live probe recorded dated under `docs/05-qa/`.
+
+---
+
 ## 8. Exit criteria
 
 Written with Phase 1 criterion 1's lesson in mind: **every clause must be mechanically checkable, and the
@@ -3714,12 +3874,19 @@ here rather than discovered later.
 
 ## 9. Sizing
 
-**~~23~~ ~~24~~ ~~25~~ ~~26~~ 27 proposed units** (U1–U22, **U24**, **U25**, **U26**, **U29** and **U30**, plus U23 deferred). Rough shape:
-**~~7~~ ~~8~~ ~~9~~ 11 S/S-M · 12 M · ~~3~~ ~~4~~ 3 L · 1 M/L**.
-*(**[2026-09-14, decision 8]** U30 is **S**, and **U22 falls from L to S** on re-scoping — the one **L**
-that leaves this count. **Cut to date: U11, U21, U23.** Of 27 proposed, **24 are live**. The gross count
-rises while the work in flight falls, which is what append-only numbering does, and why the live count is
-stated beside it rather than left to subtraction.)* *(U29 — added 2026-09-11 by owner ruling on N-48 — is **S**: one
+**~~23~~ ~~24~~ ~~25~~ ~~26~~ ~~27~~ 28 proposed units** (U1–U22, **U24**, **U25**, **U26**, **U29**, **U30** and **U31**, plus U23 deferred). Rough shape:
+**~~7~~ ~~8~~ ~~9~~ ~~10~~ 11 S/S-M · ~~12~~ 13 M · ~~3~~ ~~4~~ 3 L · 1 M/L**.
+*(**[2026-09-14, decision 8]** applied on top of decision 9's line rather than instead of it, since both
+ruled the same day: **U30 is S**, and **U22 falls from L to S** on re-scoping — the one **L** that leaves
+this count. **Cut to date: U11, U21, U23.** Of 28 proposed, **25 are live**. The gross count rises while
+the work in flight falls, which is what append-only numbering does, and why the live count is stated
+beside it rather than left to subtraction.)*
+*(U31 — added 2026-09-14 by the scope amendment and decision 9 — is **M**, and the sizing is load-bearing:
+U25 was **L** because it rewrote a wire protocol, and U31 rewrites none. `client.ts` was written to
+OpenAI's shapes from the start, so this is a rename across 21 tracked files plus two request-body fields.
+Calling it L would license scope it does not have; calling it S would hide that it edits five guard sites
+and a coverage key.)* *(U30 — added 2026-09-14 by decision 8(d) on N-51 — is **S**.)*
+*(U29 — added 2026-09-11 by owner ruling on N-48 — is **S**: one
 call inserted before the reservation, one route test, one declared behaviour change.)* *(U26 — added 2026-08-10 by GATE C1's discharge — is **S/M**:
 it does not invent an obligation, it names one the ratchet was already asserting. **U11 is cut** as of the
 same date, per cut order #3, so the unit count rises by one while the work in flight does not.)*

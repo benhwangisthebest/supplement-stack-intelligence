@@ -1,9 +1,15 @@
 // Infrastructure layer — the ONLY non-deterministic unit (Design §9.4, §2.1).
 // Implements the `ClaudeAdapter` PORT from module-1, so the Domain agent loop
 // never touches transport. Phase 2 U25 replaced the provider: the paid call now
-// goes through `@/lib/omniroute/client`, and this file owns the mapping between
-// the advisor's neutral adapter types and the OpenAI-compatible wire protocol
-// that gateway speaks.
+// goes through `@/lib/openai/client`, and this file owns the mapping between
+// the advisor's neutral adapter types and the OpenAI wire protocol.
+//
+// [2026-09-14, U31] THE PROVIDER CHANGED AGAIN — Omniroute → OpenAI's
+// first-party API — AND NONE OF THE MAPPING BELOW MOVED. That is the whole
+// result of the unit and the reason it is sized M rather than L: U25's protocol
+// rewrite targeted OpenAI's shapes, so a swap onto OpenAI itself is a rename of
+// settings, not a remapping of messages. The U25 notes below are retained
+// because they explain why each shape looks the way it does (`CLAUDE.md` §7).
 //
 // ---------------------------------------------------------------------------
 // WHAT CHANGED IN U25, AND WHAT DELIBERATELY DID NOT
@@ -57,9 +63,9 @@ import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors"
 import {
   createCompletion,
   type CompletionResult,
-  type OmnirouteFunctionTool,
-  type OmnirouteMessage,
-} from "@/lib/omniroute/client";
+  type OpenAIFunctionTool,
+  type OpenAIMessage,
+} from "@/lib/openai/client";
 import type {
   AdapterMessage,
   AdapterStep,
@@ -71,7 +77,7 @@ import type {
 const MAX_TOKENS = 1024;
 
 /**
- * The routed model id, from `OMNIROUTE_MODEL`. **There is deliberately no
+ * The routed model id, from `OPENAI_MODEL`. **There is deliberately no
  * default** — the third required setting, not an optional override.
  *
  * ---------------------------------------------------------------------------
@@ -102,7 +108,7 @@ const MAX_TOKENS = 1024;
  *   environment variable, rather than a 502 from a rejected upstream call.
  */
 function resolveModel(explicit?: string): string {
-  const model = explicit ?? process.env.OMNIROUTE_MODEL;
+  const model = explicit ?? process.env.OPENAI_MODEL;
   if (!model) throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
   return model;
 }
@@ -112,16 +118,38 @@ function resolveModel(explicit?: string): string {
  * on a serverless function burns the whole `maxDuration` before anything else
  * can react. Set here, at the one place the call is configured, so no call site
  * can forget it. Unlike the SDK option it replaced, it is now testable — see
- * finding N-20 and `omniroute/client.test.ts`.
+ * finding N-20 and `openai/client.test.ts`.
  */
-const REQUEST_TIMEOUT_MS = Number(process.env.OMNIROUTE_TIMEOUT_MS ?? 60_000);
+const REQUEST_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS ?? 60_000);
+
+/**
+ * The reasoning budget, from `OPENAI_REASONING_EFFORT`. **Optional, with no
+ * default, and NOT part of the not-configured triple** (U31, decision 9B).
+ *
+ * The difference from `resolveModel` above is the whole point: a missing model
+ * id makes the call impossible, so it throws. A missing reasoning effort makes
+ * the call *cost more than the operator may have intended* — which is a
+ * deployment fact to surface in `.env.example`, not an error. Throwing here
+ * would invent a fourth 503 for a knob the provider has its own default for.
+ *
+ * No value is written into this file. `CLAUDE.md` §2.2 rule 7: which efforts a
+ * model accepts is a property of an account this repository has never
+ * contacted, and N-21 is the record of what guessing one costs.
+ *
+ * Resolved per call, not at module load, so a test can stub it after import.
+ */
+function resolveReasoningEffort(explicit?: string): string | undefined {
+  return explicit ?? process.env.OPENAI_REASONING_EFFORT;
+}
 
 /** The one call this adapter makes. Injected in tests; never injected live. */
 export type CompleteFn = (args: {
   model: string;
-  messages: OmnirouteMessage[];
-  tools: OmnirouteFunctionTool[];
+  messages: OpenAIMessage[];
+  tools: OpenAIFunctionTool[];
   maxTokens: number;
+  /** Absent when unconfigured — never forwarded as an explicit undefined. */
+  reasoningEffort?: string;
 }) => Promise<CompletionResult>;
 
 export interface AdapterDeps {
@@ -129,12 +157,13 @@ export interface AdapterDeps {
   apiKey?: string;
   baseUrl?: string;
   model?: string;
+  reasoningEffort?: string;
 }
 
 // ---- Pure mapping cores (unit-tested) ----------------------------------------
 
 /** AdvisorTool[] → OpenAI-compatible function-tool array. PURE. */
-export function toOmnirouteTools(tools: AdvisorTool[]): OmnirouteFunctionTool[] {
+export function toOpenAITools(tools: AdvisorTool[]): OpenAIFunctionTool[] {
   return tools.map((t) => ({
     type: "function" as const,
     function: {
@@ -156,7 +185,7 @@ export function toOmnirouteTools(tools: AdvisorTool[]): OmnirouteFunctionTool[] 
 export function seedMessages(
   system: string,
   messages: AdapterMessage[],
-): OmnirouteMessage[] {
+): OpenAIMessage[] {
   return [
     { role: "system", content: system },
     ...messages.map((m) => ({ role: m.role, content: m.content })),
@@ -172,7 +201,7 @@ export function seedMessages(
  */
 export function buildToolResultMessages(
   toolResults: AdapterToolResult[],
-): OmnirouteMessage[] {
+): OpenAIMessage[] {
   return toolResults.map((r) => ({
     role: "tool" as const,
     tool_call_id: r.toolCallId,
@@ -212,7 +241,7 @@ export function parseToolArguments(argumentsJson: string): Record<string, unknow
  */
 export function toAdapterStep(result: CompletionResult): {
   step: AdapterStep;
-  assistantMessage: OmnirouteMessage;
+  assistantMessage: OpenAIMessage;
   usageReported: boolean;
 } {
   const toolCalls = result.toolCalls.map((c) => ({
@@ -221,7 +250,7 @@ export function toAdapterStep(result: CompletionResult): {
     input: parseToolArguments(c.argumentsJson),
   }));
 
-  const assistantMessage: OmnirouteMessage = {
+  const assistantMessage: OpenAIMessage = {
     role: "assistant",
     content: result.text.length > 0 ? result.text : null,
     ...(result.toolCalls.length > 0
@@ -257,9 +286,9 @@ export function toAdapterStep(result: CompletionResult): {
  * the neutral ClaudeAdapter interface intentionally doesn't expose.
  */
 export class AdvisorModelAdapter implements ClaudeAdapter {
-  private apiMessages: OmnirouteMessage[] = [];
+  private apiMessages: OpenAIMessage[] = [];
   private seeded = false;
-  private pendingAssistant: OmnirouteMessage | null = null;
+  private pendingAssistant: OpenAIMessage | null = null;
   private allUsageReported = true;
 
   constructor(private readonly deps: AdapterDeps = {}) {}
@@ -290,12 +319,17 @@ export class AdvisorModelAdapter implements ClaudeAdapter {
     }
 
     const complete = this.deps.complete ?? this.liveComplete();
+    const effort = resolveReasoningEffort(this.deps.reasoningEffort);
     const result = await complete({
       model: resolveModel(this.deps.model),
+      // Spread, not `reasoningEffort: effort` — an explicit `undefined` would
+      // reach the client and defeat the "omitted when unset" contract the
+      // client's own test pins.
+      ...(effort ? { reasoningEffort: effort } : {}),
       // Snapshot so each request captures the transcript at that step (the
       // internal array keeps growing across the turn).
       messages: [...this.apiMessages],
-      tools: toOmnirouteTools(args.tools),
+      tools: toOpenAITools(args.tools),
       maxTokens: MAX_TOKENS,
     });
 
@@ -312,9 +346,12 @@ export class AdvisorModelAdapter implements ClaudeAdapter {
    * asserts an inverse over a named list of throw sites, and moving the throw
    * into a module that list does not name would blind it — the failure mode
    * finding N-14 was raised for. Both the base URL and the key are required;
-   * Omniroute's own default (`localhost:20128`) is a developer's gateway, and
-   * defaulting a deployed application to it would fail obscurely instead of
-   * loudly.
+   * No base URL is defaulted here. The reason has changed with the provider
+   * but the conclusion has not: under Omniroute the danger was inheriting its
+   * developer default (`localhost:20128`) in production; under OpenAI it is
+   * that writing `https://api.openai.com` into `src/` puts a provider address
+   * in source, which is what `.env.example` is for. Either way an unset base
+   * URL is 503 NOT_CONFIGURED, loudly, rather than a call somewhere unintended.
    *
    * NOT WIRED, DELIBERATELY: `createCompletion` accepts a caller `signal`, and
    * this adapter does not pass one. U6's contract is that a disconnect settles
@@ -324,8 +361,8 @@ export class AdvisorModelAdapter implements ClaudeAdapter {
    * rather than absorbed (§8.1).
    */
   private liveComplete(): CompleteFn {
-    const apiKey = this.deps.apiKey ?? process.env.OMNIROUTE_API_KEY;
-    const baseUrl = this.deps.baseUrl ?? process.env.OMNIROUTE_BASE_URL;
+    const apiKey = this.deps.apiKey ?? process.env.OPENAI_API_KEY;
+    const baseUrl = this.deps.baseUrl ?? process.env.OPENAI_BASE_URL;
     if (!apiKey || !baseUrl) {
       throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
     }

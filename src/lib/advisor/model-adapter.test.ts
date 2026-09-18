@@ -21,10 +21,10 @@ import {
   parseToolArguments,
   seedMessages,
   toAdapterStep,
-  toOmnirouteTools,
+  toOpenAITools,
 } from "./model-adapter";
 import { ADVISOR_TOOLS } from "./tools";
-import type { CompletionResult } from "@/lib/omniroute/client";
+import type { CompletionResult } from "@/lib/openai/client";
 
 /** A scripted completion function that records the requests it receives. */
 function scripted(results: CompletionResult[]) {
@@ -50,8 +50,8 @@ const answer = (text: string): CompletionResult => ({
 const TEST_MODEL = "test-provider/test-model-not-real";
 
 describe("pure mapping cores", () => {
-  it("toOmnirouteTools maps every tool to the function-tool shape", () => {
-    const mapped = toOmnirouteTools(ADVISOR_TOOLS);
+  it("toOpenAITools maps every tool to the function-tool shape", () => {
+    const mapped = toOpenAITools(ADVISOR_TOOLS);
     expect(mapped).toHaveLength(ADVISOR_TOOLS.length);
     for (const m of mapped) {
       expect(m.type).toBe("function");
@@ -236,18 +236,21 @@ describe("AdvisorModelAdapter — config guard", () => {
     });
 
   it("throws a 'not configured' error when the key is absent", async () => {
-    vi.stubEnv("OMNIROUTE_API_KEY", "");
-    vi.stubEnv("OMNIROUTE_BASE_URL", "https://gw.example");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
 
     await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
   });
 
   it("throws a 'not configured' error when the base URL is absent", async () => {
-    // Both halves are required. Omniroute's own default is a developer's local
-    // gateway; a deployed app silently pointing at localhost would fail in a
-    // way no operator could read.
-    vi.stubEnv("OMNIROUTE_API_KEY", "k");
-    vi.stubEnv("OMNIROUTE_BASE_URL", "");
+    // Both halves are required, and no base URL is defaulted in `src/`.
+    // (Historically the reason was Omniroute's own developer default: a
+    // deployed app silently pointing at localhost would fail in a way no
+    // operator could read. Under OpenAI the reason is that a provider address
+    // in source is a provider-specific string — `.env.example` carries it
+    // instead. Same conclusion, different argument.)
+    vi.stubEnv("OPENAI_API_KEY", "k");
+    vi.stubEnv("OPENAI_BASE_URL", "");
 
     await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
   });
@@ -260,20 +263,20 @@ describe("AdvisorModelAdapter — config guard", () => {
     // undetectable by a mock that accepts whatever id it is handed. The first
     // live probe found it. A model id is a property of the gateway INSTANCE,
     // so there is no value this repository could have defaulted to correctly.
-    vi.stubEnv("OMNIROUTE_API_KEY", "k");
-    vi.stubEnv("OMNIROUTE_BASE_URL", "https://gw.example");
-    vi.stubEnv("OMNIROUTE_MODEL", "");
+    vi.stubEnv("OPENAI_API_KEY", "k");
+    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
+    vi.stubEnv("OPENAI_MODEL", "");
 
     await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
   });
 
-  it("sends the id from OMNIROUTE_MODEL verbatim — no normalising, no fallback", async () => {
+  it("sends the id from OPENAI_MODEL verbatim — no normalising, no fallback", async () => {
     // Reachability (§5.3): the resolved id must actually arrive on the request,
     // not merely be computed. A gateway id carries a provider namespace, and a
     // helpful `split("/")` or a lowercase would route the turn somewhere else
     // or 400 it — so `toEqual` on the whole string, not a substring match.
     const seen: string[] = [];
-    vi.stubEnv("OMNIROUTE_MODEL", "cc/some-model-4-5-20251001");
+    vi.stubEnv("OPENAI_MODEL", "cc/some-model-4-5-20251001");
 
     const adapter = new AdvisorModelAdapter({
       complete: async (req) => {
@@ -290,7 +293,7 @@ describe("AdvisorModelAdapter — config guard", () => {
     // The probes rely on this: they pass `{ model }` so a one-off id can be
     // tried against the real gateway without editing a deployment's settings.
     const seen: string[] = [];
-    vi.stubEnv("OMNIROUTE_MODEL", "env/should-not-win");
+    vi.stubEnv("OPENAI_MODEL", "env/should-not-win");
 
     const adapter = new AdvisorModelAdapter({
       model: "explicit/should-win",

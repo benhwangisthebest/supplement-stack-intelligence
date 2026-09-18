@@ -70,9 +70,9 @@ export async function POST(request: NextRequest) {
   // so an unset id is a 503 status rather than an `error` event inside a stream
   // that already claimed success.
   if (
-    !process.env.OMNIROUTE_API_KEY ||
-    !process.env.OMNIROUTE_BASE_URL ||
-    !process.env.OMNIROUTE_MODEL
+    !process.env.OPENAI_API_KEY ||
+    !process.env.OPENAI_BASE_URL ||
+    !process.env.OPENAI_MODEL
   ) {
     return fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503);
   }

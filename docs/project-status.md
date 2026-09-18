@@ -80,7 +80,8 @@ known to be harmless. Recorded here so the choice is visible rather than implici
   anywhere; its files were left untouched. It is **not** this repository and holds no authoritative
   content. Background: closeout finding **C-2** and `docs/04-report/phase-0-integration-enforcement.report.md` §2.
 - Stack: Next.js 15 (App Router), React 19, TypeScript 5.7, Tailwind, Supabase (Postgres + Auth),
-  ~~Anthropic SDK~~ **OmniRoute** (self-hosted OpenAI-compatible AI gateway, reached over plain HTTP —
+  ~~Anthropic SDK~~ ~~OmniRoute~~ **OpenAI first-party API** (U31, 2026-09-14; OmniRoute U25–U31 — a
+  self-hosted OpenAI-compatible gateway. Both are reached over plain HTTP —
   Phase 2 U25, 2026-08-10; `@anthropic-ai/sdk` is no longer a dependency), Zod. Vitest + Playwright. No ORM (deliberate — hand-written repos so RLS does tenant
   isolation). No linter, no formatter. **[2026-08-02]** CI now exists (typecheck + unit tests + build).
 - **Measured 2026-08-03** (tracked files, `git ls-files | xargs wc -l`): 13,831 LOC `src/lib`, 5,518
@@ -171,7 +172,7 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
 - **Standing caveat:** the sweep validates **vocabulary, not truth**. It cannot catch a
   correctly-hedged false statement. This is the v11 lesson and it is permanent.
 
-### 2.4 AI advisor (`lib/advisor`) — **B** · provider: **OmniRoute** since 2026-08-10 (U25)
+### 2.4 AI advisor (`lib/advisor`) — **B** · provider: **OpenAI first-party API** since 2026-09-14 (U31; OmniRoute U25–U31)
 - **Works — unusually disciplined:** the LLM **cannot write data**. Tools only *propose*;
   `POST /api/advisor/actions` re-loads context server-side, re-validates every proposal with Zod
   against fresh RLS-scoped data, and runs an **authoritative** `cumulativeRecheck` that hard-blocks
@@ -191,11 +192,24 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   nor stops billing.~~ **[2026-08-10] All three closed** — U6 (timeout + disconnect), U4 (atomic
   reservation). The timeout is now *ours*: U25 replaced the SDK's untested `timeout` option with an
   `AbortController`, which is observable under fake timers, so finding **N-20** finally has a red proof.
-- **Provider path [2026-08-10, U25]:** the advisor calls **OmniRoute**, not Anthropic — one module,
-  `src/lib/omniroute/client.ts`, is the only place in `src/` that can spend money, asserted by
-  `SOLE_PAID_CLIENT`. The routed **model id comes from `OMNIROUTE_MODEL` with no default in `src/`**
+- **Provider path [2026-09-14, U31]:** the advisor calls **OpenAI's first-party API** — one module,
+  `src/lib/openai/client.ts`, is the only place in `src/` that can spend money, asserted by
+  `SOLE_PAID_CLIENT`. The **model id comes from `OPENAI_MODEL` with no default in `src/`**
   (finding N-21: a hardcoded id 400'd on the first real gateway, and an unset variable would have failed
-  every turn from a green suite). Live evidence: `docs/05-qa/2026-08-10-omniroute-probe-record.md`.
+  every turn from a green suite). `OPENAI_REASONING_EFFORT` is optional, has no default, and is omitted
+  from the request body entirely when unset (decision 9B). **The wire protocol did not change at U31** —
+  it has been OpenAI's since U25 — which is why the swap touched settings and not message shapes.
+  Live evidence: U25's `docs/05-qa/2026-08-10-omniroute-probe-record.md` for the protocol;
+  for the current provider, two records on 2026-09-18: **record 1**
+  (`docs/05-qa/2026-09-18-u31-openai-probe-record.md`) **FAILED** on an instrument defect — both probes
+  still hand-rolled bodies carrying the legacy `max_tokens` (N-58, N-59) — and **record 2**
+  (`docs/05-qa/2026-09-18-u31-openai-probe-record-2.md`) **PASSES** after the probes were rewired to
+  import the production builders. Proven live: the model id resolves, `usage` is reported and agrees
+  raw-vs-parsed, the tool round trip completes with a grounded answer, `reasoning_effort` is accepted,
+  and **decision 7B option (a) holds** — a PDF `file` content part returns 200 and schema-valid
+  candidates for a text PDF *and* an image-only one. **Stated limits, not closed:** N-25 (clean
+  synthetic renders only, no real scanned report) and **N-61** (the probe checks output shape, never
+  the transcribed values).
   **Open against this path:** N-22 — an `auto/*` alias can complete a tool loop and return an **empty**
   answer, which every safety and grounding gate passes.
 - **Persistence:** conversations, messages, usage, actions — all persisted with RLS. **[2026-09-11]** And, since U26, owner-bound at the repository layer as well: `getAction`, `markUndone`, `getActionsByBatch` and `appendMessages` filter on the owner, so RLS is the last line rather than the only one. Two findings registered, not absorbed: `POST /api/advisor` spends a paid call before any ownership failure for a foreign `conversationId` (N-48), and `confirmAndApply` stamps an unchecked `conversation_id` (N-49) — both owned by U29.
@@ -241,17 +255,19 @@ test" part does not.
 
 ### 2.6 API layer (`src/app/api/**`) — **B**
 
-> **[2026-08-10, Phase 2 U25] Both paid routes now reach OmniRoute, and there is no second provider.**
+> **[2026-08-10, Phase 2 U25 · provider superseded by U31] Both paid routes reach ONE provider, and there
+> is no second one.** *(U25 made that provider OmniRoute; U31 made it OpenAI's first-party API. The
+> structural claim below is what matters and is unchanged by either.)*
 > `/api/advisor` and `/api/lab-import/extract` are the two routes `PAID_API_BUDGET` governs, derived from
 > an import-graph walk rather than a hand-kept list. That marker was briefly a **union** — the package
-> `@anthropic-ai/sdk` plus the module `src/lib/omniroute/client.ts` — while the halves landed separately;
+> `@anthropic-ai/sdk` plus the module `src/lib/omniroute/client.ts` (now `src/lib/openai/client.ts`, U31) — while the halves landed separately;
 > it has **collapsed back to the single module marker**, which is the mechanical proof the last Anthropic
 > import is gone, and `@anthropic-ai/sdk` left `package.json` in the same commit.
 > **Lab-timeline PDF extraction (`pdf-adapter.ts`)** no longer sends an Anthropic `document` block: a PDF
 > travels as an OpenAI **`file` content part** with a base64 data URL — decision **7B**, ruled from live
 > evidence against both a text PDF and an **image-only** one, not from documentation. `/v1/ocr` was probed
 > as the fallback and answered 400, so it is not one.
-> Its model id, like the advisor's, comes from `OMNIROUTE_MODEL` with **no default in `src/`** (N-21).
+> Its model id, like the advisor's, comes from `OPENAI_MODEL` with **no default in `src/`** (N-21).
 > One finding from that path is worth carrying: the routed model **fences its JSON**, and until `U25` added
 > `stripJsonFence` a *correct* transcription answered 502 `EXTRACTION_FAILED` (**N-23**). Record:
 > `docs/05-qa/2026-08-10-omniroute-probe-record.md`.

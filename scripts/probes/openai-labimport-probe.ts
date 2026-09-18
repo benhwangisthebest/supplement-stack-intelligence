@@ -3,9 +3,9 @@
  *
  * DECISION 7B IS OPEN, AND THIS SCRIPT EXISTS TO CLOSE IT WITH EVIDENCE.
  *
- * `src/lib/lab-import/pdf-adapter.ts` sends a PDF to Anthropic as a native
- * `{type:"document"}` content block. Omniroute publishes `/v1/*` as
- * OpenAI-compatible and no `/v1/messages`, so that block has no direct
+ * `src/lib/lab-import/pdf-adapter.ts` once sent a PDF to Anthropic as a native
+ * `{type:"document"}` content block. The endpoint has been OpenAI-compatible
+ * since U25 — `/v1/*` with no `/v1/messages` — so that block has no direct
  * equivalent (finding N-19). Two candidate replacements were identified and
  * NEITHER can be chosen from documentation, because accepting a PDF is a
  * property of the ROUTED MODEL rather than of the gateway:
@@ -29,7 +29,7 @@
  *
  *   npm run probe:labimport -- --text-pdf ./text.pdf --scanned-pdf ./scan.pdf
  *
- * `OMNIROUTE_*` settings load from a gitignored `.env.local` — names only are
+ * `OPENAI_*` settings load from a gitignored `.env.local` — names only are
  * reported, never values, and nothing outside that prefix is exported (§2.3
  * rule 14). An explicit shell value still wins over the file.
  *
@@ -38,19 +38,41 @@
  */
 import fs from "node:fs";
 import { loadProbeEnv, summarise } from "./load-env";
-import { completionsUrl } from "@/lib/omniroute/client";
+import { buildCompletionBody, completionsUrl } from "@/lib/openai/client";
 import {
+  buildTranscriptionRequest,
   candidatesFromTranscript,
-  EXTRACTION_SYSTEM_PROMPT,
+  pdfContentParts,
 } from "@/lib/lab-import/pdf-adapter";
 
 // See the advisor probe: first statement in the body, before any env read.
 const LOADED_ENV = loadProbeEnv();
 
-const BASE_URL = process.env.OMNIROUTE_BASE_URL;
-const API_KEY = process.env.OMNIROUTE_API_KEY;
-/** Same variable the application and the advisor probe read. See that probe. */
-const MODEL = process.env.OMNIROUTE_MODEL ?? "cc/claude-haiku-4-5-20251001";
+const BASE_URL = process.env.OPENAI_BASE_URL;
+const API_KEY = process.env.OPENAI_API_KEY;
+/**
+ * Same variable the application and the advisor probe read. See that probe.
+ * [2026-09-14, U31] Its hardcoded fallback is deleted here for the same reason
+ * it is deleted there: a probe that guesses a model can report success for one
+ * the operator never configured.
+ */
+const MODEL = requireModel();
+
+/**
+ * Hoisted so `MODEL` above is typed `string`, not `string | undefined` — a
+ * module-level `if` does not narrow a const inside later function bodies.
+ */
+function requireModel(): string {
+  const model = process.env.OPENAI_MODEL;
+  if (!model) {
+    console.error(
+      "OPENAI_MODEL is not set. There is deliberately no default (U31; see N-21).\n" +
+        "Set it to an id from your account's /v1/models and re-run.",
+    );
+    process.exit(1);
+  }
+  return model;
+}
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -64,7 +86,7 @@ function line(label: string, value: unknown): void {
 function requireConfig(): { baseUrl: string; apiKey: string } {
   if (!BASE_URL || !API_KEY) {
     console.error(
-      "OMNIROUTE_BASE_URL and OMNIROUTE_API_KEY must both be set.\n" +
+      "OPENAI_BASE_URL and OPENAI_API_KEY must both be set.\n" +
         `Looked in .env.local and the shell — ${summarise(LOADED_ENV)}`,
     );
     process.exit(1);
@@ -110,32 +132,29 @@ async function probeFilePart(
   const response = await fetch(completionsUrl(cfg.baseUrl), {
     method: "POST",
     headers: authHeaders(cfg.apiKey),
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 2048,
-      stream: false,
-      messages: [
-        { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            {
-              type: "file",
-              file: {
-                filename: "lab-report.pdf",
-                file_data: `data:application/pdf;base64,${base64}`,
-              },
-            },
-            { type: "text", text: "Transcribe this lab report." },
-          ],
-        },
-      ],
-    }),
+    // [2026-09-18, U31 / N-58 + N-59] BUILT BY PRODUCTION, NOT BY THIS FILE.
+    // The body below used to be re-authored here, carrying `max_tokens` after
+    // U31 moved production to `max_completion_tokens`. It 400'd — and this
+    // function then printed "option (a) does not work for this model", a verdict
+    // about the `file` content part derived from a request that had a second,
+    // sufficient cause of failure. N-26's pattern exactly.
+    // The content part and the envelope are now IMPORTED from the module under
+    // test, so a 400 here can only be about the shape production actually sends.
+    // Red evidence: `docs/05-qa/2026-09-18-u31-openai-probe-record.md` §3.
+    body: JSON.stringify(
+      buildCompletionBody(
+        buildTranscriptionRequest({
+          model: MODEL,
+          reasoningEffort: process.env.OPENAI_REASONING_EFFORT,
+          userContent: pdfContentParts(base64),
+        }),
+      ),
+    ),
   });
 
   line("http status", response.status);
   if (!response.ok) {
-    line("RESULT", "REJECTED — option (a) does not work for this model");
+    line("RESULT", `NOT ACCEPTED — HTTP ${response.status}. Status recorded; no verdict inferred (N-59)`);
     console.log(
       "  Status alone is the finding. If it is 400, the model or gateway does not accept\n" +
         "  the `file` part; if 413, the PDF is too large and the size limit is the finding.",
@@ -201,15 +220,17 @@ async function probeOcr(
   const second = await fetch(completionsUrl(cfg.baseUrl), {
     method: "POST",
     headers: authHeaders(cfg.apiKey),
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 2048,
-      stream: false,
-      messages: [
-        { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
-        { role: "user", content: text },
-      ],
-    }),
+    // Same repair as option (a) (N-58). Unreachable while `/v1/ocr` 404s, but a
+    // stale body left here is the identical defect one function down.
+    body: JSON.stringify(
+      buildCompletionBody(
+        buildTranscriptionRequest({
+          model: MODEL,
+          reasoningEffort: process.env.OPENAI_REASONING_EFFORT,
+          userContent: text,
+        }),
+      ),
+    ),
   });
   line("transcription status", second.status);
   if (!second.ok) return;
@@ -233,14 +254,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  console.log("Omniroute lab-import probe — OP-4(b), decision 7B");
+  console.log("OpenAI lab-import probe — U31 (shape inherited from OP-4(b))");
   line("settings", summarise(LOADED_ENV));
   line("base URL host", new URL(cfg.baseUrl).host);
   line("model requested (effective)", MODEL);
-  line(
-    "model source",
-    process.env.OMNIROUTE_MODEL ? "OMNIROUTE_MODEL" : "probe default (OMNIROUTE_MODEL unset)",
-  );
+  line("model source", "OPENAI_MODEL (there is no probe default — U31)");
 
   const targets: [string, string][] = [["TEXT PDF", textPdf]];
   if (scannedPdf) targets.push(["SCANNED PDF", scannedPdf]);

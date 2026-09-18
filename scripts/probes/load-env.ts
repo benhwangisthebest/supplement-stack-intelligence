@@ -11,7 +11,7 @@
 // process for no reason at all — the probes never use it, and "it was already
 // in the file" is not a purpose.
 //
-// So this reads the file and exports ONLY names matching `OMNIROUTE_`. Anything
+// So this reads the file and exports ONLY names matching `OPENAI_`. Anything
 // else in the file is parsed and discarded. Widening the prefix is a deliberate
 // act, not a default.
 //
@@ -31,7 +31,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 /** Only these reach `process.env`. See the header — this is the rule 14 fence. */
-const ALLOWED_PREFIX = "OMNIROUTE_";
+const ALLOWED_PREFIX = "OPENAI_";
 
 export interface LoadedEnv {
   /** Names taken from the file. NEVER their values. */
@@ -76,7 +76,7 @@ export function parseEnvFile(text: string): Array<[string, string]> {
 /**
  * Read `.env.local` from the repository root and export the allowlisted names.
  *
- * An existing shell value WINS. `OMNIROUTE_BASE_URL=… npm run probe:advisor`
+ * An existing shell value WINS. `OPENAI_BASE_URL=… npm run probe:advisor`
  * must keep working, and must keep meaning what it says: a one-off override
  * that a stale file cannot silently defeat.
  *

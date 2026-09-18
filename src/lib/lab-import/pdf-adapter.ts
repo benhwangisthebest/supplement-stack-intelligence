@@ -1,6 +1,6 @@
 // Infrastructure layer — the ONLY non-deterministic module (Design §9.4).
 // Plan SC-3: messy lab PDFs → structured candidates via a gateway extraction
-// adapter (Omniroute; U25 lab-import half, decision 7B option (a)). SAFETY: transcription ONLY — the model never judges ranges, never
+// adapter (OpenAI since U31; Omniroute U25–U31, decision 7B option (a)). SAFETY: transcription ONLY — the model never judges ranges, never
 // diagnoses. Its JSON output MUST pass adapterOutputSchema or we throw
 // EXTRACTION_FAILED (never coerce, never persist). Imported only by the
 // `extract` route; no domain code depends on this.
@@ -9,8 +9,9 @@ import { normalizeMarker } from "@/lib/biomarkers";
 import type { ParsedMarkerCandidate } from "@/types/lab";
 import {
   createCompletion,
-  type OmnirouteContentPart,
-} from "@/lib/omniroute/client";
+  type CompletionRequest,
+  type OpenAIContentPart,
+} from "@/lib/openai/client";
 import { adapterOutputSchema } from "./schema";
 
 export class ExtractionError extends Error {
@@ -32,6 +33,7 @@ export interface ExtractDeps {
   baseUrl?: string;
   apiKey?: string;
   model?: string;
+  reasoningEffort?: string;
 }
 
 // Tight, transcription-only instruction. Kept here so tests assert against it.
@@ -177,7 +179,7 @@ export async function extractFromPdf(
 }
 
 // ---------------------------------------------------------------------------
-// The live path — Omniroute, not the Anthropic SDK (U25 lab-import half)
+// The live path — OpenAI's API (U31); Omniroute U25–U31; the Anthropic SDK before that
 // ---------------------------------------------------------------------------
 // Decision 7B, ruled 2026-08-10 from the OP-4 record: a PDF reaches the
 // OpenAI-compatible surface as a `file` content part carrying a base64 data
@@ -188,7 +190,7 @@ export async function extractFromPdf(
 //
 // With this file's last `@anthropic-ai/sdk` import gone, the package leaves
 // `package.json` in the SAME commit (amendment constraint 8), the
-// `PAID_API_BUDGET` marker union collapses to the single Omniroute module, and
+// `PAID_API_BUDGET` marker union collapses to the single client module, and
 // `RETIRED_PACKAGE` widens from `src/lib/advisor` to all of `src/`.
 
 /**
@@ -215,6 +217,8 @@ interface GatewayConfig {
   baseUrl: string;
   apiKey: string;
   model: string;
+  /** Optional (U31). Absent means "use the model's own default effort". */
+  reasoningEffort?: string;
 }
 
 /**
@@ -237,33 +241,93 @@ interface GatewayConfig {
  * handling in `extractFromText`.
  */
 function requireGatewayConfig(deps: ExtractDeps): GatewayConfig {
-  const baseUrl = deps.baseUrl ?? process.env.OMNIROUTE_BASE_URL;
-  const apiKey = deps.apiKey ?? process.env.OMNIROUTE_API_KEY;
-  const model = deps.model ?? process.env.OMNIROUTE_MODEL;
+  const baseUrl = deps.baseUrl ?? process.env.OPENAI_BASE_URL;
+  const apiKey = deps.apiKey ?? process.env.OPENAI_API_KEY;
+  const model = deps.model ?? process.env.OPENAI_MODEL;
   if (!baseUrl || !apiKey || !model) {
     throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
   }
-  return { baseUrl, apiKey, model };
+  // [U31] NOT part of the required triple, deliberately. An unset reasoning
+  // effort is a WORKING call at the model's own default — unlike a missing key,
+  // base URL or model id, each of which makes the call impossible. Adding it to
+  // the `if` above would turn an optional tuning knob into a fourth way to get
+  // a 503, and `NOT_CONFIGURED_TOTALITY`'s sanctioned-throw list would then be
+  // asserting something this unit never intended.
+  const reasoningEffort =
+    deps.reasoningEffort ?? process.env.OPENAI_REASONING_EFFORT;
+  return { baseUrl, apiKey, model, reasoningEffort };
 }
 
 /** One transcription call. The system prompt is unchanged across the swap. */
+/**
+ * The transcription request, as a PURE exported core.
+ *
+ * ---------------------------------------------------------------------------
+ * [2026-09-18, U31] EXTRACTED AND EXPORTED SO THE PROBE CANNOT DRIFT FROM IT.
+ * ---------------------------------------------------------------------------
+ * `scripts/probes/openai-labimport-probe.ts` used to hand-roll its own request
+ * body. It was written before U31 and kept `max_tokens`, which this unit
+ * replaced with `max_completion_tokens` — so on 2026-09-18 the probe 400'd and
+ * then printed a confident verdict about the PDF `file` content part, a
+ * component the failing request never got far enough to exercise
+ * (findings N-58, N-59; record `docs/05-qa/2026-09-18-u31-openai-probe-record.md`).
+ *
+ * An instrument that re-authors the thing it measures can only ever be as
+ * current as the last person who remembered to update it. This function and
+ * `pdfContentParts` below exist so the probe IMPORTS the production body
+ * instead — same shape as `buildCompletionBody` / `completionsUrl` /
+ * `parseCompletion` in the client, and the same reason.
+ */
+export function buildTranscriptionRequest(args: {
+  model: string;
+  reasoningEffort?: string;
+  userContent: string | OpenAIContentPart[];
+}): CompletionRequest {
+  return {
+    model: args.model,
+    maxTokens: 2048,
+    // Omitted from the wire entirely when unset — see the client's
+    // `reasoningEffort` contract.
+    ...(args.reasoningEffort ? { reasoningEffort: args.reasoningEffort } : {}),
+    messages: [
+      // The Anthropic surface took `system` as a top-level string; the
+      // OpenAI-compatible one takes a leading system MESSAGE. Same prompt
+      // text, different envelope — the protocol change U25 is about.
+      { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+      { role: "user", content: args.userContent },
+    ],
+  };
+}
+
+/**
+ * The PDF `file` content part — decision 7B option (a), as a pure exported
+ * core. Extracted with `buildTranscriptionRequest` and for the same reason:
+ * the probe that tests this shape must send THIS shape, not a copy of it.
+ */
+export function pdfContentParts(base64Pdf: string): OpenAIContentPart[] {
+  return [
+    {
+      type: "file",
+      file: {
+        filename: "lab-report.pdf",
+        file_data: `data:application/pdf;base64,${base64Pdf}`,
+      },
+    },
+    { type: "text", text: "Transcribe this lab report." },
+  ];
+}
+
 async function transcribeVia(
   cfg: GatewayConfig,
-  userContent: string | OmnirouteContentPart[],
+  userContent: string | OpenAIContentPart[],
 ): Promise<string> {
   const result = await createCompletion(
     { baseUrl: cfg.baseUrl, apiKey: cfg.apiKey },
-    {
+    buildTranscriptionRequest({
       model: cfg.model,
-      maxTokens: 2048,
-      messages: [
-        // The Anthropic surface took `system` as a top-level string; the
-        // OpenAI-compatible one takes a leading system MESSAGE. Same prompt
-        // text, different envelope — the protocol change U25 is about.
-        { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
-        { role: "user", content: userContent },
-      ],
-    },
+      reasoningEffort: cfg.reasoningEffort,
+      userContent,
+    }),
   );
   return result.text;
 }
@@ -284,14 +348,5 @@ export function makeGatewayTranscriber(deps: ExtractDeps = {}): Transcribe {
  */
 export function makeGatewayPdfTranscriber(deps: ExtractDeps = {}): Transcribe {
   return async (base64Pdf: string) =>
-    transcribeVia(requireGatewayConfig(deps), [
-      {
-        type: "file",
-        file: {
-          filename: "lab-report.pdf",
-          file_data: `data:application/pdf;base64,${base64Pdf}`,
-        },
-      },
-      { type: "text", text: "Transcribe this lab report." },
-    ]);
+    transcribeVia(requireGatewayConfig(deps), pdfContentParts(base64Pdf));
 }

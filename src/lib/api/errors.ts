@@ -72,7 +72,7 @@ export class NotConfiguredError extends Error {
  * `"API_ANTHROPIC_KEY not configured"`: an environment-variable name, shown to
  * (HISTORICAL — that variable no longer exists; U25 removed it with the Anthropic
  *  SDK. The example is kept because the RULE it illustrates is unchanged, and §7
- *  forbids deleting rationale. Today the equivalent slip would name OMNIROUTE_*.)
+ *  forbids deleting rationale. Today the equivalent slip would name OPENAI_*.)
  * an end user, who can do nothing with it and should not be told the shape of
  * the server's configuration. It now names the situation and the only true
  * remedy. It makes no claim the system has not computed — it is an operational

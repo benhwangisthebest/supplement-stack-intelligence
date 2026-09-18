@@ -73,7 +73,11 @@ export default defineConfig({
         "src/lib/lab-import/**": { lines: 65, functions: 54, branches: 81, statements: 65 },
         "src/lib/lab-trends/**": { lines: 85, functions: 90, branches: 71, statements: 85 },
         // Phase 2 U25. Measured 2026-08-10 at 100 lines / 88.23 branches / 100
-        // functions / 100 statements, over `src/lib/omniroute/client.ts` alone.
+        // functions / 100 statements, over `src/lib/openai/client.ts` alone.
+        // Phase 2 U31, re-measured 2026-09-18 after the provider swap: 100 / 89.47
+        // / 100 / 100. The floors below are UNCHANGED — they were set from the
+        // U25 measurement with the D-2 margin, and a floor that chases each new
+        // measurement is the ratchet this comment already argues against.
         // Floors are the usual measured−10, and the branches margin is the full
         // 10 pp D-2 requires. NOT set at the measured value: a floor sitting on
         // today's figure turns any harmless refactor red, which is how coverage
@@ -83,7 +87,7 @@ export default defineConfig({
         // because it is small and injectable, not because it is well proven.
         // Its one genuinely uncertain behaviour — what the live gateway returns
         // — is unreachable from any unit test and is OP-4's subject.
-        "src/lib/omniroute/**": { lines: 90, functions: 90, branches: 78, statements: 90 },
+        "src/lib/openai/**": { lines: 90, functions: 90, branches: 78, statements: 90 },
         "src/lib/product-matcher/**": { lines: 85, functions: 82, branches: 83, statements: 85 },
         // Phase 2 U14. Measured 2026-08-11 at 100/100/100/100 over
         // `src/lib/security/csp.ts` alone. Floors are the usual measured−10 and

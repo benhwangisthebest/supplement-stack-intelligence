@@ -154,7 +154,10 @@ describe("POST /api/lab-import/extract", () => {
     expect(res.status).toBe(503);
     expect(body.error.code).toBe("NOT_CONFIGURED");
     expect(body.error.message).toBe(AI_SERVICE_NOT_CONFIGURED);
-    expect(body.error.message).not.toMatch(/OMNIROUTE|ANTHROPIC|API_KEY|BASE_URL/i);
+    expect(body.error.message).not.toMatch(
+      // OPENAI added by U31 — see the same assertion in the advisor route test.
+      /OPENAI|OMNIROUTE|ANTHROPIC|API_KEY|BASE_URL/i,
+    );
     expect(body.error.message).not.toMatch(/try CSV or paste/);
   });
 

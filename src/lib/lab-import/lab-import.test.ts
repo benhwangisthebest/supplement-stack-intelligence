@@ -179,9 +179,9 @@ describe("extractFromText (injected transcriber)", () => {
     // U25 lab-import half: the setting names changed (API_ANTHROPIC_KEY →
     // OMNIROUTE_*) and the ASSERTIONS did not. That is the point of the pin —
     // it is about the error CLASS crossing the boundary, not about a provider.
-    vi.stubEnv("OMNIROUTE_BASE_URL", "");
-    vi.stubEnv("OMNIROUTE_API_KEY", "");
-    vi.stubEnv("OMNIROUTE_MODEL", "");
+    vi.stubEnv("OPENAI_BASE_URL", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_MODEL", "");
 
     const rejection = await extractFromText("some lab text").catch((e: unknown) => e);
     expect(rejection).toBeInstanceOf(NotConfiguredError);
@@ -189,7 +189,9 @@ describe("extractFromText (injected transcriber)", () => {
     // And the text it will put in front of a user names no environment
     // variable — see AI_SERVICE_NOT_CONFIGURED.
     expect((rejection as NotConfiguredError).publicMessage).not.toMatch(
-      /OMNIROUTE|ANTHROPIC|API_KEY|BASE_URL|MODEL/i,
+      // OPENAI added by U31. See the advisor route test for why retired
+      // prefixes stay in the alternation rather than being replaced.
+      /OPENAI|OMNIROUTE|ANTHROPIC|API_KEY|BASE_URL|MODEL/i,
     );
   });
 
@@ -198,9 +200,9 @@ describe("extractFromText (injected transcriber)", () => {
     // SECOND call site. U25's advisor half proved a half-configured provider is
     // the easy thing to miss; this pins that the PDF half fails identically
     // rather than reaching the network with a partial config.
-    vi.stubEnv("OMNIROUTE_BASE_URL", "https://gw.example");
-    vi.stubEnv("OMNIROUTE_API_KEY", "k");
-    vi.stubEnv("OMNIROUTE_MODEL", "");
+    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
+    vi.stubEnv("OPENAI_API_KEY", "k");
+    vi.stubEnv("OPENAI_MODEL", "");
 
     const rejection = await extractFromPdf("JVBERi0xLjQK").catch((e: unknown) => e);
     expect(rejection).toBeInstanceOf(NotConfiguredError);
