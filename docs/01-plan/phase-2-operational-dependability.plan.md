@@ -3692,6 +3692,23 @@ here rather than discovered later.
 - [ ] **The follow-up register is complete and each row re-derived at close.** Check: FU numbering
       contiguous with no gaps and no duplicates; every row's condition re-measured. *(Added because
       FU-22's figures survived from U13 to closeout unchallenged — a register row is a claim.)*
+      **[2026-09-18, added at U22 closeout] This closeout owes two binding guards of the same shape, named
+      here so that "re-derived at close" cannot quietly become "re-typed at close."** Each binds something
+      that today lives as prose in two places with nothing between them:
+      1. **The N-44 parity guard** — a stable id on every criterion, present in both this §8 and
+         `docs/roadmap.md`'s Phase 2 list, asserting **tick-state parity and never text equality** (the two
+         wordings differ by design). Deferred to this closeout by U18 with its shape already written down;
+         the security-headers instance is still divergent in `roadmap.md`, deliberately.
+      2. **A count-binding guard for the "N executable architecture specs" figure** — derive the count from
+         the `src/architecture/` listing and assert every documented occurrence agrees, the way
+         `doc-truth.test.ts` already binds §4's rule table. This is what **retires the stacked date brackets**
+         at the three sites U12 and U22 dated in turn (`docs/project-status.md` ×2,
+         `docs/02-design/architecture-boundaries.md`), and it settles the mechanism half of **N-52** — whose
+         remaining question is whether `README.md`'s per-file counts get bound or dropped.
+      **Owner: the closeout. Neither is built now.** *(Why here rather than as two new register rows: both
+      are the property this criterion already asserts for the register — re-derived, not copied — applied to
+      the criteria list and to a count that no longer fits "date beside, never rewrite", because a
+      monotonically changing number restacks a bracket every time a unit moves it.)*
 
 ---
 
