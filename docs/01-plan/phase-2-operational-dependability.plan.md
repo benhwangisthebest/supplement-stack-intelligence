@@ -2824,6 +2824,49 @@ mocked `false` must see 404 and `runAdvisorTurn` never called; delete the check 
 wrong side. **Sequenced after U12** so the 404 inherits one message rather than authoring a third. **Not
 implemented in the U26 session, by ruling.**
 
+> ### **[2026-09-15] HANDOFF TO THE U31 WORKTREE — U29 and U30 are BLOCKED on U31 landing in `main`.**
+>
+> **Why, in one line:** U29, U30 and U31 edit the same route files, and U31 is in flight on
+> `feat/u31-openai-first-party` in a separate worktree. U29 and U30 wait (owner ruling, 2026-09-15).
+>
+> **This block exists so the U31 session can check reconciliation BEFORE its rebase, not after.** Every
+> file U29 or U30 will touch is listed below with what it will do to it. If U31's diff touches a file in
+> this list, that file is a rebase conflict waiting to happen and is worth looking at while both
+> intentions are still legible.
+>
+> | File | U29 | U30 | Known to be in U31's diff? |
+> |---|---|---|---|
+> | `src/app/api/advisor/route.ts` | **YES** — inserts `conversationBelongsToUser` between validation and `reserveAdvisorTokens` | **YES** — `uuidParam.parse()` (no path param today; it reads `body.conversationId`, so possibly not) | **YES** — provider swap |
+> | `src/app/api/advisor/route.test.ts` | **YES** — a 404-before-spend pin | — | **YES** |
+> | `src/services/advisor-actions.ts` | **YES** — `confirmAndApply` validates `conversationId` (N-49) | — | not seen |
+> | `src/app/api/advisor/actions/route.test.ts` | **YES** — its pin | — | not seen |
+> | `src/app/api/advisor/actions/[id]/undo/route.ts` | — | **YES** — 1 handler | not seen |
+> | `src/app/api/advisor/conversations/[id]/route.ts` | — | **YES** — 1 handler | not seen |
+> | `src/app/api/stacks/[id]/route.ts` | — | **YES** — 3 handlers | not seen |
+> | `src/app/api/stacks/[id]/items/route.ts` | — | **YES** — 1 handler | not seen |
+> | `src/app/api/stacks/[id]/items/[itemId]/route.ts` | — | **YES** — 2 handlers | not seen |
+> | `src/app/api/stacks/[id]/evaluate/route.ts` | — | **YES** — 1 handler | not seen |
+> | `src/app/api/stacks/[id]/compare/route.ts` | — | **YES** — 1 handler | not seen |
+> | `src/app/api/lab-markers/[id]/route.ts` | — | **YES** — 2 handlers | not seen |
+> | `src/lib/api/respond.ts` | — | **no** (U30 uses `handle()`'s existing `ZodError` → `validationError` path unchanged) | not seen |
+> | `src/lib/validation/schemas.ts` *(or a new module)* | — | **YES** — exports `uuidParam` | not seen |
+> | `src/architecture/` | — | **YES** — one new spec | **YES** — `boundaries.test.ts` (`PAID_MODULES`) |
+>
+> **"Known to be in U31's diff?" is this session's observation from the shared worktree before the split,
+> not a reading of U31's branch** — it was measured at 2026-09-15 ~21:20 from `git status`, and U31 has
+> continued since. **The U31 session should confirm it against its own diff rather than trust this
+> column.** Two of the three it names are certain because they were read directly: the advisor route and
+> its test, and `boundaries.test.ts`.
+>
+> **The one genuine overlap to settle before the rebase** is `src/app/api/advisor/route.ts`: U31 rewrites
+> which provider it calls, U29 inserts an ownership check *before* the reservation that precedes that
+> call. These are compatible — different lines, different concerns — but they are adjacent, and U29's
+> insertion point is defined relative to `reserveAdvisorTokens`, which U31 does not move. **If U31 moves
+> or renames the reservation call, U29's plan block needs re-reading before it is implemented.**
+>
+> **Not a blocker for U31, and stated so it is not mistaken for one:** nothing here asks U31 to change
+> anything. U31 lands first, by the same ruling.
+
 **U30 · Malformed path params answer 400, not 500.** *(created 2026-09-14 by decision 8(d), on N-51;
 numbering append-only)* N a `uuidParam` schema export · M **12 handler entry points across 8 route files**
 · M their tests · N a source scan in `src/architecture/`. **S**, deps none. **Scheduled after U29**, and
@@ -3000,12 +3043,59 @@ absorbed** — registered as **N-52**.
 
 **bkit:** feature `u22-fresh-clone-e2e`; artifact subordinate to this entry.
 
-**What CI must add before this entry is complete:** the run id on the pushed SHA, in the closeout commit.
-**Closeout sweep, pre-enumerated** *(and U12's lesson applies — this list is itself a count written once,
-so the sweep greps rather than trusting it)*: `README.md:26`'s per-spec test counts (**N-52**), and any
-`docs/` claim about the number of architecture specs, which U12 dated at 20 and this unit moves to 21 —
-`docs/project-status.md:309` and `:445` and `docs/02-design/architecture-boundaries.md:254` all carry a
-`[2026-09-14, observed at U12: 20]` note that is now off by one.
+**U22 CI — run `35047441242`, green on `13cd0fd`, 18/18 steps.** Every figure this entry claims was
+re-measured by CI and matched exactly: lint **361 of 361, 0 errors**; **1302/107**; non-live E2E
+**70 passed / 30 skipped**. That last pair is also **M4's after-figure**, which is the point: the suite a
+fresh clone runs after the documented install is the same suite CI runs, measured twice by different
+machines.
+
+**U22 STAMP ROW** *(standing disposition):*
+
+| U22 closeout | value |
+|---|---|
+| merged to `main` | **`13cd0fd`** — fast-forward from `e077ced`, 1 commit |
+| code run | **`35047441242`** — green on `13cd0fd`, 18/18 steps, on `feat/u22-fresh-clone-e2e` |
+| post-merge `main` run | **`35047626093`** — green on `13cd0fd`, 18/18, required check satisfied on the merged SHA |
+
+**THE COUNTS-WRITTEN-ONCE SWEEP — and it found something about the *correction pattern itself*.**
+Grepped rather than trusted, per U12's lesson. Three sites carry the `[2026-09-14, observed at U12: 20]`
+note this unit moves to 21, and each is **extended in place rather than given a second note**:
+
+| # | Site | Was | Now |
+|---|---|---|---|
+| 1 | `docs/project-status.md:309` | `[2026-09-14, observed at U12: 20]` | `· 21 at U22 (2026-09-15)` appended inside the same bracket |
+| 2 | `docs/project-status.md:449` | same | same |
+| 3 | `docs/02-design/architecture-boundaries.md:255` | same | same |
+| 4 | `README.md:26` | dated to 21 **in the code commit**, since this unit edits that file | — |
+
+**THE FINDING IS THE SHAPE, NOT THE NUMBER.** "Date beside, never rewrite" (§7) is the right rule for a
+*claim*, and it is the wrong rule for a *monotonically changing count*: applied literally, every unit
+that adds a spec appends another dated note to the same three sites, and the note grows without bound
+while the reader's question — how many are there? — gets harder to answer each time. This is the fifth
+appearance of the counts-written-once class and **the first where the correction mechanism is itself
+the problem**. Extending one bracket rather than stacking brackets is a stopgap, not a fix.
+**The fix is N-52's**, and this sweep is why that row says the honest answer is probably not "update the
+numbers": a count in prose rots by construction, so either drop it and keep the file names, or bind it
+mechanically the way `doc-truth.test.ts` binds §4's table. **N-52 is left registered and unfixed here,
+by the owner's instruction** — correcting `README.md`'s per-spec figures (36→47, 30→31) is not this
+unit's scope, and doing it would be the absorption §8.1 forbids.
+
+**Checked and deliberately NOT changed:** `docs/04-report/phase-0-integration-enforcement.report.md:29`
+and `docs/04-report/phase-1-verification-integrity.report.md:278` — dated historical records (the latter
+says "counts measured 2026-08-06" in its own text), which §7 forbids editing. Same disposition as U12's.
+
+**THE M4 METHOD CORRECTION, RECORDED AS A LESSON RATHER THAN A FOOTNOTE.** This unit's own
+measurement was misread once before it was read right, and the mechanism deserves its own line in the
+register of recurring classes. A filtered `tail -30 | grep` over the before-run reported *"29 skipped,
+34 passed"* and **no failure line at all**, because the list of failing specs is longer than thirty lines
+and had pushed the `37 failed` summary out of the window. Two runs of the identical command appeared to
+disagree, which is what prompted redoing it with full output captured to a file — where the before-state
+is unambiguously `37 failed · 29 skipped · 34 passed`, exit 1. **A filter that can hide the thing being
+measured is not a measurement.** It is the same class this phase keeps meeting — a figure taken once,
+under conditions that are not restated when it is reused — arriving this time **through the tooling
+rather than through the prose**, which is why it is worth naming separately: every earlier appearance was
+a number in a document, and this one was a number on a terminal. Counted as the class's fifth appearance
+(FU-32 · U19 · U20 · U12 · here).
 
 **U23 · Roadmap item 1's residue.** ~~M `respond.ts` (add `path`, `userId`; a real sink). **S/M**.~~ Deferred:
 "target a real sink" implies a logging dependency and an operational decision this plan does not take.
