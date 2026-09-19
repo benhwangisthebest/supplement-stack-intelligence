@@ -61,6 +61,7 @@
 // Importing `@/lib/api/respond` would — see that file's header.
 import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors";
 import {
+  baseUrlPermitted,
   createCompletion,
   type CompletionResult,
   type OpenAIFunctionTool,
@@ -363,10 +364,27 @@ export class AdvisorModelAdapter implements ClaudeAdapter {
   private liveComplete(): CompleteFn {
     const apiKey = this.deps.apiKey ?? process.env.OPENAI_API_KEY;
     const baseUrl = this.deps.baseUrl ?? process.env.OPENAI_BASE_URL;
-    if (!apiKey || !baseUrl) {
+    // [U32, N-63] The host pin is checked HERE and not only in the client,
+    // because this is where the `NotConfiguredError` throw lives — the one
+    // NOT_CONFIGURED_TOTALITY sanctions — so a base URL this deployment may
+    // not dial is the same operational 503 as a base URL it does not have.
+    // The check covers the INJECTED value too: `deps.baseUrl` is ordinary
+    // constructor input, not a test-only channel, so validating the env var
+    // alone would leave the pin one parameter away from being bypassed.
+    const allowNonFirstParty =
+      process.env.OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL === "1";
+    if (!apiKey || !baseUrl || !baseUrlPermitted(baseUrl, allowNonFirstParty)) {
       throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
     }
     return (req) =>
-      createCompletion({ baseUrl, apiKey, timeoutMs: REQUEST_TIMEOUT_MS }, req);
+      createCompletion(
+        {
+          baseUrl,
+          apiKey,
+          allowNonFirstPartyBaseUrl: allowNonFirstParty,
+          timeoutMs: REQUEST_TIMEOUT_MS,
+        },
+        req,
+      );
   }
 }

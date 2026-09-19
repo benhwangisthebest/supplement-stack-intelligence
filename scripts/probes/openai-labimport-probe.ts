@@ -38,7 +38,11 @@
  */
 import fs from "node:fs";
 import { loadProbeEnv, summarise } from "./load-env";
-import { buildCompletionBody, completionsUrl } from "@/lib/openai/client";
+import {
+  baseUrlPermitted,
+  buildCompletionBody,
+  completionsUrl,
+} from "@/lib/openai/client";
 import {
   buildTranscriptionRequest,
   candidatesFromTranscript,
@@ -88,6 +92,21 @@ function requireConfig(): { baseUrl: string; apiKey: string } {
     console.error(
       "OPENAI_BASE_URL and OPENAI_API_KEY must both be set.\n" +
         `Looked in .env.local and the shell — ${summarise(LOADED_ENV)}`,
+    );
+    process.exit(1);
+  }
+  // [U32, N-63] The probes are outside `SOLE_PAID_CLIENT` by design — they are
+  // owner-run diagnostics the application cannot reach — but they dial the
+  // same host with the same credential, so the pin has to reach them too. An
+  // override here is the same explicit act it is in production: set the
+  // variable, and the client logs where the bytes are going.
+  const allowNonFirstParty =
+    process.env.OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL === "1";
+  if (!baseUrlPermitted(BASE_URL, allowNonFirstParty)) {
+    console.error(
+      `OPENAI_BASE_URL is not OpenAI's first-party host, and ` +
+        `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL is not set. Refusing to probe.\n` +
+        "The host is not printed here; it is in your .env.local.",
     );
     process.exit(1);
   }
@@ -274,7 +293,7 @@ async function main(): Promise<void> {
   }
 
   console.log("\nDone. Record this output in a dated copy of");
-  console.log("docs/05-qa/omniroute-probe-record.template.md — decision 7B follows from it.");
+  console.log("docs/05-qa/openai-probe-record.template.md — decision 7B follows from it.");
 }
 
 main().catch((error: unknown) => {

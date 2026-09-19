@@ -23,6 +23,7 @@ import {
 import { advisorRequestSchema } from "@/lib/advisor/schema";
 import { enforceRateLimit } from "@/lib/api/rate-limit-guard";
 import { AI_SERVICE_NOT_CONFIGURED } from "@/lib/api/errors";
+import { baseUrlPermitted } from "@/lib/openai/client";
 import {
   INTERNAL_ERROR_MESSAGE,
   fail,
@@ -69,10 +70,20 @@ export async function POST(request: NextRequest) {
   // is the point: this pre-flight runs BEFORE the 200 SSE response is committed,
   // so an unset id is a 503 status rather than an `error` event inside a stream
   // that already claimed success.
+  //
+  // [U32, N-63] The base URL must also be one this deployment may dial. The
+  // pin is enforced in the client too, but a throw from there would arrive
+  // after this handler had already committed to a 200 SSE stream — the exact
+  // failure mode the paragraph above describes for a missing key. Same
+  // reasoning, one more condition.
   if (
     !process.env.OPENAI_API_KEY ||
     !process.env.OPENAI_BASE_URL ||
-    !process.env.OPENAI_MODEL
+    !process.env.OPENAI_MODEL ||
+    !baseUrlPermitted(
+      process.env.OPENAI_BASE_URL,
+      process.env.OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL === "1",
+    )
   ) {
     return fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503);
   }

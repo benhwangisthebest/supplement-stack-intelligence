@@ -1,8 +1,20 @@
-# OP-4 — Omniroute live probe record (TEMPLATE)
+# OP-4 — OpenAI live probe record (TEMPLATE)
 
-> **This is a template. Copy it to `docs/05-qa/omniroute-probe-<YYYY-MM-DD>.md` and fill it in from a
-> real run.** An unfilled template is not evidence, and a filled one is the only thing that may close
-> decision 7B.
+> **[2026-09-18, U32 / N-65] RETITLED AND RE-POINTED.** ~~OP-4 — Omniroute live probe record~~. The
+> provider became OpenAI's first-party API in U31; a template named for the previous provider is the
+> same drift N-58 found in the probes themselves — the instrument's own documentation lagging the code
+> it documents. The old name is struck rather than erased (`CLAUDE.md` §7).
+>
+> **This is a template. Copy it to `docs/05-qa/openai-probe-<YYYY-MM-DD>.md` and fill it in from a
+> real run.** An unfilled template is not evidence. ~~A filled one is the only thing that may close
+> decision 7B.~~ **[2026-09-18] Struck: decision 7B is RULED and no longer waiting on this document.**
+> A filled record is still the only way a claim about the live provider becomes evidence — that part
+> never depended on 7B.
+>
+> **[2026-09-18, U32] Record the base-URL host and whether the override was set.** The host pin refuses
+> any host but `api.openai.com` unless `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1`, so a probe run against
+> anything else happened *because someone set that variable* — which the record must say, since it is
+> the difference between evidence about the first-party API and evidence about something else.
 >
 > **Why this is owner-run and not CI.** Ruling 3 (2026-08-08) refuses live credentials in a public
 > repository, so nothing in CI can call the gateway. Same footing as **OP-2** and **OP-3**: a claim about

@@ -8,6 +8,7 @@ import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors"
 import { normalizeMarker } from "@/lib/biomarkers";
 import type { ParsedMarkerCandidate } from "@/types/lab";
 import {
+  baseUrlPermitted,
   createCompletion,
   type CompletionRequest,
   type OpenAIContentPart,
@@ -216,6 +217,8 @@ export async function extractFromPdf(
 interface GatewayConfig {
   baseUrl: string;
   apiKey: string;
+  /** [U32] The resolved override, carried so the client sees the same decision. */
+  allowNonFirstPartyBaseUrl: boolean;
   model: string;
   /** Optional (U31). Absent means "use the model's own default effort". */
   reasoningEffort?: string;
@@ -244,7 +247,18 @@ function requireGatewayConfig(deps: ExtractDeps): GatewayConfig {
   const baseUrl = deps.baseUrl ?? process.env.OPENAI_BASE_URL;
   const apiKey = deps.apiKey ?? process.env.OPENAI_API_KEY;
   const model = deps.model ?? process.env.OPENAI_MODEL;
-  if (!baseUrl || !apiKey || !model) {
+  // [U32, N-63] Same shape as the advisor adapter: the pin is checked at the
+  // sanctioned `NotConfiguredError` site, on the value actually used, so an
+  // injected `deps.baseUrl` cannot route around it. A PDF is the single
+  // largest piece of health data this product sends anywhere (§2.3 rule 15).
+  const allowNonFirstPartyBaseUrl =
+    process.env.OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL === "1";
+  if (
+    !baseUrl ||
+    !apiKey ||
+    !model ||
+    !baseUrlPermitted(baseUrl, allowNonFirstPartyBaseUrl)
+  ) {
     throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
   }
   // [U31] NOT part of the required triple, deliberately. An unset reasoning
@@ -255,7 +269,7 @@ function requireGatewayConfig(deps: ExtractDeps): GatewayConfig {
   // asserting something this unit never intended.
   const reasoningEffort =
     deps.reasoningEffort ?? process.env.OPENAI_REASONING_EFFORT;
-  return { baseUrl, apiKey, model, reasoningEffort };
+  return { baseUrl, apiKey, allowNonFirstPartyBaseUrl, model, reasoningEffort };
 }
 
 /** One transcription call. The system prompt is unchanged across the swap. */
@@ -322,7 +336,11 @@ async function transcribeVia(
   userContent: string | OpenAIContentPart[],
 ): Promise<string> {
   const result = await createCompletion(
-    { baseUrl: cfg.baseUrl, apiKey: cfg.apiKey },
+    {
+      baseUrl: cfg.baseUrl,
+      apiKey: cfg.apiKey,
+      allowNonFirstPartyBaseUrl: cfg.allowNonFirstPartyBaseUrl,
+    },
     buildTranscriptionRequest({
       model: cfg.model,
       reasoningEffort: cfg.reasoningEffort,

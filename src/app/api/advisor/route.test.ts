@@ -98,12 +98,19 @@ const BODY = { message: "Does my stack make sense?" };
 
 // A syntactically valid but obviously fake value. Never a real key.
 const FAKE_KEY = "test-key-not-a-real-credential";
-const FAKE_BASE_URL = "https://gateway.invalid";
+const FAKE_BASE_URL = "https://api.openai.com";
 /** Namespaced like a real gateway id, so the fixture cannot re-teach the bare form. */
 const FAKE_MODEL = "test-provider/test-model-not-real";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // [U32] STUBS DO NOT CLEAN THEMSELVES UP HERE, and this line is not tidiness
+  // — it is a correctness fix. `vi.stubEnv` persists past the test that set
+  // it unless something unstubs, so the U32 test below that sets
+  // `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1` silently disabled the new host
+  // pin for every test AFTER it, including the 200 happy path. The suite went
+  // green over a control that was switched off. Registered as N-67.
+  vi.unstubAllEnvs();
   adapterState.usageReported = true;
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubEnv("OPENAI_API_KEY", FAKE_KEY);
@@ -204,6 +211,33 @@ describe("POST /api/advisor — guards before the stream", () => {
     expect(res.status).toBe(503);
     expect((await res.json()).error.code).toBe("NOT_CONFIGURED");
     expect(runAdvisorTurn).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 NOT_CONFIGURED when the base URL is not first-party (U32, N-63)", async () => {
+    // The pin's whole point is that this is a PRE-FLIGHT refusal. Left to the
+    // client alone, a disallowed host would first be noticed inside the paid
+    // call — after the 200 SSE response may already be committed, turning an
+    // operational 503 into an error event on a stream that claimed success.
+    getUser.mockResolvedValue(USER);
+    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
+
+    const res = await POST(req(BODY));
+
+    expect(res.status).toBe(503);
+    expect((await res.json()).error.code).toBe("NOT_CONFIGURED");
+    expect(runAdvisorTurn).not.toHaveBeenCalled();
+  });
+
+  it("proceeds when the override is set for a non-first-party host (U32)", async () => {
+    // The escape hatch stays and stops being silent. A deployment pointing at
+    // a proxy keeps working BY SETTING THE VARIABLE.
+    getUser.mockResolvedValue(USER);
+    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
+    vi.stubEnv("OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL", "1");
+
+    const res = await POST(req(BODY));
+
+    expect(res.status).not.toBe(503);
   });
 
   it("returns 503 NOT_CONFIGURED when the model id is absent (N-21)", async () => {

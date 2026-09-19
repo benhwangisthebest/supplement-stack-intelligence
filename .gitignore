@@ -25,6 +25,12 @@ yarn-error.log*
 # local env files
 .env
 .env*.local
+# [2026-09-18, U32 / N-64] BACKUPS TOO. `.env*.local` does not match
+# `.env.local.bak-u31probe` — a real file the U31 session created while
+# repairing N-57 and had to notice and delete by hand before staging. A
+# credential file that `git status` offers to commit is one keystroke from
+# CLAUDE.md §2.3 rule 14.
+.env*.local*
 
 # typescript
 *.tsbuildinfo

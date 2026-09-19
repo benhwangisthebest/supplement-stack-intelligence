@@ -154,7 +154,13 @@ export interface CompletionResult {
   usage: { inputTokens: number; outputTokens: number } | null;
 }
 
-export type OpenAIFailureKind = "timeout" | "aborted" | "http" | "malformed";
+export type OpenAIFailureKind =
+  | "timeout"
+  | "aborted"
+  | "http"
+  | "malformed"
+  /** [U32] The configured base URL is not first-party and no override is set. */
+  | "config";
 
 /**
  * A transport failure. Carries NO response body and no upstream error text —
@@ -174,6 +180,81 @@ export class OpenAIError extends Error {
 }
 
 // ---- Pure cores (unit-tested, no network) -----------------------------------
+
+/** OpenAI's own API host. The only address this client dials without an override. */
+const FIRST_PARTY_HOST = "api.openai.com";
+
+/** The escape hatch, by name. Read by the CALLER — see the note below. */
+export const ALLOW_NON_FIRST_PARTY = "OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL";
+
+/**
+ * Has the override already been reported? Module scope, so the log is once per
+ * SERVER PROCESS.
+ *
+ * NOT AT MODULE LOAD, AND THAT IS THE WHOLE REASON THIS IS A LATCH RATHER THAN
+ * A TOP-LEVEL STATEMENT. A load-time emission fires during `next build`'s RSC
+ * evaluation and again on every lambda cold start; U28's rendering-determinism
+ * step exists because build-time behaviour and request-time behaviour had
+ * already diverged once here. A first-call latch emits where the decision is
+ * actually made. "Once per process" is also the honest phrasing: an operator
+ * promised "once at startup" reads a cold-start repeat as a defect.
+ */
+let overrideReported = false;
+
+/**
+ * Is this base URL permitted? PURE, except for the one-per-process log.
+ *
+ * PARSED, NOT PATTERN-MATCHED (N-63). A hostname comparison alone accepts
+ * `http://api.openai.com` — right host, wrong transport — and a `endsWith`
+ * check accepts `api.openai.com.evil.example`. So the value is parsed, the
+ * scheme must be `https:`, the hostname must equal the first-party host
+ * exactly, and three shapes that read like the real thing are refused:
+ * userinfo (`https://api.openai.com@evil.example`, whose hostname is
+ * `evil.example`), a trailing dot (`api.openai.com.`, which resolves to the
+ * same host and defeats an exact compare), and any NON-DEFAULT port —
+ * `new URL` normalises `:443` away, so `https://api.openai.com:443` is
+ * permitted and `https://api.openai.com:8443` is not. Measured, not assumed.
+ *
+ * THE OVERRIDE IS NOT A SECURITY BOUNDARY, and nothing here pretends otherwise:
+ * whoever can set the base URL can set the override. This controls DRIFT and
+ * SILENCE — a deployment that quietly points somewhere else — not a hostile
+ * deployer. N-63 is mitigated by this function, not closed by it.
+ *
+ * The caller passes the override as an argument rather than this module reading
+ * the environment, because this module resolves no configuration: it is handed
+ * a base URL and a key (see the zero-imports note at the top of the file), and
+ * that property is what keeps it inside `DOMAIN_IS_PURE`.
+ */
+export function baseUrlPermitted(baseUrl: string, allowNonFirstParty: boolean): boolean {
+  let url: URL;
+  try {
+    url = new URL(baseUrl);
+  } catch {
+    return false;
+  }
+
+  const firstParty =
+    url.protocol === "https:" &&
+    url.hostname.toLowerCase() === FIRST_PARTY_HOST &&
+    url.port === "" &&
+    url.username === "" &&
+    url.password === "";
+
+  if (firstParty) return firstParty;
+  if (!allowNonFirstParty) return false;
+
+  if (!overrideReported) {
+    overrideReported = true;
+    // The host, not the whole URL: a base URL can carry a path, and the thing
+    // an auditor needs is where the bytes went. An override whose destination
+    // is absent from the log is not an audit record.
+    console.warn(
+      `[openai] ${ALLOW_NON_FIRST_PARTY}=1 — paid calls go to ${url.host || baseUrl}, ` +
+        `not ${FIRST_PARTY_HOST}. Health context may leave this process to that host.`,
+    );
+  }
+  return true;
+}
 
 /** `baseUrl` + the completions path, tolerant of a trailing slash. PURE. */
 export function completionsUrl(baseUrl: string): string {
@@ -298,6 +379,11 @@ export interface ClientConfig {
   timeoutMs?: number;
   /** The caller's connection, so a client disconnect stops an in-flight call. */
   signal?: AbortSignal;
+  /**
+   * [U32] The caller's reading of `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL`.
+   * Absent means STRICT — the safe default is the one you get by forgetting.
+   */
+  allowNonFirstPartyBaseUrl?: boolean;
   /** Injected in tests. Never injected in production. */
   fetchImpl?: typeof fetch;
 }
@@ -331,6 +417,19 @@ export async function createCompletion(
   // rather than a behaviour inherited from the runtime.
   if (config.signal?.aborted) {
     throw new OpenAIError("Caller disconnected before the request", "aborted");
+  }
+
+  // [U32] THE BACKSTOP, not the primary control. Both real callers validate
+  // where their `NotConfiguredError` throw lives, so a misconfigured
+  // deployment is a 503 at pre-flight rather than a throw from here. This
+  // check exists for the caller that has not been written yet: refusing at the
+  // one place money is spent means a new call site cannot dial an unpinned
+  // host by simply not knowing about the rule.
+  if (!baseUrlPermitted(config.baseUrl, config.allowNonFirstPartyBaseUrl ?? false)) {
+    throw new OpenAIError(
+      `Base URL is not first-party and ${ALLOW_NON_FIRST_PARTY} is not set`,
+      "config",
+    );
   }
 
   const controller = new AbortController();

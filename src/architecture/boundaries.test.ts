@@ -1214,6 +1214,36 @@ describe("architecture boundaries — the real source tree", () => {
     ]);
   });
 
+  it("SOLE_PAID_CLIENT: the gateway ADDRESS is read only where it is declared to be", () => {
+    // [2026-09-18, U32 / N-66] The same ratchet, on the other half of the paid
+    // boundary. The key half was pinned in U25; the address half was not, and
+    // U32's host pin lives on the address — so a new module could read
+    // `OPENAI_BASE_URL`, skip the validator, and dial whatever the environment
+    // named, with every existing assertion still green.
+    //
+    // WHY THIS IS NOT REDUNDANT WITH `FIRST_PARTY_BASE_URL`. That rule says
+    // every reader VALIDATES; this one says the set of readers cannot grow
+    // without a decision. A reader added WITH a validator call satisfies the
+    // first rule and is still a new place where a paid address is resolved —
+    // which is exactly what U32's "the validator is called from exactly two
+    // sites" sentence would otherwise be: a count written once, in prose.
+    const readers = NON_TEST_SRC.filter((f) =>
+      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OPENAI_BASE_URL"),
+    ).sort();
+
+    expect(
+      readers,
+      "SOLE_PAID_CLIENT: a new module resolves the gateway address. Every reader is\n" +
+        "a place that decides where a paid call goes, so the list is pinned rather\n" +
+        "than bounded — add the reason here, or take the resolved URL as an argument:\n  " +
+        readers.join("\n  "),
+    ).toEqual([
+      "src/app/api/advisor/route.ts",
+      "src/lib/advisor/model-adapter.ts",
+      "src/lib/lab-import/pdf-adapter.ts",
+    ]);
+  });
+
   // ---- U25 / N-21: NO_PINNED_MODEL_ID -------------------------------------
   //
   // Found by the FIRST live probe, not by any test: `model-adapter.ts` shipped

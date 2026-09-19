@@ -5,6 +5,7 @@
 // delegated to an SDK option — see finding N-20.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  baseUrlPermitted,
   buildCompletionBody,
   COMPLETIONS_PATH,
   createCompletion,
@@ -15,7 +16,7 @@ import {
   readUsage,
 } from "./client";
 
-const CONFIG = { baseUrl: "https://gw.example", apiKey: "k" };
+const CONFIG = { baseUrl: "https://api.openai.com", apiKey: "k" };
 const REQ = {
   model: "m",
   messages: [{ role: "user" as const, content: "hi" }],
@@ -132,7 +133,7 @@ describe("createCompletion — the request it puts on the wire", () => {
     await createCompletion({ ...CONFIG, fetchImpl: fetchImpl as never }, REQ);
 
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe(`https://gw.example${COMPLETIONS_PATH}`);
+    expect(url).toBe(`https://api.openai.com${COMPLETIONS_PATH}`);
     expect(init.method).toBe("POST");
     expect((init.headers as Record<string, string>).Authorization).toBe("Bearer k");
     const body = JSON.parse(init.body as string);
@@ -356,5 +357,114 @@ describe("createCompletion — the timeout (N-20's first red proof)", () => {
       ),
     ).rejects.toMatchObject({ kind: "aborted" });
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// U32 — the base URL is pinned to first-party (N-63)
+// ---------------------------------------------------------------------------
+describe("baseUrlPermitted: parsed, not pattern-matched", () => {
+  it("permits OpenAI's own host over https, with or without a trailing slash", () => {
+    expect(baseUrlPermitted("https://api.openai.com", false)).toBe(true);
+    expect(baseUrlPermitted("https://api.openai.com/", false)).toBe(true);
+    expect(baseUrlPermitted("https://API.OpenAI.com", false)).toBe(true);
+  });
+
+  it("refuses any other host when no override is set", () => {
+    expect(baseUrlPermitted("https://gw.example", false)).toBe(false);
+  });
+
+  it("refuses http, because the host is right and the transport is not", () => {
+    // A hostname check alone passes this, which is why the scheme is parsed.
+    expect(baseUrlPermitted("http://api.openai.com", false)).toBe(false);
+  });
+
+  it("refuses a lookalike that merely ends with the right suffix", () => {
+    expect(baseUrlPermitted("https://api.openai.com.evil.example", false)).toBe(false);
+    expect(baseUrlPermitted("https://notapi.openai.com", false)).toBe(false);
+  });
+
+  it("refuses userinfo, a trailing dot, and a non-default port", () => {
+    // `https://api.openai.com@evil.example` has hostname `evil.example` and
+    // reads as the real thing; the trailing dot resolves to the same host and
+    // defeats an exact string compare.
+    expect(baseUrlPermitted("https://api.openai.com@evil.example", false)).toBe(false);
+    expect(baseUrlPermitted("https://api.openai.com.", false)).toBe(false);
+    expect(baseUrlPermitted("https://api.openai.com:8443", false)).toBe(false);
+  });
+
+  it("permits the DEFAULT port written out, because `new URL` normalises it away", () => {
+    // Measured, not assumed: `new URL("https://api.openai.com:443").port` is
+    // the empty string, so an operator who writes the port explicitly is not
+    // locked out by a rule aimed at redirection.
+    expect(baseUrlPermitted("https://api.openai.com:443", false)).toBe(true);
+  });
+
+  it("refuses a value that is not a URL at all", () => {
+    expect(baseUrlPermitted("api.openai.com", false)).toBe(false);
+    expect(baseUrlPermitted("", false)).toBe(false);
+  });
+
+  it("permits a non-first-party host when the override is set", () => {
+    expect(baseUrlPermitted("https://gw.example", true)).toBe(true);
+  });
+});
+
+describe("the override is logged once per server process, with the host", () => {
+  it("logs exactly one line naming the host, however many calls are made", async () => {
+    // Once per PROCESS, not per request: a per-request line is noise that
+    // trains people to ignore it. And not at module load either — a load-time
+    // emission fires during `next build`'s RSC evaluation and on every cold
+    // start, which U28's rendering-determinism step makes a live concern.
+    vi.resetModules();
+    const fresh = await import("./client");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    expect(fresh.baseUrlPermitted("https://gw.example", true)).toBe(true);
+    expect(fresh.baseUrlPermitted("https://gw.example", true)).toBe(true);
+    expect(fresh.baseUrlPermitted("https://other.example", true)).toBe(true);
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain("gw.example");
+    warn.mockRestore();
+  });
+
+  it("says nothing when the configured host is first-party", async () => {
+    vi.resetModules();
+    const fresh = await import("./client");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(fresh.baseUrlPermitted("https://api.openai.com", true)).toBe(true);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+describe("createCompletion refuses a non-first-party base URL", () => {
+  it("throws before spending, and never calls fetch", async () => {
+    const fetchImpl = vi.fn();
+    await expect(
+      createCompletion(
+        { baseUrl: "https://gw.example", apiKey: "k", fetchImpl: fetchImpl as never },
+        REQ,
+      ),
+    ).rejects.toBeInstanceOf(OpenAIError);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("proceeds when the caller passes the override", async () => {
+    const fetchImpl = vi.fn(async () =>
+      jsonResponse({ choices: [{ message: { content: "ok" } }] }),
+    );
+    const result = await createCompletion(
+      {
+        baseUrl: "https://gw.example",
+        apiKey: "k",
+        allowNonFirstPartyBaseUrl: true,
+        fetchImpl: fetchImpl as never,
+      },
+      REQ,
+    );
+    expect(result.text).toBe("ok");
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });

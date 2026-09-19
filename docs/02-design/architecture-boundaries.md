@@ -253,7 +253,8 @@ Status: **7/7** of `evaluateStack`'s context fields covered (was 2/7). No dead c
 ```bash
 npm test                                              # includes all seven executable specs
                                                       # [2026-09-14, observed at U12: 20 · 21 at U22
-                                                      #  (2026-09-15), not seven.
+                                                      #  (2026-09-15) · 22 at U32 (2026-09-18),
+                                                      #  not seven.
                                                       #  `npm test` runs the directory, so the command
                                                       #  is right and only the count aged.]
 npx vitest run src/architecture/boundaries.test.ts     # layer boundaries only (36)

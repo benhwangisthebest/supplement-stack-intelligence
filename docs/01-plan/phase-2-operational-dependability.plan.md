@@ -324,6 +324,9 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-63** | **`ecc:security-reviewer` on the U31 diff, 2026-09-18** | **`OPENAI_BASE_URL` is documented as first-party and never validated as first-party.** Both readers (`model-adapter.ts`, `pdf-adapter.ts`) apply a **truthiness check only**; `completionsUrl` concatenates without a `new URL()` parse, an https-only assertion or a host allowlist. `.env.example:26` documents the escape hatch in as many words. Anyone who can set the deployment's environment can silently redirect medications, conditions, lab values and whole lab-report PDFs to an arbitrary host, carrying `OPENAI_API_KEY` in the `Authorization` header. `SOLE_PAID_CLIENT` does not cover this **and says so itself** — it proves the code funnels through one module, not what host that module dials | `model-adapter.ts:365-368`, `pdf-adapter.ts:244-249`, `client.ts:179-181`; `.env.example:26`; `boundaries.test.ts:1160-1164` (the guard's own stated limit) | **TAKEN AS `U32`** — owner ruling 2026-09-18, sequenced after U31 and **before U29**. **Not absorbed into U31:** a provider rename must not quietly acquire a deployment control (§8.1). **This is OP-5's code-level half**, and OP-5 stays OPEN until it lands *and* the owner's account facts are recorded |
 | **N-64** | **U31 closeout, 2026-09-18** | **`.gitignore:27`'s `.env*.local` does not match a `.env*.local*` backup.** `.env.local.bak-u31probe` — created while repairing N-57 — was untracked, unignored, and offered by `git status` for staging, holding a live API key and the Supabase service-role key. It was noticed and deleted by hand. **The near-miss is the finding:** §2.3 rule 14 was preserved by attention, not by a pattern | `git check-ignore -v .env.local.bak-u31probe` → no match | **FOLDED INTO `U32`** — one line. Registered separately because the *class* is "credential files whose names are one suffix away from the ignore pattern", which one line narrows but does not close |
 | **N-65** | **U31 closeout sweep, 2026-09-18** | **The probe record template outlived the thing it templates, and the renamed probes still hand it to the operator.** `docs/05-qa/omniroute-probe-record.template.md` is titled *"OP-4 — Omniroute live probe record"*, instructs a copy to `omniroute-probe-<date>.md`, and states it "is the only thing that may close decision 7B" — a decision ruled 2026-08-10 and re-established against a different provider on 2026-09-18. **Three live pointers in U31's own renamed probes still name it.** Neither record written on 2026-09-18 used it | `scripts/probes/openai-advisor-probe.ts:31,263`; `openai-labimport-probe.ts:277`; the template's own header | **FOLDED INTO `U32`** — owner ruling 2026-09-18, **declared there as a widening with its reasons**, not absorbed silently: U32 already opens `scripts/`, the template is the instrument's own documentation, and this is **N-58's class** (the probes drifting from what they measure) one level out. This is U31's residue — U31 renamed the probes and not their target. **The class is "counts-written-once, one level up": not a number that rotted but a template that did**, still being handed forward by the files that should have retired it |
+| **N-66** | **`ecc:architect` during U32 planning, 2026-09-18** (the one question the unit put to it: client module or env reader) | **`SOLE_PAID_CLIENT`'s reader ratchet pins readers of `OPENAI_API_KEY` and nothing else, so a new module that reads `OPENAI_BASE_URL` and dials it without the validator is green.** The key half of the paid boundary is ratcheted; the address half is not, and U32's control lives on the address | `boundaries.test.ts:1194` pins the key readers as an equality; no assertion anywhere names a base-URL reader. Measured readers today: `model-adapter.ts:365`, `pdf-adapter.ts:244`, `route.ts:74` | **FOLDED INTO U32 by owner ruling 2026-09-18, declared as a widening.** The ruling's reason: it is what stops U32's *"the validator is called from exactly two sites"* clause from being a count written once (FU-32's class). An anti-vacuity assertion proves the validator is called somewhere; only a pinned reader list proves nothing reads the variable *instead*. **M7** is its red proof |
+| **N-67** | **U32 implementation, 2026-09-18 — raised by this unit's own test, which is the uncomfortable part** | **`vi.stubEnv` leaks across tests in `src/app/api/advisor/route.test.ts`, and a test that sets an escape-hatch flag therefore disables that control for every test AFTER it.** Nothing in the file or in `vitest.config.ts` unstubs. U32's new *"proceeds when the override is set"* test stubbed `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1`, and the happy-path test 200 lines later — which configures the non-first-party `https://gateway.invalid` — **passed with a 200 while the brand-new host pin was switched off**. A green suite over a disabled control, introduced by the commit that added the control | Observed: run at 19:58:38 on 2026-09-18, `route.test.ts` **23 passed** with `FAKE_BASE_URL = "https://gateway.invalid"` and the pre-flight live — arithmetic that only works if the override leaked. Confirmed by `git show HEAD:src/app/api/advisor/route.test.ts | grep -c unstub` → **0**, and `grep -c unstub vitest.config.ts` → **0** | **INSTANCE FIXED HERE** — `vi.unstubAllEnvs()` added to `beforeEach`, and `FAKE_BASE_URL` changed to the first-party host so the happy path exercises a permitted address rather than a tolerated one. **THE CLASS IS OPEN, unassigned**: `grep -rl "vi.stubEnv" --include=*.test.ts src/` returns **three** files — this one plus `src/lib/advisor/model-adapter.test.ts` and `src/lib/lab-import/lab-import.test.ts` — and nothing in the project asserts that a stub is ever undone. The mechanical fix is `unstubEnvs: true` in `vitest.config.ts` — one line, and it may redden tests that currently depend on leakage, which is why it is a decision and not a patch smuggled into this unit |
+| **N-68** | **U32 review follow-through, 2026-09-18** — found while proving the fix for `ecc:code-reviewer`'s BLOCKING finding, by running the same mutation against `HEAD` | **`model-adapter.test.ts`'s "key is absent" test has been green for the wrong reason since before this unit.** Deleting the `!apiKey` clause leaves the suite **21/21 green on `HEAD`**, because the test stubs no `OPENAI_MODEL` and `resolveModel` throws the same shared `AI_SERVICE_NOT_CONFIGURED` a moment later. `rejects.toThrow("not configured")` cannot tell two causes apart when one message serves every cause | `git show HEAD:…model-adapter.ts` with `!apiKey` removed, `git show HEAD:…model-adapter.test.ts` unchanged → **Tests 21 passed (21)**. The same mutation on the U32 tree: **22 passed** | **OPEN, unassigned — NOT fixed here, deliberately.** It predates U32 and belongs to whichever unit owns that guard; fixing a pre-existing green-for-the-wrong-reason test inside a unit about base URLs is the absorption §8.1 forbids, and this register row is what stops it being forgotten instead. **The fix is one line** — stub `OPENAI_MODEL` in that test so the key check is the only thing that can throw. **The class is the real finding**: a single shared error message across every configuration failure makes `toThrow(<that message>)` structurally unable to distinguish causes, so any test written that way is one new early-return away from silently stopping. U32's own BLOCKING finding was the same mechanism, one commit later |
 
 **[2026-09-18, third and final revision — the two earlier versions of this note are why it is worth reading.] THE GAP IS CLOSED, AND BY THIS COMMIT RATHER THAN BY THE CLOSEOUT.** The first version said N-53…N-55 sat on an unmerged branch and would arrive at merge. They did not: U31's code commit `f9c34e3` left them in its subordinate artifact. The second version recorded that as a finding and refused to promote them unasked. U31's closeout `a0d318b` then added **N-63, N-64 and N-65** straight into this register — correctly — while **N-53 … N-62 stayed in the artifact**, so the register read N-1…N-52, N-63…N-65 and the numbers between them existed only in a subordinate file. **This commit promotes N-53 … N-62 verbatim**, each tagged with its source section, and strikes the artifact copies in place with a pointer (§7). **N-56 is one row, not two** — U31 raised it, the main session wrote it up more fully with the owner's ruling, and the artifact's copy is superseded in place. The register is now **contiguous N-1 … N-65**, verified by count rather than by reading.
 
@@ -376,6 +379,54 @@ that "Phase 2 closed" cannot be read as "these were done".
 | **OP-5** | **The production gateway's provider set must be restricted to real API-keyed providers before any deployment carries user traffic.** The owner's gateway instance currently exposes mostly **free web front-ends and repackaged coding-subscription providers**. Advisor traffic carries the user's **health context** — medications, conditions, lab values (§2.3 rule 15) — so which upstream a turn is routed to is a data-handling decision, not a cost one. A free front-end has no data-processing agreement, no stated retention, and in several cases trains on submitted text | **Registered, not absorbed (§8.1), and explicitly NOT U25 work.** U25 swaps the client and the protocol; it does not choose or constrain a routing table, and it must not silently acquire a scope that belongs to a deployment decision. Nothing in the codebase can enforce this either — the provider set lives in the gateway's own configuration, outside this repository, so a test here would be theatre | **OWNER CONDITION, PRE-DEPLOYMENT.** Before the advisor is served to any real user from this gateway: restrict the instance's provider set to API-keyed providers with stated retention terms, and record the permitted set and the date under `docs/05-qa/`. Until that record exists, treat any deployed advisor as **development-only, with no real user health data**. Non-negotiable rule §2.3.15 is the authority; this row is its operational form for a routed provider. **[2026-09-18, U31] RE-STATED FOR THE NEW PROVIDER, AND STILL OPEN — NOT DISCHARGED.** U31 replaced the routed gateway with OpenAI's first-party API, which **narrows** this row's original risk (a routing table of free front-ends is gone; there is one known upstream) but does **not** close it, for two reasons, both blocking: **(i) N-63 — the code does not enforce what the docs claim.** `OPENAI_BASE_URL` is validated only for non-emptiness, so "first-party" is a deployment convention, not a control. **U32 is this row's precondition** and is sequenced before U29 for that reason. **(ii) The account facts are the owner's and are not in evidence** — the configured base URL as deployed, whether a data-processing agreement is executed for this account and when, and whether zero-data-retention is enabled. The record this row demands (`docs/05-qa/2026-09-18-op5-provider-record.md`) is **not written**, because writing it would mean either fabricating those facts or citing a retention policy from recall, and §2.2 rule 8 forbids both: verified against a real source, or absent. **Any account fact returning "unknown" leaves OP-5 open with the record naming exactly what is missing.** The development-only instruction above **remains in force** |
 | **OP-7** ✅ **DISCHARGED 2026-08-17** — `docs/05-qa/2026-08-17-op7-deletion-function-sitting.md`. All four steps PASS: `0010` applied clean, **`args` EMPTY**, `proconfig = {search_path=""}`, and the null-claim probe raised **`28000` from `line 8 at RAISE`** — the same line the local measurement and CI both exercise. **No live deletion run.** Two apparent mismatches were client rendering, not data (`prosecdef` as `true` not `t`; `proconfig` as JSON not an array literal); the procedure's expectations now carry both renderings, because a probe that reports a false alarm invites being tuned until it agrees (**N-26**). U17's merge blocker is cleared | **Deploy `0010_delete_user_data.sql`, then verify the function with SAFE PROBES ONLY.** **THE ORDER IS THE REVERSE OF OP-1's, and the reversal is the point.** OP-1 (0008) was *code first, never the migration alone*. This one is **migration first, never the code alone**: `0010` deployed against old code is a harmless unused function, whereas U17's code deployed without `0010` is a DELETE route whose RPC does not exist. That second case is pinned to fail **honestly** rather than partially — `route.test.ts` asserts a 500 with `data: null`, no counts, and a correlation id, so a user is never told their data was removed when nothing was | CI proves the function applies, is callable, deletes all twelve, and isolates users — but only against a **throwaway** Postgres. Whether the DEPLOYED database has the function, and whether its pins hold there, is exactly what CI structurally cannot see (P-03: no credentials) | **SAFE PROBES ONLY — three statements, none of which delete live data.** (1) **Catalog shape:** `select p.proname, pg_get_function_identity_arguments(p.oid) as args, pg_get_function_result(p.oid) as returns, p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'delete_all_user_data';` → **expect 1 row, `args` EMPTY, returns `jsonb`, `prosecdef = t`**. The empty `args` is the live-side check of the repository's highest-stakes assertion. (2) **search_path:** `select proconfig from pg_proc where proname = 'delete_all_user_data';` → **expect `{search_path=\"\"}`**. (3) **Null-claim refusal, which touches no data:** in a transaction, `set local role authenticated;` with **no** `request.jwt.claims`, then `select public.delete_all_user_data();` → **expect ERROR `28000` \"requires an authenticated caller\"**; `auth.uid()` is null so the function raises before its first delete. `rollback;`. **NO LIVE-DELETION TEST** — the cascade and emptiness proofs live in CI against the throwaway Postgres, which is what U15 was built to make possible. **If the procedure appears to need anything beyond read-only plus the null-claim probe, STOP AND ASK rather than improvising against a production database.** The three statements are also carried in `0010`'s own header, per the 0008/0009 pattern |
 | **OP-6** ✅ **DISCHARGED 2026-08-10** — `docs/05-qa/2026-08-10-rate-limit-policy-verification.md`, hours after this row was opened. All four as `authenticated`: DELETE (**no `WHERE`** — every visible row targeted) removed 0; INSERT raised **`ERROR 42501 new row violates row-level security policy for table "api_rate_limits"`**; SELECT returned the live `:advisor` bucket; `consume_rate_limit('user:op6-test', 60, 5)` × 6 returned **1,2,3,4,5,0**. Test bucket rolled back. **Check 2 is the only one of the eight checks across both records that stands alone** — a raised error cannot be explained by an empty table, where a filtered 0-row result can | **`0009`'s sibling verification block was never run, and had no row here — which is the reason this one exists.** `0009_rate_limits.sql`'s header carries four owner-run statements against `api_rate_limits`: `delete` (denied), `insert` (denied), `select` (own rows), `consume_rate_limit('user:me', 60, 5)` (`1..5` then `0`). It calls itself *"plan §4.6 OP-2's sibling"* — but OP-2's procedure column names `0008`'s statements and only those, so the sibling's absence was invisible at discharge and OP-2 closed without it | Same reason as OP-2: `RLS_COVERAGE` and `SQL_FUNCTION_REGISTRY` read `0009` as **text**. `api_rate_limits` is the schema's **second counter table** (0008's rule, applied at birth rather than in a later migration), so it carries the same hole closed the same way — and verified by nothing. Its `insert` check is also the only one of the eight that can produce the `new row violates` error shape; the `0008` four can only ever produce silent 0-row filtering | The four psql statements in `0009_rate_limits.sql`'s header, **as the `authenticated` role**, same technique as OP-2. Append to `docs/05-qa/2026-08-10-ledger-policy-verification.md`. **Registered rather than folded into OP-2** because §4.6's stated purpose is that these are *"listed here, not buried in a file header"* — a header block with no register row is exactly the burial this section exists to prevent |
+
+#### OP-5's non-coverage paragraph — written by U32, from `ecc:security-reviewer`'s enumeration (2026-09-18)
+
+**Drafted here so OP-5's record cannot cite U32 as though it settled the question.** The reviewer was
+asked one question — *with the pin in place, enumerate every way health context can still leave the
+process to a host other than `api.openai.com`* — and the answer is the paragraph, ordered by how
+plausible each path is in a real deployment. **Verdict first: N-63 is MITIGATED, not CLOSED.** U32 closes
+the *silent-drift* mode — an unset or mistyped `OPENAI_BASE_URL` no longer dials an arbitrary host
+unnoticed. It does not close the *hostile-operator* or *network-layer* mode.
+
+1. **The override itself.** `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1`. By design, and the most plausible
+   path in any real deployment, because it is the intended hatch for a proxy or compatible gateway.
+   Whoever can set the address can set the permission. **U32 makes it explicit and logged once per
+   process, naming the host; it does not prevent it.**
+2. **DNS, TLS and proxy-level redirection the code cannot observe.** An egress proxy, poisoned DNS, a
+   hosts entry, or a TLS-terminating middlebox can make the literal string `api.openai.com` resolve to,
+   or be terminated by, infrastructure no source-level check can see. **There is no certificate pinning
+   anywhere in the client.** U32 validates the configured *string*, not the resolved peer. **Unchanged
+   by this unit, and not fixable by a check of this kind.**
+3. **A future call that bypasses `createCompletion`.** Measured today: none — the only other `fetch(`
+   calls in `src/` are same-origin `/api/...` calls from client components. `SOLE_PAID_CLIENT` plus
+   N-66's address ratchet catch a new `src/` module that *reads `OPENAI_BASE_URL`*; **neither catches a
+   hardcoded host literal that never reads the variable**, and the ratchet's file set is `src/` only.
+   **Narrowed by U32, not eliminated.**
+4. **Supabase.** Every request carrying medications, allergies, conditions or lab values reaches the
+   configured Supabase host through `src/lib/db` and the session refresh in `src/middleware.ts`. This is
+   expected, separately governed infrastructure rather than a leak — listed because the question said
+   *every* way, and because a non-coverage paragraph that omits the other host the data goes to is not
+   an honest one. **Entirely outside U32's scope and untouched by it.**
+5. **Telemetry or error-reporting SDKs.** None exist: the reviewer grepped Sentry, Datadog, PostHog,
+   LogRocket, Bugsnag, Honeycomb and New Relic across `src/` and `package.json` — **zero matches**. Not
+   a path today, and the measurement is what makes that sentence worth writing.
+6. **Log and error paths.** No `console.*` in the advisor, lab-import or advisor-route code outside
+   U32's own host-only override line, and `OpenAIError` carries no response body or upstream text by the
+   module's existing design — so the new `"config"` failure kind inherits that invariant and cannot
+   smuggle context into a log or a response.
+7. **The probe scripts.** They transmit health-context-shaped test data to whatever host is configured.
+   **U32 gates them with the same validator**, and the refusal deliberately does not print the host.
+   **Residual, and it belongs in this paragraph:** the N-66 ratchet does not reach `scripts/`, so a
+   third probe or an ad-hoc script that read the variable would not be caught mechanically.
+8. **Build-time, edge and middleware execution.** `next.config.ts` sets static headers and no rewrites,
+   redirects or proxying; `src/middleware.ts` refreshes the Supabase cookie and stamps a CSP nonce.
+   Neither is a paid-LLM egress path. **N/A, and unchanged.**
+
+**One advisory taken as written rather than silently:** the override log has no correlation id or
+structured fields. It carries a host name and no health context, so it is low severity — recorded, not
+fixed here.
+
 
 **OP-2 now has a dated record (2026-08-10) and `advisor_usage`'s policy is verified against the deployed
 database — §2's finding is retired in both senses.** ~~Until OP-2 and OP-3 have dated records, the honest
@@ -3109,6 +3160,143 @@ the owner's and was asked for explicitly rather than assumed.
 *this code* will dial, not what the deployment's egress permits, and an operator who sets the override can
 still send health context anywhere. **U32 makes the control code-level and auditable; it does not make it
 absolute**, and OP-5's record must say so rather than cite U32 as though it closed the question.
+
+---
+
+#### U32 PLAN — drafted 2026-09-18, ~~AWAITING OWNER APPROVAL. Nothing below is implemented.~~ **APPROVED AS WRITTEN by the repository owner, 2026-09-18**, with **N-66 folded in** and a seventh mutation added. Rulings recorded in the same breath: **N-63 is MITIGATED, not closed**, and that sentence is OP-5's first line of non-coverage; the log is **once per server process**; the refusal is **503 via `NotConfiguredError`**; `.env.example`'s line is corrected in the same commit.
+
+**bkit:** registered as `u32-first-party-base-url`, phase `plan`; artifact
+`docs/01-plan/features/u32-first-party-base-url.plan.md`, subordinate, mirroring this entry and not
+replacing it (the standing rule from the 2026-09-18 ruling recorded under the register's numbering note).
+
+**PLACEMENT — the one question put to `ecc:architect`, and the answer taken.** *Does the host check
+belong in the client module or in the env reader, given `SOLE_PAID_CLIENT`'s boundary?* **Answer: the
+client module**, and the reason is measured rather than stylistic — **both paid paths already funnel into
+`createCompletion`**: `model-adapter.ts:370` and `pdf-adapter.ts:324` each resolve `deps.baseUrl ??
+process.env.OPENAI_BASE_URL` and hand the result to it (verified by reading both call sites, not
+inferred). An env-reader placement would have to enumerate the readers — and **`SOLE_PAID_CLIENT`'s reader
+ratchet pins readers of `OPENAI_API_KEY` only** (`boundaries.test.ts:1194`), so base-URL readers are
+unpinned and a fifth one added tomorrow is green. The decisive failure, though, is **injection**:
+`deps.baseUrl` short-circuits an env-reader check by construction, and `ExtractDeps`/advisor deps are
+ordinary constructor input rather than a test-only channel.
+
+**Two corrections to this entry's own text, dated rather than rewritten (§7):**
+1. ~~"logged **once at startup**"~~ → **once per server process**. A module-load side effect fires during
+   `next build`'s RSC evaluation and again on every lambda cold start, and **U28's rendering-determinism
+   step makes build-time emissions a live concern**. The log is a module-scope first-call latch inside the
+   validator. An operator promised "startup only" reads cold-start repeats as a defect.
+2. The entry says *"M `src/lib/openai/client.ts` (or the one place both adapters already read the
+   variable)"*. **There is no such one place** — `process.env.OPENAI_BASE_URL` is read in four:
+   `model-adapter.ts:365`, `pdf-adapter.ts:244`, `route.ts:74` (presence only), and both probes. The
+   parenthetical described a module that does not exist.
+
+**THE SECOND CALL SITE IS NOT A SECOND IMPLEMENTATION, AND IT IS NOT OPTIONAL.** `route.ts:74` is a
+presence-only pre-flight today, so a disallowed host would first be noticed **inside** the paid call —
+after the response may already be committed. The pure validator is called there too, which keeps the
+declared behaviour a 503 at pre-flight. One function, two call sites; the guard asserts both.
+
+**FILES, and the callers enumerated per §9.4:**
+
+| File | Change | Why it is in the list |
+|---|---|---|
+| `src/lib/openai/client.ts` | **N** `assertFirstPartyBaseUrl` (pure, exported) + call at the top of `createCompletion` | the chokepoint; validates the injected value too |
+| `src/app/api/advisor/route.ts:74` | **M** pre-flight calls the validator | keeps the failure a 503 before the stream commits |
+| `src/lib/advisor/model-adapter.ts` | **unchanged** | reaches the check through `createCompletion` — enumerated to record that it needs no edit |
+| `src/lib/lab-import/pdf-adapter.ts` | **unchanged** | same |
+| `scripts/probes/openai-advisor-probe.ts` | **M** import and call the validator; `:31`, `:263` template pointers | dials the same host with the same credential, outside `SOLE_PAID_CLIENT` by design |
+| `scripts/probes/openai-labimport-probe.ts` | **M** same; `:277` template pointer | same |
+| `.env.example:22-28` | **M** | it currently says *"Point it elsewhere for a proxy or a compatible gateway"* — after this unit that is false without the override, and a template that contradicts the code is N-52's class |
+| `.gitignore:27` | **M** `.env*.local` → also match `.env*.local*` | **N-64** |
+| `docs/05-qa/omniroute-probe-record.template.md` | **R** → `openai-probe-record.template.md`, retitled, 7B claim dropped | **N-65** |
+| `src/architecture/first-party-base-url.test.ts` | **N** | the guard. **Spec count 21 → 22** — three dated sites to update, and this is the count N-52's mechanism question is about |
+| `src/lib/openai/client.test.ts` · `src/app/api/advisor/route.test.ts` | **M** | `client.test.ts:18` injects `baseUrl: "https://gw.example"` and `route.test.ts:110` stubs a fake base URL; **both go red on this change and that is correct** — they are the first proof the check binds |
+
+**ERROR TYPE — proposed, and the alternative stated.** Throw `NotConfiguredError(AI_SERVICE_NOT_CONFIGURED)`,
+which `NOT_CONFIGURED_TOTALITY` already sanctions and which answers **503**, the same shape U31 declared
+for a missing variable. A disallowed host *is* a misconfiguration, and inventing a second error class
+would produce a 500 with a correlation id for an operator error the operator can fix. **The alternative —
+a distinct `OpenAIError("non-first-party host")` → 500 — is rejected** because it tells the caller nothing
+and tells the operator less.
+
+**VALIDATION, parsed rather than matched.** `new URL(x)`, require **`https:`**, compare
+`hostname.toLowerCase()` exactly against `api.openai.com`, and reject **userinfo**
+(`https://api.openai.com@evil.example` has hostname `evil.example`, but the credential-bearing form is
+worth rejecting explicitly), a **trailing dot** (`api.openai.com.`), and any **non-default port**. A
+hostname check alone passes `http://api.openai.com`, which is the same host and the wrong transport.
+
+**RED PLAN — seven mutations, each shown red before the fix (§5 rule 2). M7 added by the 2026-09-18 ruling that folded in N-66:**
+
+| # | Mutation | Must redden |
+|---|---|---|
+| **M1** | Delete the `assertFirstPartyBaseUrl` call from `createCompletion` | the refusal test |
+| **M2** | Delete the call from the route pre-flight | the "503 at pre-flight, not mid-call" test |
+| **M3** | Relax the scheme check (accept `http:`) | the transport test |
+| **M4** | Relax the host comparison to `endsWith("openai.com")` | the lookalike test (`api.openai.com.evil.example`) |
+| **M5** | Pre-set the log latch so the override log never emits | the "logged exactly once, with the host" test |
+| **M6** | Narrow `.gitignore` back to `.env*.local` | the `git check-ignore` test on `.env.local.bak` |
+| **M7** | Add a **third** `src/` reader of `OPENAI_BASE_URL` that skips validation | the extended `SOLE_PAID_CLIENT` reader ratchet (N-66) |
+
+**Anti-vacuity**: the guard asserts its own inventories non-empty — the validator is called from **exactly
+two** sites in `src/`, and both probes call it — so a rename that makes the scan match nothing is red
+rather than green.
+
+**STATED NON-COVERAGE, and the first line is the one that matters.**
+**The override is not a security boundary.** Whoever can set `OPENAI_BASE_URL` can set
+`OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1`. This control addresses **drift and silence**, not a hostile
+deployer — **N-63 is mitigated, not closed**, and OP-5's record must say exactly that rather than cite
+U32 as though it settled the question. Beyond that: it is not taint analysis and not an egress control
+(this entry's existing paragraph); it is defeated by the same two things that defeat `SOLE_PAID_CLIENT`
+— an inline `fetch` in `src/`, or a caller outside `src/` — which is an **inherited** limit, not a new
+one, since either already bypasses the budget reservation and rate limit (§4 rule 9).
+
+**N-66 — FOLDED IN BY OWNER RULING 2026-09-18, and declared as a widening rather than absorbed (§8.1).** ~~It is ~10 lines in an existing spec and it is **not in this plan**.~~ `SOLE_PAID_CLIENT`'s reader ratchet is extended to pin readers of **`OPENAI_BASE_URL`** alongside `OPENAI_API_KEY`, so a new module that reads the variable and skips the validator is **red rather than green**.
+
+**The ruling's reason is the one worth keeping: it is what stops U32's own "exactly two call sites" clause from being a count written once.** An anti-vacuity assertion proves the validator is called *somewhere*; only a pinned reader list proves nothing else reads the variable *instead*. Without it this unit ships a control whose scope is a sentence in a plan — which is precisely N-63's defect, reproduced one layer up. The widening is the owner's, asked for explicitly, and the next unit that finds an adjacent ratchet does not inherit permission from this paragraph.
+
+
+**REVIEWS — `ecc:code-reviewer` BLOCK → fixed → the fix proven; `ecc:security-reviewer` 0 blocking.**
+
+**THE BLOCKING FINDING, AND IT IS THE BEST THING THIS UNIT PRODUCED.** `model-adapter.test.ts`'s three
+config-guard fixtures configured `https://gw.example`. The moment this adapter refused a non-first-party
+host, each of them threw for the NEW reason *before* reaching the condition it was written to test — and
+because every configuration failure carries the one shared `AI_SERVICE_NOT_CONFIGURED` message,
+`rejects.toThrow("not configured")` could not tell the causes apart. **N-21's regression guard — the one
+written after a hardcoded model id 400'd every advisor turn from a green suite — stopped guarding, and
+the suite stayed green.**
+
+**Proven, not argued, in both directions:**
+
+| Check | Before the fix | After the fix |
+|---|---|---|
+| delete `resolveModel`'s `!model` throw (N-21's own bug) | **21 passed — GREEN over the bug** | **1 failed** — the N-21 test |
+| delete the `!baseUrl` clause | *not a valid mutation* — `tsc` rejects it (TS2345/TS2322); the type system holds that line, not the test | same |
+
+Fix: the fixtures are re-pointed to `https://api.openai.com`, so each isolates its own condition again,
+and a new test covers the condition that displaced them. **This is §5 rule 2's exact failure class —
+a guard that stops guarding invisibly — and it was introduced by the commit that added a security
+control.** It is recorded here rather than quietly repaired because the mechanism generalises: an
+early-return added ahead of an existing check silently re-points every test that reaches the check
+through a shared error message.
+
+**A fourth thing fell out of proving it**, registered as **N-68** and deliberately not fixed: the same
+file's "key is absent" test was ALREADY green for the wrong reason before U32 — the same mutation on
+`HEAD` leaves 21/21 green. It predates this unit and belongs to whoever owns that guard.
+
+**Three advisories, all taken:** the port comment claimed "any explicit port" is refused, which `new URL`
+makes impossible — `:443` normalises away and IS permitted, now stated and pinned by a test; the new
+spec's header now names the two evasions it has rather than a general disclaimer (it scans
+`git ls-files --cached`, not the working tree — which is exactly why **M7 appeared green on its first
+run** — and its call check matches a name, not a binding).
+
+**`ecc:security-reviewer`: 0 blocking, 2 advisory, and its enumeration is written up as OP-5's
+non-coverage paragraph in §4.6.** Verdict as ruled: **N-63 MITIGATED, not closed.** Both of its
+measurements were re-run independently rather than quoted — every `fetch(` in `src/` outside the client
+is a same-origin `/api/…` call from a client component (25 sites), and `package.json` contains no
+telemetry SDK (Sentry/Datadog/PostHog/LogRocket/Bugsnag/Honeycomb/New Relic → 0 matches).
+
+**Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured, not copied) ·
+`npx next build`. Reviews: `ecc:code-reviewer` on the diff **and** `ecc:security-reviewer` — this unit
+changes a security control's shape, so the second is not optional the way it was for U22.
 
 ### Group E — cuttable
 

@@ -237,7 +237,7 @@ describe("AdvisorModelAdapter — config guard", () => {
 
   it("throws a 'not configured' error when the key is absent", async () => {
     vi.stubEnv("OPENAI_API_KEY", "");
-    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
+    vi.stubEnv("OPENAI_BASE_URL", "https://api.openai.com");
 
     await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
   });
@@ -264,8 +264,27 @@ describe("AdvisorModelAdapter — config guard", () => {
     // live probe found it. A model id is a property of the gateway INSTANCE,
     // so there is no value this repository could have defaulted to correctly.
     vi.stubEnv("OPENAI_API_KEY", "k");
-    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
+    vi.stubEnv("OPENAI_BASE_URL", "https://api.openai.com");
     vi.stubEnv("OPENAI_MODEL", "");
+
+    await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
+  });
+
+  it("throws a 'not configured' error when the base URL is not first-party (U32)", async () => {
+    // [2026-09-18, U32 — found by ecc:code-reviewer, BLOCKING] The three
+    // fixtures above used to configure `https://gw.example`. Once this adapter
+    // refused a non-first-party host, every one of them threw for the NEW
+    // reason before reaching the condition it was written to test — and the
+    // shared `AI_SERVICE_NOT_CONFIGURED` message made the two causes
+    // indistinguishable to `rejects.toThrow("not configured")`. Proven, not
+    // argued: with `resolveModel`'s `!model` check deleted, the N-21 test
+    // still passed. That is a guard that stopped guarding while the suite
+    // stayed green — §5 rule 2's exact failure class. The fixtures are now
+    // first-party, so each isolates its own condition again, and THIS test
+    // covers the condition that displaced them.
+    vi.stubEnv("OPENAI_API_KEY", "k");
+    vi.stubEnv("OPENAI_MODEL", "m");
+    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
 
     await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
   });
