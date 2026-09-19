@@ -210,6 +210,14 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
   candidates for a text PDF *and* an image-only one. **Stated limits, not closed:** N-25 (clean
   synthetic renders only, no real scanned report) and **N-61** (the probe checks output shape, never
   the transcribed values).
+  **[2026-09-18, U32] Where the advisor's traffic may go, and on whose terms:**
+  `docs/05-qa/2026-09-18-op5-provider-record.md`. U32 pins the base URL to `api.openai.com` in code
+  (an override exists and is logged once per process), and the record carries OpenAI's current API
+  terms as read that day — not used for training, **but abuse-monitoring logs retain prompts and
+  responses for up to 30 days by default** unless ZDR is in force. **OP-5 is OPEN**: the deployed base
+  URL, an executed DPA, and ZDR are all **UNKNOWN**, so a deployed advisor stays **development-only,
+  with no real user health data**. N-63 is **MITIGATED, not closed** — a host pin is not a
+  data-processing term.
   **Open against this path:** N-22 — an `auto/*` alias can complete a tool loop and return an **empty**
   answer, which every safety and grounding gate passes.
 - **Persistence:** conversations, messages, usage, actions — all persisted with RLS. **[2026-09-11]** And, since U26, owner-bound at the repository layer as well: `getAction`, `markUndone`, `getActionsByBatch` and `appendMessages` filter on the owner, so RLS is the last line rather than the only one. Two findings registered, not absorbed: `POST /api/advisor` spends a paid call before any ownership failure for a foreign `conversationId` (N-48), and `confirmAndApply` stamps an unchecked `conversation_id` (N-49) — both owned by U29.

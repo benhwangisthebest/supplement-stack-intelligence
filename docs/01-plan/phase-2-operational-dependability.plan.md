@@ -382,6 +382,8 @@ that "Phase 2 closed" cannot be read as "these were done".
 
 #### OP-5's non-coverage paragraph — written by U32, from `ecc:security-reviewer`'s enumeration (2026-09-18)
 
+**THE RECORD ITSELF IS `docs/05-qa/2026-09-18-op5-provider-record.md`** (filed at U32's closeout). It carries the provider's current terms with their URL and read-date, this paragraph's code half, and the three account facts that remain **UNKNOWN**. **OP-5 stays OPEN**, and the development-only constraint stays in force. *(The pointer is added here because this row had none — a non-coverage paragraph whose evidence file cannot be reached from it is the same defect one layer down.)*
+
 **Drafted here so OP-5's record cannot cite U32 as though it settled the question.** The reviewer was
 asked one question — *with the pin in place, enumerate every way health context can still leave the
 process to a host other than `api.openai.com`* — and the answer is the paragraph, ordered by how
@@ -3298,6 +3300,108 @@ telemetry SDK (Sentry/Datadog/PostHog/LogRocket/Bugsnag/Honeycomb/New Relic → 
 `npx next build`. Reviews: `ecc:code-reviewer` on the diff **and** `ecc:security-reviewer` — this unit
 changes a security control's shape, so the second is not optional the way it was for U22.
 
+**U32 STAMP ROW** *(standing disposition):*
+
+| U32 closeout | value |
+|---|---|
+| merged to `main` | **`104a111`** — fast-forward from `9c07657`, 1 commit, 19 files, +834/−26 |
+| code run | **`35412653584`** — green on `104a111`, **18/18 steps**, on `feat/u32-first-party-base-url` |
+| post-merge `main` run | **`35412852092`** — green on `104a111`, 18/18, required check satisfied on the merged SHA |
+| CI figures, re-measured | lint **362 of 362, 0 errors** · vitest **1328 / 108 files** · non-live E2E **70 passed / 30 skipped** |
+| live evidence | **none, and that is the finding** — see `docs/05-qa/2026-09-18-op5-provider-record.md`. No probe was run for this unit; a host pin is testable without a network |
+| bkit | **`u32-first-party-base-url` → `completed`**, advanced 2026-09-18 by this session as the last step of this closeout (N-56's standing line) |
+
+**CI matched every local figure exactly** — 362/362, 1328/108, 70/30 — so the suite a fresh clone runs
+and the suite CI runs agreed on two machines, again.
+
+**THE OP-5 RECORD IS THE OTHER HALF OF THIS UNIT, and it is filed rather than promised:**
+`docs/05-qa/2026-09-18-op5-provider-record.md`. Its shape is the point. The provider's current terms are
+**fetched, with URL and read-date**, not recalled: API data is not used for training since 2023-03-01,
+and **abuse-monitoring logs retain prompts and responses for up to 30 days by default** — a retention
+window that applies to every health-context prompt this application sends unless ZDR is in force. The
+DPA page **could not be read** (HTTP 403 on 2026-09-18), so no DPA term is quoted; the record says so
+instead of filling the gap. Three account facts are recorded **UNKNOWN**: the deployed base URL and
+override state, an executed DPA with its date, and ZDR. **OP-5 stays OPEN and development-only remains in
+force**; the record names exactly what would discharge it, and two of the three are procurement facts
+that no further work in this repository can supply.
+
+**A host pin is not a data-processing term** — the sentence the record exists to make unavoidable. U32
+establishes *where* the bytes go; it establishes nothing about what may be done with them on arrival.
+
+**THE SWEEP.** Grepped, not recalled.
+
+| Claim | Site | Action |
+|---|---|---|
+| "seven executable architecture specs" | `README.md:26`, `docs/project-status.md:325` and `:465`, `docs/02-design/architecture-boundaries.md:255` | **21 → 22**, each bracket **extended in place**, never stacked: `observed at U12: 20 · 21 at U22 · 22 at U32 (2026-09-18)` |
+| the spec count itself | `ls src/architecture/*.test.ts` → **22** | re-measured, not copied |
+| `NOT_CONFIGURED_TOTALITY`'s sanctioned list | three files, unchanged | U32 adds **conditions** to existing sanctioned throws and **no fourth throw site** — verified, since a fourth would have reddened the equality |
+| N-52's README per-spec counts (36/30 vs 47/31) | `README.md:26` | **still left registered and unfixed** — a third unit has now declined to absorb them, which is itself the argument for N-52's mechanical fix |
+
+**The sweep found nothing new, and the reason is worth one line:** this unit's claims were checked by
+guards as they were written, so the prose that would normally drift had nowhere to drift from. That is
+what the §8 count-binding guard is for, and it is still owed.
+
+**THE LESSON, and it is not the one this unit set out to teach.** U32's designed deliverable was a host
+pin. Its most valuable output was `ecc:code-reviewer`'s BLOCKING finding: **the commit that added a
+security control silently disabled N-21's regression guard**, because an early return placed ahead of an
+existing check re-points every test that reaches that check through a shared error message. Proven both
+ways — with `resolveModel`'s `!model` throw deleted the suite was **21/21 green** before the fix and
+**1 failed** after it. Two further instances of the same mechanism were found while proving it: **N-67**
+(a `vi.stubEnv` that never unstubs, so this unit's own override test switched the new pin off for every
+later test in the file, including the 200 happy path) and **N-68** (the same file's "key is absent" test
+has been green for the wrong reason since before U32 — the mutation leaves `HEAD` at 21/21 too).
+
+Three appearances, one mechanism: **an assertion that cannot distinguish why it passed will stop
+distinguishing, and nothing will say so.** N-67 and N-68 become **U33** by the owner's ruling of
+2026-09-18.
+
+**Method note, fifth appearance of the measurement-through-a-filter class in this phase's tooling
+half:** **M7 first ran GREEN** — 54 passed — because the mutant file was untracked and both guards scan
+`git ls-files --cached`. The guards were right; the mutation was not reaching the tree they read. It
+reddened ×2 once `git add -N` put it in the index. The spec's header now states that boundary rather than
+leaving the next person to rediscover it.
+
+
+**U33 · Test isolation, and config failures that can be told apart.** *(created 2026-09-18 by owner
+ruling on N-67 and N-68; numbering append-only — U33 follows U32)* M `vitest.config.ts` · M
+`src/lib/api/errors.ts` · M the three `NotConfiguredError` throw sites · M the config-guard tests in
+`model-adapter.test.ts`, `lab-import.test.ts`, `route.test.ts` · M `not-configured-totality.test.ts`.
+**S**, deps **U32**. **Sequenced after U30 and before the Phase 2 closeout.**
+
+**Two halves, and they are one finding seen twice.**
+
+**(a) `unstubEnvs: true` in `vitest.config.ts`** — so a `vi.stubEnv` cannot outlive the test that set it.
+**Every test that reddens is fixed on its merits, not re-stubbed** (the owner's words, and the whole
+point): a test that only passed because a previous test's environment leaked into it was not testing what
+its title claims. Three files call `vi.stubEnv` today — `route.test.ts`, `model-adapter.test.ts`,
+`lab-import.test.ts` — and the count of reddened tests is **unknown until the flag is flipped**, which is
+the first thing this unit measures rather than predicts.
+
+**(b) `NotConfiguredError` carries a machine-readable reason** — `missing-key | missing-model |
+missing-base-url | disallowed-host` — **and the config-guard tests assert on the reason, not on the
+shared message.** This is the direct fix for the mechanism that produced all three findings: one message
+for every configuration failure makes `rejects.toThrow("not configured")` structurally unable to say
+*why* it passed, so any early return added ahead of an existing check silently re-points every test
+behind it. **It also closes N-68's pre-existing instance** — the "key is absent" test that has been green
+for the wrong reason since before U32.
+
+**The client boundary is not crossed.** `src/lib/openai/client.ts` imports nothing and must keep
+importing nothing, so the `disallowed-host` reason is constructed by the **callers** that already own the
+sanctioned throw — the two adapters — from `baseUrlPermitted`'s boolean. The client keeps throwing its
+own `OpenAIError("config")` backstop. If this unit finds itself adding an import to that module, the
+design is wrong and the unit stops.
+
+**Red:** (a) with `unstubEnvs` on, the pre-fix suite must show a **non-zero** reddened set, recorded
+verbatim — a flag that reddens nothing was not needed; (b) delete any one of the four conditions and the
+test naming **that reason** must fail while the other three still pass — which is precisely what today's
+suite cannot do. **Mutation-shown, per §5 rule 2.**
+
+**Non-coverage.** A reason code is for tests and logs, not for clients: the **response** stays a 503 with
+`AI_SERVICE_NOT_CONFIGURED` and no reason, because which environment variable is unset is internal state
+and §2.3 rule 13 does not bend for a convenient debugging aid. `NOT_CONFIGURED_TOTALITY` must be extended
+to assert that too, or this unit hands the next one a way to leak configuration detail through an error
+object that already crosses a boundary.
+
 ### Group E — cuttable
 
 **U21 · FU-24, cited artifacts must be tracked.** ~~N `src/architecture/cited-artifact.test.ts`. **S**.~~
@@ -4214,8 +4318,9 @@ here rather than discovered later.
 
 ## 9. Sizing
 
-**~~23~~ ~~24~~ ~~25~~ ~~26~~ ~~27~~ ~~28~~ 29 proposed units** (U1–U22, **U24**, **U25**, **U26**, **U29**, **U30**, **U31** and **U32**, plus U23 deferred). Rough shape:
-**~~7~~ ~~8~~ ~~9~~ ~~10~~ 11 S/S-M · ~~12~~ 13 M · ~~3~~ ~~4~~ 3 L · 1 M/L**.
+**~~23~~ ~~24~~ ~~25~~ ~~26~~ ~~27~~ ~~28~~ ~~29~~ 30 proposed units** (U1–U22, **U24**, **U25**, **U26**, **U29**, **U30**, **U31**, **U32** and **U33**, plus U23 deferred). Rough shape:
+**~~7~~ ~~8~~ ~~9~~ ~~10~~ ~~11~~ 12 S/S-M · ~~12~~ 13 M · ~~3~~ ~~4~~ 3 L · 1 M/L**.
+*(**[2026-09-18]** **U33 is S** — created by the owner's ruling on N-67 and N-68, both raised while U32 was being reviewed. **Of 30 proposed, 27 are live** (cut: U11, U21, U23). A unit created by a review finding is the third of this phase — U26, U29 and now U33 — which is the measurable form of the claim that the review step pays for itself.)*
 *(**[2026-09-14, decision 8]** applied on top of decision 9's line rather than instead of it, since both
 ruled the same day: **U30 is S**, and **U22 falls from L to S** on re-scoping — the one **L** that leaves
 this count. **Cut to date: U11, U21, U23.** Of 28 proposed, **25 are live**. The gross count rises while
