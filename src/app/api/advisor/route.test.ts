@@ -52,11 +52,13 @@ vi.mock("@/lib/advisor/context-loader", () => ({
   loadAdvisorContext: (...a: unknown[]) => loadAdvisorContext(...a),
 }));
 const enforceRateLimit = vi.fn();
+const conversationBelongsToUser = vi.fn();
 vi.mock("@/lib/api/rate-limit-guard", () => ({
   enforceRateLimit: (...a: unknown[]) => enforceRateLimit(...a),
 }));
 vi.mock("@/lib/advisor/repo", () => ({
   appendMessages: (...a: unknown[]) => appendMessages(...a),
+  conversationBelongsToUser: (...a: unknown[]) => conversationBelongsToUser(...a),
   createConversation: (...a: unknown[]) => createConversation(...a),
   deriveTitle: (m: string) => m.slice(0, 10),
   getMessages: (...a: unknown[]) => getMessages(...a),
@@ -122,6 +124,7 @@ beforeEach(() => {
   vi.stubEnv("OPENAI_MODEL", FAKE_MODEL);
   loadAdvisorContext.mockResolvedValue(CTX);
   enforceRateLimit.mockResolvedValue(null);
+  conversationBelongsToUser.mockResolvedValue(true);
   reserveAdvisorTokens.mockResolvedValue(25000);
   getMessages.mockResolvedValue([]);
   createConversation.mockResolvedValue({ id: "c-new" });
@@ -211,6 +214,56 @@ describe("POST /api/advisor — guards before the stream", () => {
     expect(res.status).toBe(503);
     expect((await res.json()).error.code).toBe("NOT_CONFIGURED");
     expect(runAdvisorTurn).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 before ANY reservation when the conversation is not the caller's (U29, N-48)", async () => {
+    // THE POINT OF THIS UNIT IS THE ORDER, NOT THE STATUS. Before U29 the
+    // route reserved budget and called a paid model, and discovered ownership
+    // afterwards — if at all. The status assertion alone would stay green if
+    // the check were folded back into the `Promise.all` beside the
+    // reservation, which is M2. Hence the not-called assertions below: they
+    // are the guard, and the 404 is the symptom.
+    getUser.mockResolvedValue(USER);
+    conversationBelongsToUser.mockResolvedValue(false);
+
+    const res = await POST(req({ ...BODY, conversationId: "11111111-1111-4111-8111-111111111111" }));
+
+    expect(res.status).toBe(404);
+    expect((await res.json()).error.message).toBe("Conversation not found.");
+    expect(reserveAdvisorTokens).not.toHaveBeenCalled();
+    expect(runAdvisorTurn).not.toHaveBeenCalled();
+    expect(getMessages).not.toHaveBeenCalled();
+  });
+
+  it("answers a NONEXISTENT conversation identically, to the byte (U29)", async () => {
+    // A response that distinguishes "not yours" from "does not exist" is an
+    // existence oracle for other users' conversation ids. One predicate, one
+    // branch, one literal — so the two cases cannot drift apart later.
+    getUser.mockResolvedValue(USER);
+
+    conversationBelongsToUser.mockResolvedValue(false);
+    const foreign = await POST(req({ ...BODY, conversationId: "11111111-1111-4111-8111-111111111111" }));
+    const foreignBody = await foreign.text();
+
+    conversationBelongsToUser.mockResolvedValue(false);
+    const missing = await POST(req({ ...BODY, conversationId: "22222222-2222-4222-8222-222222222222" }));
+    const missingBody = await missing.text();
+
+    expect(foreign.status).toBe(missing.status);
+    expect(foreignBody).toBe(missingBody);
+    expect(foreignBody.length).toBe(missingBody.length);
+  });
+
+  it("does not check ownership when no conversation id is supplied (U29)", async () => {
+    // A first turn has no conversation yet. The predicate applies only to a
+    // non-null id; calling it with null would turn every new conversation
+    // into a 404.
+    getUser.mockResolvedValue(USER);
+
+    const res = await POST(req({ ...BODY, conversationId: undefined }));
+
+    expect(res.status).toBe(200);
+    expect(conversationBelongsToUser).not.toHaveBeenCalled();
   });
 
   it("returns 503 NOT_CONFIGURED when the base URL is not first-party (U32, N-63)", async () => {

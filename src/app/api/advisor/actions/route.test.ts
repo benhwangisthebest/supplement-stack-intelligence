@@ -36,6 +36,7 @@ const cumulativeRecheck = vi.fn();
 const executeBatch = vi.fn();
 const getStack = vi.fn();
 const recordBatch = vi.fn();
+const conversationBelongsToUser = vi.fn();
 const getSupplementById = vi.fn();
 const matchProducts = vi.fn();
 
@@ -49,6 +50,9 @@ vi.mock("@/lib/advisor/safety-recheck", () => ({
 }));
 vi.mock("@/lib/advisor/actions/execute", () => ({
   executeBatch: (...a: unknown[]) => executeBatch(...a),
+}));
+vi.mock("@/lib/advisor/repo", () => ({
+  conversationBelongsToUser: (...a: unknown[]) => conversationBelongsToUser(...a),
 }));
 vi.mock("@/lib/db/stack-repo", () => ({ getStack: (...a: unknown[]) => getStack(...a) }));
 vi.mock("@/lib/db/advisor-action-repo", () => ({
@@ -141,6 +145,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {});
   arrangeSuccess();
+  // [U29] Owned by default, so every pre-existing test keeps its meaning.
+  // Set HERE and not inside a test: `vi.clearAllMocks()` clears calls but not
+  // implementations, so a default established inside one test leaks forward
+  // and the suite becomes order-dependent — N-67's mechanism, in the file
+  // whose sibling raised it.
+  conversationBelongsToUser.mockResolvedValue(true);
 });
 
 describe("PIN 401 — unauthenticated", () => {
@@ -477,5 +487,79 @@ describe("U4 — confirm-card inputs reach their destination", () => {
 
     const [, , , newActions] = recordBatch.mock.calls[0];
     expect(newActions[0].conversationId).toBeNull();
+  });
+  it("refuses a conversationId that is not the caller's, before any write (U29, N-49)", async () => {
+    // N-49: the id arrives from the request body and was written into the
+    // caller's own `advisor_actions` rows unchecked. The FK guarantees the
+    // conversation EXISTS; it says nothing about whose it is (N-69).
+    conversationBelongsToUser.mockResolvedValue(false);
+
+    const res = await POST(
+      req({
+        conversationId: "c-someone-else",
+        actions: [{ proposal: { type: "add_item", stackId: "s1", payload: ADD_PAYLOAD } }],
+      }),
+    );
+
+    expect(res.status).toBe(404);
+    expect((await res.json()).error.message).toBe("Conversation not found.");
+    expect(executeBatch).not.toHaveBeenCalled();
+    expect(recordBatch).not.toHaveBeenCalled();
+  });
+
+  it("answers a NONEXISTENT conversation identically at THIS site too (U29)", async () => {
+    // Site 1 has this test; site 2 did not, and the asymmetry is the finding:
+    // structurally there is one branch and one literal here, so the two cases
+    // cannot diverge today — but "cannot diverge today" is what a guard is
+    // for. An M5-style mutation applied only to this site would otherwise go
+    // uncaught. (ecc:code-reviewer, U29, advisory.)
+    conversationBelongsToUser.mockResolvedValue(false);
+    const foreign = await POST(
+      req({
+        conversationId: "11111111-1111-4111-8111-111111111111",
+        actions: [{ proposal: { type: "add_item", stackId: "s1", payload: ADD_PAYLOAD } }],
+      }),
+    );
+    const foreignBody = await foreign.text();
+
+    conversationBelongsToUser.mockResolvedValue(false);
+    const missing = await POST(
+      req({
+        conversationId: "22222222-2222-4222-8222-222222222222",
+        actions: [{ proposal: { type: "add_item", stackId: "s1", payload: ADD_PAYLOAD } }],
+      }),
+    );
+    const missingBody = await missing.text();
+
+    expect(foreign.status).toBe(missing.status);
+    expect(foreignBody).toBe(missingBody);
+  });
+
+  it("treats an EMPTY conversationId as an id to check, not as absence (U29)", async () => {
+    // `confirmSchema.conversationId` is `z.string().nullish()` — no `.uuid()`,
+    // unlike the advisor route's schema — so `""` is a schema-valid body.
+    // A falsy-guard would skip the check for it, which is neither "no
+    // conversation" nor a value the check can evaluate; the write would then
+    // reach Postgres and fail the uuid cast AFTER `executeBatch` had already
+    // committed a stack change. The condition tests for null/undefined
+    // explicitly instead. (ecc:code-reviewer, U29, advisory.)
+    conversationBelongsToUser.mockResolvedValue(false);
+
+    const res = await POST(
+      req({
+        conversationId: "",
+        actions: [{ proposal: { type: "add_item", stackId: "s1", payload: ADD_PAYLOAD } }],
+      }),
+    );
+
+    expect(res.status).toBe(404);
+    expect(executeBatch).not.toHaveBeenCalled();
+  });
+
+  it("does not check ownership when the confirm carries no conversationId (U29)", async () => {
+    await POST(req(body(ADD_PAYLOAD)));
+
+    expect(conversationBelongsToUser).not.toHaveBeenCalled();
+    expect(recordBatch).toHaveBeenCalled();
   });
 });

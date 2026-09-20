@@ -327,6 +327,9 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-66** | **`ecc:architect` during U32 planning, 2026-09-18** (the one question the unit put to it: client module or env reader) | **`SOLE_PAID_CLIENT`'s reader ratchet pins readers of `OPENAI_API_KEY` and nothing else, so a new module that reads `OPENAI_BASE_URL` and dials it without the validator is green.** The key half of the paid boundary is ratcheted; the address half is not, and U32's control lives on the address | `boundaries.test.ts:1194` pins the key readers as an equality; no assertion anywhere names a base-URL reader. Measured readers today: `model-adapter.ts:365`, `pdf-adapter.ts:244`, `route.ts:74` | **FOLDED INTO U32 by owner ruling 2026-09-18, declared as a widening.** The ruling's reason: it is what stops U32's *"the validator is called from exactly two sites"* clause from being a count written once (FU-32's class). An anti-vacuity assertion proves the validator is called somewhere; only a pinned reader list proves nothing reads the variable *instead*. **M7** is its red proof |
 | **N-67** | **U32 implementation, 2026-09-18 — raised by this unit's own test, which is the uncomfortable part** | **`vi.stubEnv` leaks across tests in `src/app/api/advisor/route.test.ts`, and a test that sets an escape-hatch flag therefore disables that control for every test AFTER it.** Nothing in the file or in `vitest.config.ts` unstubs. U32's new *"proceeds when the override is set"* test stubbed `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1`, and the happy-path test 200 lines later — which configures the non-first-party `https://gateway.invalid` — **passed with a 200 while the brand-new host pin was switched off**. A green suite over a disabled control, introduced by the commit that added the control | Observed: run at 19:58:38 on 2026-09-18, `route.test.ts` **23 passed** with `FAKE_BASE_URL = "https://gateway.invalid"` and the pre-flight live — arithmetic that only works if the override leaked. Confirmed by `git show HEAD:src/app/api/advisor/route.test.ts | grep -c unstub` → **0**, and `grep -c unstub vitest.config.ts` → **0** | **INSTANCE FIXED HERE** — `vi.unstubAllEnvs()` added to `beforeEach`, and `FAKE_BASE_URL` changed to the first-party host so the happy path exercises a permitted address rather than a tolerated one. **THE CLASS IS OPEN, unassigned**: `grep -rl "vi.stubEnv" --include=*.test.ts src/` returns **three** files — this one plus `src/lib/advisor/model-adapter.test.ts` and `src/lib/lab-import/lab-import.test.ts` — and nothing in the project asserts that a stub is ever undone. The mechanical fix is `unstubEnvs: true` in `vitest.config.ts` — one line, and it may redden tests that currently depend on leakage, which is why it is a decision and not a patch smuggled into this unit |
 | **N-68** | **U32 review follow-through, 2026-09-18** — found while proving the fix for `ecc:code-reviewer`'s BLOCKING finding, by running the same mutation against `HEAD` | **`model-adapter.test.ts`'s "key is absent" test has been green for the wrong reason since before this unit.** Deleting the `!apiKey` clause leaves the suite **21/21 green on `HEAD`**, because the test stubs no `OPENAI_MODEL` and `resolveModel` throws the same shared `AI_SERVICE_NOT_CONFIGURED` a moment later. `rejects.toThrow("not configured")` cannot tell two causes apart when one message serves every cause | `git show HEAD:…model-adapter.ts` with `!apiKey` removed, `git show HEAD:…model-adapter.test.ts` unchanged → **Tests 21 passed (21)**. The same mutation on the U32 tree: **22 passed** | **OPEN, unassigned — NOT fixed here, deliberately.** It predates U32 and belongs to whichever unit owns that guard; fixing a pre-existing green-for-the-wrong-reason test inside a unit about base URLs is the absorption §8.1 forbids, and this register row is what stops it being forgotten instead. **The fix is one line** — stub `OPENAI_MODEL` in that test so the key check is the only thing that can throw. **The class is the real finding**: a single shared error message across every configuration failure makes `toThrow(<that message>)` structurally unable to distinguish causes, so any test written that way is one new early-return away from silently stopping. U32's own BLOCKING finding was the same mechanism, one commit later |
+| **N-69** | **`ecc:architect` during U29 planning, 2026-09-19** (the one question: route, service or repo) | **`recordBatch` can persist an `advisor_actions` row pointing at ANOTHER user's conversation, and every existing guard passes.** The row's `user_id` is stamped correctly, so `repo-scoping.test.ts` is satisfied; the column's foreign key constrains **existence, never ownership** | `0004_advisor_actions.sql:16-17` — `conversation_id uuid references public.advisor_conversations(id) on delete set null`, so a *nonexistent* id is refused by Postgres and a *foreign* one is accepted. `recordBatch` itself takes the id from its caller | **OPEN, unassigned.** **U29 closes the path through `confirmAndApply` and does NOT close `recordBatch`** — which is the distinction worth keeping: U29 guards a caller, not the function every future caller will reach. Candidate fixes, neither chosen here: scope `recordBatch` to verified conversations, or add a composite constraint so the database itself refuses a cross-owner reference |
+| **N-70** | **`ecc:security-reviewer` on the U29 diff, 2026-09-20** | **U29's two ownership guards are check-then-act, and the repo layer already has the atomic pattern they do not use.** `conversationBelongsToUser` is a plain `select … maybeSingle` awaited at `route.ts:119`; the reservation happens at `route.ts:137` as a separate round trip, and `getMessages` at `:140`. Between the two the answer can go stale. Same shape at `advisor-actions.ts:149` | The contrast is inside this repository: **`appendMessages` (`repo.ts:159-187`, Phase 2 U26) folds ownership into the write statement itself** — `update … .eq("id", …).eq("user_id", …)` and a row-count check — so its check cannot go stale. U29's guards are the weaker pattern beside it | **DEFERRED by owner ruling 2026-09-20, with the reason stated rather than left implicit — NOT a Phase 2 unit.** **The window has no adversary**: nothing in this product transfers or shares a conversation, so the only way to lose ownership between the check and the reservation is to delete your own conversation, and the cost of that race is your own budget. A TOCTOU with no second party is a latent defect, not a live one. **THE GATE, and it is the whole point of deferring rather than closing: any future proposal to make conversations transferable or shareable must cite N-70 and close it first.** That is what turns the window into an exploitable one, and the person proposing the feature is the only one positioned to notice. **It is registered because the asymmetry is the finding** — this codebase holds both patterns, and the weaker was chosen where the stakes are a paid call. The fix folds the predicate into the reservation RPC or the write's `WHERE`, the way `appendMessages` already does; that is a design, not a patch |
+| **N-71** | **`ecc:code-reviewer` on the U29 diff, 2026-09-20** (found while tracing the blast radius of an empty `conversationId`) | **A stack mutation can commit with no audit row and no `rolledBack` signal.** `executeBatch` has its own `try/catch` that returns `ACTION_ERROR` with `details: { rolledBack: true }` — a computed fact the client acts on. **`recordBatch` runs AFTER that block**, so a throw there falls to the outer `catch`, which returns `ACTION_ERROR` **without** `rolledBack`. The stack change is already committed and the audit row never exists | `advisor-actions.ts` — inner catch returns `{ rolledBack: true }`; `recordBatch` is called ~15 lines later; the outer catch returns `internalError(err, { code: "ACTION_ERROR" })` with no details | **OPEN, unassigned. PRE-EXISTING and explicitly NOT introduced by U29** — the reviewer said so unprompted, and U29 in fact *narrows* one route to it by refusing an empty id before `executeBatch` rather than after. It is registered because the audit trail is the thing this pair of findings (N-48/N-49) is about: a client told `ACTION_ERROR` with no `rolledBack` cannot tell a rolled-back batch from an applied-but-unaudited one |
 
 **[2026-09-18, third and final revision — the two earlier versions of this note are why it is worth reading.] THE GAP IS CLOSED, AND BY THIS COMMIT RATHER THAN BY THE CLOSEOUT.** The first version said N-53…N-55 sat on an unmerged branch and would arrive at merge. They did not: U31's code commit `f9c34e3` left them in its subordinate artifact. The second version recorded that as a finding and refused to promote them unasked. U31's closeout `a0d318b` then added **N-63, N-64 and N-65** straight into this register — correctly — while **N-53 … N-62 stayed in the artifact**, so the register read N-1…N-52, N-63…N-65 and the numbers between them existed only in a subordinate file. **This commit promotes N-53 … N-62 verbatim**, each tagged with its source section, and strikes the artifact copies in place with a pointer (§7). **N-56 is one row, not two** — U31 raised it, the main session wrote it up more fully with the owner's ruling, and the artifact's copy is superseded in place. The register is now **contiguous N-1 … N-65**, verified by count rather than by reading.
 
@@ -2969,6 +2972,203 @@ implemented in the U26 session, by ruling.**
 > **`reserveAdvisorTokens` did not move and was not renamed** — U31's entire edit to that route is one
 > hunk renaming three env reads in the `NOT_CONFIGURED` gate — so U29's insertion point is intact and
 > the conditional in the paragraph above does not fire.
+---
+
+#### U29 PLAN — drafted 2026-09-19, ~~AWAITING OWNER APPROVAL. Nothing below is implemented.~~ **APPROVED AS DRAFTED by the repository owner, 2026-09-19** — route for site 1 (after `enforceRateLimit`, awaited before the `Promise.all`), service for site 2, `getMessages` keeps no `userId` for the stated behavioural reason, byte-identical 404 for foreign and nonexistent, `null` stays valid, **N-69 registered and out of scope**.
+
+**bkit:** registered as `u29-pre-spend-ownership`, phase `plan`; artifact
+`docs/01-plan/features/u29-pre-spend-ownership.plan.md`, subordinate, mirroring this entry.
+
+**THE TREE MOVED UNDER THIS UNIT, and the handoff note's line numbers are stale.** Re-read against
+`main` at `1a6c080`, not against the 2026-09-15 snapshot. U32 inserted its base-URL pre-flight, so the
+advisor route's guard sequence is now:
+
+| line | what runs |
+|---|---|
+| 79–89 | U32's config + base-URL pre-flight → **503** |
+| 91 | `const supabase = await createClient()` |
+| 97–98 | `enforceRateLimit` → **429** |
+| **99–111** | **← U29's ownership check goes here** |
+| 112–121 | `Promise.all([reserveAdvisorTokens, loadAdvisorContext, getMessages])` |
+
+**Exact insertion: after line 98, before line 112.** Bounded on both sides and neither bound is
+stylistic — it cannot precede line 91 (it needs the `supabase` client) and it must precede line 112
+(`reserveAdvisorTokens` is *inside* that `Promise.all`). It goes **after** the rate limit because the
+rate limit is the cheaper refusal and already turns a flood away before any database round trip.
+
+**IT MUST NOT JOIN THE `Promise.all`** (`ecc:architect`, and it is the sharpest point in the answer).
+Concurrency would mean the reservation is *already taken* when the check fails. The check is awaited
+first; the existing parallel load then runs with one less member. **Cost: one round trip per turn**,
+stated rather than hidden.
+
+**PLACEMENT — the one question put to `ecc:architect`: route, service, or repo, given U26 moved
+owner-binding into the repo layer?** **Answer: route for site 1, service for site 2 — they differ, and
+the difference is the reuse surface.** The route is the only entry point into the turn path;
+`confirmAndApply` is a service function that already takes `userId` and already re-validates everything
+else in its SC-6 loop, so a check placed anywhere but the service leaves its next caller unguarded.
+
+**This continues U26 rather than contradicting it.** U26 bound the owner where the owner-scoped
+statement *is* the action — `appendMessages` uses the update's row count as the check. U29's sites need
+a **decision** (404) taken *before* any side effect exists to scope. Both sites call
+`conversationBelongsToUser` (`src/lib/advisor/repo.ts:105`), which is already the testable module §4
+rule 8 asks for and already maps `false → notFound("Conversation")` at its one existing caller. U29 adds
+the second and third call sites of a proven boundary; it does not invent a boundary in a route.
+
+**`getMessages` MUST NOT GAIN A `userId`, and this is the part worth reading twice.** It is exempt for a
+real reason — `advisor_messages` has no `user_id` column (`repo-scoping.test.ts:177`) — but the decisive
+argument is behavioural: **an implicit filter cannot produce the required 404.** A filtered-to-empty read
+is byte-identical to a legitimately empty conversation, so scoping `getMessages` would silently convert a
+foreign-id request into a *successful, paid, first-turn* model call. Explicit is not the weaker design
+here; it is the only one that answers the question the route has to answer. *(Scoping it may still be
+worth doing as pure defence in depth. It would not satisfy N-48, and this unit will not let it be
+mistaken for a fix.)*
+
+**FILES, callers enumerated per §9.4:**
+
+| File | Change | Why |
+|---|---|---|
+| `src/app/api/advisor/route.ts` | **M** — await `conversationBelongsToUser` when `body.conversationId` is non-null; `false` → `notFound("Conversation")` | site 1, N-48 |
+| `src/app/api/advisor/route.test.ts` | **M** — the 404-before-spend pin | the guard |
+| `src/services/advisor-actions.ts` | **M** — same check in `confirmAndApply`, before `executeBatch` | site 2, N-49 |
+| `src/app/api/advisor/actions/route.test.ts` | **M** — its pin | the guard |
+| `src/architecture/repo-scoping.test.ts:177-181` | **M** — **prose only.** Its `advisor_messages` reason ends "*which only the GET conversations route calls; N-48*". After this unit that sentence is false | a register that documents a fixed defect as open is the counts-written-once class in a guard |
+| `src/lib/advisor/repo.ts` | **unchanged** | `conversationBelongsToUser` already exists and is already tested both ways |
+
+**DECLARED BEHAVIOUR CHANGE, one:** a `POST /api/advisor` naming a conversation the caller does not own,
+**or one that does not exist**, answers **404 `Conversation not found.`** — before any reservation and
+before any paid call. **The two cases are identical to the byte**: one predicate, one branch, one string
+literal via `notFound("Conversation")` (`respond.ts:50`). There is deliberately **no separate
+`if (!exists)`**, because a response that distinguishes them is an existence oracle for other users'
+conversation ids. Callers using their own conversations see no change. `conversationId: null` stays
+valid at both sites — an unbound action batch is legitimate, and the predicate applies only to a
+non-null id.
+
+**RED PLAN — ~~six~~ SEVEN mutations, each shown red (§5 rule 2). M7 was added by the code review, which is where it belongs: a mutation nobody thought of until someone attacked the condition:**
+
+| # | Mutation | Must redden |
+|---|---|---|
+| **M1** | Delete the route's ownership check | the 404 test on site 1 |
+| **M2** | **Move the check INTO the `Promise.all`** | the *"`reserveAdvisorTokens` was not called"* assertion — **M2 is the reason that assertion exists**: a 404 test alone stays green while the spend still happens |
+| **M3** | Delete the check in `confirmAndApply` | site 2's pin |
+| **M4** | Make the check apply to `conversationId: null` too | the unbound-batch test — the fix must not break legitimate null |
+| **M5** | Answer a *different* string for nonexistent than for foreign | the byte-identity assertion (message **and** length, U12's shape) |
+| **M6** | Restore `repo-scoping.test.ts`'s stale "N-48" reason | the prose assertion that the exemption's reason matches reality |
+| **M7** *(added by `ecc:code-reviewer`, 2026-09-20)* | Revert site 2's `!= null` to a truthiness test | the empty-`conversationId` test — `""` is schema-valid at that site |
+
+**§5.2's real requirement, stated because a 404 test looks sufficient and is not:** every site-1 test
+asserts **both** the status **and** that `reserveAdvisorTokens` and the adapter were **not called**. A
+guard that only checks the status leaves M2 green.
+
+**NEW FINDING, registered not absorbed (§8.1) — N-69.** `recordBatch` stamps `user_id` and
+`advisor_actions.conversation_id` carries a foreign key to `advisor_conversations(id)`
+(`0004_advisor_actions.sql:16-17`, `on delete set null`) — so a *nonexistent* id is refused by Postgres,
+but a **foreign** one is not: the FK constrains existence, never ownership. A future direct caller of
+`recordBatch` could therefore persist a row pointing at another user's conversation, and
+`repo-scoping.test.ts` would pass because the row's `user_id` is correct. U29 closes the path through
+`confirmAndApply`; it does not close `recordBatch` itself.
+
+**RESIDUAL, named because the structure does not cover it:** site 1's check lives in the route, so a
+future second entry point into the turn path — a server action, a streaming v2 — re-opens N-48. The turn
+orchestration lives in the route today, so there is nothing else to protect; the mitigation is the pinned
+test, not the structure. That is a real limit of the recommended placement, not an argument against it.
+
+**REVIEWS — `ecc:code-reviewer`: 0 blocking, 2 advisory, both taken. `ecc:security-reviewer`: 0
+blocking, 2 advisory, enumeration published above.**
+
+**ADVISORY 1, TAKEN, AND IT FOUND A REAL HOLE IN THIS UNIT'S OWN FRAMING.** The plan says *"the
+predicate applies only to a non-null id."* The code said `conversationId && …`, which is **non-falsy**,
+not non-null — a different class. It matters because `confirmSchema.conversationId` is
+`z.string().nullish()` with **no `.uuid()`**, unlike the advisor route's schema, so **`""` is a
+schema-valid body** (verified: `z.string().nullish().safeParse("").success === true`). A falsy guard
+skips the check for it, and `""` is neither "no conversation" nor a value the check can evaluate.
+**Fixed here** — the condition is `conversationId != null` — with a test, and **M7** added to the red
+plan: reverting to the truthiness test reddens it.
+
+**The blast radius is worth recording even though it is not ours.** With `""` the insert would have
+failed Postgres' uuid cast **after `executeBatch` had already committed the stack change**, and that
+throw lands in the outer `catch`, which returns `ACTION_ERROR` **without** `rolledBack: true` — so the
+client cannot tell a rolled-back batch from an applied-but-unaudited one. **Pre-existing, registered as
+N-71, not attributed to this unit** (the reviewer said so unprompted); U29 in fact narrows one route to
+it.
+
+**ADVISORY 2, TAKEN: site 2 had no byte-identity test.** Site 1 did. Structurally the two cases cannot
+diverge at site 2 today — one branch, one literal — but *"cannot diverge today"* is what a guard is for,
+and an M5-style mutation applied only there would have gone uncaught. The symmetric test now exists.
+
+**A THIRD THING THE REVIEW TURNED UP, AND IT IS THE ONE I LIKE LEAST: my own test wiring had N-67's
+defect.** The reviewer flagged an indentation slip at `actions/route.test.ts:153`; the slip was the
+visible half of a default mock (`conversationBelongsToUser.mockResolvedValue(true)`) that I had
+inserted **inside the 401 test instead of the `beforeEach`**. `vi.clearAllMocks()` clears calls but not
+implementations, so the default leaked forward and every later test depended on the 401 test having run
+first. **The suite was green and order-dependent** — the same mechanism as N-67, in the sibling file, in
+the very unit that registered it. Moved to `beforeEach` with the reason written beside it.
+
+**Verified soundness, from the code review, recorded because it is the part that did not need fixing:**
+the guard runs after `enforceRateLimit`, awaited, strictly before the `Promise.all`, and a `false`
+returns before any of the three members run; `confirmAndApply` has exactly one caller and the check is
+unconditional at the top of its `try`; **byte-identity is structural, not merely a shared literal** —
+`conversationBelongsToUser` issues ONE query filtered on both `id` and `user_id`, so "exists but not
+yours" and "does not exist" are already indistinguishable at the data layer, and the new call sites
+inherit that rather than re-deriving it.
+
+**U29's NON-COVERAGE PARAGRAPH — `ecc:security-reviewer`'s enumeration, 2026-09-20.** The question put to
+it: *after U29, enumerate every remaining path by which a caller can cause a reservation or a paid call
+against a conversation they do not own.* **Verdict: N-48 and N-49 are MITIGATED, not CLOSED.**
+
+1. **A first turn with no `conversationId` — allowed, and the residual spend surface.** The guard fires
+   only on a truthy id (`route.ts:117-122`), so a caller who never supplies one always reaches
+   `reserveAdvisorTokens` and the model. **There is no conversation to not-own yet, so this is correct
+   behaviour and not a hole** — but it means the only cost controls on that path remain
+   `enforceRateLimit` and the daily token ledger. Rate limiting bounds the *rate*, not the fact that
+   every first turn is a full paid call. **Unchanged by U29, and named rather than folded into "closed".**
+2. **TOCTOU — check-then-act at both sites.** The predicate is a plain read; the reservation is a
+   separate round trip afterwards. The answer can go stale in the gap. **Registered as N-70**, with the
+   uncomfortable detail that this repository already contains the atomic pattern: `appendMessages` puts
+   the ownership filter on the write statement itself, so its check *cannot* go stale. Practical
+   exploitability today is low — conversations are not transferable — but the asymmetry is real.
+3. **`getMessages` remains unscoped** (`repo.ts:120-131`), by the design decision this unit defends: an
+   implicit filter cannot answer a 404. After the guard passes, the read leans on the check plus RLS. In
+   item 2's window, RLS is doing real work here rather than pure defence in depth. **Stated, because the
+   exemption's written reason now says so too.**
+4. **The streaming section after the guard is the safe half, and already was.** `createConversation`
+   always creates a row owned by the caller; **`appendMessages` re-checks ownership atomically** and
+   would throw rather than write into a conversation that stopped being theirs; `settleAdvisorUsage`
+   touches only the caller's ledger row. **U29 does not need to touch any of it.**
+5. **`/api/lab-import/extract` — confirmed non-applicable, not merely "unchanged".** It has no
+   `conversationId` in its request shape and never imports the advisor repo. It reaches
+   `createCompletion` through `pdf-adapter.ts`, but carries no conversation-scoped state to
+   misappropriate; its spend is bounded by its own rate limit and `maxDuration` under §4 rule 9.
+6. **`recordBatch` has exactly one caller today** — `confirmAndApply`, which U29 now guards — and
+   `confirmAndApply` has exactly one caller, its route. **The schema gap survives**: a future second
+   caller reinherits N-69 with no compiler or migration signal.
+7. **Nothing else reaches the paid path.** Grepped, not assumed: `reserveAdvisorTokens` has one caller
+   (`route.ts:137`), `createCompletion` has two (`model-adapter.ts:380` — gated; `pdf-adapter.ts:338` —
+   item 5). No cron, server action or admin path.
+
+**Why MITIGATED and not CLOSED, in one line:** the attack the unit targets — riding another user's
+conversation to spend their budget or bind their audit trail — is closed at both current call sites,
+with the *ordering* pinned rather than only the status; what remains is a non-atomic window (N-70), a
+schema that constrains existence but not ownership (N-69), and a first-turn path whose only cost control
+is the rate limit.
+
+**Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured) · `npx next build`.
+Reviews: `ecc:code-reviewer` on the diff **and** `ecc:security-reviewer` — this unit changes who may
+spend money on whose behalf.
+
+**STATED DEVIATION FROM §11, recorded at the owner's instruction rather than left in a report.**
+`graphify` could not be run for this unit. The host became **arm64** mid-session and the installed
+binary is **x86_64**: `bad interpreter: Bad CPU type in executable`. The same break took out `gh` and
+`/usr/local/bin/python3`. **§11 asks for graphify *first*, and it was not available at all**, so this
+unit's orientation was `grep` plus a direct read of the route and both call sites — which is the
+fallback §11 exists to avoid, used knowingly.
+
+**What follows from that, stated so the next reader can price it:** a grep finds the call sites it is
+asked about and cannot volunteer the ones nobody thought to ask about, which is exactly the caller
+enumeration §9.4 exists for — so this unit's enumeration rests on the handoff table and two targeted
+greps rather than on a graph walk. **The owner will reinstall `gh`, `graphify` and `python3` under
+arm64 before U30.** Until then CI figures are read through the **GitHub REST API**, cited as such
+wherever they appear, and `/usr/bin/python3` replaces the Homebrew one.
+
 **U30 · Malformed path params answer 400, not 500.** *(created 2026-09-14 by decision 8(d), on N-51;
 numbering append-only)* N a `uuidParam` schema export · M **12 handler entry points across 8 route files**
 · M their tests · N a source scan in `src/architecture/`. **S**, deps none. **Scheduled after U29**, and

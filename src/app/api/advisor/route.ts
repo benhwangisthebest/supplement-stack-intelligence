@@ -14,6 +14,7 @@ import { AdvisorModelAdapter } from "@/lib/advisor/model-adapter";
 import { loadAdvisorContext } from "@/lib/advisor/context-loader";
 import {
   appendMessages,
+  conversationBelongsToUser,
   createConversation,
   deriveTitle,
   getMessages,
@@ -30,6 +31,7 @@ import {
   reportInternalError,
   unauthorized,
   validationError,
+  notFound,
 } from "@/lib/api/respond";
 import type { AdapterMessage, ProgressEvent } from "@/types/advisor";
 import { ZodError } from "zod";
@@ -96,6 +98,28 @@ export async function POST(request: NextRequest) {
   // refusal can still be a status code rather than an error event.
   const limited = await enforceRateLimit("advisor", user.id, request);
   if (limited) return limited;
+
+  // [U29, N-48] OWNERSHIP BEFORE SPEND. Until this unit the route accepted a
+  // caller-supplied `conversationId`, reserved budget, loaded that
+  // conversation's messages and called a paid model — and never asked whose
+  // conversation it was. RLS already isolates tenants at the database
+  // (§2.3 rule 12); what RLS does not do is stop the spend, because the
+  // reservation and the model call happen before any row is read.
+  //
+  // AWAITED, NOT FOLDED INTO THE `Promise.all` BELOW, and that is the whole
+  // control: run concurrently with `reserveAdvisorTokens` and the reservation
+  // is already taken by the time the check fails. Costs one round trip per
+  // turn with a conversation id; the alternative costs a model call.
+  //
+  // A foreign id and a nonexistent id answer THE SAME BYTES — one predicate,
+  // one branch, one literal. A response that told them apart would be an
+  // existence oracle for other users' conversation ids.
+  if (
+    body.conversationId &&
+    !(await conversationBelongsToUser(supabase, user.id, body.conversationId))
+  ) {
+    return notFound("Conversation");
+  }
 
   // Phase 2 U4: RESERVE before spending, never read-then-write.
   //

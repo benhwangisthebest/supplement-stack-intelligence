@@ -177,8 +177,12 @@ const EXEMPT_TABLES: Record<string, string> = {
   advisor_messages:
     "Owned through `advisor_conversations`. Scoped by `conversation_id`; since Phase 2 U26 " +
     "`appendMessages` binds the owner as a filter on the parent conversation BEFORE inserting, " +
-    "so the write path checks ownership itself. (This reason used to cite the route's " +
-    "`conversationBelongsToUser` — which only the GET conversations route calls; N-48.)",
+    "so the write path checks ownership itself. [2026-09-20, U29] The READ path is now checked " +
+    "too, by three callers of `conversationBelongsToUser`: the GET conversations route, " +
+    "`POST /api/advisor` before any reservation (N-48), and `confirmAndApply` before any write " +
+    "(N-49). `getMessages` still takes no `userId` DELIBERATELY — `advisor_messages` has no such " +
+    "column, and an implicit filter cannot answer a 404: filtered-to-empty is indistinguishable " +
+    "from a legitimately empty conversation, which would turn a foreign id into a paid first turn.",
 };
 
 /**
@@ -211,6 +215,13 @@ const EXEMPT_MODULES: Record<string, string> = {
  * reason rather than in the exemption list — a ratchet is not an exemption.
  */
 const UNSCOPED_FUNCTIONS: Record<string, string> = {};
+
+/** Every tracked non-test source file — the caller search space for U29's prose binding. */
+const SRC_FILES = tracked(
+  "src",
+  (p) => (p.endsWith(".ts") || p.endsWith(".tsx")) && !p.includes(".test."),
+  "source file",
+);
 
 const PERSISTENCE_MODULES = tracked(
   "src/lib",
@@ -292,6 +303,40 @@ describe("REPO_SCOPING: the exemption list is exactly GATE C1's three, and earns
         USER_OWNED_TABLES.has(table),
         `${table} now has a user_id column, so it can no longer be exempt`,
       ).toBe(false);
+    }
+  });
+
+  it("the advisor_messages reason describes the CURRENT caller set (U29)", () => {
+    // [2026-09-20, U29] A written reason is a claim, and a claim rots. This
+    // one said `conversationBelongsToUser` is the thing "which only the GET
+    // conversations route calls; N-48" — true when U26 wrote it, false the
+    // moment U29 added the pre-spend check and the confirm-path check. A
+    // register that documents a fixed defect as open is the
+    // counts-written-once class (FU-32) living inside a guard.
+    //
+    // Bound to the code rather than to a date: count the callers, and forbid
+    // the singular claim once there is more than one.
+    const callers = SRC_FILES.filter((f) => {
+      const src = readFileSync(join(REPO_ROOT, f), "utf8");
+      // A CALL, not the declaration: the defining module mentions its own name
+      // and is not one of its callers.
+      if (/export async function conversationBelongsToUser\b/.test(src)) return false;
+      return /\bconversationBelongsToUser\s*\(/.test(src);
+    }).sort();
+
+    expect(
+      callers.length,
+      "REPO_SCOPING found no caller of conversationBelongsToUser; the reason below " +
+        "describes a predicate nothing uses, which is a different defect.",
+    ).toBeGreaterThanOrEqual(1);
+
+    if (callers.length > 1) {
+      expect(
+        EXEMPT_TABLES.advisor_messages,
+        "REPO_SCOPING: advisor_messages' exemption reason still says the predicate is called " +
+          `by only the GET conversations route, but ${callers.length} modules call it:\n  ` +
+          callers.join("\n  "),
+      ).not.toContain("only the GET conversations route");
     }
   });
 

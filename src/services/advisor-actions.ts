@@ -47,7 +47,8 @@ import {
 } from "@/lib/advisor/actions/schema";
 import { stackItemInputSchema } from "@/lib/validation/schemas";
 import { recordBatch, type NewAction } from "@/lib/db/advisor-action-repo";
-import { fail, internalError, ok, validationError } from "@/lib/api/respond";
+import { conversationBelongsToUser } from "@/lib/advisor/repo";
+import { fail, internalError, notFound, ok, validationError } from "@/lib/api/respond";
 import type { ActionProposal } from "@/types/advisor-action";
 import type { AdvisorContext } from "@/types/advisor";
 import type { StackItem } from "@/types";
@@ -129,6 +130,34 @@ export async function confirmAndApply(
   conversationId: string | null,
 ): Promise<NextResponse> {
   try {
+    // [U29, N-49] The conversation id arrives from the request body and was
+    // persisted into the caller's own `advisor_actions` rows unchecked. The
+    // column's foreign key guarantees the conversation EXISTS; it says nothing
+    // about whose it is (N-69), so a caller could bind their audit trail to
+    // someone else's conversation.
+    //
+    // Checked HERE rather than in the route because this is a service
+    // function: the route is one caller, and a check in the route leaves the
+    // next caller unguarded. Checked FIRST, before context is loaded, because
+    // a request that will be refused should cost nothing.
+    //
+    // `null` stays valid — an unbound action batch is legitimate, and applying
+    // the predicate to null would turn every conversation-less confirm into a
+    // 404.
+    // `!= null` and NOT a truthiness test, deliberately (ecc:code-reviewer,
+    // U29, advisory). `confirmSchema.conversationId` is `z.string().nullish()`
+    // with no `.uuid()` — unlike the advisor route's schema — so `""` is a
+    // schema-valid body. A falsy guard would skip the check for it, and `""`
+    // is neither "no conversation" nor a value the check can evaluate: the
+    // insert would then fail Postgres' uuid cast AFTER `executeBatch` had
+    // already committed a stack change.
+    if (
+      conversationId != null &&
+      !(await conversationBelongsToUser(supabase, userId, conversationId))
+    ) {
+      return notFound("Conversation");
+    }
+
     const ctx = await loadAdvisorContext(supabase, userId);
 
     // SC-6: re-validate EVERY selected action against fresh, owned data. Any stale
