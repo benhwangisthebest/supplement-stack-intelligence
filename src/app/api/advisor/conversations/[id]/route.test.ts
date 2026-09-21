@@ -37,7 +37,7 @@ vi.mock("@/lib/advisor/repo", () => ({
 
 import { GET } from "./route";
 
-function ctx(id = "c1") {
+function ctx(id = "d0f631ca-1ddb-48db-8bcf-cb9e057cdc98") {
   return { params: Promise.resolve({ id }) };
 }
 
@@ -45,7 +45,7 @@ const USER = { id: "u1" };
 
 const MESSAGE: AdvisorMessage = {
   id: "m1",
-  conversationId: "c1",
+  conversationId: "d0f631ca-1ddb-48db-8bcf-cb9e057cdc98",
   role: "assistant",
   content: "Magnesium glycinate has evidence for sleep onset.",
   citations: [],
@@ -96,7 +96,7 @@ describe("GET /api/advisor/conversations/:id", () => {
     conversationBelongsToUser.mockResolvedValue(false);
     getMessages.mockResolvedValue([MESSAGE]);
 
-    const res = await GET(new Request("http://localhost"), ctx("c-someone-else"));
+    const res = await GET(new Request("http://localhost"), ctx("6cc5e967-1cb9-418e-8ce8-7cc52e49341a"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -112,9 +112,9 @@ describe("GET /api/advisor/conversations/:id", () => {
     getUser.mockResolvedValue(USER);
     getMessages.mockResolvedValue([MESSAGE]);
 
-    await GET(new Request("http://localhost"), ctx("c1"));
+    await GET(new Request("http://localhost"), ctx("d0f631ca-1ddb-48db-8bcf-cb9e057cdc98"));
 
-    expect(conversationBelongsToUser).toHaveBeenCalledWith({}, "u1", "c1");
+    expect(conversationBelongsToUser).toHaveBeenCalledWith({}, "u1", "d0f631ca-1ddb-48db-8bcf-cb9e057cdc98");
   });
 
   it("does not fail open when the ownership check itself throws", async () => {
@@ -143,5 +143,19 @@ describe("GET /api/advisor/conversations/:id", () => {
     expect(res.status).toBe(500);
     expect(body.error.message).toBe("An unexpected internal error occurred.");
     expect(JSON.stringify(body)).not.toContain("service_role");
+  });
+});
+
+describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
+  // The id never reaches Postgres: `uuidParam` decides from the string, before
+  // any I/O. That ordering is the reason a syntactic 400 is not an existence
+  // oracle — nothing was looked up to produce it. A WELL-FORMED id that is
+  // foreign or absent still answers 404, byte-identical (U29's property).
+
+  it("GET — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await GET(new Request("http://localhost"), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
   });
 });

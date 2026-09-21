@@ -14,7 +14,15 @@ import {
   markUndone,
 } from "@/lib/db/advisor-action-repo";
 import { executeIntent } from "@/lib/advisor/actions/execute";
-import { fail, internalError, ok, notFound, unauthorized } from "@/lib/api/respond";
+import {
+  fail,
+  internalError,
+  ok,
+  notFound,
+  unauthorized,
+  validationError,
+} from "@/lib/api/respond";
+import { uuidParam } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +34,17 @@ export async function POST(
   if (!user) return unauthorized();
 
   const { id } = await params;
+
+  // [U30, N-51] `safeParse` + an explicit `validationError`, NOT the bare
+  // `uuidParam.parse(...)` the other eleven handlers use — because this
+  // handler does not run inside `handle()` (N-72). Its own catch maps
+  // everything to `internalError(..., { code: "UNDO_ERROR" })` → 500, so a
+  // thrown ZodError here would be a 500 with the wrong code rather than the
+  // 400 every other route gets for free. The body is identical to theirs;
+  // only the route to it differs. N-72 is owned by U34, which decides whether
+  // this handler moves onto `handle()` or stays exempt with a written reason.
+  const parsedId = uuidParam.safeParse(id);
+  if (!parsedId.success) return validationError(parsedId.error);
   const supabase = await createClient();
 
   try {

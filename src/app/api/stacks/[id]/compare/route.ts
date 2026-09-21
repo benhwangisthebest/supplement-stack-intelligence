@@ -6,6 +6,7 @@ import { listItems } from "@/lib/db/stack-item-repo";
 import { getProfile } from "@/lib/db/profile-repo";
 import { compareFromProfile } from "@/lib/compare";
 import { handle, notFound, ok, unauthorized } from "@/lib/api/respond";
+import { uuidParam } from "@/lib/validation/schemas";
 
 export async function GET(
   _request: Request,
@@ -15,6 +16,7 @@ export async function GET(
     const user = await getUser();
     if (!user) return unauthorized();
     const { id } = await params;
+    uuidParam.parse(id);
     const supabase = await createClient();
     if (!(await getStack(supabase, user.id, id))) return notFound("Stack");
     const [items, profile] = await Promise.all([

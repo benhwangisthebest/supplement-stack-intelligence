@@ -23,7 +23,7 @@ import { POST } from "./route";
 const USER = { id: "u1" };
 const REPORT = { flags: [], summary: {} };
 
-function ctx(id = "s1") {
+function ctx(id = "e8bc163c-82ee-4187-8328-8c7d4ac636db") {
   return { params: Promise.resolve({ id }) };
 }
 
@@ -64,9 +64,9 @@ describe("POST /api/stacks/:id/evaluate", () => {
     getUser.mockResolvedValue(USER);
     runEvaluation.mockResolvedValue(REPORT);
 
-    await POST(new Request("http://localhost", { method: "POST" }), ctx("s-42"));
+    await POST(new Request("http://localhost", { method: "POST" }), ctx("b222d77b-50db-4d42-8499-3c5e00415170"));
 
-    expect(runEvaluation).toHaveBeenCalledWith({}, "u1", "s-42");
+    expect(runEvaluation).toHaveBeenCalledWith({}, "u1", "b222d77b-50db-4d42-8499-3c5e00415170");
   });
 
   it("404s when the stack is absent or not the caller's", async () => {
@@ -79,5 +79,19 @@ describe("POST /api/stacks/:id/evaluate", () => {
     expect(res.status).toBe(404);
     expect(body.data).toBeNull();
     expect(body.error.code).toBe("NOT_FOUND");
+  });
+});
+
+describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
+  // The id never reaches Postgres: `uuidParam` decides from the string, before
+  // any I/O. That ordering is the reason a syntactic 400 is not an existence
+  // oracle — nothing was looked up to produce it. A WELL-FORMED id that is
+  // foreign or absent still answers 404, byte-identical (U29's property).
+
+  it("POST — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await POST(new Request("http://localhost", { method: "POST" }), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
   });
 });

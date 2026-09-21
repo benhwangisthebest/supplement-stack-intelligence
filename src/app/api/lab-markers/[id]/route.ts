@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth/session";
 import { deleteLabMarker, updateLabMarker } from "@/lib/db/lab-marker-repo";
-import { labMarkerInputSchema } from "@/lib/validation/schemas";
+import { labMarkerInputSchema, uuidParam } from "@/lib/validation/schemas";
 import { handle, ok, unauthorized } from "@/lib/api/respond";
 
 export async function PATCH(
@@ -14,6 +14,7 @@ export async function PATCH(
     const user = await getUser();
     if (!user) return unauthorized();
     const { id } = await params;
+    uuidParam.parse(id);
     const input = labMarkerInputSchema.parse(await request.json());
     const supabase = await createClient();
     return ok(await updateLabMarker(supabase, user.id, id, input));
@@ -28,6 +29,7 @@ export async function DELETE(
     const user = await getUser();
     if (!user) return unauthorized();
     const { id } = await params;
+    uuidParam.parse(id);
     const supabase = await createClient();
     await deleteLabMarker(supabase, user.id, id);
     return ok({ id });

@@ -21,7 +21,7 @@ vi.mock("@/lib/db/lab-marker-repo", () => ({
 
 import { DELETE, PATCH } from "./route";
 
-function ctx(id = "m1") {
+function ctx(id = "ca0df2c9-5aa1-44c1-80ff-2ff3c8f967fd") {
   return { params: Promise.resolve({ id }) };
 }
 function req(body?: unknown): NextRequest {
@@ -31,7 +31,7 @@ function req(body?: unknown): NextRequest {
 const USER = { id: "u1" };
 
 const MARKER: LabMarker = {
-  id: "m1",
+  id: "ca0df2c9-5aa1-44c1-80ff-2ff3c8f967fd",
   userId: "u1",
   marker: "Ferritin",
   value: 45,
@@ -76,7 +76,7 @@ describe("PATCH /api/lab-markers/:id", () => {
     getUser.mockResolvedValue(USER);
     updateLabMarker.mockResolvedValue(MARKER);
 
-    const res = await PATCH(req(VALID_INPUT), ctx("m-someone-else"));
+    const res = await PATCH(req(VALID_INPUT), ctx("6bd1e100-393f-4251-8bad-ef4a4a7a99af"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -84,7 +84,7 @@ describe("PATCH /api/lab-markers/:id", () => {
     expect(updateLabMarker).toHaveBeenCalledWith(
       {},
       "u1",
-      "m-someone-else",
+      "6bd1e100-393f-4251-8bad-ef4a4a7a99af",
       expect.objectContaining({ marker: "Ferritin" }),
     );
   });
@@ -109,7 +109,28 @@ describe("DELETE /api/lab-markers/:id", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toEqual({ id: "m1" });
-    expect(deleteLabMarker).toHaveBeenCalledWith({}, "u1", "m1");
+    expect(body.data).toEqual({ id: "ca0df2c9-5aa1-44c1-80ff-2ff3c8f967fd" });
+    expect(deleteLabMarker).toHaveBeenCalledWith({}, "u1", "ca0df2c9-5aa1-44c1-80ff-2ff3c8f967fd");
+  });
+});
+
+describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
+  // The id never reaches Postgres: `uuidParam` decides from the string, before
+  // any I/O. That ordering is the reason a syntactic 400 is not an existence
+  // oracle — nothing was looked up to produce it. A WELL-FORMED id that is
+  // foreign or absent still answers 404, byte-identical (U29's property).
+
+  it("PATCH — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await PATCH(req(VALID_INPUT), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("DELETE — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await DELETE(new Request("http://localhost", { method: "DELETE" }), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
   });
 });

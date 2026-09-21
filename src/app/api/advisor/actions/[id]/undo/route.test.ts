@@ -33,7 +33,7 @@ vi.mock("@/lib/advisor/actions/execute", () => ({
 
 import { POST } from "./route";
 
-function ctx(id = "a1") {
+function ctx(id = "f55ff16f-66f4-4360-866b-95db6f8fec01") {
   return { params: Promise.resolve({ id }) };
 }
 const req = () => ({}) as unknown as NextRequest;
@@ -42,7 +42,7 @@ const USER = { id: "u1" };
 
 function action(over: Partial<AdvisorActionRecord> = {}): AdvisorActionRecord {
   return {
-    id: "a1",
+    id: "f55ff16f-66f4-4360-866b-95db6f8fec01",
     userId: "u1",
     conversationId: null,
     actionType: "add_item",
@@ -84,7 +84,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     getUser.mockResolvedValue(USER);
     getAction.mockResolvedValue(null);
 
-    const res = await POST(req(), ctx("a-missing"));
+    const res = await POST(req(), ctx("a45c4779-a077-4e4f-8295-f75e12090947"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -112,15 +112,15 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toEqual({ id: "a1", undone: true, batchId: null, count: 1 });
+    expect(body.data).toEqual({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", undone: true, batchId: null, count: 1 });
     expect(executeIntent).toHaveBeenCalledWith({}, "u1", {
       op: "delete_item",
       stackId: "s1",
       itemId: "i1",
     });
     // U26: the owner travels with every repo call, in the second position.
-    expect(getAction).toHaveBeenCalledWith({}, "u1", "a1");
-    expect(markUndone).toHaveBeenCalledWith({}, "u1", "a1");
+    expect(getAction).toHaveBeenCalledWith({}, "u1", "f55ff16f-66f4-4360-866b-95db6f8fec01");
+    expect(markUndone).toHaveBeenCalledWith({}, "u1", "f55ff16f-66f4-4360-866b-95db6f8fec01");
     expect(getActionsByBatch).not.toHaveBeenCalled();
   });
 
@@ -128,19 +128,19 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     getUser.mockResolvedValue(USER);
     getAction.mockResolvedValue(action({ batchId: "b1" }));
     getActionsByBatch.mockResolvedValue([
-      action({ id: "a1", inverse: { op: "delete_item", stackId: "s1", itemId: "first" } }),
-      action({ id: "a2", inverse: { op: "delete_item", stackId: "s1", itemId: "second" } }),
+      action({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", inverse: { op: "delete_item", stackId: "s1", itemId: "first" } }),
+      action({ id: "2c3a4249-d770-4005-8649-dbd822dcaf79", inverse: { op: "delete_item", stackId: "s1", itemId: "second" } }),
     ]);
 
     const res = await POST(req(), ctx());
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toEqual({ id: "a1", undone: true, batchId: "b1", count: 2 });
+    expect(body.data).toEqual({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", undone: true, batchId: "b1", count: 2 });
     // Newest first — the same invariant executeBatch holds on the forward path.
     expect(executeIntent.mock.calls.map((c) => c[2].itemId)).toEqual(["second", "first"]);
     expect(getActionsByBatch).toHaveBeenCalledWith({}, "u1", "b1");
-    expect(markUndone.mock.calls.map((c) => c[2])).toEqual(["a2", "a1"]);
+    expect(markUndone.mock.calls.map((c) => c[2])).toEqual(["2c3a4249-d770-4005-8649-dbd822dcaf79", "f55ff16f-66f4-4360-866b-95db6f8fec01"]);
     expect(markUndone.mock.calls.every((c) => c[1] === "u1")).toBe(true);
   });
 
@@ -148,8 +148,8 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     getUser.mockResolvedValue(USER);
     getAction.mockResolvedValue(action({ batchId: "b1" }));
     getActionsByBatch.mockResolvedValue([
-      action({ id: "a1", inverse: { op: "delete_item", stackId: "s1", itemId: "live" } }),
-      action({ id: "a2", status: "undone" }),
+      action({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", inverse: { op: "delete_item", stackId: "s1", itemId: "live" } }),
+      action({ id: "2c3a4249-d770-4005-8649-dbd822dcaf79", status: "undone" }),
     ]);
 
     const res = await POST(req(), ctx());
@@ -172,5 +172,19 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     expect(body.error.message).toBe("An unexpected internal error occurred.");
     expect(typeof body.error.correlationId).toBe("string");
     expect(JSON.stringify(body)).not.toContain("deadlock");
+  });
+});
+
+describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
+  // The id never reaches Postgres: `uuidParam` decides from the string, before
+  // any I/O. That ordering is the reason a syntactic 400 is not an existence
+  // oracle — nothing was looked up to produce it. A WELL-FORMED id that is
+  // foreign or absent still answers 404, byte-identical (U29's property).
+
+  it("POST — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await POST(req(), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
   });
 });

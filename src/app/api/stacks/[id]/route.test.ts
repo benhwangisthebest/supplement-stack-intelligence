@@ -31,7 +31,7 @@ vi.mock("@/services/evaluation", () => ({
 
 import { DELETE, GET, PUT } from "./route";
 
-function ctx(id = "s1") {
+function ctx(id = "e8bc163c-82ee-4187-8328-8c7d4ac636db") {
   return { params: Promise.resolve({ id }) };
 }
 function req(body?: unknown): NextRequest {
@@ -41,7 +41,7 @@ function req(body?: unknown): NextRequest {
 const USER = { id: "u1" };
 
 const STACK: Stack = {
-  id: "s1",
+  id: "e8bc163c-82ee-4187-8328-8c7d4ac636db",
   userId: "u1",
   name: "Sleep stack",
   intent: "sleep",
@@ -86,7 +86,7 @@ describe("GET /api/stacks/:id", () => {
 
     expect(res.status).toBe(200);
     expect(body.data.stack).toEqual(STACK);
-    expect(getStackDetail).toHaveBeenCalledWith({}, "u1", "s1");
+    expect(getStackDetail).toHaveBeenCalledWith({}, "u1", "e8bc163c-82ee-4187-8328-8c7d4ac636db");
   });
 
   it("404s for a stack the caller does not own", async () => {
@@ -94,7 +94,7 @@ describe("GET /api/stacks/:id", () => {
     arrangeSuccess();
     getStackDetail.mockResolvedValue(null);
 
-    const res = await GET(new Request("http://localhost"), ctx("s-not-mine"));
+    const res = await GET(new Request("http://localhost"), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -132,7 +132,7 @@ describe("PUT /api/stacks/:id", () => {
 
     // A body that would fail validation, against a stack the caller does not
     // own. A 400 here would confirm the stack exists to an outsider.
-    const res = await PUT(req({ name: "" }), ctx("s-not-mine"));
+    const res = await PUT(req({ name: "" }), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -150,7 +150,7 @@ describe("PUT /api/stacks/:id", () => {
     expect(updateStack).toHaveBeenCalledWith(
       {},
       "u1",
-      "s1",
+      "e8bc163c-82ee-4187-8328-8c7d4ac636db",
       expect.objectContaining({ name: "Renamed" }),
     );
   });
@@ -172,7 +172,7 @@ describe("DELETE /api/stacks/:id", () => {
     arrangeSuccess();
     getStack.mockResolvedValue(null);
 
-    const res = await DELETE(new Request("http://localhost"), ctx("s-not-mine"));
+    const res = await DELETE(new Request("http://localhost"), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5"));
 
     expect(res.status).toBe(404);
     expect(deleteStack).not.toHaveBeenCalled();
@@ -186,7 +186,35 @@ describe("DELETE /api/stacks/:id", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toEqual({ id: "s1" });
-    expect(deleteStack).toHaveBeenCalledWith({}, "u1", "s1");
+    expect(body.data).toEqual({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
+    expect(deleteStack).toHaveBeenCalledWith({}, "u1", "e8bc163c-82ee-4187-8328-8c7d4ac636db");
+  });
+});
+
+describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
+  // The id never reaches Postgres: `uuidParam` decides from the string, before
+  // any I/O. That ordering is the reason a syntactic 400 is not an existence
+  // oracle — nothing was looked up to produce it. A WELL-FORMED id that is
+  // foreign or absent still answers 404, byte-identical (U29's property).
+
+  it("GET — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await GET(new Request("http://localhost"), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("PUT — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await PUT(req(VALID_INPUT), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("DELETE — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await DELETE(new Request("http://localhost", { method: "DELETE" }), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
   });
 });

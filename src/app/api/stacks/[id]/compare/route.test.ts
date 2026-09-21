@@ -28,13 +28,13 @@ import { GET } from "./route";
 const USER = { id: "u1" };
 const RESULT = { covered: [], gaps: [] };
 
-function ctx(id = "s1") {
+function ctx(id = "e8bc163c-82ee-4187-8328-8c7d4ac636db") {
   return { params: Promise.resolve({ id }) };
 }
 
 /** The whole happy path — installed by the 401 test too, per §6.3.1. */
 function arrangeSuccess() {
-  getStack.mockResolvedValue({ id: "s1" });
+  getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
   listItems.mockResolvedValue([]);
   getProfile.mockResolvedValue({ goals: [] });
   compareFromProfile.mockReturnValue(RESULT);
@@ -76,9 +76,9 @@ describe("GET /api/stacks/:id/compare", () => {
     getUser.mockResolvedValue(USER);
     arrangeSuccess();
 
-    await GET(new Request("http://localhost"), ctx("s-other"));
+    await GET(new Request("http://localhost"), ctx("2c197d57-b487-44b6-8f06-63a85575913e"));
 
-    expect(getStack).toHaveBeenCalledWith({}, "u1", "s-other");
+    expect(getStack).toHaveBeenCalledWith({}, "u1", "2c197d57-b487-44b6-8f06-63a85575913e");
   });
 
   it("404s — and reads nothing further — for a stack the caller does not own", async () => {
@@ -86,7 +86,7 @@ describe("GET /api/stacks/:id/compare", () => {
     arrangeSuccess();
     getStack.mockResolvedValue(null);
 
-    const res = await GET(new Request("http://localhost"), ctx("s-not-mine"));
+    const res = await GET(new Request("http://localhost"), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -95,5 +95,19 @@ describe("GET /api/stacks/:id/compare", () => {
     // check — otherwise the 404 is cosmetic and the data was still fetched.
     expect(listItems).not.toHaveBeenCalled();
     expect(getProfile).not.toHaveBeenCalled();
+  });
+});
+
+describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
+  // The id never reaches Postgres: `uuidParam` decides from the string, before
+  // any I/O. That ordering is the reason a syntactic 400 is not an existence
+  // oracle — nothing was looked up to produce it. A WELL-FORMED id that is
+  // foreign or absent still answers 404, byte-identical (U29's property).
+
+  it("GET — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await GET(new Request("http://localhost"), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
   });
 });

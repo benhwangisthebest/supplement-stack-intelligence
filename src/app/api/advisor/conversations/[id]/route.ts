@@ -26,6 +26,7 @@ import { getUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { conversationBelongsToUser, getMessages } from "@/lib/advisor/repo";
 import { handle, notFound, ok, unauthorized } from "@/lib/api/respond";
+import { uuidParam } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export async function GET(
     const user = await getUser();
     if (!user) return unauthorized();
     const { id } = await params;
+    uuidParam.parse(id);
     const supabase = await createClient();
     if (!(await conversationBelongsToUser(supabase, user.id, id))) {
       return notFound("Conversation");

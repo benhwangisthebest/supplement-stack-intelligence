@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth/session";
 import { getStack } from "@/lib/db/stack-repo";
 import { addItem } from "@/lib/db/stack-item-repo";
-import { stackItemInputSchema } from "@/lib/validation/schemas";
+import { stackItemInputSchema, uuidParam } from "@/lib/validation/schemas";
 import { handle, notFound, ok, unauthorized } from "@/lib/api/respond";
 
 export async function POST(
@@ -15,6 +15,7 @@ export async function POST(
     const user = await getUser();
     if (!user) return unauthorized();
     const { id } = await params;
+    uuidParam.parse(id);
     const supabase = await createClient();
     if (!(await getStack(supabase, user.id, id))) return notFound("Stack");
     const input = stackItemInputSchema.parse(await request.json());

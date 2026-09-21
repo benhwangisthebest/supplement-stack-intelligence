@@ -31,7 +31,7 @@ import { getUser } from "@/lib/auth/session";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStack } from "@/lib/db/stack-repo";
 import { deleteItem, listItems, updateItem } from "@/lib/db/stack-item-repo";
-import { stackItemInputSchema } from "@/lib/validation/schemas";
+import { stackItemInputSchema, uuidParam } from "@/lib/validation/schemas";
 import { handle, notFound, ok, unauthorized } from "@/lib/api/respond";
 
 /**
@@ -59,6 +59,8 @@ export async function PUT(
     const user = await getUser();
     if (!user) return unauthorized();
     const { id, itemId } = await params;
+    uuidParam.parse(id);
+    uuidParam.parse(itemId);
     const supabase = await createClient();
     if (!(await getStack(supabase, user.id, id))) return notFound("Stack item");
     if (!(await belongsToStack(supabase, id, itemId))) return notFound("Stack item");
@@ -75,6 +77,8 @@ export async function DELETE(
     const user = await getUser();
     if (!user) return unauthorized();
     const { id, itemId } = await params;
+    uuidParam.parse(id);
+    uuidParam.parse(itemId);
     const supabase = await createClient();
     if (!(await getStack(supabase, user.id, id))) return notFound("Stack item");
     if (!(await belongsToStack(supabase, id, itemId))) return notFound("Stack item");

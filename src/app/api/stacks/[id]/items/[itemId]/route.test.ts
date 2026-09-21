@@ -41,7 +41,7 @@ vi.mock("@/lib/db/stack-item-repo", () => ({
 
 import { DELETE, PUT } from "./route";
 
-function ctx(id = "s1", itemId = "i1") {
+function ctx(id = "e8bc163c-82ee-4187-8328-8c7d4ac636db", itemId = "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903") {
   return { params: Promise.resolve({ id, itemId }) };
 }
 function req(body?: unknown): NextRequest {
@@ -51,8 +51,8 @@ function req(body?: unknown): NextRequest {
 const USER = { id: "u1" };
 
 const ITEM: StackItem = {
-  id: "i1",
-  stackId: "s1",
+  id: "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903",
+  stackId: "e8bc163c-82ee-4187-8328-8c7d4ac636db",
   supplementId: "magnesium",
   customName: null,
   dose: 400,
@@ -73,7 +73,7 @@ beforeEach(() => {
 describe("PUT /api/stacks/:id/items/:itemId", () => {
   it("returns 401 when unauthenticated", async () => {
     getUser.mockResolvedValue(null);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     updateItem.mockResolvedValue(ITEM);
 
     const res = await PUT(req(VALID_INPUT), ctx());
@@ -87,7 +87,7 @@ describe("PUT /api/stacks/:id/items/:itemId", () => {
     getStack.mockResolvedValue(null);
     updateItem.mockResolvedValue(ITEM);
 
-    const res = await PUT(req(VALID_INPUT), ctx("s-not-mine"));
+    const res = await PUT(req(VALID_INPUT), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5"));
 
     expect(res.status).toBe(404);
     expect(updateItem).not.toHaveBeenCalled();
@@ -95,7 +95,7 @@ describe("PUT /api/stacks/:id/items/:itemId", () => {
 
   it("returns 400 for an invalid body and writes nothing", async () => {
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     listItems.mockResolvedValue([ITEM]);
     updateItem.mockResolvedValue(ITEM);
 
@@ -113,10 +113,10 @@ describe("PUT /api/stacks/:id/items/:itemId", () => {
     // outsider that the item exists. A malformed body against a foreign item
     // must still be 404, never 400.
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     listItems.mockResolvedValue([ITEM]);
 
-    const res = await PUT(req({ dose: -1, unit: "mg" }), ctx("s1", "i-from-another-stack"));
+    const res = await PUT(req({ dose: -1, unit: "mg" }), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db", "6564e498-a5a1-4253-8fab-f0663357eff3"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -126,24 +126,24 @@ describe("PUT /api/stacks/:id/items/:itemId", () => {
 
   it("returns 200 for an item that IS in the verified stack", async () => {
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     listItems.mockResolvedValue([ITEM]);
     updateItem.mockResolvedValue(ITEM);
 
-    const res = await PUT(req(VALID_INPUT), ctx("s1", "i1"));
+    const res = await PUT(req(VALID_INPUT), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db", "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903"));
 
     expect(res.status).toBe(200);
-    expect(updateItem).toHaveBeenCalledWith({}, "i1", expect.objectContaining({ dose: 400 }));
+    expect(updateItem).toHaveBeenCalledWith({}, "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903", expect.objectContaining({ dose: 400 }));
   });
 
   it("404s — writing nothing — for an item that is NOT in the verified stack (U19)", async () => {
     // The behaviour change. Before U19 this returned 200 and updated the
     // foreign item; RLS stopped it only when the item's owner differed.
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     listItems.mockResolvedValue([ITEM]); // the stack contains i1, not the target
 
-    const res = await PUT(req(VALID_INPUT), ctx("s1", "i-from-another-stack"));
+    const res = await PUT(req(VALID_INPUT), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db", "6564e498-a5a1-4253-8fab-f0663357eff3"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -153,20 +153,20 @@ describe("PUT /api/stacks/:id/items/:itemId", () => {
 
   it("checks membership against the stack from the PATH, not one from the body", async () => {
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     listItems.mockResolvedValue([ITEM]);
     updateItem.mockResolvedValue(ITEM);
 
-    await PUT(req({ ...VALID_INPUT, stackId: "s-other" }), ctx("s1", "i1"));
+    await PUT(req({ ...VALID_INPUT, stackId: "s-other" }), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db", "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903"));
 
-    expect(listItems).toHaveBeenCalledWith({}, "s1");
+    expect(listItems).toHaveBeenCalledWith({}, "e8bc163c-82ee-4187-8328-8c7d4ac636db");
   });
 });
 
 describe("DELETE /api/stacks/:id/items/:itemId", () => {
   it("returns 401 when unauthenticated", async () => {
     getUser.mockResolvedValue(null);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     deleteItem.mockResolvedValue(undefined);
 
     const res = await DELETE(new Request("http://localhost"), ctx());
@@ -180,7 +180,7 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
     getStack.mockResolvedValue(null);
     deleteItem.mockResolvedValue(undefined);
 
-    const res = await DELETE(new Request("http://localhost"), ctx("s-not-mine"));
+    const res = await DELETE(new Request("http://localhost"), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5"));
 
     expect(res.status).toBe(404);
     expect(deleteItem).not.toHaveBeenCalled();
@@ -188,7 +188,7 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
 
   it("returns 200 with the removed item id", async () => {
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     listItems.mockResolvedValue([ITEM]);
     deleteItem.mockResolvedValue(undefined);
 
@@ -196,19 +196,19 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toEqual({ id: "i1" });
-    expect(deleteItem).toHaveBeenCalledWith({}, "i1");
+    expect(body.data).toEqual({ id: "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903" });
+    expect(deleteItem).toHaveBeenCalledWith({}, "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903");
   });
 
   it("404s — deleting nothing — for an item that is NOT in the verified stack (U19)", async () => {
     // The more dangerous half of the behaviour change: before U19 this deleted
     // the foreign item outright, and a delete has no inverse to offer the user.
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     listItems.mockResolvedValue([ITEM]);
     deleteItem.mockResolvedValue(undefined);
 
-    const res = await DELETE(new Request("http://localhost"), ctx("s1", "i-from-another-stack"));
+    const res = await DELETE(new Request("http://localhost"), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db", "6564e498-a5a1-4253-8fab-f0663357eff3"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -231,10 +231,10 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
     listItems.mockResolvedValue([ITEM]);
 
     getStack.mockResolvedValue(null);
-    const foreignStack = await DELETE(new Request("http://localhost"), ctx("s-not-mine", "i1"));
+    const foreignStack = await DELETE(new Request("http://localhost"), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5", "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903"));
 
-    getStack.mockResolvedValue({ id: "s1" });
-    const foreignItem = await DELETE(new Request("http://localhost"), ctx("s1", "i-nope"));
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
+    const foreignItem = await DELETE(new Request("http://localhost"), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db", "6dea0405-cf9d-4091-8935-ae0b932f89c6"));
 
     const stackText = await foreignStack.text();
     const itemText = await foreignItem.text();
@@ -260,16 +260,51 @@ describe("DELETE /api/stacks/:id/items/:itemId", () => {
       }) as unknown as NextRequest;
 
     getStack.mockResolvedValue(null);
-    const putStack = (await (await PUT(body(), ctx("s-not-mine", "i1"))).json()).error.message;
-    getStack.mockResolvedValue({ id: "s1" });
-    const putItem = (await (await PUT(body(), ctx("s1", "i-nope"))).json()).error.message;
+    const putStack = (await (await PUT(body(), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5", "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903"))).json()).error.message;
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
+    const putItem = (await (await PUT(body(), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db", "6dea0405-cf9d-4091-8935-ae0b932f89c6"))).json()).error.message;
     getStack.mockResolvedValue(null);
-    const delStack = (await (await DELETE(new Request("http://localhost"), ctx("s-not-mine", "i1"))).json()).error.message;
-    getStack.mockResolvedValue({ id: "s1" });
-    const delItem = (await (await DELETE(new Request("http://localhost"), ctx("s1", "i-nope"))).json()).error.message;
+    const delStack = (await (await DELETE(new Request("http://localhost"), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5", "4cd9b767-2d7f-4ee8-8b51-fb1e049f6903"))).json()).error.message;
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
+    const delItem = (await (await DELETE(new Request("http://localhost"), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db", "6dea0405-cf9d-4091-8935-ae0b932f89c6"))).json()).error.message;
 
     // All four call sites — two branches × two handlers — in one assertion, so
     // the title claims no more than this test alone establishes.
     expect(new Set([putStack, putItem, delStack, delItem]).size).toBe(1);
+  });
+});
+
+describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
+  // The id never reaches Postgres: `uuidParam` decides from the string, before
+  // any I/O. That ordering is the reason a syntactic 400 is not an existence
+  // oracle — nothing was looked up to produce it. A WELL-FORMED id that is
+  // foreign or absent still answers 404, byte-identical (U29's property).
+
+  it("PUT — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await PUT(req(VALID_INPUT), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("PUT — malformed `itemId` answers 400 VALIDATION_ERROR", async () => {
+    const res = await PUT(req(VALID_INPUT), ctx(undefined, "not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("DELETE — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await DELETE(new Request("http://localhost", { method: "DELETE" }), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("DELETE — malformed `itemId` answers 400 VALIDATION_ERROR", async () => {
+    const res = await DELETE(new Request("http://localhost", { method: "DELETE" }), ctx(undefined, "not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
   });
 });

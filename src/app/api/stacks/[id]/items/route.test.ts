@@ -19,7 +19,7 @@ vi.mock("@/lib/db/stack-item-repo", () => ({ addItem: (...a: unknown[]) => addIt
 
 import { POST } from "./route";
 
-function ctx(id = "s1") {
+function ctx(id = "e8bc163c-82ee-4187-8328-8c7d4ac636db") {
   return { params: Promise.resolve({ id }) };
 }
 function req(body?: unknown): NextRequest {
@@ -30,7 +30,7 @@ const USER = { id: "u1" };
 
 const ITEM: StackItem = {
   id: "i1",
-  stackId: "s1",
+  stackId: "e8bc163c-82ee-4187-8328-8c7d4ac636db",
   supplementId: "magnesium",
   customName: null,
   dose: 200,
@@ -51,7 +51,7 @@ beforeEach(() => {
 describe("POST /api/stacks/:id/items", () => {
   it("returns 401 when unauthenticated", async () => {
     getUser.mockResolvedValue(null);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     addItem.mockResolvedValue(ITEM);
 
     const res = await POST(req(VALID_INPUT), ctx());
@@ -65,7 +65,7 @@ describe("POST /api/stacks/:id/items", () => {
     getStack.mockResolvedValue(null);
     addItem.mockResolvedValue(ITEM);
 
-    const res = await POST(req(VALID_INPUT), ctx("s-not-mine"));
+    const res = await POST(req(VALID_INPUT), ctx("7f4677b2-c82f-4acd-8f79-1ef550d473e5"));
     const body = await res.json();
 
     expect(res.status).toBe(404);
@@ -75,7 +75,7 @@ describe("POST /api/stacks/:id/items", () => {
 
   it("returns 400 for a non-positive dose and writes nothing", async () => {
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     addItem.mockResolvedValue(ITEM);
 
     const res = await POST(req({ supplementId: "magnesium", dose: 0, unit: "mg" }), ctx());
@@ -88,15 +88,29 @@ describe("POST /api/stacks/:id/items", () => {
 
   it("returns 201 and writes to the stack id from the PATH", async () => {
     getUser.mockResolvedValue(USER);
-    getStack.mockResolvedValue({ id: "s1" });
+    getStack.mockResolvedValue({ id: "e8bc163c-82ee-4187-8328-8c7d4ac636db" });
     addItem.mockResolvedValue(ITEM);
 
     // The body carries a different stackId; it must be ignored.
-    const res = await POST(req({ ...VALID_INPUT, stackId: "s-someone-else" }), ctx("s1"));
+    const res = await POST(req({ ...VALID_INPUT, stackId: "s-someone-else" }), ctx("e8bc163c-82ee-4187-8328-8c7d4ac636db"));
     const body = await res.json();
 
     expect(res.status).toBe(201);
     expect(body.data).toEqual(ITEM);
-    expect(addItem).toHaveBeenCalledWith({}, "s1", expect.objectContaining({ dose: 200 }));
+    expect(addItem).toHaveBeenCalledWith({}, "e8bc163c-82ee-4187-8328-8c7d4ac636db", expect.objectContaining({ dose: 200 }));
+  });
+});
+
+describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
+  // The id never reaches Postgres: `uuidParam` decides from the string, before
+  // any I/O. That ordering is the reason a syntactic 400 is not an existence
+  // oracle — nothing was looked up to produce it. A WELL-FORMED id that is
+  // foreign or absent still answers 404, byte-identical (U29's property).
+
+  it("POST — malformed `id` answers 400 VALIDATION_ERROR", async () => {
+    const res = await POST(req(VALID_INPUT), ctx("not-a-uuid"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
   });
 });

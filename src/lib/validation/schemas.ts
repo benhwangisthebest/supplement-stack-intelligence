@@ -52,6 +52,30 @@ export const labMarkerInputSchema = z
   );
 export type LabMarkerInput = z.infer<typeof labMarkerInputSchema>;
 
+/**
+ * A UUID taken from a URL path segment (Phase 2 U30, finding N-51).
+ *
+ * WHY IT LIVES HERE AND NOT IN A MODULE OF ITS OWN: this file already owned
+ * the predicate twice — `generateProtocolSchema` and `matchProductsSchema`
+ * both inlined `z.string().uuid()` for a `stackId`, and both now use this.
+ * One definition, one place for the rule to change.
+ *
+ * WHY THERE IS NO `src/types/` CONFORMANCE ASSERTION BESIDE IT, unlike the two
+ * write contracts at the bottom of this file — and this is a decision, not an
+ * omission (owner ruling, 2026-09-21). A domain contract for this could only
+ * say `type UuidParam = string`, and `Equal<string, string>` is a TAUTOLOGY:
+ * it cannot go red under any mutation of the schema below, including deleting
+ * `.uuid()`, which is the only mutation that matters. An assertion that
+ * provably cannot fail is worse than none, because it reads like coverage.
+ * The non-vacuous version is a branded `Uuid` threaded through every repo
+ * signature — a cross-cutting refactor, not this unit's (§3 rule 4).
+ *
+ * What DOES guard it: `path-param-validation.test.ts` (every id validated,
+ * before any I/O, by the validator imported from here) and the per-route 400
+ * tests. Behaviour, not types.
+ */
+export const uuidParam = z.string().uuid();
+
 export const stackInputSchema = z.object({
   name: z.string().min(1).max(120),
   intent,
@@ -61,7 +85,7 @@ export const stackInputSchema = z.object({
 export type StackInput = z.infer<typeof stackInputSchema>;
 
 export const generateProtocolSchema = z.object({
-  stackId: z.string().uuid(),
+  stackId: uuidParam,
 });
 export type GenerateProtocolInput = z.infer<typeof generateProtocolSchema>;
 
@@ -106,7 +130,7 @@ export const checkinInputSchema = z.object({
 export type CheckinInputSchema = z.infer<typeof checkinInputSchema>;
 
 export const matchProductsSchema = z.object({
-  stackId: z.string().uuid(),
+  stackId: uuidParam,
 });
 export type MatchProductsRequest = z.infer<typeof matchProductsSchema>;
 

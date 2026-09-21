@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth/session";
 import { runEvaluation } from "@/services/evaluation";
 import { handle, notFound, ok, unauthorized } from "@/lib/api/respond";
+import { uuidParam } from "@/lib/validation/schemas";
 
 export async function POST(
   _request: Request,
@@ -12,6 +13,7 @@ export async function POST(
     const user = await getUser();
     if (!user) return unauthorized();
     const { id } = await params;
+    uuidParam.parse(id);
     const supabase = await createClient();
     const result = await runEvaluation(supabase, user.id, id);
     if (!result) return notFound("Stack");

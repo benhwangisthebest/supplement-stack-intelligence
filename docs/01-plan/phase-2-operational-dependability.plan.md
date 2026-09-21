@@ -241,6 +241,19 @@ repository's CI) · **FU-26** — now U22's whole scope, **S** · **FU-28** — 
 FU-17, FU-18, FU-19, FU-21, FU-22. Each carries its own written reason in Phase 1 plan §12; none is a live
 defect; none is dropped.
 
+> **[2026-09-21] FU-33 — NEW, and it is the first row this register has gained since Phase 1.**
+> **A `handleParams(params, schema, fn)` wrapper: the structural fix that would make U30's guard
+> redundant by construction.** Raised by `ecc:architect` during U30 planning and **deferred to a later
+> phase by owner ruling the same day**, with **U30's two-layer guard as the interim control**.
+>
+> **Why it is better than the guard it would replace:** U30 asserts that twelve handlers each remember
+> to validate; a wrapper that receives `params` makes forgetting impossible — the difference between a
+> rule that is checked and a rule that cannot be broken (§3 rule 5's ceiling). **Why it is not U30:**
+> it is a twelve-site signature refactor, and `handle()` structurally cannot become it — `handle()`
+> receives a thunk and never sees `params`, so this is a new sibling, not an extension.
+> **The interim control is not a placeholder**: if the wrapper ever lands, U30's behavioural layer
+> remains the thing that proves the wrapper is wired, so the guard outlives its own redundancy.
+
 ### 4.4 Found while orienting — not previously in any register
 
 | # | Finding | Evidence | Disposition |
@@ -330,6 +343,7 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-69** | **`ecc:architect` during U29 planning, 2026-09-19** (the one question: route, service or repo) | **`recordBatch` can persist an `advisor_actions` row pointing at ANOTHER user's conversation, and every existing guard passes.** The row's `user_id` is stamped correctly, so `repo-scoping.test.ts` is satisfied; the column's foreign key constrains **existence, never ownership** | `0004_advisor_actions.sql:16-17` — `conversation_id uuid references public.advisor_conversations(id) on delete set null`, so a *nonexistent* id is refused by Postgres and a *foreign* one is accepted. `recordBatch` itself takes the id from its caller | **OPEN, unassigned.** **U29 closes the path through `confirmAndApply` and does NOT close `recordBatch`** — which is the distinction worth keeping: U29 guards a caller, not the function every future caller will reach. Candidate fixes, neither chosen here: scope `recordBatch` to verified conversations, or add a composite constraint so the database itself refuses a cross-owner reference |
 | **N-70** | **`ecc:security-reviewer` on the U29 diff, 2026-09-20** | **U29's two ownership guards are check-then-act, and the repo layer already has the atomic pattern they do not use.** `conversationBelongsToUser` is a plain `select … maybeSingle` awaited at `route.ts:119`; the reservation happens at `route.ts:137` as a separate round trip, and `getMessages` at `:140`. Between the two the answer can go stale. Same shape at `advisor-actions.ts:149` | The contrast is inside this repository: **`appendMessages` (`repo.ts:159-187`, Phase 2 U26) folds ownership into the write statement itself** — `update … .eq("id", …).eq("user_id", …)` and a row-count check — so its check cannot go stale. U29's guards are the weaker pattern beside it | **DEFERRED by owner ruling 2026-09-20, with the reason stated rather than left implicit — NOT a Phase 2 unit.** **The window has no adversary**: nothing in this product transfers or shares a conversation, so the only way to lose ownership between the check and the reservation is to delete your own conversation, and the cost of that race is your own budget. A TOCTOU with no second party is a latent defect, not a live one. **THE GATE, and it is the whole point of deferring rather than closing: any future proposal to make conversations transferable or shareable must cite N-70 and close it first.** That is what turns the window into an exploitable one, and the person proposing the feature is the only one positioned to notice. **It is registered because the asymmetry is the finding** — this codebase holds both patterns, and the weaker was chosen where the stakes are a paid call. The fix folds the predicate into the reservation RPC or the write's `WHERE`, the way `appendMessages` already does; that is a design, not a patch |
 | **N-71** | **`ecc:code-reviewer` on the U29 diff, 2026-09-20** (found while tracing the blast radius of an empty `conversationId`) | **A stack mutation can commit with no audit row and no `rolledBack` signal.** `executeBatch` has its own `try/catch` that returns `ACTION_ERROR` with `details: { rolledBack: true }` — a computed fact the client acts on. **`recordBatch` runs AFTER that block**, so a throw there falls to the outer `catch`, which returns `ACTION_ERROR` **without** `rolledBack`. The stack change is already committed and the audit row never exists | `advisor-actions.ts` — inner catch returns `{ rolledBack: true }`; `recordBatch` is called ~15 lines later; the outer catch returns `internalError(err, { code: "ACTION_ERROR" })` with no details | **OPEN, unassigned. PRE-EXISTING and explicitly NOT introduced by U29** — the reviewer said so unprompted, and U29 in fact *narrows* one route to it by refusing an empty id before `executeBatch` rather than after. It is registered because the audit trail is the thing this pair of findings (N-48/N-49) is about: a client told `ACTION_ERROR` with no `rolledBack` cannot tell a rolled-back batch from an applied-but-unaudited one |
+| **N-72** | **U30 planning, 2026-09-21** (found enumerating the twelve handler sites) | **`src/app/api/advisor/actions/[id]/undo/route.ts` is the only dynamic handler that does not use `handle()`.** It reads its path param outside any `try`, and its own catch maps **everything** to `internalError(err, { code: "UNDO_ERROR" })` → 500 — so a `ZodError` there would be a 500 with a different code, not the 400 every other handler gets for free | `grep -c "handle(async"` → **0** in that file, **≥1** in the other seven dynamic route files; its catch is a single `internalError` with no `ZodError` branch | **OPEN — owner: U34**, by ruling 2026-09-21. U34 already owns that route's error reporting (N-71), so it decides whether the handler **moves onto `handle()`** or **stays exempt with a written reason**. **U30 does not decide it**: U30 gets the same 400 body there via `safeParse` + explicit `validationError`, which works under either outcome and prejudges neither |
 
 **[2026-09-18, third and final revision — the two earlier versions of this note are why it is worth reading.] THE GAP IS CLOSED, AND BY THIS COMMIT RATHER THAN BY THE CLOSEOUT.** The first version said N-53…N-55 sat on an unmerged branch and would arrive at merge. They did not: U31's code commit `f9c34e3` left them in its subordinate artifact. The second version recorded that as a finding and refused to promote them unasked. U31's closeout `a0d318b` then added **N-63, N-64 and N-65** straight into this register — correctly — while **N-53 … N-62 stayed in the artifact**, so the register read N-1…N-52, N-63…N-65 and the numbers between them existed only in a subordinate file. **This commit promotes N-53 … N-62 verbatim**, each tagged with its source section, and strikes the artifact copies in place with a pointer (§7). **N-56 is one row, not two** — U31 raised it, the main session wrote it up more fully with the owner's ruling, and the artifact's copy is superseded in place. The register is now **contiguous N-1 … N-65**, verified by count rather than by reading.
 
@@ -453,6 +467,21 @@ different claims from what the migration set proves.
 
 Sizes follow Phase 1's key: **S** = one focused test file or a config change · **M** = a guard with
 fixtures, or ~5–10 route tests · **L** = a refactor plus its tests.
+
+> **METHOD RULE, standing, added 2026-09-21 from U30 — mutation reverts use a FILE-COPY BACKUP, never
+> `git checkout --`.**
+>
+> A file under mutation usually carries **uncommitted work belonging to the unit doing the mutating**.
+> `git checkout -- <file>` restores it to **HEAD**, which silently discards that work; the mutation
+> "reverts" and the implementation goes with it. This is recorded because it happened: during U30's M4,
+> a `git checkout` on `stacks/[id]/compare/route.ts` removed that unit's own `uuidParam.parse` and
+> import, and the loss was caught only because `git status` was read afterwards rather than the revert
+> being trusted.
+>
+> **The rule:** `cp <file> <scratch>/…bak` before mutating, `cp` back after. **And read `git status`
+> after any revert** — the check is cheap and it is the only thing that would have noticed. §5 rule 2
+> requires a mutation to be *shown* red; a revert that also deletes the fix makes the next green run a
+> lie about a tree that no longer exists.
 
 ### Group A — the error contract
 
@@ -3253,6 +3282,209 @@ reading `params`), so a regex that stops matching is red rather than green. **St
 `itemId` in the stack-item route is compared in JavaScript and never cast, so it is not a 500 risk; whether
 it should still be validated for shape is a question U30 answers by validating it anyway (one schema, no
 per-parameter judgement) rather than by carving an exception.
+
+---
+
+#### U30 PLAN — drafted 2026-09-21, ~~AWAITING OWNER APPROVAL. Nothing below is implemented.~~ **APPROVED by the repository owner, 2026-09-21**, with five rulings: **(1)** the category B reversal is accepted **on the syntactic/semantic distinction**, and the clause retires per §7 with that reasoning in place; **(2)** the undo route uses `safeParse` + explicit `validationError`, and its being the only handler without `handle()` is registered as **N-72**, owned by **U34**; **(3)** placement in `schemas.ts` accepted with **no tautological conformance assertion — an assertion that cannot go red is not written**, and the reasoning is recorded so nobody adds one later; **(4)** the wrapper is deferred as **FU-33**; **(5)** `graphify label` is not run — an optional LLM relabel that costs money for no unit value.
+
+**bkit:** registered as `u30-uuid-path-params`, phase `plan`; artifact
+`docs/01-plan/features/u30-uuid-path-params.plan.md`, subordinate, mirroring this entry.
+
+**STOP HERE FIRST — THIS UNIT REVERSES A RECORDED DECISION, AND THE DECISION'S REASONING IS THE ONE U29
+JUST USED.** `route-contract.test.ts:74-77` defines exemption **category B** in these words: *"the id is
+caller-supplied, but a malformed or foreign one resolves to 404 — never 400, because a 400
+distinguishing 'not a uuid' from 'not yours' is a weak existence oracle."* **Four of U30's eight files
+are category B entries** — `advisor/actions/[id]/undo`, `advisor/conversations/[id]`,
+`stacks/[id]/compare`, `stacks/[id]/evaluate`. Decision 8(d) created U30; this paragraph is where U30
+meets what the guard already says.
+
+**The reversal is defensible, and here is the distinction that makes it so:** a **syntactic** 400
+discloses nothing about existence. *"This string is not a UUID"* is knowable from the string alone,
+without touching the database — it is a statement about the request, not about the data. The oracle
+category B guards against is a **semantic** one: answering differently for *well-formed but foreign*
+versus *well-formed and absent*, which is exactly what U29 spent a mutation (M5) making impossible.
+**U30 must not touch that.** Well-formed-but-foreign stays 404, byte-identical, forever.
+
+**What the unit therefore owes, per §7:** category B's *"never 400"* clause is **retired, struck with
+its rationale, not deleted**, and replaced by the syntactic/semantic split above. **Two assertions in
+`route-contract.test.ts` go red on the way** — the stale-exemption check (`:180`) and the set-equality
+check (`:204`) — and **that redness is evidence, not breakage**: it is the guard noticing that four
+routes it recorded as non-validating now validate.
+
+**THE TWELVE HANDLER SITES.** Measured, not recalled — `grep -Hn "await params"` across the eight
+tracked dynamic route files. Every one reads its params with no validation of any kind today; the
+"current parse" column is empty for all twelve because there is no parse, which is N-51 in one column.
+
+| # | File | Handler | Param read | Ids | Insertion |
+|---|---|---|---|---|---|
+| 1 | `advisor/actions/[id]/undo/route.ts` | POST | **:28** | `id` | **see the asymmetry below — this one is not like the others** |
+| 2 | `advisor/conversations/[id]/route.ts` | GET | :39 | `id` | `uuidParam.parse(id)` immediately after the read |
+| 3 | `stacks/[id]/route.ts` | GET | :17 | `id` | same |
+| 4 | `stacks/[id]/route.ts` | PUT | :32 | `id` | same |
+| 5 | `stacks/[id]/route.ts` | DELETE | :47 | `id` | same |
+| 6 | `stacks/[id]/items/route.ts` | POST | :17 | `id` | same |
+| 7 | `stacks/[id]/items/[itemId]/route.ts` | PUT | :61 | **`id`, `itemId`** | **both** parsed |
+| 8 | `stacks/[id]/items/[itemId]/route.ts` | DELETE | :77 | **`id`, `itemId`** | **both** parsed |
+| 9 | `stacks/[id]/evaluate/route.ts` | POST | :14 | `id` | same |
+| 10 | `stacks/[id]/compare/route.ts` | GET | :17 | `id` | same |
+| 11 | `lab-markers/[id]/route.ts` | PATCH | :16 | `id` | same |
+| 12 | `lab-markers/[id]/route.ts` | DELETE | :30 | `id` | same |
+
+**Twelve handlers, FOURTEEN ids** — rows 7 and 8 take two each. The difference matters twice: once for
+the work, and once for the guard, because a text scan for `uuidParam.parse(` is satisfied by a handler
+that parses `id` twice and never touches `itemId`.
+
+**THE TWELFTH HANDLER IS NOT LIKE THE OTHER ELEVEN, and the plan's headline claim is false for it
+without a decision.** `advisor/actions/[id]/undo/route.ts` **does not use `handle()`** — measured:
+`grep -c "handle(async"` returns **0** there and ≥1 in every other file. It reads params at `:28`
+*outside* any `try`, and its own catch at `:52` maps **everything** to
+`internalError(err, { code: "UNDO_ERROR" })` → **500**. So a thrown `ZodError` there becomes a 500 with
+a different code, not a 400. **Proposed:** at that one site use `uuidParam.safeParse(id)` and return
+`validationError(parsed.error)` explicitly — the identical 400 body as the other eleven, with no change
+to `handle()`, no change to `UNDO_ERROR`'s contract, and no conversion of that handler to `handle()`
+(which would be a separate refactor with its own error-contract questions). **The guard must therefore
+accept either form**, and that is stated here rather than discovered when the scan reddens.
+
+**PLACEMENT — the one question put to `ecc:architect`: does `uuidParam` belong in
+`src/lib/validation/schemas.ts`, and does that module's compile-time conformance pattern apply?**
+
+**Answer: yes to the module, no to the pattern.** The module already owns this predicate **twice** —
+`schemas.ts:64` and `:109` both inline `z.string().uuid()` for a `stackId`, and `schemas.test.ts` has a
+`uuid-only request schemas` block over them. A new module would create a second place the UUID rule can
+drift; `uuidParam` here lets those two be rewritten as `z.object({ stackId: uuidParam })`, one
+definition.
+
+**The conformance pattern does NOT apply, and the reason is worth keeping because it is a rule about
+when to stop copying a good idea.** The pattern is real (`schemas.ts:136-153`): `src/types` owns a write
+contract and `Equal<>` — invariant, via the function-parameter trick — fails `tsc` if the Zod schema
+drifts. But a `src/types/` contract for a UUID path parameter could only say `type UuidParam = string`,
+and **`Equal<string, string>` is a tautology that cannot go red under any mutation of
+`z.string().uuid()` — including deleting `.uuid()`, which is the only mutation that matters.** An
+assertion that provably cannot fail is worse than none: it reads like coverage. *(The non-vacuous
+version is a branded `Uuid` type threaded through every repo signature — a cross-cutting refactor §3
+rule 4 forbids this unit from starting.)*
+
+**THE SCAN — `PATH_PARAM_VALIDATION`, new spec `src/architecture/path-param-validation.test.ts`
+(spec count 22 → 23).** A text scan for `uuidParam.parse(` is defeated four ways, and one of them is
+live in this unit's own shape: **(i)** the two-id handlers parsing `id` twice; **(ii)** an aliased
+import; **(iii)** a parse placed *after* the first repo call, which still 500s; **(iv)** a thirteenth
+`[param]` route nobody adds to a list. So the guard is **two layers, both derived from `git ls-files`
+rather than from a hand-kept list**:
+
+1. **BEHAVIOURAL.** For every tracked `src/app/api/**/route.ts` whose path contains a `[param]`
+   segment, import its exported handlers and assert **400** with each param position in turn filled
+   with a non-UUID. Caller-derived, so a new dynamic route is in scope the day it is tracked, and a
+   missed `itemId` reddens **by behaviour, not by text** — which kills evasions (i), (ii) and (iv).
+2. **ORDERING.** Every identifier destructured from `await params` must reach a validating call
+   **before the first I/O call** in that handler — which kills (iii). `auth-coverage.test.ts` already
+   has the machinery: per-file I/O-symbol derivation and a position sort.
+
+**Anti-vacuity, on both layers:** the discovered set of dynamic routes is asserted **non-empty and ≥ 8
+files / 12 handlers**, because a scan that stops finding routes — a rename, a restructure, a regex that
+no longer matches `[` — passes over nothing and reports success.
+
+**DECLARED BEHAVIOUR CHANGE, one:** a malformed path id answers **400 `VALIDATION_ERROR`** instead of
+**500**, through the **existing** `ZodError → validationError` path in `handle()` (`respond.ts:251`) —
+no new error class, no change to `respond.ts`, no new response shape. **A well-formed id that does not
+exist, or is not yours, still answers 404, byte-identical** — U29's property is untouched, and U30 must
+not weaken it.
+
+**RED PLAN — ~~seven~~ NINE mutations (§5 rule 2). M8 and M9 were added by the code review, and both attack the guard's blindness rather than the code's behaviour — the failure mode a guard has that a test does not:**
+
+| # | Mutation | Must redden |
+|---|---|---|
+| **M1** | Remove the parse from one handler | that handler's 400 test **and** the behavioural scan |
+| **M2** | In a two-id handler, parse `id` twice and never `itemId` | the `itemId`-position 400 test — **the evasion a text scan cannot see** |
+| **M3** | Delete `.uuid()` from `uuidParam` | every 400 test; this is the mutation the conformance pattern could not have caught |
+| **M4** | Move a parse to **after** the first repo call | the ordering layer (the handler still 500s) |
+| **M5** | Add a thirteenth `[param]` route with no validation | the derived discovery — proves the set is derived, not listed |
+| **M6** | Narrow route discovery so it matches nothing | the anti-vacuity assertion |
+| **M7** | Restore category B's "never 400" clause and its four entries | `route-contract.test.ts`'s stale-exemption (`:180`) and set-equality (`:204`) |
+| **M8** *(added by `ecc:code-reviewer`)* | Rewrite a handler as an arrow export and drop its parse | the widened walker sees it — before the fix this passed silently |
+| **M9** *(added by `ecc:code-reviewer`)* | `(await params).id` instead of destructuring | *no silent skips* — the handler yields no id and says so |
+
+**CONSIDERED AND NOT CHOSEN, recorded so the next unit does not re-litigate it.** **Middleware: no** — it
+would re-derive route shapes from URL regexes (a second source of truth for what the filesystem already
+states), duplicate `fail()`'s envelope, and match pages as well as routes. **A `handleParams(params,
+schema, fn)` wrapper: the better design, and still not this unit** — it would make the guard unnecessary
+*by construction*, which is strictly better than a guard, but it is a twelve-site signature refactor and
+`handle()` structurally cannot do it (it receives a thunk and never sees `params`). Registered as the
+considered alternative; if the owner prefers it, U30 is a different and larger unit.
+
+**Prior art, cited because this bug class has been found here before:** `advisor-actions.ts:149` carries
+U29's note that a falsy-vs-null guard let an unvalidatable id through to Postgres. Same class — a
+caller-supplied identifier reaching the database unvalidated — one layer up.
+
+**REVIEWS — `ecc:code-reviewer`: APPROVE, 0 blocking, 2 MEDIUM + 1 LOW + 1 DOC, **all four taken**.
+`ecc:security-reviewer`: 0 blocking, answer NO (the paragraph above).**
+
+**THE TWO MEDIUMS WERE THE SAME DEFECT, AND IT IS THE ONE A GUARD CAN HAVE THAT A TEST CANNOT: NOT
+"WRONG", BUT "ABSENT".** The walker recognised only `export async function GET(...)`. A handler written
+as `export const GET = async (...) => {}`, or one reading `(await params).id` instead of destructuring,
+produced **no report at all** — so it failed nothing. The floors are aggregate, so such a route could
+sit beside the twelve covered handlers and be checked by nothing.
+
+**Fixed rather than disclosed, because the reviewer proposed the better version and it is better:** the
+walker now recognises both declaration shapes, and a new assertion — *every handler in a dynamic route
+yields at least one id* — turns an unseen handler into a **failure** instead of an absence. Two more
+mutations prove it, beyond the approved seven:
+
+| # | Mutation | Red evidence |
+|---|---|---|
+| **M8** | Rewrite a handler as an arrow export **and** drop its parse | the guard now **sees** it — `compare/route.ts#GET(id)` reported unvalidated. Before the widening this mutation passed silently, which is the whole finding |
+| **M9** | Replace destructuring with `(await params).id` | *"these handlers live in a dynamic route and yielded NO path id"* |
+
+**The LOW was a disclosure that was narrower than its own gap.** The honest-limits comment said the
+scanner cannot see I/O reached "through a helper in another module"; the same blindness applies to a
+**same-file** local helper, because `ioSymbols` walks imported identifiers only. `items/[itemId]`'s local
+`belongsToStack` is exactly that shape. Not live — every handler makes a directly imported I/O call
+first, so `firstIo` is pinned before any wrapper runs — but the comment now says what is actually true.
+
+**The DOC item, taken:** the subordinate artifact still read *AWAITING OWNER APPROVAL* after the entry
+recorded the approval. Synced, with a note that the artifact carries no status of its own.
+
+**What the review verified rather than assumed, and it is worth recording:** the reviewer re-ran two of
+the seven planned mutations (M2, M4) against the working tree and reproduced both, then invented a
+third — removing a parse outright — and confirmed the route test fails with `expected 200 to be 400`
+**rather than masking a 500**. It also confirmed no two converted fixtures collided on one UUID and no
+assertion depended on an old literal.
+
+**U30's NON-COVERAGE PARAGRAPH — `ecc:security-reviewer`'s answer, 2026-09-21. The question was: after
+U30, does any 400 body, status, header or timing distinguish a well-formed FOREIGN id from a well-formed
+ABSENT id, at any of the fourteen positions? THE ANSWER IS NO, and here is what that rests on.**
+
+1. **The 404 branches are untouched.** U30 inserts a validation call *ahead of* each handler's existing
+   lookup and changes no `notFound` branch. `not-found-uniformity.test.ts` — U12's byte-identity guard —
+   is not among the changed files and its assertions still pass unmodified.
+2. **A malformed id never reaches the database.** In all twelve handlers the parse precedes
+   `createClient()`, so there is no query to time. **This is a regression-tested property, not an
+   observation**: `PATH_PARAM_VALIDATION`'s ordering rule compares source position against the first I/O
+   call, and **M4** is its red proof.
+3. **Foreign and absent cost the same.** Both continue down the pre-existing lookup path —
+   `getStack`, `belongsToStack`, `conversationBelongsToUser`, `getAction` — doing the identical number
+   of queries they did before this unit. U30 adds none and removes none.
+4. **The 400 body carries nothing.** `validationError` serialises **only** `fieldErrors`, and for a bare
+   (non-object) schema Zod's per-path `fieldErrors` is always `{}` — re-measured here rather than taken
+   on trust: `z.string().uuid().safeParse("not-a-uuid").error.flatten()` →
+   `{"formErrors":["Invalid uuid"],"fieldErrors":{}}`, and `formErrors` is **not** in the envelope. So
+   every malformed id at every position produces the same body: no echo of the value, no route
+   variance, nothing that says which position rejected it.
+5. **The two-id handlers were the specific risk, and they are clean.** If `itemId` were validated after
+   the parent-stack lookup, a 400 on `itemId` would imply *the parent stack exists and is yours* — a
+   real oracle. Both parses sit together, before `getStack`. **M2 is the mutation that keeps it that
+   way.**
+
+**The limits, carried forward rather than buried:** the guard reads the AST, not the runtime — it cannot
+see an id that reaches I/O through a helper in another module, and it treats a `safeParse` whose result
+is ignored as validated. Manual review of all twelve handlers confirms none exploits either gap today.
+**This is a coverage boundary, not a defect**, and it is why the fourteen behavioural 400 tests exist
+beside the guard rather than instead of it.
+
+**STATED NON-COVERAGE — U29's property is untouched, and this paragraph is the commitment.** U30 changes the answer for a **syntactically invalid** id only. **A well-formed id that is foreign and a well-formed id that is absent answer the same 404, to the byte, at every one of the fourteen positions** — that is U29's semantic property, pinned by its own M5, and U30 neither weakens nor re-derives it. The security review's question for this unit is exactly that: *does any 400 body or timing distinguish well-formed-foreign from well-formed-absent at any position* — **and the answer must be no**. A 400 that reached the database to decide would be the oracle category B was written to prevent; `uuidParam.parse` decides from the string, before any I/O, which is why the ordering layer of the guard is a correctness property and not tidiness.
+
+**Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured) · `npx next build`.
+Reviews: `ecc:code-reviewer` on the diff **and** `ecc:security-reviewer`, because the unit changes what
+an unauthenticated scanner can learn from a malformed URL.
 
 **U31 · The LLM provider becomes OpenAI's first-party API.** *(created 2026-09-14 by the scope amendment
 in this document's header and decision 9; numbering append-only — U31 follows U30, it is not inserted)*

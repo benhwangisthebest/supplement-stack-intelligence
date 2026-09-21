@@ -71,18 +71,34 @@ const EXEMPT_NO_400: Record<string, string> = {
   "src/app/api/account/export/route.ts":
     "A — no request input. `GET()` is a zero-arg handler returning the caller's own rows across the twelve user-owned tables (Phase 2 U16). There is no value a caller could supply for it to reject.",
 
-  // --- B: path parameter only, unvalidated by design. The id is caller-supplied,
-  //        but a malformed or foreign one resolves to 404 — never 400, because a
-  //        400 distinguishing "not a uuid" from "not yours" is a weak existence
-  //        oracle. These are exempt from 400, NOT from ownership testing.
-  "src/app/api/advisor/actions/[id]/undo/route.ts":
-    "B — path parameter only. `POST(_request, {params})`, request deliberately unused; unknown id → `notFound(\"Action\")`, already-undone → 409.",
-  "src/app/api/advisor/conversations/[id]/route.ts":
-    "B — path parameter only. `GET(_request, {params})`, request unused. Since U21 (`882d53e`) a foreign or unknown id yields `notFound(\"Conversation\")` rather than the empty list RLS used to return; U21 added no 400 path, so the exemption still holds.",
-  "src/app/api/stacks/[id]/compare/route.ts":
-    "B — path parameter only. `GET(_request, {params})`, request unused; unknown or foreign stack → `notFound(\"Stack\")`.",
-  "src/app/api/stacks/[id]/evaluate/route.ts":
-    "B — path parameter only. `POST(_request, {params})`, request unused; unknown or foreign stack → `notFound(\"Stack\")`.",
+  // --- B: RETIRED 2026-09-21 by Phase 2 U30, on the owner's ruling. Kept here
+  //        struck rather than deleted (CLAUDE.md §7), because the reasoning was
+  //        right about the risk and wrong about the remedy, and the next person
+  //        to propose a 400 on a path parameter should meet both halves.
+  //
+  //        IT SAID: "path parameter only, unvalidated by design. The id is
+  //        caller-supplied, but a malformed or foreign one resolves to 404 —
+  //        never 400, because a 400 distinguishing 'not a uuid' from 'not
+  //        yours' is a weak existence oracle."
+  //
+  //        WHAT SURVIVES, AND IT IS THE IMPORTANT HALF: a **semantic** 400 —
+  //        one that answers differently for a well-formed id that is FOREIGN
+  //        versus one that is ABSENT — is exactly the oracle described, and it
+  //        is still forbidden. U29 pinned that property with a byte-identity
+  //        test and a mutation; U30 does not touch it.
+  //
+  //        WHAT CHANGED: a **syntactic** 400 discloses nothing. "This string is
+  //        not a UUID" is decidable from the string alone, before any I/O — no
+  //        row is consulted, so no existence can leak. U30 validates with
+  //        `uuidParam` at the top of each handler, which is why the ordering
+  //        assertion in `path-param-validation.test.ts` is a CORRECTNESS
+  //        property and not tidiness: a 400 produced after a database round
+  //        trip would be the oracle this paragraph forbade.
+  //
+  //        The four entries that lived here — advisor/actions/[id]/undo,
+  //        advisor/conversations/[id], stacks/[id]/compare, stacks/[id]/evaluate
+  //        — now validate, so they are no longer exemptions. The two ratchet
+  //        assertions below went red on the way, which is the guard noticing.
 
   // --- C: query parameter, coerced rather than validated.
   "src/app/api/side-effects/route.ts":
