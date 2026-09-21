@@ -3176,8 +3176,10 @@ wherever they appear, and `/usr/bin/python3` replaces the Homebrew one.
 | merged to `main` | **`1f0077c`** — fast-forward from `1a6c080`, 1 commit, 7 files, +477/−3 |
 | code run | **`35536919856`** — green on `1f0077c`, **18/18 steps**, on `feat/u29-pre-spend-ownership` |
 | post-merge `main` run | **`35537125713`** — green on `1f0077c`, 18/18, required check satisfied on the merged SHA |
-| CI figures | **NOT READ — see below.** Local, re-measured: lint **362/362, 0 errors** · vitest **1336 / 108 files** · build succeeds |
+| CI figures | ~~**NOT READ — see below.**~~ **BACK-FILLED 2026-09-21, read from run `35536919856`'s log after the arm64 reinstall**: lint **362 of 362, 0 errors** · vitest **1336 / 108 files** · non-live E2E **70 passed / 30 skipped**. **All three match the local run exactly**, which is the check the row could not perform when it was written |
 | bkit | **`u29-pre-spend-ownership` → `completed`**, advanced 2026-09-20 as the last step of this closeout |
+
+**[2026-09-21] BACK-FILLED. The paragraph below is kept as written (§7) because it is the record of why the figures were missing, and because the gap it describes lasted one unit and was closed by a toolchain fix rather than by a decision.** `gh` 2.101.0 (arm64, authenticated) read run `35536919856`'s log; the three figures are now in the row above and **match the local run exactly**. **One thing the reinstall did not fix, and it is worth knowing:** the arm64 binary lives at `/opt/homebrew/bin/gh`, which is **not on this shell's `PATH`**, so bare `gh` still resolves to the stale x86_64 binary at `/usr/local/bin/gh` and still fails. The back-fill was run by absolute path. A tool that is installed and unreachable is indistinguishable from one that is not installed, which is the same shape as §10.3's *guardrails that do not run in CI do not exist*.
 
 **THE THREE CI FIGURES ARE MISSING FROM THIS ROW, AND THAT IS A REPORT, NOT AN OMISSION.** Every prior
 closeout in this phase re-read lint / vitest / E2E out of the CI log to check them against the local
