@@ -14,14 +14,7 @@ import {
   markUndone,
 } from "@/lib/db/advisor-action-repo";
 import { executeIntent } from "@/lib/advisor/actions/execute";
-import {
-  fail,
-  internalError,
-  ok,
-  notFound,
-  unauthorized,
-  validationError,
-} from "@/lib/api/respond";
+import { fail, handle, ok, notFound, unauthorized } from "@/lib/api/respond";
 import { uuidParam } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
@@ -33,21 +26,32 @@ export async function POST(
   const user = await getUser();
   if (!user) return unauthorized();
 
-  const { id } = await params;
+  // [U34, N-72] THIS HANDLER NOW USES `handle()` LIKE THE OTHER ELEVEN, and
+  // the reason is not uniformity.
+  //
+  // `await params` and `await createClient()` used to sit OUTSIDE the try. A
+  // throw at either escaped the handler entirely, so Next.js answered with a
+  // non-envelope 500 carrying **no correlation id** — the one 500 in this
+  // application invisible to the log. Moving the boundary outward is what
+  // closes that, structurally rather than by remembering.
+  //
+  // What the move does NOT buy, stated because U34's plan first claimed it
+  // did: `auth-coverage.test.ts` and `error-disclosure.test.ts` already
+  // scanned this file — the first derives its set from `git ls-files`, the
+  // second names the file at `:395`. There was never a coverage gap here.
+  //
+  // `{ code: "UNDO_ERROR" }` preserves the declared code. The move is about
+  // where the catch lives, not about re-labelling a response.
+  //
+  // [U30, N-51] And the bare `uuidParam.parse(id)` is back, identical to the
+  // other eleven: a ZodError inside `handle()` is a 400 `VALIDATION_ERROR`
+  // for free, so the `safeParse` special case U30 needed here is gone. M9
+  // pins that the 400 is byte-identical either way.
+  return handle(async () => {
+    const { id } = await params;
+    uuidParam.parse(id);
+    const supabase = await createClient();
 
-  // [U30, N-51] `safeParse` + an explicit `validationError`, NOT the bare
-  // `uuidParam.parse(...)` the other eleven handlers use — because this
-  // handler does not run inside `handle()` (N-72). Its own catch maps
-  // everything to `internalError(..., { code: "UNDO_ERROR" })` → 500, so a
-  // thrown ZodError here would be a 500 with the wrong code rather than the
-  // 400 every other route gets for free. The body is identical to theirs;
-  // only the route to it differs. N-72 is owned by U34, which decides whether
-  // this handler moves onto `handle()` or stays exempt with a written reason.
-  const parsedId = uuidParam.safeParse(id);
-  if (!parsedId.success) return validationError(parsedId.error);
-  const supabase = await createClient();
-
-  try {
     const action = await getAction(supabase, user.id, id);
     if (!action) return notFound("Action");
     if (action.status === "undone") {
@@ -68,7 +72,5 @@ export async function POST(
     }
 
     return ok({ id, undone: true, batchId: action.batchId, count: rows.length });
-  } catch (err) {
-    return internalError(err, { code: "UNDO_ERROR" });
-  }
+  }, { code: "UNDO_ERROR" });
 }

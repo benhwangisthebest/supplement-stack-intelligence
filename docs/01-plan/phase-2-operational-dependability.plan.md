@@ -254,6 +254,27 @@ defect; none is dropped.
 > **The interim control is not a placeholder**: if the wrapper ever lands, U30's behavioural layer
 > remains the thing that proves the wrapper is wired, so the guard outlives its own redundancy.
 
+> **[2026-09-21] FU-34 — NEW, raised by `ecc:architect` during U34 planning and registered rather than
+> built. THE USER IS NEVER TOLD THAT PART OF THEIR BATCH MAY STILL BE APPLIED.**
+>
+> U34 makes the API answer `PARTIALLY_APPLIED` with `{ rolledBack: false, reverted, unreverted }` when a
+> compensating rollback does not fully succeed. **Nothing renders it.** `grep -rn "rolledBack" src/`
+> finds no component and no hook (N-74), so a correct code reaches the log, the E2E suite and the
+> support path — and stops there. The confirm surface should say something like *"some changes may have
+> been applied — check your stack"* when it sees that code.
+>
+> **It is also the condition under which the owner's `details.unreverted` proposal becomes right.** U34
+> ruled ids-only because nothing reads `error.details` — a payload with no consumer is disclosure with no
+> beneficiary. **If this follow-up lands a renderer, that objection collapses to sequencing** and the
+> payload should be reconsidered on its merits, restricted to `remove_item`/`edit_item`, with `reason`
+> and `notes` included only after explicit sign-off (they are free text and squarely §2.3 rule 15).
+>
+> **Why this is a follow-up and not U34:** U34 is about what the server can truthfully say, and it is
+> already M. **Why it must be registered rather than assumed:** without it, U34 closes N-71 *at the API*
+> and leaves it open *at the product*, and a closeout reader looking only at a green suite would
+> conclude otherwise. **N-71 is MITIGATED by U34, not closed** — the same distinction U32 was required
+> to draw for N-63, and for the same reason.
+
 ### 4.4 Found while orienting — not previously in any register
 
 | # | Finding | Evidence | Disposition |
@@ -345,6 +366,7 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-71** | **`ecc:code-reviewer` on the U29 diff, 2026-09-20** (found while tracing the blast radius of an empty `conversationId`) | **A stack mutation can commit with no audit row and no `rolledBack` signal.** `executeBatch` has its own `try/catch` that returns `ACTION_ERROR` with `details: { rolledBack: true }` — a computed fact the client acts on. **`recordBatch` runs AFTER that block**, so a throw there falls to the outer `catch`, which returns `ACTION_ERROR` **without** `rolledBack`. The stack change is already committed and the audit row never exists | `advisor-actions.ts` — inner catch returns `{ rolledBack: true }`; `recordBatch` is called ~15 lines later; the outer catch returns `internalError(err, { code: "ACTION_ERROR" })` with no details | **OPEN, unassigned. PRE-EXISTING and explicitly NOT introduced by U29** — the reviewer said so unprompted, and U29 in fact *narrows* one route to it by refusing an empty id before `executeBatch` rather than after. It is registered because the audit trail is the thing this pair of findings (N-48/N-49) is about: a client told `ACTION_ERROR` with no `rolledBack` cannot tell a rolled-back batch from an applied-but-unaudited one |
 | **N-72** | **U30 planning, 2026-09-21** (found enumerating the twelve handler sites) | **`src/app/api/advisor/actions/[id]/undo/route.ts` is the only dynamic handler that does not use `handle()`.** It reads its path param outside any `try`, and its own catch maps **everything** to `internalError(err, { code: "UNDO_ERROR" })` → 500 — so a `ZodError` there would be a 500 with a different code, not the 400 every other handler gets for free | `grep -c "handle(async"` → **0** in that file, **≥1** in the other seven dynamic route files; its catch is a single `internalError` with no `ZodError` branch | **OPEN — owner: U34**, by ruling 2026-09-21. U34 already owns that route's error reporting (N-71), so it decides whether the handler **moves onto `handle()`** or **stays exempt with a written reason**. **U30 does not decide it**: U30 gets the same 400 body there via `safeParse` + explicit `validationError`, which works under either outcome and prejudges neither |
 | **N-73** | **U33 implementation, 2026-09-21** — raised by the unit's own narrowing, when a guard failed for a reason that was not a defect in the code it guards | **Three `boundaries.test.ts` reader ratchets were matching PROSE.** `SOLE_PAID_CLIENT`'s key and address pins and `NO_PINNED_MODEL_ID`'s model pin each did `fs.readFileSync(file).includes("OPENAI_…")` on **raw text**, so a file that merely NAMES a variable in a comment counted as a module that READS it. The pressure this creates is the finding: the cheapest way to satisfy the guard is to delete accurate prose | `model-adapter.ts` failed the model-id pin after U33 moved every `process.env` read out of it, solely because a docstring says *"the routed model id, from `OPENAI_MODEL`"*. Verified by stripping comments: the file drops out of the reader set and the three pins go green | **FIXED HERE.** All three scans now strip comments before matching, using the stripper `NO_PINNED_MODEL_ID` already carried for its literal scan — one function, three new callers. A comment cannot read an environment variable, so this makes the scans MORE precise, not more permissive; the sibling rule `FIRST_PARTY_BASE_URL` already drew the same distinction explicitly (*"a reader is found by its env access, not by its filename"*), which is the argument for the change and also the reason the inconsistency lasted: two guards over the same property disagreed about what a reader is, and only one said so out loud |
+| **N-74** | **U34 planning, 2026-09-21** — found reading `executeBatch` before asking the architect anything | **`details: { rolledBack: true }` is ASSERTED, not computed — and nothing reads it.** Two halves of one claim about one field. (i) `execute.ts:128-151` rolls back **best-effort** and SWALLOWS each failure — `reportInternalError(rollbackErr, "ROLLBACK_FAILED")`, continue, then rethrow the ORIGINAL error — so the caller cannot know whether the rollback worked, yet `advisor-actions.ts:189` returns `rolledBack: true` unconditionally under a comment reading *"it is a computed fact the client acts on"*. (ii) `grep -rn "rolledBack" src/ tests/` finds the service and two test files: **no component, no hook**. Neither half of that comment is true | `execute.ts:133-148` catches `rollbackErr` and does not rethrow; `advisor-actions.ts:186-189` has no branch on rollback success; the grep returns three files, all of them the service or its tests | **OWNED BY U34, half (a), fixed there rather than deferred.** Splitting it would be worse than leaving it: if the audit-failure path computed rollback honestly while the execute-failure path kept asserting `true`, the same field would carry different truth on two paths, and a reader who checked one would generalise. **The history is the point** — **T-06** (2026-07-30) found this rollback swallowing failures silently and asked for a LOG; **U20 added exactly that log**; nobody went back to the RESPONSE, so the fix installed a log beside a claim the log contradicts. A remedy applied to the half that was reported |
 
 **[2026-09-18, third and final revision — the two earlier versions of this note are why it is worth reading.] THE GAP IS CLOSED, AND BY THIS COMMIT RATHER THAN BY THE CLOSEOUT.** The first version said N-53…N-55 sat on an unmerged branch and would arrive at merge. They did not: U31's code commit `f9c34e3` left them in its subordinate artifact. The second version recorded that as a finding and refused to promote them unasked. U31's closeout `a0d318b` then added **N-63, N-64 and N-65** straight into this register — correctly — while **N-53 … N-62 stayed in the artifact**, so the register read N-1…N-52, N-63…N-65 and the numbers between them existed only in a subordinate file. **This commit promotes N-53 … N-62 verbatim**, each tagged with its source section, and strikes the artifact copies in place with a pointer (§7). **N-56 is one row, not two** — U31 raised it, the main session wrote it up more fully with the owner's ruling, and the artifact's copy is superseded in place. The register is now **contiguous N-1 … N-65**, verified by count rather than by reading.
 
@@ -4497,6 +4519,357 @@ rests on a dormant import.*
   this tree. Editing it because it contains the number three would be the mistake U30's sweep avoided
   when it left `items/[itemId]/route.test.ts:114` untouched — a sweep that edits what matched the grep,
   rather than what became false, makes the record worse.
+
+
+#### U34 PLAN — drafted 2026-09-21, **AWAITING OWNER APPROVAL. Nothing below is implemented.**
+
+**bkit:** registered as `u34-honest-post-commit-failures`, phase `plan`; artifact
+`docs/01-plan/features/u34-honest-post-commit-failures.plan.md`, subordinate, mirroring this entry.
+
+**§11 orientation:** `graphify query "confirmAndApply batch execution rollback and advisor action audit
+records"` (graph rebuilt at U33's tip), then direct reads. The query surfaced **T-06** from the
+2026-07-30 transition review, which turns out to matter — see N-74.
+
+**Scoped in two halves by the owner, 2026-09-21.** **Size S → M**, and the widening is the owner's
+instruction rather than a proposal: the approved entry named half (a) only.
+
+---
+
+**TWO FACTS MEASURED BEFORE ASKING ANYTHING, because they change what the choice is about.**
+
+**FACT 1 — today's `rolledBack: true` is ASSERTED, NOT COMPUTED, and the comment beside it says
+otherwise.** `execute.ts:128-151` rolls back best-effort and **swallows** each failure: it calls
+`reportInternalError(rollbackErr, "ROLLBACK_FAILED")`, continues the loop, and rethrows the **original**
+error. The caller therefore cannot know whether the rollback worked — yet `advisor-actions.ts:189`
+returns `details: { rolledBack: true }` unconditionally, under a comment reading *"it is a computed fact
+the client acts on"*. **T-06 asked for the rollback failure to be logged; U20 did exactly that, and
+nobody went back to the response.** The log was added beside a claim the log contradicts.
+
+**FACT 2 — nothing consumes it.** `grep -rn "rolledBack" src/ tests/` returns the service, `respond.test.ts`
+and `actions/route.test.ts` — no component, no hook. Same for `UNDO_ERROR`. That does not make either
+harmless; it means **both halves can change response shape without breaking a client**, and it caps what
+this unit can achieve (see FU-34).
+
+Both are registered as **N-74**, and Fact 1 is folded into half (a) rather than deferred — see below for
+why splitting them would be worse than leaving them alone.
+
+---
+
+**HALF (a) — N-71. `ecc:architect` was asked the owner's question verbatim. Verdict: A1 — roll back and
+report honestly — but with THREE outcome codes, not two.**
+
+**The owner's reasoning is right and the architect sharpened it, so the sharper version is what the unit
+builds on.** "The user cannot undo it through the product" is true of the undo *path*, but for
+`add_item`, `generate_protocol` and `attach_product` the user can reverse the change by hand in Stack
+Lab. **The unanswerable cases are `remove_item` and `edit_item`** — verified at `execute.ts:55-74` and
+`apply.ts:134-142`: their inverse is `add_item(itemToInput(priorItem))` and
+`update_item(itemToInput(priorItem))`, so **the prior dose, unit, timing and notes exist ONLY inside
+`ExecuteResult.inverse`**, which step 3 failed to persist and step 4 never returns. At the moment
+`recordBatch` throws, that data is gone. The invariant that breaks is not "undo is inconvenient": it is
+**an irreversible destructive write to health data with no record that it happened** (§2.4, §2.3 rule
+15). That carries A1 on its own.
+
+**THE ARGUMENT AGAINST A1, from the architect, and it is the reason the design is three codes rather
+than two.** `recordBatch` failing is a write to **the same database** the compensating replay must also
+write to. Under the likeliest cause — connection loss, pool exhaustion, an RLS or permission fault — the
+replay fails too, so A1's *expected* outcome is "applied, unaudited, **and now partially reverted**",
+which is a worse state than A2's single clean one. **A1 with a binary `rolledBack` would be a worse
+design than A2.** It is only defensible with an honest third outcome, which is what is proposed.
+
+**WHY FACT 1 BELONGS IN THIS HALF AND NOT IN A LATER UNIT.** If step 3 computes rollback success
+honestly while step 2 keeps asserting `rolledBack: true`, **the same field carries different truth on
+two paths** — strictly worse than today's uniform lie, because a reader who checks one path will
+generalise. So `executeBatch` counts its `rollbackErr` catches (keeping `reportInternalError`) and
+throws a typed error carrying `{ reverted, unreverted }` instead of rethrowing bare. One rollback
+reporter, two call sites.
+
+**THE RESPONSE CONTRACT — codes describe STATE, never which step threw.** A client cannot act on "step
+3 failed"; it can act on "your change was undone" versus "some of it stands".
+
+| state | status | code | `details` | correlationId |
+|---|---|---|---|---|
+| success | **201** | — | `{ applied, batchId, results, newSafetyFlags, … }` | — |
+| threw before any write (outer catch) | **500** | `ACTION_ERROR` | *absent* | yes |
+| a write failed **or** the audit failed, **and every inverse succeeded** | **500** | `ACTION_ERROR` | `{ rolledBack: true }` | yes |
+| same, **any inverse failed** | **500** | **`PARTIALLY_APPLIED`** | `{ rolledBack: false, reverted: n, unreverted: m }` | yes |
+| Zod / safety / stale / not-found | 400 / 409 / 409 / 404 | unchanged | unchanged | — |
+
+The counts are facts about **the caller's own batch**, not internal state, so §2.3 rule 13 is untouched:
+no message, path, driver string or host appears, and the correlation id carries the rest to the log.
+
+**THE OWNER'S ADDITION — return the unreverted inverse PAYLOADS in `details.unreverted`, the owner's own
+data handed back to them as the last place it can survive. RULED: NO, ids and counts only, on the
+architect's objection and the owner's standing instruction to keep ids-only in both if it objected. The
+reasoning is recorded here because the argument is not the one either of us expected.**
+
+It is not a privacy argument. Every read on this path is owner-bound and RLS-backed, the caller is
+authenticated, and the owner's reading of §2.3 rule 15 — that it governs the **log**, not the owner's own
+response — is sound. **The objection is about DELIVERY, and it is checkable rather than arguable:**
+
+- **Nothing reads `error.details`.** Verified: `grep -rn "error\.details|error?\.details" src/components
+  src/hooks src/app` returns **nothing** outside tests. The only consumer of this endpoint's error body
+  is `ActionProposalCard.tsx:76-78`, which reads `json?.error?.message` and returns.
+- **There is no client-side error reporting to capture it either** — no Sentry, Datadog, PostHog,
+  LogRocket, Bugsnag, no `window.onerror`, no fetch wrapper. All 25 call sites are bare `fetch`.
+
+So the payloads would be serialised, delivered, and **dropped on the floor**. Data a user can only
+recover by opening devtools is not a recovery path; it is disclosure with no beneficiary. **That is the
+same test this repository already applies to guardrails — one that does not run does not exist (§10.3) —
+applied to a recovery affordance.**
+
+Two secondary points, recorded because they bear on the follow-up rather than on this ruling:
+
+1. **What the payload actually contains is worse than "stack data".** `itemToInput` (`apply.ts:28-39`)
+   carries `reason` and `notes` — **free text, where a user plausibly writes a condition or a
+   medication**. That is squarely §2.3 rule 15's category. It does not change the ruling, because
+   delivery already decided it, but it raises what a future unit must sign off.
+2. **`details?: unknown` (`respond.ts:9`) carries no ownership proof of any kind**, and `internalError`
+   passes it through opaquely. Putting row contents there once establishes "row contents may travel in
+   `error.details`" as a pattern a later unit copies to a path where ownership is **not** established.
+   This is a **different class** from U30's category-B oracle — that one leaked facts about rows the
+   caller may not own, and here every read is owner-bound — but the structural precedent is real.
+
+**The condition under which the owner's instinct wins, stated so the ruling can be revisited on
+evidence rather than re-argued:** if the rendering client lands, the payload has a consumer and the
+objection collapses to sequencing. That is **FU-34**, widened to say so.
+
+**What the ruling does NOT cancel: the owner's log test is built anyway, and is the stronger half.**
+Ids-only in the response makes it *more* important that the log is clean, not less — the counts go to
+the log, and a throw site that interpolates an item value into a message would put `notes` there. The
+assertions are M10, and they include the mutation the architect insisted on, without which the log half
+rots.
+
+**Declared behaviour changes, (a):** a `recordBatch` failure now **rolls back** instead of leaving the
+change applied; a failed rollback answers **`PARTIALLY_APPLIED`** where it answers `ACTION_ERROR` today;
+`rolledBack: true` stops being unconditional. No success-path byte moves.
+
+---
+
+**HALF (b) — N-72. Verdict: MOVE onto `handle()`, and I had the reason wrong.**
+
+**BOTH OF MY PREMISES WERE FALSE, and the plan says so rather than quietly using the right ones.** I
+expected the move to newly expose the route to `auth-coverage` and `error-disclosure`. **It does not:
+both already scan it** — `error-disclosure.test.ts:395` names the file explicitly, and
+`auth-coverage.test.ts:70-88` derives its set from `git ls-files -- src/app/api`, which has always
+included it. **The move buys zero new guard coverage.** Verified at source before accepting the
+correction. And `auth-coverage.test.ts:255-257`, which asserts both guard shapes still exist, survives:
+`side-effects`, `checkins`, `advisor/route.ts` and `advisor/actions/route.ts` all keep `shape: "before"`.
+
+**What the move actually buys, now that the wrong reason is gone:**
+
+1. **It deletes U30's special case.** The bare `uuidParam.parse(id)` returns to all twelve dynamic
+   handlers, so the next author cannot reproduce N-51 here by copying the odd one out.
+2. **THE REAL DEFECT: `await params` (`:36`) and `await createClient()` (`:48`) sit OUTSIDE the try.** A
+   throw at either escapes the handler entirely and Next returns a non-envelope 500 **with no
+   correlation id** — the one 500 in this application that is invisible to the log. `handle()` closes
+   that structurally. This is a defect, not a uniformity preference, and it is the reason to move.
+3. Future additions to `handle()`'s mapping — as `NotConfiguredError` was in U1 — then cover 12 of 12
+   rather than 11 of 12.
+
+**Cost, and how it is avoided:** the response `code` would change `UNDO_ERROR` → `INTERNAL_ERROR`.
+Instead `handle()` gains an optional `{ code }` (three lines at `respond.ts:245-267`, passed through to
+`internalError`), so the declared code survives the move. That is consistent with half (a), where the
+whole point is that codes are meaningful.
+
+**The argument against, from the architect, recorded because it is a fair one:** this is churn on a
+working handler, and adding an options bag to a helper used by 22 files to serve one caller arguably
+loses to §3.4's "smallest change that works" — the ratchet exemption is smaller. **Rejected, for a
+stated reason:** an exemption entry must assert a violation that still holds, and this one would be
+*trivially removable*, which makes it a ratchet that documents a preference rather than a constraint.
+Lines 36 and 48 are the tiebreaker: they are uncovered today and no written reason fixes them.
+
+**Declared behaviour change, (b):** a throw in `await params` or `await createClient()` on the undo
+route becomes a **logged 500 in the standard envelope** instead of an unlogged framework 500. The
+`UNDO_ERROR` code is **preserved**.
+
+---
+
+**N-74, registered in this unit's commit** *(both halves of one claim about one field, in one row,
+because a reader deciding what to do needs them together)*: `rolledBack: true` is asserted rather than
+computed, and nothing reads it.
+
+**FU-34, registered and NOT built here** *(the architect's recommendation, adopted)*: a correct code that
+no UI reads reaches the log, the E2E suite and the support path — **it does not reach the user**. The
+confirm surface should say "some changes may have been applied — check your stack" when it sees
+`PARTIALLY_APPLIED`. **N-71 is therefore MITIGATED at the API and not closed at the product**, and this
+entry says so in the same breath, the way U32 was made to say it about N-63.
+
+---
+
+**RED — measured, not predicted. §5 rule 2. Nothing is implemented until these are run.**
+
+| # | mutation | must redden |
+|---|---|---|
+| **M1** | today's code, unmodified: force `recordBatch` to throw after a successful `executeBatch` | the new "rolled back and said so" test — **this is the pre-fix red the whole unit exists for**, and it must be shown BEFORE any implementation |
+| **M2** | make the step-3 rollback a no-op, keep reporting `rolledBack: true` | the `PARTIALLY_APPLIED` test |
+| **M3** | hard-code `rolledBack: true` in the typed error | the partial-failure test — this is Fact 1's own red, and it must fail on **both** paths, step 2 and step 3 |
+| **M4** | drop `unreverted` from the details | the counts assertion |
+| **M5** | return `PARTIALLY_APPLIED` when every inverse in fact succeeded | the clean-rollback test — the two states must not collapse in either direction |
+| **M6** | leak the caught error's text into the 503/500 body | `error-disclosure.test.ts` |
+| **M7** | remove `handle()` from the undo route | the new "a throw in `await params` is a logged envelope 500" test |
+| **M8** | drop the `{ code }` option at the undo call site | the `UNDO_ERROR` assertion at `undo/route.test.ts:171` |
+| **M9** | revert the undo route to `safeParse` + explicit `validationError` | nothing should redden — the 400 must be identical either way, which is what makes removing the special case safe |
+| **M10** | *(the owner's log test, built although the response ruling went the other way)* throw `new Error(JSON.stringify(inverse))` at the rollback-failure site | the log-cleanliness test — every `console.error` argument is flattened and searched for sentinel values planted in `dose`, `unit`, `customName`, `reason` and `notes`. **Without this mutation the test is unproven and will rot**, which is the architect's condition for it being worth writing |
+
+**Forcing the partial-failure state**, because a test that cannot reach the state proves nothing: in
+`actions/route.test.ts`, run `executeBatch` for real and mock `@/lib/db/stack-item-repo` — reject the
+second action's forward call **and** reject the inverse repo call for the first (`deleteItem` after an
+`addItem`). For the step-3 variant, reject `recordBatch` plus that same inverse call.
+
+**Gates:** `npx tsc --noEmit`, `npm run lint`, `npx vitest run`, `npx next build`, coverage re-measured.
+
+**Non-coverage — what U34 does NOT do.**
+
+1. **It does not make the two writes atomic.** A transaction spanning the stack mutation and the audit
+   insert is a different, larger design; N-71 does not ask for it and this entry does not smuggle it in.
+2. **It does not close N-71 at the product.** See FU-34.
+3. **It does not touch the undo route's own partial-failure behaviour** — the loop at
+   `undo/route.ts:65-68` replays inverses and marks rows undone one at a time, and a throw midway
+   leaves the same class of half-state. **Named, not absorbed** (§8.1): it is the same shape as N-71 at
+   a different site, and folding it in would double a unit that is already M.
+4. **No new spec is added**, so the architecture-spec count stays at **24** and the closeout sweep has
+   nothing to move on that line.
+5. **No §8 exit criterion is ticked.** That is the Phase 2 closeout's job.
+
+
+#### U34's red record — measured 2026-09-21, not predicted
+
+**M1, THE PRE-FIX RED, run before a line of source moved**, as the owner's red order required. Three
+assertions, all failing against the tree as it stood:
+
+```
+× rolls back and says so when the AUDIT write fails after a committed batch
+  → expected undefined to deeply equal { rolledBack: true }
+× answers PARTIALLY_APPLIED when a compensating inverse did not succeed
+  → expected 'ACTION_ERROR' to be 'PARTIALLY_APPLIED'
+× says HOW MUCH it reverted, so the caller does not have to assume
+  → expected Error: write failed to match object { reverted: +0, unreverted: 1 }
+```
+
+The first is N-71 exactly. The second and third are N-74: the response claimed an undo that the engine
+could not have known happened.
+
+**THE FULL MATRIX. Ten mutations, and TWO OF THEM FOUND HOLES IN MY OWN TESTS.**
+
+| # | mutation | result |
+|---|---|---|
+| **M1** | *(pre-fix)* the three assertions above | **3 failed** — the unit's reason to exist |
+| **M2** | make the audit-path rollback a no-op, keep reporting `rolledBack: true` | **FIRST RUN: 105 passed — NOTHING REDDENED.** See below |
+| **M3** | hard-code a clean outcome in the engine (`reverted + unreverted, 0`) | **2 failed** — the counts test and the log test |
+| **M4** | drop `unreverted` from the details | **1 failed** |
+| **M5** | answer `PARTIALLY_APPLIED` when every inverse in fact succeeded | **2 failed** — the two states do not collapse in either direction |
+| **M6** | leak the caught error's text into the `PARTIALLY_APPLIED` body | **2 failed**. *First attempt mutated a branch no test reaches — see below* |
+| **M7** | unwrap `handle()` from the undo route | **5 failed** |
+| **M8** | drop the `{ code }` option at the undo call site | **3 failed** — `UNDO_ERROR` becomes `INTERNAL_ERROR` |
+| **M9** | revert the undo route to `safeParse` + explicit `validationError` | **nothing reddened, AS PREDICTED** — the 400 is byte-identical either way, which is what makes removing U30's special case safe rather than merely tidy |
+| **M10** | interpolate the inverse into the rollback failure: `new Error(JSON.stringify(inverse))` | **2 failed** — *"the customName value reached the log"*. The owner's log test can see a leak |
+
+**M2 IS THE FINDING, AND IT IS IN THIS UNIT'S OWN TEST.** Making the audit-path rollback a no-op while
+still answering `rolledBack: true` left the suite **fully green**. The test asserted the *response shape*
+and never asserted that the revert **ran** — so it would have passed against a handler that says "rolled
+back" and rolls nothing back. **That is the exact defect U34 exists to end, reproduced inside U34's own
+red.** Fixed with a reachability assertion (§5.3): `revertAll` called once, with this user, over the
+batch that was applied. M2 re-run after the fix: **2 failed.**
+
+It is worth naming the shape, because it is the third time this phase has met it: **an assertion about
+what a handler SAYS is not an assertion about what it DOES.** U29 needed the same distinction for
+ownership order, U33 for which condition failed, and here for whether a rollback happened at all.
+
+**M6's first attempt is the smaller sibling.** It mutated `batchFailure`'s `outcome === null` guard and
+nothing reddened — because **no route test reaches that branch any more**. Since `executeBatch` always
+attaches counts, a bare error from it models a collaborator that cannot exist. The branch stays, because
+it is a contract-violation guard, but it is now tested where it can be tested honestly: **nine unit tests
+of `rollbackOutcomeOf`**, covering a bare `Error`, a string, `null`, `undefined`, an object with no
+counts, counts of the wrong type, one count only, both counts, and **zero counts — a number, not an
+absence**. Testing it through a fixture that pretends a bare error can arrive would have been a test
+agreeing with itself.
+
+**A U11 "DO NOT EDIT THE PINS" FIXTURE WAS CHANGED, AND THE ASSERTIONS WERE NOT.** `route.test.ts`'s
+*"returns 500 with rolledBack:true … when the batch fails"* rejected with a bare `Error`. Since U34,
+`executeBatch` **always** attaches `{ reverted, unreverted }`, so a bare error models a collaborator
+that can no longer exist, and the service correctly answers "no rollback was attempted" for it. Left
+alone, the pin would have been asserting the old shape against an impossible input. **Every assertion in
+it is unchanged, including `toEqual({ rolledBack: true })`;** only the arrangement moved, to the contract
+the real collaborator now has. The reasoning is written at the test, not only here, because the file's
+header says not to edit it and a future reader deserves the argument rather than the diff.
+
+**Gates:** `npx tsc --noEmit` clean · `npm run lint` **366 of 366 tracked files, 0 errors** · `npx vitest
+run` **1404 passed / 111 files** (from 1386 / 111) · `npx next build` compiled successfully · coverage
+re-measured, `src/lib/advisor` **92.86 / 82.07 / 95.65 / 92.86** and `src/services` **83.81 / 85.1 /
+83.33 / 83.81**, both above their floors. `graphify update .` run.
+
+
+#### U34's review record — two reviewers, one finding, and it was the same one
+
+**`ecc:security-reviewer`, asked the owner's question verbatim — does any response or log line on the
+three failure paths carry a health-data field value anywhere other than the authenticated owner's own
+response body? Verdict: NO.** Enumerated, not sampled:
+
+- **Responses.** `batchFailure` passes `details` of exactly three shapes — absent, `{rolledBack:true}`,
+  or `{rolledBack:false, reverted, unreverted}` — and `rollbackOutcomeOf` gates both counts on
+  `typeof === "number"`, so no other property can pass through. No `results`, `newActions`, `records`,
+  `exec.inverse` or `action.inverse` reaches any error branch.
+- **The log.** `logInternalError` reads `name`/`message`/`stack`/`cause` **by name** and never
+  enumerates the thrown value, so `Object.assign(err, { reverted, unreverted })` adds own properties the
+  logger does not look at. `cause` is set nowhere in this chain.
+- **`revertAll`'s per-failure log** is handed the caught error and a fixed code — never the inverse. The
+  resulting count is a bare integer with no per-item association.
+- **The undo route's move** changed where the try/catch boundary sits, not what crosses it.
+- **Side channels:** every path is behind `getUser()` and every repo call is `user_id`-scoped, so a
+  non-owner cannot reach these branches at all.
+
+**BOTH REVIEWERS INDEPENDENTLY FOUND THE SAME BRANCH, AND IT WAS THE ONE PIECE OF THIS DIFF THAT MADE
+THINGS WORSE.** `withRollbackOutcome`'s non-Error fallback was `new Error(String(err))`. The security
+reviewer called it a latent leak; the code reviewer called it an inconsistency with an existing policy.
+Both were describing the same thing, and the policy is written down in the file it contradicts:
+`logInternalError`'s non-Error branch says *"the value itself is never copied, because nothing here
+knows what it holds"*. **My line lifted that value into a `message` one call earlier, so the logger
+would have written in full what it had specifically decided not to record.** An object with a custom
+`toString` or `Symbol.toPrimitive` is all it would take.
+
+**FIXED, NOT COMMENTED.** The code reviewer's advice was a comment, on the ground that no throw site in
+the chain rejects with a non-Error today. That is true and it is the same argument that made the line
+easy to write: **"unreachable" is a property of today's call sites, not of the function.** The wrapper
+now carries fixed text, and the original value is reported through `reportInternalError` first — the
+path that knows how to describe a value of unknown shape — so the counts survive and the diagnosis
+survives, neither at the other's expense. Pinned by a test that throws an object whose `toString`
+returns a sentinel.
+
+**The second LOW is now a guard rather than an accident.** `PostgrestError` carries `details` and
+`hint`, and `@supabase/postgrest-js`'s own doc comment says they "often" hold *the offending value, key,
+or row* — in this application, a stack item, including the free-text `reason` and `notes`.
+`logInternalError` excludes them **incidentally**: it simply does not name those fields. Nothing would
+have gone red if someone later "improved" it to `console.error(err)` wholesale or added `details` to the
+named list because it looked useful. There is now a test that plants sentinels in `details` and `hint`,
+asserts the `message` IS logged (so it cannot pass by logging having stopped), and asserts neither
+sentinel appears in the log or the body.
+
+**`ecc:code-reviewer`: APPROVE — no CRITICAL, no HIGH, no MEDIUM.** It also settled the question this
+unit most needed settling, by tracing rather than by opinion:
+
+**THE U11 FIXTURE CHANGE IS LEGITIMATE, and the argument is worth keeping.** `executeBatch`'s only throw
+site now runs every rejection through `withRollbackOutcome`, so a count-less rejection is **not a value
+it can emit**. Keeping the old bare-`Error` fixture would have exercised an input the real collaborator
+cannot produce, and the old pin would then have failed **for a reason unrelated to any regression**. The
+scenario it guarded — a clean rollback truthfully reporting `rolledBack: true` — is preserved by the
+updated fixture, and the case the old fixture accidentally covered, "no counts attached", is now covered
+directly by nine unit tests of `rollbackOutcomeOf`. **Net coverage did not shrink**, which is the only
+thing that makes editing a file headed "do not edit the pins" defensible.
+
+It also confirmed, by reading rather than by assumption: `handle`'s new `{ code }` is read **only** in
+the catch-all, so `ZodError` still answers `VALIDATION_ERROR` and `NotConfiguredError` still answers
+`NOT_CONFIGURED`; `revertAll` walks `results` newest-first, identical to `executeBatch`'s own order,
+because it is the same function; and no double-revert path exists, since the audit branch runs only when
+`executeBatch` succeeded.
+
+**One limitation of the review, stated because the reviewer stated it:** it re-ran the three touched test
+files (78/78) and traced the rest by reading. It did **not** re-run the full suite, `tsc`, `lint` or the
+build. Those were run here, before and after the two fixes, and the figures below are the after.
+
+**Gates, re-run on the finished tree:** tsc clean · lint **366 of 366, 0 errors** · vitest **1406 passed
+/ 111 files** · `next build` compiled successfully · coverage `src/lib/advisor` **92.86 / 82.07 / 95.65
+/ 92.86**, `src/lib/api` **96.64 / 93.75 / 100 / 96.64**, `src/services` **83.81 / 85.1 / 83.33 /
+83.81**.
 
 
 ### Group E — cuttable

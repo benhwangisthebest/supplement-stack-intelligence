@@ -244,6 +244,15 @@ export function reportInternalError(err: unknown, code = "INTERNAL_ERROR"): stri
  */
 export async function handle<T>(
   fn: () => Promise<NextResponse<ApiEnvelope<T>>>,
+  // [U34, N-72] The 500's code, for the one handler that had its own before it
+  // moved onto this wrapper. `advisor/actions/[id]/undo` answered
+  // `UNDO_ERROR`, and moving it here must not silently re-label a response —
+  // the move is about WHERE the catch lives, not about what the client is
+  // told. Every other caller omits it and gets `INTERNAL_ERROR` exactly as
+  // before. It affects only the catch-all: a ZodError is still
+  // `VALIDATION_ERROR` and a NotConfiguredError still `NOT_CONFIGURED`,
+  // because those codes describe what happened, not who was handling it.
+  options: { code?: string } = {},
 ): Promise<NextResponse<ApiEnvelope<T>> | NextResponse<ApiEnvelope<never>>> {
   try {
     return await fn();
@@ -262,6 +271,6 @@ export async function handle<T>(
       // ./errors.ts.
       return fail("NOT_CONFIGURED", err.publicMessage, 503);
     }
-    return internalError(err);
+    return internalError(err, { code: options.code });
   }
 }

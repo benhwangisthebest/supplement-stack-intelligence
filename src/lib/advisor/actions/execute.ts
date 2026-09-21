@@ -126,29 +126,127 @@ export async function executeBatch(
     }
     return done;
   } catch (err) {
-    // Compensating rollback: reverse what already succeeded, newest first.
-    for (let i = done.length - 1; i >= 0; i--) {
-      try {
-        await executeIntent(supabase, userId, done[i].exec.inverse);
-      } catch (rollbackErr) {
-        // Best-effort rollback — never mask the original failure with a rollback
-        // error, so this is still swallowed rather than re-thrown.
-        //
-        // But swallowing it SILENTLY was a trust defect (Phase 1 FU-2 → U20): a
-        // failed rollback leaves the stack half-applied, which is the one state
-        // this function exists to prevent, and there was no log, no correlation
-        // id, and no trace of it anywhere. The user sees the original error and
-        // reasonably assumes nothing was written.
-        //
-        // Log-only, deliberately. Every response byte is unchanged — the original
-        // error still propagates below, and `reportInternalError` offers no way to
-        // put text in front of a client (see its header), so this cannot reopen
-        // the §2.3 rule 13 disclosure the way a hand-rolled log line might.
-        reportInternalError(rollbackErr, "ROLLBACK_FAILED");
-      }
-    }
-    throw err;
+    // [U34, N-74] Compensating rollback, and it now COUNTS ITSELF.
+    //
+    // It always reversed newest-first; what it never did was say how it went.
+    // T-06 (2026-07-30) found this catch swallowing failures with no trace and
+    // asked for a LOG; U20 added the log. Nobody went back to the RESPONSE,
+    // which has claimed `rolledBack: true` unconditionally ever since — a
+    // remedy applied to the half that was reported. The counts below are what
+    // let the caller stop guessing.
+    const { reverted, unreverted } = await revertAll(supabase, userId, done);
+    throw withRollbackOutcome(err, reverted, unreverted);
   }
+}
+
+/**
+ * Replay a batch's inverses, newest first, and report how many took.
+ *
+ * Extracted by U34 so the audit-failure path in `confirmAndApply` reverts the
+ * SAME way this function's own catch does. Two rollback implementations would
+ * be two `rolledBack` semantics, which is the defect this unit exists to end.
+ *
+ * NEVER THROWS. A rollback that fails is a fact to report, not a second
+ * exception to mask the first with — the original cause must survive, which is
+ * what `execute.test.ts`'s "re-throws the ORIGINAL failure" pin has held since
+ * U20.
+ */
+export async function revertAll(
+  supabase: SupabaseClient,
+  userId: string,
+  done: BatchItemResult[],
+): Promise<{ reverted: number; unreverted: number }> {
+  let reverted = 0;
+  let unreverted = 0;
+  for (let i = done.length - 1; i >= 0; i--) {
+    try {
+      await executeIntent(supabase, userId, done[i].exec.inverse);
+      reverted += 1;
+    } catch (rollbackErr) {
+      unreverted += 1;
+      // Best-effort rollback — never mask the original failure with a rollback
+      // error, so this is still swallowed rather than re-thrown.
+      //
+      // But swallowing it SILENTLY was a trust defect (Phase 1 FU-2 → U20): a
+      // failed rollback leaves the stack half-applied, which is the one state
+      // this function exists to prevent, and there was no log, no correlation
+      // id, and no trace of it anywhere. The user sees the original error and
+      // reasonably assumes nothing was written.
+      //
+      // Log-only, deliberately — and `reportInternalError` offers no way to put
+      // text in front of a client (see its header), so this cannot reopen the
+      // §2.3 rule 13 disclosure a hand-rolled log line might.
+      //
+      // ~~Every response byte is unchanged.~~ **[2026-09-21, U34] NO LONGER
+      // TRUE, and that sentence was the defect.** The log was the whole of
+      // T-06's remedy, and a log nobody reads at request time left the
+      // response free to claim `rolledBack: true` while this branch ran. The
+      // count above is now carried out to the caller, so the log and the
+      // response finally agree. **What crosses the boundary is a NUMBER** —
+      // the caught error's text stays here, exactly as before.
+      reportInternalError(rollbackErr, "ROLLBACK_FAILED");
+    }
+  }
+  return { reverted, unreverted };
+}
+
+/**
+ * Attach a rollback outcome to the original failure, without replacing it.
+ *
+ * MUTATES AND RETHROWS THE ORIGINAL rather than wrapping it, deliberately, for
+ * three reasons that each rule out the alternatives:
+ *   * the message, stack and identity of the real cause survive untouched —
+ *     `execute.test.ts`'s "re-throws the ORIGINAL failure" pin predates this
+ *     unit and must keep passing unedited;
+ *   * a wrapper would have to copy `cause.message` into its own, and this file
+ *     is scanned by `error-disclosure.test.ts` (`src/lib/**`), which flags a
+ *     `.message` read off a caught binding — the guard would be right to;
+ *   * `internalError(err)` then logs the same `name`/`message`/`stack` it
+ *     logged before, so the log record does not move either.
+ */
+function withRollbackOutcome(err: unknown, reverted: number, unreverted: number): unknown {
+  if (err instanceof Error) return Object.assign(err, { reverted, unreverted });
+
+  // [2026-09-21, U34, from `ecc:security-reviewer`] A NON-ERROR THROW IS NOT
+  // STRINGIFIED HERE, and the first version of this line did exactly that.
+  //
+  // `logInternalError` already handles a non-Error throw safely and says so in
+  // its own comment: it records the value's TYPE and SHAPE and "the value
+  // itself is never copied, because nothing here knows what it holds".
+  // `new Error(String(err))` would have undone that protection one call
+  // earlier — an object with a custom `toString` or `Symbol.toPrimitive` would
+  // have had its text lifted into a `message` the logger then writes out in
+  // full. No throw site in this chain rejects with such a value today, which
+  // is precisely why it was easy to miss.
+  //
+  // So the wrapper carries FIXED text, and the original is reported first
+  // through the same safe path rather than dropped — the counts survive and
+  // the diagnosis survives, neither at the other's expense.
+  reportInternalError(err, "BATCH_NON_ERROR_THROW");
+  return Object.assign(new Error("Batch apply failed."), { reverted, unreverted });
+}
+
+/** The rollback outcome a caught batch failure carries, when it carries one. */
+export interface RollbackOutcome {
+  reverted: number;
+  unreverted: number;
+}
+
+/**
+ * Read the rollback outcome off a caught error, or `null` when it has none.
+ *
+ * `null` is a meaningful third answer and not a default: a throw that never
+ * reached `executeBatch`'s rollback rolled nothing back, and must NOT be
+ * reported as a clean rollback. That distinction is the outer catch's `details:
+ * undefined`, pinned since U11.
+ */
+export function rollbackOutcomeOf(err: unknown): RollbackOutcome | null {
+  if (typeof err !== "object" || err === null) return null;
+  const candidate = err as { reverted?: unknown; unreverted?: unknown };
+  if (typeof candidate.reverted !== "number" || typeof candidate.unreverted !== "number") {
+    return null;
+  }
+  return { reverted: candidate.reverted, unreverted: candidate.unreverted };
 }
 
 /** Execute a stored WriteIntent (used by undo to replay the inverse). */

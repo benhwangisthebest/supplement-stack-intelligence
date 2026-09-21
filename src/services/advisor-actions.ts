@@ -36,7 +36,12 @@ import { matchProducts } from "@/lib/product-matcher";
 import { getStack } from "@/lib/db/stack-repo";
 import { loadAdvisorContext } from "@/lib/advisor/context-loader";
 import { cumulativeRecheck } from "@/lib/advisor/safety-recheck";
-import { executeBatch } from "@/lib/advisor/actions/execute";
+import {
+  executeBatch,
+  revertAll,
+  rollbackOutcomeOf,
+  type RollbackOutcome,
+} from "@/lib/advisor/actions/execute";
 import {
   addItemPayloadSchema,
   attachProductPayloadSchema,
@@ -123,6 +128,38 @@ async function revalidate(
  * from re-loading context onward happens here. Returns the response to send —
  * the route adds nothing to it.
  */
+/**
+ * One response for every way a committed batch can fail, so the two states
+ * cannot drift apart.
+ *
+ * THE CODE NAMES THE STATE, NOT THE STEP. A client cannot act on "the audit
+ * write failed"; it can act on "your change was undone" versus "some of it
+ * stands". So a failure during `executeBatch` and a failure during
+ * `recordBatch` answer IDENTICALLY when their rollback outcome is identical —
+ * which is the whole contract.
+ *
+ * A `null` outcome means no rollback was attempted, which is NOT a clean
+ * rollback: it keeps `details` absent, the shape the outer catch has returned
+ * since U11 and which `route.test.ts` pins.
+ *
+ * ONLY NUMBERS CROSS THE BOUNDARY. The counts are facts about this caller's own
+ * batch — no message, path, driver string or host — and the correlation id
+ * carries the rest to the log. U34 considered returning the unreverted inverse
+ * PAYLOADS here, which would be the owner's own data handed back to them, and
+ * ruled against it: nothing in `src/components` reads `error.details`, so it
+ * would be disclosure with no beneficiary. See FU-34.
+ */
+function batchFailure(err: unknown, outcome: RollbackOutcome | null): NextResponse {
+  if (outcome === null) return internalError(err, { code: "ACTION_ERROR" });
+  if (outcome.unreverted > 0) {
+    return internalError(err, {
+      code: "PARTIALLY_APPLIED",
+      details: { rolledBack: false, reverted: outcome.reverted, unreverted: outcome.unreverted },
+    });
+  }
+  return internalError(err, { code: "ACTION_ERROR", details: { rolledBack: true } });
+}
+
 export async function confirmAndApply(
   supabase: SupabaseClient,
   userId: string,
@@ -183,10 +220,18 @@ export async function confirmAndApply(
     try {
       results = await executeBatch(supabase, userId, actions, priorItems);
     } catch (err) {
-      // The batch was rolled back, so `rolledBack` stays — it is a computed fact
-      // the client acts on. The exception itself goes to the log under a
-      // correlation id (CLAUDE.md §2.3 rule 13); it used to be returned verbatim.
-      return internalError(err, { code: "ACTION_ERROR", details: { rolledBack: true } });
+      // The batch was rolled back, so `rolledBack` stays. The exception itself
+      // goes to the log under a correlation id (CLAUDE.md §2.3 rule 13); it
+      // used to be returned verbatim.
+      //
+      // ~~It is a computed fact the client acts on.~~ **[2026-09-21, U34,
+      // N-74] IT WAS NEITHER, AND NOW IT IS THE FIRST.** It was not computed:
+      // `executeBatch`'s rollback is best-effort and swallowed its own
+      // failures, so this line asserted an undo that may never have happened.
+      // It is still not acted on by any client — nothing in `src/components`
+      // reads `error.details` (FU-34) — and that half is a follow-up, not
+      // something this unit can fix in the service layer.
+      return batchFailure(err, rollbackOutcomeOf(err));
     }
 
     // Audit all applied actions under one batch_id → grouped one-click undo (SC-7).
@@ -197,7 +242,32 @@ export async function confirmAndApply(
       payload: r.proposal.payload as unknown as Record<string, unknown>,
       inverse: r.exec.inverse,
     }));
-    const records = await recordBatch(supabase, userId, batchId, newActions);
+    // [U34, N-71] THE AUDIT WRITE IS THE LAST PLACE THE INVERSE CAN SURVIVE.
+    //
+    // `executeBatch` has committed. For `add_item`, `generate_protocol` and
+    // `attach_product` a user could undo this by hand in Stack Lab; for
+    // `remove_item` and `edit_item` they cannot, because the prior dose, unit,
+    // timing, frequency, reason and notes exist ONLY inside
+    // `ExecuteResult.inverse` — see `apply.ts:134-142` — which this call is
+    // about to persist and step 4 never returns. If this throws and nothing
+    // reverts, that data is gone and no audit row records that it ever
+    // existed: an irreversible destructive write to health data with no trace
+    // (§2.4, §2.3 rule 15).
+    //
+    // So the failure reverts, through the SAME `revertAll` the batch's own
+    // rollback uses — two implementations would be two meanings of
+    // `rolledBack`, which is the defect this unit exists to end.
+    //
+    // NOTE WHAT IS LIKELY HERE: `recordBatch` fails by losing the database,
+    // and the replay needs the same database. The expected outcome of this
+    // branch is therefore a PARTIAL revert, which is exactly why the response
+    // has a third state rather than a boolean.
+    let records;
+    try {
+      records = await recordBatch(supabase, userId, batchId, newActions);
+    } catch (err) {
+      return batchFailure(err, await revertAll(supabase, userId, results));
+    }
 
     const perAction = records.map((rec, i) => ({
       actionId: rec.id,

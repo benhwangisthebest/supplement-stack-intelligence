@@ -47,7 +47,7 @@ vi.mock("@/lib/api/respond", () => ({
   reportInternalError: (...a: unknown[]) => reportInternalError(...a),
 }));
 
-import { executeBatch, executeIntent, executeProposal } from "./execute";
+import { executeBatch, executeIntent, executeProposal, rollbackOutcomeOf } from "./execute";
 
 /** The module only forwards this value to the repos; it never reads it. */
 const DB = {} as unknown as SupabaseClient;
@@ -283,6 +283,45 @@ describe("executeBatch — success", () => {
   });
 });
 
+describe("rollbackOutcomeOf — the third answer is 'no rollback was attempted' (U34)", () => {
+  // `null` is not a default and not an absence of information: it is the
+  // statement that nothing was rolled back, which the service turns into
+  // `details: undefined` — the shape the outer catch has returned since U11.
+  // Reporting it as a CLEAN rollback would be the same lie this unit is
+  // removing, arriving through the fallback instead of the happy path.
+  //
+  // These also cover the service's defensive `outcome === null` branch, which
+  // no route test reaches any more: since U34, `executeBatch` always attaches
+  // counts, so a bare error from it models a collaborator that cannot exist.
+  // The branch stays because it is a contract violation guard; it is tested
+  // here, at the pure function, rather than through a fixture that pretends.
+  it.each([
+    ["a bare Error", new Error("write failed")],
+    ["a string", "write failed"],
+    ["null", null],
+    ["undefined", undefined],
+    ["an object with no counts", { message: "x" }],
+    ["counts of the wrong type", { reverted: "1", unreverted: "0" }],
+    ["only one count", { reverted: 1 }],
+  ])("returns null for %s", (_label, value) => {
+    expect(rollbackOutcomeOf(value)).toBeNull();
+  });
+
+  it("reads both counts when the error carries them", () => {
+    expect(rollbackOutcomeOf(Object.assign(new Error("x"), { reverted: 2, unreverted: 1 }))).toEqual({
+      reverted: 2,
+      unreverted: 1,
+    });
+  });
+
+  it("reads a zero count, which is a number and not an absence", () => {
+    expect(rollbackOutcomeOf(Object.assign(new Error("x"), { reverted: 0, unreverted: 0 }))).toEqual({
+      reverted: 0,
+      unreverted: 0,
+    });
+  });
+});
+
 describe("executeBatch — all-or-nothing rollback", () => {
   /** Fails on the Nth addItem call, succeeding before that. */
   function failAddOnCall(n: number) {
@@ -328,6 +367,153 @@ describe("executeBatch — all-or-nothing rollback", () => {
     await expect(
       executeBatch(DB, USER, [{ proposal: ADD }, { proposal: ADD }], [null, null]),
     ).rejects.toThrow("write failed");
+  });
+
+  it("says HOW MUCH it reverted, so the caller does not have to assume (U34, N-74)", async () => {
+    // [U34] M1's third half, red before any source edit.
+    //
+    // The test above pins that the original cause survives — correct, and it
+    // is the whole of what U20 delivered for T-06. What NOTHING pinned is that
+    // the caller is left unable to distinguish a clean rollback from a failed
+    // one, because the rethrown error says nothing either way. The route then
+    // answers `rolledBack: true` unconditionally: a claim about an undo that
+    // did not happen.
+    //
+    // T-06 asked for the failure to be LOGGED and U20 logged it. The log is
+    // still there — `reportInternalError(rollbackErr, "ROLLBACK_FAILED")` —
+    // and it sits beside a response that contradicts it.
+    failAddOnCall(2);
+    deleteItem.mockRejectedValue(new Error("rollback exploded"));
+
+    const err = await executeBatch(
+      DB,
+      USER,
+      [{ proposal: ADD }, { proposal: ADD }],
+      [null, null],
+    ).then(
+      () => null,
+      (e: unknown) => e as { reverted?: number; unreverted?: number },
+    );
+
+    // One inverse was attempted and it failed: nothing reverted, one did not.
+    expect(err).toMatchObject({ reverted: 0, unreverted: 1 });
+  });
+
+  it("the ROLLBACK_FAILED log carries ids and counts, never a field value (U34)", async () => {
+    // [U34] THE OWNER'S LOG TEST. §2.3 rule 15 governs the log absolutely:
+    // health data does not go in it, whoever owns the row.
+    //
+    // The response half of the owner's proposal — returning the unreverted
+    // inverse PAYLOADS to the authenticated owner — was ruled against on the
+    // architect's objection (nothing reads `error.details`, so it would be
+    // disclosure with no beneficiary; see FU-34). This half is built anyway,
+    // and ids-only in the response makes it MORE important, not less.
+    //
+    // The leak vector is a throw site interpolating item values into a
+    // message, a stack or a `cause` — which `logInternalError` reads
+    // field-by-field and writes out. So the assertion is over EVERY argument
+    // handed to the log boundary, flattened, searched for sentinels planted in
+    // exactly the fields `itemToInput` copies.
+    const SENTINELS = {
+      customName: "SENTINEL-CUSTOM-NAME",
+      unit: "SENTINEL-UNIT",
+      reason: "SENTINEL-REASON-TEXT",
+      notes: "SENTINEL-NOTES-TEXT",
+      dose: 1234.5678,
+    };
+    const sentinelItem: StackItem = {
+      ...PRIOR,
+      customName: SENTINELS.customName,
+      unit: SENTINELS.unit,
+      reason: SENTINELS.reason,
+      notes: SENTINELS.notes,
+      dose: SENTINELS.dose,
+    };
+
+    // A remove_item that succeeds, then a failure, so the inverse carrying the
+    // full prior state is the one that must be replayed — and fails.
+    deleteItem.mockResolvedValue(undefined);
+    addItem.mockRejectedValue(new Error("rollback exploded"));
+
+    const err = await executeBatch(
+      DB,
+      USER,
+      [{ proposal: REMOVE }, { proposal: REMOVE }],
+      [sentinelItem, null],
+    ).then(
+      () => null,
+      (e: unknown) => e as { reverted: number; unreverted: number },
+    );
+
+    // Positive first, so the assertion below cannot pass vacuously by the log
+    // having stopped: one record per failed inverse, under its own code.
+    expect(reportInternalError).toHaveBeenCalledTimes(1);
+    expect(reportInternalError.mock.calls[0][1]).toBe("ROLLBACK_FAILED");
+    expect(err).toMatchObject({ reverted: 0, unreverted: 1 });
+
+    // Everything the log boundary was handed, flattened — including `cause`
+    // and any non-enumerable text reachable through String().
+    const handed = reportInternalError.mock.calls
+      .flat()
+      .map((a) => {
+        try {
+          return `${String(a)} ${JSON.stringify(a)} ${a instanceof Error ? String(a.stack) : ""}`;
+        } catch {
+          return String(a);
+        }
+      })
+      .join("\n");
+
+    for (const [field, value] of Object.entries(SENTINELS)) {
+      expect(handed, `the ${field} value reached the log`).not.toContain(String(value));
+    }
+  });
+
+  it("does not stringify a non-Error throw into a message (U34, security review)", async () => {
+    // A rejection whose `toString` carries data is the one way the counts
+    // wrapper could have leaked: `new Error(String(err))` would lift that text
+    // into a `message` the logger writes in full. `logInternalError` refuses
+    // to copy a non-Error value; this pins that the wrapper does not undo it
+    // one call earlier.
+    const hostile = {
+      toString: () => "SENTINEL-HOSTILE-TOSTRING",
+      notes: "SENTINEL-NOTES-VIA-THROW",
+    };
+    addItem.mockImplementation(async () => {
+      throw hostile;
+    });
+
+    const err = await executeBatch(DB, USER, [{ proposal: ADD }], [null]).then(
+      () => null,
+      (e: unknown) => e as Error & { reverted: number; unreverted: number },
+    );
+
+    // The counts still arrive — the safety fix does not cost the diagnosis.
+    expect(err).toMatchObject({ reverted: 0, unreverted: 0 });
+    expect(err?.message).toBe("Batch apply failed.");
+    expect(err?.message).not.toContain("SENTINEL");
+    // And the original went to the log through the path that knows how to
+    // handle a value of unknown shape.
+    expect(reportInternalError).toHaveBeenCalledWith(hostile, "BATCH_NON_ERROR_THROW");
+  });
+
+  it("reports a FULLY successful rollback as fully reverted (U34)", async () => {
+    // The other side of the same claim — the two states must not collapse in
+    // either direction, which is M5.
+    failAddOnCall(2);
+    deleteItem.mockResolvedValue(undefined);
+
+    const err = await executeBatch(
+      DB,
+      USER,
+      [{ proposal: ADD }, { proposal: ADD }],
+      [null, null],
+    ).then(
+      () => null,
+      (e: unknown) => e as { reverted?: number; unreverted?: number },
+    );
+
+    expect(err).toMatchObject({ reverted: 1, unreverted: 0 });
   });
 
   it("attempts every inverse even if an earlier rollback step throws", async () => {

@@ -36,6 +36,7 @@ const cumulativeRecheck = vi.fn();
 const executeBatch = vi.fn();
 const getStack = vi.fn();
 const recordBatch = vi.fn();
+const revertAll = vi.fn();
 const conversationBelongsToUser = vi.fn();
 const getSupplementById = vi.fn();
 const matchProducts = vi.fn();
@@ -48,8 +49,14 @@ vi.mock("@/lib/advisor/context-loader", () => ({
 vi.mock("@/lib/advisor/safety-recheck", () => ({
   cumulativeRecheck: (...a: unknown[]) => cumulativeRecheck(...a),
 }));
-vi.mock("@/lib/advisor/actions/execute", () => ({
+// [U34] `rollbackOutcomeOf` is kept REAL — it is pure, and re-implementing it
+// in a mock factory would mean this file asserts against its own copy of the
+// contract rather than the shipped one. The two functions that touch the
+// database are mocked.
+vi.mock("@/lib/advisor/actions/execute", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/advisor/actions/execute")>()),
   executeBatch: (...a: unknown[]) => executeBatch(...a),
+  revertAll: (...a: unknown[]) => revertAll(...a),
 }));
 vi.mock("@/lib/advisor/repo", () => ({
   conversationBelongsToUser: (...a: unknown[]) => conversationBelongsToUser(...a),
@@ -139,6 +146,9 @@ function arrangeSuccess() {
     },
   ]);
   recordBatch.mockResolvedValue([{ id: "a1" }]);
+  // [U34] The audit-failure path reverts through this; default to a clean
+  // revert of the one action `executeBatch` above reports as applied.
+  revertAll.mockResolvedValue({ reverted: 1, unreverted: 0 });
 }
 
 beforeEach(() => {
@@ -306,7 +316,27 @@ describe("PIN 500 — ACTION_ERROR", () => {
   beforeEach(() => getUser.mockResolvedValue(USER));
 
   it("returns 500 with rolledBack:true and no internal text when the batch fails", async () => {
-    executeBatch.mockRejectedValue(new Error("duplicate key value violates unique constraint"));
+    // [2026-09-21, U34] THE FIXTURE CHANGED HERE AND THE ASSERTIONS DID NOT,
+    // and in a file headed "do not edit the pins" that distinction has to be
+    // argued rather than asserted.
+    //
+    // `executeBatch` now ALWAYS attaches `{ reverted, unreverted }` to the
+    // error it rethrows — that is N-74's fix, and it is why `rolledBack` is
+    // finally a computed fact rather than a claim. A mock that rejects with a
+    // BARE error therefore models a collaborator that can no longer exist, and
+    // the service correctly answers "no rollback was attempted" (details
+    // absent) for it. Left as it was, this pin would be asserting the old
+    // shape against an impossible input.
+    //
+    // Every assertion below is unchanged, including `toEqual({ rolledBack:
+    // true })`. What moved is the arrangement, to the contract the real
+    // collaborator now has: one action applied, one inverse replayed cleanly.
+    executeBatch.mockRejectedValue(
+      Object.assign(new Error("duplicate key value violates unique constraint"), {
+        reverted: 1,
+        unreverted: 0,
+      }),
+    );
 
     const res = await POST(req(body(ADD_PAYLOAD)));
     const json = await res.json();
@@ -334,6 +364,76 @@ describe("PIN 500 — ACTION_ERROR", () => {
     expect(json.error.message).toBe("An unexpected internal error occurred.");
     expect(json.error.details).toBeUndefined();
     expect(JSON.stringify(json)).not.toContain("connection refused");
+  });
+
+  // -------------------------------------------------------------------------
+  // [U34, N-71 / N-74] M1 — THE PRE-FIX RED. Both assertions below fail against
+  // the code as it stands, and were run and shown red before any source edit.
+  // -------------------------------------------------------------------------
+
+  it("rolls back and says so when the AUDIT write fails after a committed batch", async () => {
+    // N-71. `executeBatch` has committed; `recordBatch` throws. Today that
+    // lands in the OUTER catch, which returns ACTION_ERROR with no details —
+    // byte-identical to a batch that rolled back cleanly. The stack change is
+    // live and no audit row exists, so the product's own undo path cannot
+    // reach it: for remove_item and edit_item the prior dose/unit/timing/notes
+    // live ONLY in the unpersisted inverse, and they are gone.
+    recordBatch.mockRejectedValue(new Error("insert failed"));
+
+    const res = await POST(req(body(ADD_PAYLOAD)));
+    const json = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(json.error.code).toBe("ACTION_ERROR");
+    expect(json.error.details).toEqual({ rolledBack: true });
+    expect(typeof json.error.correlationId).toBe("string");
+    expect(JSON.stringify(json)).not.toContain("insert failed");
+
+    // REACHABILITY (§5.3), and it was missing until M2 found it missing. The
+    // three assertions above are satisfied by a handler that answers
+    // "rolled back" and rolls nothing back — which is the exact defect this
+    // unit exists to end, reproduced in its own test. So assert the WORK, not
+    // only the WORDS: the revert ran, over the batch that was applied.
+    expect(revertAll).toHaveBeenCalledTimes(1);
+    expect(revertAll.mock.calls[0][1]).toBe("u1");
+    expect(revertAll.mock.calls[0][2]).toHaveLength(1);
+  });
+
+  it("answers PARTIALLY_APPLIED when the AUDIT write fails and the revert does too", async () => {
+    // The likeliest shape of this failure, and the reason the response has a
+    // third state rather than a boolean: `recordBatch` fails by losing the
+    // database, and the compensating replay needs the same database.
+    recordBatch.mockRejectedValue(new Error("insert failed"));
+    revertAll.mockResolvedValue({ reverted: 0, unreverted: 1 });
+
+    const res = await POST(req(body(ADD_PAYLOAD)));
+    const json = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(json.error.code).toBe("PARTIALLY_APPLIED");
+    expect(json.error.details).toEqual({ rolledBack: false, reverted: 0, unreverted: 1 });
+    expect(typeof json.error.correlationId).toBe("string");
+    expect(JSON.stringify(json)).not.toContain("insert failed");
+  });
+
+  it("answers PARTIALLY_APPLIED when a compensating inverse did not succeed", async () => {
+    // N-74. Today `rolledBack: true` is ASSERTED, not computed: `executeBatch`
+    // swallows each rollback failure and rethrows the original error, so this
+    // response claims an undo that did not happen. The rejection below carries
+    // the counts the fixed `executeBatch` will attach; today's route ignores
+    // them and answers ACTION_ERROR + rolledBack:true regardless, which is
+    // exactly what makes this red.
+    executeBatch.mockRejectedValue(
+      Object.assign(new Error("write failed"), { reverted: 1, unreverted: 1 }),
+    );
+
+    const res = await POST(req(body(ADD_PAYLOAD)));
+    const json = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(json.error.code).toBe("PARTIALLY_APPLIED");
+    expect(json.error.details).toMatchObject({ rolledBack: false, reverted: 1, unreverted: 1 });
+    expect(JSON.stringify(json)).not.toContain("write failed");
   });
 
   it("maps a ZodError raised during re-validation to 400, not 500", async () => {

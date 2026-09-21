@@ -21,7 +21,8 @@ const markUndone = vi.fn();
 const executeIntent = vi.fn();
 
 vi.mock("@/lib/auth/session", () => ({ getUser: () => getUser() }));
-vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({}) }));
+const createClient = vi.fn(async () => ({}));
+vi.mock("@/lib/supabase/server", () => ({ createClient: () => createClient() }));
 vi.mock("@/lib/db/advisor-action-repo", () => ({
   getAction: (...a: unknown[]) => getAction(...a),
   getActionsByBatch: (...a: unknown[]) => getActionsByBatch(...a),
@@ -186,5 +187,54 @@ describe("U30 — a malformed path id is a 400, not a 500 (N-51)", () => {
 
     expect(res.status).toBe(400);
     expect((await res.json()).error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("the 400 is unchanged by U34's move onto handle() (M9)", async () => {
+    // U30 needed `safeParse` + an explicit `validationError` here because this
+    // handler had no `handle()`. U34 gave it one and restored the bare
+    // `uuidParam.parse(id)`. The point of this assertion is that the CLIENT
+    // cannot tell: same status, same code, same envelope, no correlation id
+    // (a 400 is the caller's fault and nothing was logged).
+    const body = await (await POST(req(), ctx("not-a-uuid"))).json();
+
+    expect(body).toMatchObject({ data: null, error: { code: "VALIDATION_ERROR" } });
+    expect(body.error.correlationId).toBeUndefined();
+  });
+});
+
+describe("U34 — the pre-handler throws are inside the envelope now (N-72)", () => {
+  // THE DEFECT THIS CLOSES, and it is not uniformity. `await params` and
+  // `await createClient()` used to run OUTSIDE the try, so a throw at either
+  // left the handler entirely: Next.js answered with its own 500, in no
+  // envelope, with no correlation id, and nothing reached the log. It was the
+  // only 500 in this application that could not be traced.
+
+  it("a throw in `await params` is a logged 500 in the standard envelope", async () => {
+    getUser.mockResolvedValue(USER);
+
+    const res = await POST(req(), {
+      params: Promise.reject(new Error("params resolution exploded")),
+    } as unknown as { params: Promise<{ id: string }> });
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.error.code).toBe("UNDO_ERROR");
+    expect(body.error.message).toBe("An unexpected internal error occurred.");
+    expect(typeof body.error.correlationId).toBe("string");
+    // §2.3 rule 13 — the cause goes to the log, never to the client.
+    expect(JSON.stringify(body)).not.toContain("exploded");
+  });
+
+  it("a throw in `await createClient()` is too", async () => {
+    getUser.mockResolvedValue(USER);
+    createClient.mockRejectedValueOnce(new Error("pool exhausted"));
+
+    const res = await POST(req(), ctx());
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.error.code).toBe("UNDO_ERROR");
+    expect(typeof body.error.correlationId).toBe("string");
+    expect(JSON.stringify(body)).not.toContain("pool exhausted");
   });
 });

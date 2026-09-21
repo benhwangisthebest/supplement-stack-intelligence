@@ -675,6 +675,48 @@ describe("T5 — NOT_CONFIGURED keeps its evidence-backed 503 contract", () => {
     }
   });
 
+  it("logs a PostgrestError's message but NOT its details or hint (U34)", async () => {
+    // [2026-09-21, U34, from `ecc:security-reviewer`] MAKING AN IMPLICIT
+    // EXCLUSION EXPLICIT.
+    //
+    // `logInternalError` reads `name`, `message`, `stack` and one level of
+    // `cause` BY NAME — it never enumerates the thrown object. That is the
+    // only reason a PostgrestError's `details` and `hint` stay out of the log,
+    // and `@supabase/postgrest-js`'s own doc comment says those fields "often"
+    // carry *the offending value, key, or row*. In this application that row
+    // is a stack item: supplement, dose, unit, timing, and the free-text
+    // `reason` and `notes` where a user plausibly writes a condition or a
+    // medication (§2.3 rule 15).
+    //
+    // So the protection is real and it is INCIDENTAL — nothing would go red if
+    // someone "improved" the logger to `console.error(err)` wholesale, or
+    // added `details` to the named-field list because it looked useful. This
+    // test is that red.
+    const spy = captureLog();
+    const pgError = Object.assign(new Error("new row violates check constraint"), {
+      code: "23514",
+      details: "Failing row contains (i1, magnesium, 200, mg, SENTINEL-NOTES-TEXT).",
+      hint: "SENTINEL-HINT-TEXT",
+    });
+
+    const res = await handle(throwing(pgError));
+    const logged = loggedText(spy);
+
+    // Positive first, so this cannot pass by the logging having stopped.
+    expect(logged).toContain("api.internal_error");
+    expect(logged).toContain("new row violates check constraint");
+    expect(res.status).toBe(500);
+
+    expect(logged, "PostgrestError.details reached the log").not.toContain("SENTINEL-NOTES-TEXT");
+    expect(logged, "PostgrestError.hint reached the log").not.toContain("SENTINEL-HINT-TEXT");
+    expect(logged).not.toContain("Failing row contains");
+
+    // And neither reaches the client, which the generic message already
+    // guarantees — asserted anyway, because the two are separate claims.
+    const body = await res.text();
+    expect(body).not.toContain("SENTINEL");
+  });
+
   it("keeps publicMessage and message identical, so the wire text cannot drift", () => {
     // One constructor parameter sets both. If a later edit lets them diverge,
     // `respond.ts` would answer with text no log or stack trace ever shows.
