@@ -330,7 +330,7 @@ test" part does not.
 
 ### 2.9 Testing infrastructure — **B**
 - **[2026-08-06] Updated at Phase 1 close:** **859 unit tests across 73 files** (was 524/42 at Phase 0
-  close). **Seven** executable architecture specs, not two **[2026-09-14, observed at U12: **20** · **21 at U22 (2026-09-15)** · **22 at U32 (2026-09-18)** · **23 at U30 (2026-09-21)**, the
+  close). **Seven** executable architecture specs, not two **[2026-09-14, observed at U12: **20** · **21 at U22 (2026-09-15)** · **22 at U32 (2026-09-18)** · **23 at U30 (2026-09-21)** · **24 at U33 (2026-09-21)**, the
   directory count — the figure below is the 2026-08-06 measurement and stays as written; the thirteen
   added since are Phase 2's, most recently `not-found-uniformity.test.ts` (U12) and the specs added by
   U13–U28]**: `boundaries.test.ts` (**36**),
@@ -470,7 +470,7 @@ What compounds debt is not the shape but **the coverage of enforcement**: ~~two 
 purity is unenforced, the presentation layer is untestable-by-config, and none of it runs automatically.~~
 **[2026-08-06] Three of those four are closed** — `src/services` and `src/data` are scanned layers,
 `DOMAIN_IS_PURE` is enforced as a ratchet (U18), and all seven architecture specs run on every push via
-CI (including a coverage gate) **[2026-09-14, observed at U12: **20** · **21 at U22 (2026-09-15)** · **22 at U32 (2026-09-18)** · **23 at U30 (2026-09-21)**, and the "all" is the load-bearing
+CI (including a coverage gate) **[2026-09-14, observed at U12: **20** · **21 at U22 (2026-09-15)** · **22 at U32 (2026-09-18)** · **23 at U30 (2026-09-21)** · **24 at U33 (2026-09-21)**, and the "all" is the load-bearing
 word — it was true when written and is still true, because CI runs the whole suite rather than a named
 list; only the count aged]**. **The presentation layer is still untestable by config**: `include` is
 `src/**/*.test.ts` with `environment: "node"`, so a `.test.tsx` cannot run — though since U13 a tracked

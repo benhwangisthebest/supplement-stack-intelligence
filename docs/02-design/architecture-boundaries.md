@@ -254,7 +254,8 @@ Status: **7/7** of `evaluateStack`'s context fields covered (was 2/7). No dead c
 npm test                                              # includes all seven executable specs
                                                       # [2026-09-14, observed at U12: 20 · 21 at U22
                                                       #  (2026-09-15) · 22 at U32 (2026-09-18) ·
-                                                      #  23 at U30 (2026-09-21),
+                                                      #  23 at U30 (2026-09-21) ·
+                                                      #  24 at U33 (2026-09-21),
                                                       #  not seven.
                                                       #  `npm test` runs the directory, so the command
                                                       #  is right and only the count aged.]

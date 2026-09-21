@@ -338,8 +338,8 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-64** | **U31 closeout, 2026-09-18** | **`.gitignore:27`'s `.env*.local` does not match a `.env*.local*` backup.** `.env.local.bak-u31probe` — created while repairing N-57 — was untracked, unignored, and offered by `git status` for staging, holding a live API key and the Supabase service-role key. It was noticed and deleted by hand. **The near-miss is the finding:** §2.3 rule 14 was preserved by attention, not by a pattern | `git check-ignore -v .env.local.bak-u31probe` → no match | **FOLDED INTO `U32`** — one line. Registered separately because the *class* is "credential files whose names are one suffix away from the ignore pattern", which one line narrows but does not close |
 | **N-65** | **U31 closeout sweep, 2026-09-18** | **The probe record template outlived the thing it templates, and the renamed probes still hand it to the operator.** `docs/05-qa/omniroute-probe-record.template.md` is titled *"OP-4 — Omniroute live probe record"*, instructs a copy to `omniroute-probe-<date>.md`, and states it "is the only thing that may close decision 7B" — a decision ruled 2026-08-10 and re-established against a different provider on 2026-09-18. **Three live pointers in U31's own renamed probes still name it.** Neither record written on 2026-09-18 used it | `scripts/probes/openai-advisor-probe.ts:31,263`; `openai-labimport-probe.ts:277`; the template's own header | **FOLDED INTO `U32`** — owner ruling 2026-09-18, **declared there as a widening with its reasons**, not absorbed silently: U32 already opens `scripts/`, the template is the instrument's own documentation, and this is **N-58's class** (the probes drifting from what they measure) one level out. This is U31's residue — U31 renamed the probes and not their target. **The class is "counts-written-once, one level up": not a number that rotted but a template that did**, still being handed forward by the files that should have retired it |
 | **N-66** | **`ecc:architect` during U32 planning, 2026-09-18** (the one question the unit put to it: client module or env reader) | **`SOLE_PAID_CLIENT`'s reader ratchet pins readers of `OPENAI_API_KEY` and nothing else, so a new module that reads `OPENAI_BASE_URL` and dials it without the validator is green.** The key half of the paid boundary is ratcheted; the address half is not, and U32's control lives on the address | `boundaries.test.ts:1194` pins the key readers as an equality; no assertion anywhere names a base-URL reader. Measured readers today: `model-adapter.ts:365`, `pdf-adapter.ts:244`, `route.ts:74` | **FOLDED INTO U32 by owner ruling 2026-09-18, declared as a widening.** The ruling's reason: it is what stops U32's *"the validator is called from exactly two sites"* clause from being a count written once (FU-32's class). An anti-vacuity assertion proves the validator is called somewhere; only a pinned reader list proves nothing reads the variable *instead*. **M7** is its red proof |
-| **N-67** | **U32 implementation, 2026-09-18 — raised by this unit's own test, which is the uncomfortable part** | **`vi.stubEnv` leaks across tests in `src/app/api/advisor/route.test.ts`, and a test that sets an escape-hatch flag therefore disables that control for every test AFTER it.** Nothing in the file or in `vitest.config.ts` unstubs. U32's new *"proceeds when the override is set"* test stubbed `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1`, and the happy-path test 200 lines later — which configures the non-first-party `https://gateway.invalid` — **passed with a 200 while the brand-new host pin was switched off**. A green suite over a disabled control, introduced by the commit that added the control | Observed: run at 19:58:38 on 2026-09-18, `route.test.ts` **23 passed** with `FAKE_BASE_URL = "https://gateway.invalid"` and the pre-flight live — arithmetic that only works if the override leaked. Confirmed by `git show HEAD:src/app/api/advisor/route.test.ts | grep -c unstub` → **0**, and `grep -c unstub vitest.config.ts` → **0** | **INSTANCE FIXED HERE** — `vi.unstubAllEnvs()` added to `beforeEach`, and `FAKE_BASE_URL` changed to the first-party host so the happy path exercises a permitted address rather than a tolerated one. **THE CLASS IS OPEN, unassigned**: `grep -rl "vi.stubEnv" --include=*.test.ts src/` returns **three** files — this one plus `src/lib/advisor/model-adapter.test.ts` and `src/lib/lab-import/lab-import.test.ts` — and nothing in the project asserts that a stub is ever undone. The mechanical fix is `unstubEnvs: true` in `vitest.config.ts` — one line, and it may redden tests that currently depend on leakage, which is why it is a decision and not a patch smuggled into this unit |
-| **N-68** | **U32 review follow-through, 2026-09-18** — found while proving the fix for `ecc:code-reviewer`'s BLOCKING finding, by running the same mutation against `HEAD` | **`model-adapter.test.ts`'s "key is absent" test has been green for the wrong reason since before this unit.** Deleting the `!apiKey` clause leaves the suite **21/21 green on `HEAD`**, because the test stubs no `OPENAI_MODEL` and `resolveModel` throws the same shared `AI_SERVICE_NOT_CONFIGURED` a moment later. `rejects.toThrow("not configured")` cannot tell two causes apart when one message serves every cause | `git show HEAD:…model-adapter.ts` with `!apiKey` removed, `git show HEAD:…model-adapter.test.ts` unchanged → **Tests 21 passed (21)**. The same mutation on the U32 tree: **22 passed** | **OPEN, unassigned — NOT fixed here, deliberately.** It predates U32 and belongs to whichever unit owns that guard; fixing a pre-existing green-for-the-wrong-reason test inside a unit about base URLs is the absorption §8.1 forbids, and this register row is what stops it being forgotten instead. **The fix is one line** — stub `OPENAI_MODEL` in that test so the key check is the only thing that can throw. **The class is the real finding**: a single shared error message across every configuration failure makes `toThrow(<that message>)` structurally unable to distinguish causes, so any test written that way is one new early-return away from silently stopping. U32's own BLOCKING finding was the same mechanism, one commit later |
+| **N-67** | **U32 implementation, 2026-09-18 — raised by this unit's own test, which is the uncomfortable part** | **`vi.stubEnv` leaks across tests in `src/app/api/advisor/route.test.ts`, and a test that sets an escape-hatch flag therefore disables that control for every test AFTER it.** Nothing in the file or in `vitest.config.ts` unstubs. U32's new *"proceeds when the override is set"* test stubbed `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1`, and the happy-path test 200 lines later — which configures the non-first-party `https://gateway.invalid` — **passed with a 200 while the brand-new host pin was switched off**. A green suite over a disabled control, introduced by the commit that added the control | Observed: run at 19:58:38 on 2026-09-18, `route.test.ts` **23 passed** with `FAKE_BASE_URL = "https://gateway.invalid"` and the pre-flight live — arithmetic that only works if the override leaked. Confirmed by `git show HEAD:src/app/api/advisor/route.test.ts | grep -c unstub` → **0**, and `grep -c unstub vitest.config.ts` → **0** | **[2026-09-21] CLOSED BY U33 — the class, not only the instance.** `unstubEnvs: true` in `vitest.config.ts` makes the property global, and `src/architecture/env-stub-isolation.test.ts` is the red a config line otherwise cannot have. **It reddened nothing when flipped** — all three files already cleaned up after themselves — so U33 bought prevention, not repair, and says so. Worth recording against the last sentence of this row: the mechanical fix did NOT redden tests that depended on leakage, because by then none did. ~~**INSTANCE FIXED HERE**~~ — `vi.unstubAllEnvs()` added to `beforeEach`, and `FAKE_BASE_URL` changed to the first-party host so the happy path exercises a permitted address rather than a tolerated one. **THE CLASS IS OPEN, unassigned**: `grep -rl "vi.stubEnv" --include=*.test.ts src/` returns **three** files — this one plus `src/lib/advisor/model-adapter.test.ts` and `src/lib/lab-import/lab-import.test.ts` — and nothing in the project asserts that a stub is ever undone. The mechanical fix is `unstubEnvs: true` in `vitest.config.ts` — one line, and it may redden tests that currently depend on leakage, which is why it is a decision and not a patch smuggled into this unit |
+| **N-68** | **U32 review follow-through, 2026-09-18** — found while proving the fix for `ecc:code-reviewer`'s BLOCKING finding, by running the same mutation against `HEAD` | **`model-adapter.test.ts`'s "key is absent" test has been green for the wrong reason since before this unit.** Deleting the `!apiKey` clause leaves the suite **21/21 green on `HEAD`**, because the test stubs no `OPENAI_MODEL` and `resolveModel` throws the same shared `AI_SERVICE_NOT_CONFIGURED` a moment later. `rejects.toThrow("not configured")` cannot tell two causes apart when one message serves every cause | `git show HEAD:…model-adapter.ts` with `!apiKey` removed, `git show HEAD:…model-adapter.test.ts` unchanged → **Tests 21 passed (21)**. The same mutation on the U32 tree: **22 passed** | **[2026-09-21] CLOSED BY U33.** The test now asserts `reason === "missing-key"` and its fixture unsets exactly one setting, so the mutation that left it green is the mutation that reddens it (M3). U33 also measured the row's last sentence at scale: the same blindness held at **seven of twelve** condition-deletions, and `pdf-adapter.ts` scored **zero of four**. ~~**OPEN, unassigned — NOT fixed here, deliberately.**~~ It predates U32 and belongs to whichever unit owns that guard; fixing a pre-existing green-for-the-wrong-reason test inside a unit about base URLs is the absorption §8.1 forbids, and this register row is what stops it being forgotten instead. **The fix is one line** — stub `OPENAI_MODEL` in that test so the key check is the only thing that can throw. **The class is the real finding**: a single shared error message across every configuration failure makes `toThrow(<that message>)` structurally unable to distinguish causes, so any test written that way is one new early-return away from silently stopping. U32's own BLOCKING finding was the same mechanism, one commit later |
 | **N-69** | **`ecc:architect` during U29 planning, 2026-09-19** (the one question: route, service or repo) | **`recordBatch` can persist an `advisor_actions` row pointing at ANOTHER user's conversation, and every existing guard passes.** The row's `user_id` is stamped correctly, so `repo-scoping.test.ts` is satisfied; the column's foreign key constrains **existence, never ownership** | `0004_advisor_actions.sql:16-17` — `conversation_id uuid references public.advisor_conversations(id) on delete set null`, so a *nonexistent* id is refused by Postgres and a *foreign* one is accepted. `recordBatch` itself takes the id from its caller | **OPEN, unassigned.** **U29 closes the path through `confirmAndApply` and does NOT close `recordBatch`** — which is the distinction worth keeping: U29 guards a caller, not the function every future caller will reach. Candidate fixes, neither chosen here: scope `recordBatch` to verified conversations, or add a composite constraint so the database itself refuses a cross-owner reference |
 | **N-70** | **`ecc:security-reviewer` on the U29 diff, 2026-09-20** | **U29's two ownership guards are check-then-act, and the repo layer already has the atomic pattern they do not use.** `conversationBelongsToUser` is a plain `select … maybeSingle` awaited at `route.ts:119`; the reservation happens at `route.ts:137` as a separate round trip, and `getMessages` at `:140`. Between the two the answer can go stale. Same shape at `advisor-actions.ts:149` | The contrast is inside this repository: **`appendMessages` (`repo.ts:159-187`, Phase 2 U26) folds ownership into the write statement itself** — `update … .eq("id", …).eq("user_id", …)` and a row-count check — so its check cannot go stale. U29's guards are the weaker pattern beside it | **DEFERRED by owner ruling 2026-09-20, with the reason stated rather than left implicit — NOT a Phase 2 unit.** **The window has no adversary**: nothing in this product transfers or shares a conversation, so the only way to lose ownership between the check and the reservation is to delete your own conversation, and the cost of that race is your own budget. A TOCTOU with no second party is a latent defect, not a live one. **THE GATE, and it is the whole point of deferring rather than closing: any future proposal to make conversations transferable or shareable must cite N-70 and close it first.** That is what turns the window into an exploitable one, and the person proposing the feature is the only one positioned to notice. **It is registered because the asymmetry is the finding** — this codebase holds both patterns, and the weaker was chosen where the stakes are a paid call. The fix folds the predicate into the reservation RPC or the write's `WHERE`, the way `appendMessages` already does; that is a design, not a patch |
 | **N-71** | **`ecc:code-reviewer` on the U29 diff, 2026-09-20** (found while tracing the blast radius of an empty `conversationId`) | **A stack mutation can commit with no audit row and no `rolledBack` signal.** `executeBatch` has its own `try/catch` that returns `ACTION_ERROR` with `details: { rolledBack: true }` — a computed fact the client acts on. **`recordBatch` runs AFTER that block**, so a throw there falls to the outer `catch`, which returns `ACTION_ERROR` **without** `rolledBack`. The stack change is already committed and the audit row never exists | `advisor-actions.ts` — inner catch returns `{ rolledBack: true }`; `recordBatch` is called ~15 lines later; the outer catch returns `internalError(err, { code: "ACTION_ERROR" })` with no details | **OPEN, unassigned. PRE-EXISTING and explicitly NOT introduced by U29** — the reviewer said so unprompted, and U29 in fact *narrows* one route to it by refusing an empty id before `executeBatch` rather than after. It is registered because the audit trail is the thing this pair of findings (N-48/N-49) is about: a client told `ACTION_ERROR` with no `rolledBack` cannot tell a rolled-back batch from an applied-but-unaudited one |
@@ -4403,6 +4403,100 @@ MEDIUM fix present; the figures below are the re-run with both.
 111 files** · `next build` compiled successfully · coverage `src/lib/openai` **100 / 93.75 / 100 / 100**
 against floors 90 / 90 / 78 / 90. **M3–M6 re-run with both fixes in place** — 5, 6, 4 and 6 failures
 respectively, each confined to the deleted condition's own reason.
+
+
+#### **[2026-09-21] U33 — UNIT REPORT. DONE.** One resolver, five reasons, and a suite that can say which condition failed
+
+**STAMP ROW.** Code and closeout in one commit and one follow-up commit.
+
+| | |
+|---|---|
+| **commit** | `ffbb7bc` — 19 files, **+1431 / −110** |
+| **branch run** | **`35656319972`**, green, **18/18 steps** |
+| **post-merge run** | **`35656749978`**, green, **18/18 steps**, on `ffbb7bc` |
+| **merge** | fast-forward `47712bd` → `ffbb7bc`; branch `feat/u33-config-reasons` deleted; `main` the only ref |
+| **CI figures, read through `gh`, each checked against a local run** | lint **366 of 366 tracked files, 0 errors** · vitest **1386 passed / 111 files** · non-live E2E **70 passed / 30 skipped**. **All three match local exactly** — and the E2E figure was checked by running `npx playwright test` locally for this unit rather than by comparing against U30's, because a figure carried forward is not a figure checked |
+| **suite** | 1355 / 109 → **1386 / 111** |
+| **specs** | `src/architecture/` 23 → **24** |
+| **bkit** | `u33-test-isolation-config-reasons` → `completed` |
+
+**WHAT THIS UNIT ACTUALLY BOUGHT, stated as a number rather than as a claim:** before it, **seven of
+twelve** single-condition deletions across the three configuration sites were invisible to the entire
+suite. After it, **zero** — each of the four reddens the tests named for its own reason and nothing
+else. N-67 and N-68 are both discharged; their register rows are updated in this commit.
+
+**THE ONE I WOULD PUT IN FRONT OF A REVIEWER: I BLINDED A GUARD IN THE UNIT ABOUT GUARDS GOING BLIND.**
+N-73's fix stripped comments from three reader ratchets with `.replace(/\/\/[^\n]*/g, " ")`. `//` is
+also the middle of every `https://` literal, so that regex ate the rest of any line containing one.
+`ecc:code-reviewer` did not argue it — it added `const _decoy = "https://" + process.env.OPENAI_API_KEY;`
+to a file outside the pinned set and the key ratchet stayed **green**. A second module reading the paid
+credential, invisible to the ratchet whose only job is to see that.
+
+Three things follow, and the third is the durable one:
+
+1. **I traded a false positive for a false negative and did not notice.** N-73 was prose counting as
+   code — noisy, harmless. The replacement was code counting as nothing. An over-reporting guard is
+   annoying; an under-reporting guard has stopped existing.
+2. **It is U30's lesson at one unit's distance, with me as the author.** U30's closeout recorded that a
+   guard can be *blind* rather than wrong. I wrote that sentence and then did it.
+3. **The fix is not a better regex.** The three pins now match **TypeScript scanner tokens**, which know
+   what a string literal is and skip comment trivia as trivia. Nine self-test cases pin both directions,
+   including the reviewer's decoy verbatim. **The general form: a guard that parses a language with a
+   pattern is measuring a different language.** `NOT_CONFIGURED_TOTALITY` and `path-param-validation`
+   already used the compiler API; these three pins were the ones still using text, and that was not a
+   decision anyone had made — it was the shape the first version happened to take.
+
+**THE METHOD RULE ADDED YESTERDAY FAILED TODAY, AND IS AMENDED IN THIS COMMIT.** Applying the review's
+LOW fix and then re-running M3–M6 restored `model-adapter.ts` from a backup taken for **M7**, silently
+undoing the fix. `git status` reported `M src/lib/advisor/model-adapter.ts` — which is exactly what a
+correct tree reports, because the file *is* modified by this unit. Only `git diff --numstat` showed it
+had stopped growing. Two additions, struck-and-dated beside the original: **delete a backup when its
+mutation ends**, and **verify a revert by diff, not by status**. A stale backup is a `git checkout --`
+with a delay on it — the same destruction the rule exists to prevent, arriving from the tool adopted to
+prevent it. The figures first reported for the gates were taken with only the MEDIUM fix present and
+were re-run; both sets are in the review record.
+
+**TWO PLACES THE PLAN WAS WRONG, LEFT STANDING RATHER THAN EDITED.**
+
+- **M2b predicted N-67 would reproduce with the flag and the per-file cleanup both removed. It does
+  not** — the file stays 26/26 green, because U32 closed that instance *twice*: the cleanup **and** a
+  fixture moved to a first-party host. What the unit actually buys is M2a: the property no longer
+  depends on three files each remembering.
+- **The plan named two pinned reader ratchets. There are three.** `NO_PINNED_MODEL_ID` failed on the
+  same commit — a guard doing its job on a unit that had not counted it, which is the cheapest possible
+  way to discover an uncounted guard.
+
+**STATED LIMIT, carried verbatim from the security review's qualification.** `ecc:security-reviewer`
+answered NO to all three disclosure questions, and the client-bundle half deserves its exact wording
+rather than a summary: *"No client component imports this module chain" is true, and it is
+circumstantial rather than structural: `supabase/client.ts` → `supabase/env.ts` → `errors.ts` is a real
+edge, dormant only because the browser Supabase client is imported by no non-test module. That is not
+news — `csp.ts:101` already records it and the Report-Only CSP is what verifies the consequence — and if
+the chain ever went live what would ship is four lowercase reason strings whose variable names
+`.env.example` documents in public. Inert, but the verdict should not be read as structural when it
+rests on a dormant import.*
+
+**THE SWEEP, including the two greps the owner named.**
+
+- **Spec count 23 → 24** at the four dated sites — `README.md:26`, `docs/project-status.md:333` and
+  `:473`, `docs/02-design/architecture-boundaries.md:255` — each bracket **extended in place**, never
+  rewritten (§7, the counts-written-once class, FU-32).
+- **`AI_SERVICE_NOT_CONFIGURED` prose that now implies one cause: none found.** Every live mention names
+  the constant as *the shared text*, which is still exactly what it is — the unit changed what a TEST
+  can distinguish, not what the message says. The matches in the phase plan (N-9, N-10, N-14, U25's M7)
+  are dated records of what was true when written and stay as written.
+- **"three sites" / "three files" claims that the resolver made false: none.** The count that changed is
+  the number of modules that *resolve* the configuration (3 → 1); the number of **sanctioned throw-site
+  files** is unchanged at three, because the throws deliberately did not move —
+  `not-configured-totality.test.ts:273` and `errors.ts:39` both still say three and are both still
+  right. This is the distinction the design was chosen for, and the sweep is where it is confirmed
+  rather than assumed.
+- **One thing deliberately left alone, recorded so it reads as a judgement and not an oversight.**
+  `first-party-base-url.test.ts:13` says *"a validator that three modules call and a fourth does not is
+  a control with a hole"*. That is a hypothetical illustrating why a reach rule exists, not a count of
+  this tree. Editing it because it contains the number three would be the mistake U30's sweep avoided
+  when it left `items/[itemId]/route.test.ts:114` untouched — a sweep that edits what matched the grep,
+  rather than what became false, makes the record worse.
 
 
 ### Group E — cuttable
