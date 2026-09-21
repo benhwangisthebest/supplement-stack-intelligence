@@ -3169,6 +3169,72 @@ greps rather than on a graph walk. **The owner will reinstall `gh`, `graphify` a
 arm64 before U30.** Until then CI figures are read through the **GitHub REST API**, cited as such
 wherever they appear, and `/usr/bin/python3` replaces the Homebrew one.
 
+**U29 STAMP ROW** *(standing disposition):*
+
+| U29 closeout | value |
+|---|---|
+| merged to `main` | **`1f0077c`** — fast-forward from `1a6c080`, 1 commit, 7 files, +477/−3 |
+| code run | **`35536919856`** — green on `1f0077c`, **18/18 steps**, on `feat/u29-pre-spend-ownership` |
+| post-merge `main` run | **`35537125713`** — green on `1f0077c`, 18/18, required check satisfied on the merged SHA |
+| CI figures | **NOT READ — see below.** Local, re-measured: lint **362/362, 0 errors** · vitest **1336 / 108 files** · build succeeds |
+| bkit | **`u29-pre-spend-ownership` → `completed`**, advanced 2026-09-20 as the last step of this closeout |
+
+**THE THREE CI FIGURES ARE MISSING FROM THIS ROW, AND THAT IS A REPORT, NOT AN OMISSION.** Every prior
+closeout in this phase re-read lint / vitest / E2E out of the CI log to check them against the local
+run. This one could not: `gh` is x86_64 and this host is now arm64, and the REST API's log endpoint
+answers **403 unauthenticated** (measured). What the API *does* give without credentials is the run id,
+the conclusion and the step count, and those are above. **So the two runs are green and 18/18 — and the
+claim "CI measured the same numbers the developer did" is NOT made for this unit**, because nothing
+this session could run established it. The figures in the row are local.
+
+**Why it matters more here than it looks:** the non-live E2E count is the one figure this unit could not
+produce locally at all, so it is simply absent rather than unverified-but-guessed. §5 rule 1.
+
+**THE SWEEP.** Grepped, not recalled. Three prose sites asserted that `POST /api/advisor` *never* calls
+`conversationBelongsToUser` — true when U26 wrote them, false the moment this unit landed.
+
+| Site | Claim | Action |
+|---|---|---|
+| `docs/project-status.md:223` | "Two findings registered, not absorbed … both owned by U29" | struck and dated; both now addressed, **MITIGATED not closed**, with N-69 and N-70 named |
+| `src/lib/advisor/repo.ts:154` | "`POST /api/advisor` never calls `conversationBelongsToUser`" | struck in place; "IT DOES NOW — awaited before the reservation" |
+| `src/lib/advisor/repo.test.ts:298` | the same claim, in a test comment | dated addendum; the bump-first filter is still the atomic half, and N-70 records that U29's is not |
+| `src/architecture/repo-scoping.test.ts:177` | the same claim again | **already corrected inside the unit — and it was the only one of the four that a test forced** |
+
+**That last row is the finding, and it is worth more than the four edits.** Four copies of one claim
+existed; **one** was bound to the code, and that one reddened by itself and could not be left stale. The
+other three were prose, and they survived U26 → U31 → U32 untouched because nothing reads prose. The
+spec-count sweep of U12/U22/U32 is the same lesson in a different costume: **the fix is never "remember
+to grep", it is to bind the claim.** This is the sixth appearance of the counts-written-once class
+(FU-32) in this phase.
+
+Spec count is **unchanged at 22** — U29 added assertions to an existing spec rather than a new file,
+so the three dated bracket sites are not touched.
+
+**U34 · Post-commit failures report their state honestly.** *(created 2026-09-20 by owner ruling on
+N-71; numbering append-only)* M `src/services/advisor-actions.ts` · M its route test · possibly
+`src/lib/api/respond.ts`. **S**, deps **U29**, **sequenced after U33 and before the Phase 2 closeout.**
+
+**The defect, stated as the client experiences it:** `executeBatch` has its own `try/catch` that returns
+`ACTION_ERROR` with `details: { rolledBack: true }` — a computed fact the client acts on. **`recordBatch`
+runs after that block**, so a throw there falls to the outer `catch`, which returns `ACTION_ERROR`
+**without** `rolledBack`. The stack change is already committed and the audit row never exists, and the
+response cannot be told apart from a batch that rolled back cleanly.
+
+**What U34 must deliver:** after `executeBatch` has committed, any throw before the audit row is
+recorded must **either** roll back and say so, **or** answer with a body that states
+**applied-but-unaudited** — and the client must be able to distinguish the two. Which of the two is the
+right behaviour is U34's design question, not a detail: rolling back is honest but discards work the
+user asked for; reporting applied-but-unaudited keeps the work and admits the audit gap. **Both are
+defensible; silently returning the same shape as a rollback is not.**
+
+**Red:** force `recordBatch` to throw after a successful `executeBatch` and assert the response
+distinguishes the two states — a test that must go red against today's code, which returns the
+indistinguishable shape. **Mutation-shown, per §5 rule 2.**
+
+**Non-coverage, named now so U34 does not quietly grow:** this is about **reporting**, not about making
+the two writes atomic. A transaction spanning the stack mutation and the audit insert is a different,
+larger design, and N-71 does not ask for it.
+
 **U30 · Malformed path params answer 400, not 500.** *(created 2026-09-14 by decision 8(d), on N-51;
 numbering append-only)* N a `uuidParam` schema export · M **12 handler entry points across 8 route files**
 · M their tests · N a source scan in `src/architecture/`. **S**, deps none. **Scheduled after U29**, and
@@ -4518,9 +4584,9 @@ here rather than discovered later.
 
 ## 9. Sizing
 
-**~~23~~ ~~24~~ ~~25~~ ~~26~~ ~~27~~ ~~28~~ ~~29~~ 30 proposed units** (U1–U22, **U24**, **U25**, **U26**, **U29**, **U30**, **U31**, **U32** and **U33**, plus U23 deferred). Rough shape:
+**~~23~~ ~~24~~ ~~25~~ ~~26~~ ~~27~~ ~~28~~ ~~29~~ ~~30~~ 31 proposed units** (U1–U22, **U24**, **U25**, **U26**, **U29**, **U30**, **U31**, **U32**, **U33** and **U34**, plus U23 deferred). Rough shape:
 **~~7~~ ~~8~~ ~~9~~ ~~10~~ ~~11~~ 12 S/S-M · ~~12~~ 13 M · ~~3~~ ~~4~~ 3 L · 1 M/L**.
-*(**[2026-09-18]** **U33 is S** — created by the owner's ruling on N-67 and N-68, both raised while U32 was being reviewed. **Of 30 proposed, 27 are live** (cut: U11, U21, U23). A unit created by a review finding is the third of this phase — U26, U29 and now U33 — which is the measurable form of the claim that the review step pays for itself.)*
+*(**[2026-09-20]** **U34 is S** — created by the owner's ruling on N-71, which `ecc:code-reviewer` found while tracing the blast radius of an empty `conversationId` in U29's diff. **Of 31 proposed, 28 are live.** The fourth unit this phase created by a review finding, after U26, U29 and U33.)* *(**[2026-09-18]** **U33 is S** — created by the owner's ruling on N-67 and N-68, both raised while U32 was being reviewed. **Of 30 proposed, 27 are live** (cut: U11, U21, U23). A unit created by a review finding is the third of this phase — U26, U29 and now U33 — which is the measurable form of the claim that the review step pays for itself.)*
 *(**[2026-09-14, decision 8]** applied on top of decision 9's line rather than instead of it, since both
 ruled the same day: **U30 is S**, and **U22 falls from L to S** on re-scoping — the one **L** that leaves
 this count. **Cut to date: U11, U21, U23.** Of 28 proposed, **25 are live**. The gross count rises while

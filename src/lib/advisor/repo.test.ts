@@ -296,7 +296,9 @@ describe("advisor repo — ownership pins (U9)", () => {
     // runs FIRST: check and act are one statement, and it fails before any
     // message row exists. (Until U26 the bump was addressed by `id` alone, and
     // the only application-layer ownership check on this path was… none: the
-    // POST route never called `conversationBelongsToUser` — N-48.)
+    // POST route never called `conversationBelongsToUser` — N-48. [2026-09-20]
+    // U29 added that call, before the reservation; this bump-first filter
+    // remains the atomic half, and N-70 records that U29's is not.)
     const spy = querySpy({ data: [{ id: "c1" }] });
     await appendMessages(spy.client, "u1", "c1", [
       { role: "user", content: "hi", citations: [] },

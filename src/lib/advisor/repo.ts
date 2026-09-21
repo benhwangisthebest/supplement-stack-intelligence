@@ -152,9 +152,12 @@ export interface NewMessage {
  * Stated cost: if the insert then fails, `updated_at` leads the newest message.
  *
  * Until U26 this was the only application-layer ownership check MISSING from
- * the advisor turn path: `POST /api/advisor` never calls
+ * the advisor turn path. ~~`POST /api/advisor` never calls
  * `conversationBelongsToUser` (finding N-48, owned by U29 for the pre-spend
- * half). RLS still isolates tenants at the database (§2.3 rule 12).
+ * half).~~ [2026-09-20, U29] IT DOES NOW — awaited before the reservation, so
+ * the paid call is no longer the first thing an unauthorised request reaches.
+ * RLS still isolates tenants at the database (§2.3 rule 12); this file's
+ * filter and that check are the two layers above it.
  */
 export async function appendMessages(
   supabase: SupabaseClient,
