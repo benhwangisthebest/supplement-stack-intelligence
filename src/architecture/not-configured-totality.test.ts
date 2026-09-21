@@ -59,6 +59,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
+import {
+  AI_CONFIG_REASONS,
+  AI_SERVICE_NOT_CONFIGURED,
+  NotConfiguredError,
+} from "@/lib/api/errors";
+import { handle } from "@/lib/api/respond";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -277,6 +283,65 @@ describe("NOT_CONFIGURED_TOTALITY — one class owns the 503 (Phase 2 U1)", () =
         "src/lib/lab-import/pdf-adapter.ts",
       ]),
     );
+  });
+
+  it("the 503 body is byte-identical across all four AI reasons (U33)", async () => {
+    // [2026-09-21, U33] `NotConfiguredError` now carries a machine-readable
+    // `reason` so a test can say WHY a configuration failure happened. That
+    // field is for tests and logs. IT MAY NOT REACH A CLIENT — which
+    // environment variable is unset is internal state, and §2.3 rule 13 does
+    // not bend for a convenient debugging aid.
+    //
+    // Asserted on BYTES, not on shape: `toEqual` over parsed JSON would not
+    // notice key order, and a serialiser that appended the reason would be
+    // caught only if someone thought to assert its absence by name. Every
+    // reason produces the same response or this fails.
+    const bodies = new Map<string, string>();
+    for (const reason of AI_CONFIG_REASONS) {
+      const res = await handle(async () => {
+        throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED, reason);
+      });
+      expect(res.status, `reason ${reason} must still be 503`).toBe(503);
+      bodies.set(reason, await res.text());
+    }
+
+    const distinct = new Set(bodies.values());
+    expect(
+      [...distinct],
+      "NOT_CONFIGURED_TOTALITY: the 503 body differs by reason. Something is\n" +
+        "serialising internal configuration state to the client:\n  " +
+        [...bodies].map(([r, b]) => `${r} → ${b}`).join("\n  "),
+    ).toHaveLength(1);
+
+    // The inverse, so a body that is uniformly WRONG cannot pass the above:
+    // the one body they all share is still the authored operational text, and
+    // it still names no setting.
+    const [only] = distinct;
+    expect(only).toContain(AI_SERVICE_NOT_CONFIGURED);
+    expect(only).not.toMatch(/missing-|disallowed-|OPENAI|reason/i);
+
+    // The fifth reason is deliberately NOT in this comparison. `supabase/env.ts`
+    // carries different `publicMessage` text — it names two PUBLIC variables,
+    // the only site allowed to name any — so its body differs, and always has.
+    // The difference is the MESSAGE, never the reason, and that is asserted:
+    const supabase = await handle(async () => {
+      throw new NotConfiguredError("Supabase is not configured.", "missing-supabase-env");
+    });
+    expect(await supabase.text()).not.toContain("missing-supabase-env");
+  });
+
+  it("the boundary never reads the reason off a caught error (U33)", () => {
+    // The structural half of the assertion above. A byte comparison catches a
+    // reason that is serialised today; this catches the line that would do it,
+    // including on a path no test exercises. `respond.ts` reads exactly one
+    // field off a NotConfiguredError, and that field is `publicMessage`.
+    const respond = fs.readFileSync(path.join(REPO_ROOT, "src/lib/api/respond.ts"), "utf8");
+    const code = respond
+      .split("\n")
+      .filter((l) => !l.trimStart().startsWith("*") && !l.trimStart().startsWith("//"))
+      .join("\n");
+
+    expect(code).not.toMatch(/\.reason\b/);
   });
 
   it("the substring dispatch is gone from the boundary, not merely bypassed", () => {

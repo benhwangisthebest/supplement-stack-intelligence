@@ -8,11 +8,11 @@ import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors"
 import { normalizeMarker } from "@/lib/biomarkers";
 import type { ParsedMarkerCandidate } from "@/types/lab";
 import {
-  baseUrlPermitted,
   createCompletion,
   type CompletionRequest,
   type OpenAIContentPart,
 } from "@/lib/openai/client";
+import { resolveAiConfig } from "@/lib/openai/config";
 import { adapterOutputSchema } from "./schema";
 
 export class ExtractionError extends Error {
@@ -244,23 +244,27 @@ interface GatewayConfig {
  * handling in `extractFromText`.
  */
 function requireGatewayConfig(deps: ExtractDeps): GatewayConfig {
-  const baseUrl = deps.baseUrl ?? process.env.OPENAI_BASE_URL;
-  const apiKey = deps.apiKey ?? process.env.OPENAI_API_KEY;
-  const model = deps.model ?? process.env.OPENAI_MODEL;
   // [U32, N-63] Same shape as the advisor adapter: the pin is checked at the
   // sanctioned `NotConfiguredError` site, on the value actually used, so an
   // injected `deps.baseUrl` cannot route around it. A PDF is the single
   // largest piece of health data this product sends anywhere (§2.3 rule 15).
-  const allowNonFirstPartyBaseUrl =
-    process.env.OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL === "1";
-  if (
-    !baseUrl ||
-    !apiKey ||
-    !model ||
-    !baseUrlPermitted(baseUrl, allowNonFirstPartyBaseUrl)
-  ) {
-    throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
+  //
+  // [U33] THIS FILE IS WHY THE CONDITIONS MOVED. Pre-fix, all FOUR of its
+  // single-condition deletions were invisible: both config tests unset several
+  // settings at once, so any surviving condition kept the throw happening and
+  // `toThrow("not configured")` could not tell which one did it. Four of the
+  // seven blind spots in the whole matrix were here. The conditions now live
+  // in `resolveAiConfig`; the throw stays here, where NOT_CONFIGURED_TOTALITY
+  // sanctions it.
+  const resolved = resolveAiConfig({
+    baseUrl: deps.baseUrl,
+    apiKey: deps.apiKey,
+    model: deps.model,
+  });
+  if (!resolved.ok) {
+    throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED, resolved.reason);
   }
+  const { baseUrl, apiKey, model, allowNonFirstPartyBaseUrl } = resolved.config;
   // [U31] NOT part of the required triple, deliberately. An unset reasoning
   // effort is a WORKING call at the model's own default — unlike a missing key,
   // base URL or model id, each of which makes the call impossible. Adding it to

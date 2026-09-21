@@ -11,6 +11,24 @@ import {
 } from "./pdf-adapter";
 
 afterEach(() => vi.unstubAllEnvs());
+
+/**
+ * [U33] Every configuration setting present, so a test can unset exactly one.
+ *
+ * The four reasons are enumerated in `src/lib/openai/config.test.ts`; the
+ * cases in this file pin that the two lab-import call sites REACH them.
+ */
+const COMPLETE_AI_ENV = {
+  OPENAI_API_KEY: "k",
+  OPENAI_BASE_URL: "https://api.openai.com",
+  OPENAI_MODEL: "m",
+} as const;
+
+const stubAllBut = (unset: keyof typeof COMPLETE_AI_ENV, value = "") => {
+  for (const [k, v] of Object.entries(COMPLETE_AI_ENV)) {
+    vi.stubEnv(k, k === unset ? value : v);
+  }
+};
 import {
   labCommitSchema,
   parsedCandidateSchema,
@@ -179,13 +197,23 @@ describe("extractFromText (injected transcriber)", () => {
     // U25 lab-import half: the setting names changed (API_ANTHROPIC_KEY →
     // OMNIROUTE_*) and the ASSERTIONS did not. That is the point of the pin —
     // it is about the error CLASS crossing the boundary, not about a provider.
-    vi.stubEnv("OPENAI_BASE_URL", "");
-    vi.stubEnv("OPENAI_API_KEY", "");
-    vi.stubEnv("OPENAI_MODEL", "");
+    //
+    // [2026-09-21, U33] THIS FILE SCORED ZERO OUT OF FOUR. Measured before any
+    // edit: deleting the key condition, the base-URL condition, the model
+    // condition, or the host condition each left this suite 33/33 green. Four
+    // of the seven blind spots in the whole twelve-mutation matrix were here,
+    // for one reason — the fixture below used to unset ALL THREE settings at
+    // once, so any surviving condition still threw, and the assertion matched
+    // the class rather than the cause. The fixture now unsets exactly one
+    // thing and names the reason it expects. The four cases are enumerated in
+    // `src/lib/openai/config.test.ts`; these two pin that THIS path reaches
+    // them (§5.3 reachability), which is a different claim.
+    stubAllBut("OPENAI_API_KEY");
 
     const rejection = await extractFromText("some lab text").catch((e: unknown) => e);
     expect(rejection).toBeInstanceOf(NotConfiguredError);
     expect(rejection).not.toBeInstanceOf(ExtractionError);
+    expect((rejection as NotConfiguredError).reason).toBe("missing-key");
     // And the text it will put in front of a user names no environment
     // variable — see AI_SERVICE_NOT_CONFIGURED.
     expect((rejection as NotConfiguredError).publicMessage).not.toMatch(
@@ -200,13 +228,37 @@ describe("extractFromText (injected transcriber)", () => {
     // SECOND call site. U25's advisor half proved a half-configured provider is
     // the easy thing to miss; this pins that the PDF half fails identically
     // rather than reaching the network with a partial config.
-    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
-    vi.stubEnv("OPENAI_API_KEY", "k");
-    vi.stubEnv("OPENAI_MODEL", "");
+    // [U33] Unsets exactly one thing, like its sibling above, and a DIFFERENT
+    // one — the PDF path is a second call site, so the two tests should not
+    // both prove the same condition.
+    stubAllBut("OPENAI_MODEL");
 
     const rejection = await extractFromPdf("JVBERi0xLjQK").catch((e: unknown) => e);
     expect(rejection).toBeInstanceOf(NotConfiguredError);
     expect(rejection).not.toBeInstanceOf(ExtractionError);
+    expect((rejection as NotConfiguredError).reason).toBe("missing-model");
+  });
+
+  it("refuses a non-first-party host on the PDF path too (U32, N-63)", async () => {
+    // The third of the four conditions, reached through this file's second
+    // call site. A PDF is the largest piece of health data this product sends
+    // anywhere (§2.3 rule 15), so "where it goes" is pinned here and not only
+    // in the resolver's own unit tests.
+    stubAllBut("OPENAI_BASE_URL", "https://gw.example");
+
+    const rejection = await extractFromPdf("JVBERi0xLjQK").catch((e: unknown) => e);
+    expect(rejection).toBeInstanceOf(NotConfiguredError);
+    expect((rejection as NotConfiguredError).reason).toBe("disallowed-host");
+  });
+
+  it("refuses a missing base URL on the text path too", async () => {
+    // The fourth condition, so every one of the four is reached from this
+    // file — the property that was absent when it scored zero out of four.
+    stubAllBut("OPENAI_BASE_URL");
+
+    const rejection = await extractFromText("some lab text").catch((e: unknown) => e);
+    expect(rejection).toBeInstanceOf(NotConfiguredError);
+    expect((rejection as NotConfiguredError).reason).toBe("missing-base-url");
   });
 
   it("reads a FENCED transcript — N-23, found by the OP-4 live probe", () => {

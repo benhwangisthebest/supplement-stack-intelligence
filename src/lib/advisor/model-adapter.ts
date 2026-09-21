@@ -61,12 +61,12 @@
 // Importing `@/lib/api/respond` would — see that file's header.
 import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors";
 import {
-  baseUrlPermitted,
   createCompletion,
   type CompletionResult,
   type OpenAIFunctionTool,
   type OpenAIMessage,
 } from "@/lib/openai/client";
+import { resolveAiConfig, resolveModelId } from "@/lib/openai/config";
 import type {
   AdapterMessage,
   AdapterStep,
@@ -109,9 +109,13 @@ const MAX_TOKENS = 1024;
  *   environment variable, rather than a 502 from a rejected upstream call.
  */
 function resolveModel(explicit?: string): string {
-  const model = explicit ?? process.env.OPENAI_MODEL;
-  if (!model) throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
-  return model;
+  // [U33] The `!model` condition itself lives in `resolveAiConfig`'s module, so
+  // it exists once and has one mutation point. This wrapper only turns the
+  // refusal into the sanctioned throw — which stays HERE, because
+  // `NOT_CONFIGURED_TOTALITY` sanctions this file by name.
+  const resolved = resolveModelId(explicit);
+  if (!resolved.ok) throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED, resolved.reason);
+  return resolved.model;
 }
 
 /**
@@ -319,10 +323,34 @@ export class AdvisorModelAdapter implements ClaudeAdapter {
       this.apiMessages.push(...buildToolResultMessages(args.toolResults));
     }
 
-    const complete = this.deps.complete ?? this.liveComplete();
+    // [U33] THE LIVE PATH RESOLVES ITS MODEL FROM THE SAME CALL that resolved
+    // its key, base URL and host, so the id is computed once and the order of
+    // the four conditions is exactly the resolver's. Before this unit the two
+    // were separate — `liveComplete()` checked key/base-URL/host and
+    // `resolveModel()` ran afterwards — so the adapter's effective order was
+    // key → base URL → host → model. It is now key → base URL → model → host.
+    // DECLARED, not discovered: the change is internal and unobservable
+    // (`publicMessage`, class and status are identical for every reason), and
+    // it is stated here because `ecc:code-reviewer` asked the right question
+    // about it and a reader of `config.ts`'s "the order is load-bearing"
+    // paragraph should know this site's order used to differ.
+    //
+    // The injected path has no configuration to resolve — a test double needs
+    // no key and dials nothing — but it still needs a REAL model id, because
+    // N-21 was a pinned default reaching a gateway that rejected it. So it
+    // asks for that one condition on its own.
+    let complete: CompleteFn;
+    let model: string;
+    if (this.deps.complete) {
+      complete = this.deps.complete;
+      model = resolveModel(this.deps.model);
+    } else {
+      ({ complete, model } = this.liveComplete());
+    }
+
     const effort = resolveReasoningEffort(this.deps.reasoningEffort);
     const result = await complete({
-      model: resolveModel(this.deps.model),
+      model,
       // Spread, not `reasoningEffort: effort` — an explicit `undefined` would
       // reach the client and defeat the "omitted when unset" contract the
       // client's own test pins.
@@ -361,30 +389,41 @@ export class AdvisorModelAdapter implements ClaudeAdapter {
    * Wiring it is a change to U6's declared semantics, so it is named here
    * rather than absorbed (§8.1).
    */
-  private liveComplete(): CompleteFn {
-    const apiKey = this.deps.apiKey ?? process.env.OPENAI_API_KEY;
-    const baseUrl = this.deps.baseUrl ?? process.env.OPENAI_BASE_URL;
-    // [U32, N-63] The host pin is checked HERE and not only in the client,
-    // because this is where the `NotConfiguredError` throw lives — the one
-    // NOT_CONFIGURED_TOTALITY sanctions — so a base URL this deployment may
-    // not dial is the same operational 503 as a base URL it does not have.
+  private liveComplete(): { complete: CompleteFn; model: string } {
+    // [U32, N-63] The host pin is checked on this path and not only in the
+    // client, because this is where the `NotConfiguredError` throw lives — the
+    // one NOT_CONFIGURED_TOTALITY sanctions — so a base URL this deployment
+    // may not dial is the same operational 503 as a base URL it does not have.
     // The check covers the INJECTED value too: `deps.baseUrl` is ordinary
     // constructor input, not a test-only channel, so validating the env var
     // alone would leave the pin one parameter away from being bypassed.
-    const allowNonFirstParty =
-      process.env.OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL === "1";
-    if (!apiKey || !baseUrl || !baseUrlPermitted(baseUrl, allowNonFirstParty)) {
-      throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
+    //
+    // [U33] The four conditions moved into `resolveAiConfig`, which RETURNS the
+    // reason rather than throwing it — see that module's header for why, and
+    // for the measured reason this consolidation happened at all (seven of
+    // twelve single-condition deletions were invisible to the suite, two of
+    // them in this file). The throw stays here; only the deciding moved.
+    const resolved = resolveAiConfig({
+      apiKey: this.deps.apiKey,
+      baseUrl: this.deps.baseUrl,
+      model: this.deps.model,
+    });
+    if (!resolved.ok) {
+      throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED, resolved.reason);
     }
-    return (req) =>
-      createCompletion(
-        {
-          baseUrl,
-          apiKey,
-          allowNonFirstPartyBaseUrl: allowNonFirstParty,
-          timeoutMs: REQUEST_TIMEOUT_MS,
-        },
-        req,
-      );
+    const { apiKey, baseUrl, model, allowNonFirstPartyBaseUrl } = resolved.config;
+    return {
+      model,
+      complete: (req) =>
+        createCompletion(
+          {
+            baseUrl,
+            apiKey,
+            allowNonFirstPartyBaseUrl,
+            timeoutMs: REQUEST_TIMEOUT_MS,
+          },
+          req,
+        ),
+    };
   }
 }

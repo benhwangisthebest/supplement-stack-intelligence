@@ -1148,6 +1148,63 @@ describe("architecture boundaries — the real source tree", () => {
     }
   });
 
+  // Comments are ignored before any env-variable or model-id match, so prose
+  // EXPLAINING a retired id or naming a variable — including these guards' own
+  // rationale and pdf-adapter's — is not a hit. Only code counts.
+  //
+  // ---------------------------------------------------------------------
+  // WHY THIS IS TOKENISED AND NOT A REGEX, AND HOW THE REGEX WAS CAUGHT
+  // ---------------------------------------------------------------------
+  // [2026-09-21, U33] The first version of this helper was
+  //
+  //     src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ")
+  //
+  // and `ecc:code-reviewer` broke it by experiment, not by argument: `//` is
+  // also the middle of every `https://` string literal, so the second regex
+  // deleted the REST OF THE LINE after any such literal. It added
+  //
+  //     const _decoy = "https://" + process.env.OPENAI_API_KEY;
+  //
+  // to `client.ts` — a file not in the pinned reader list — and the key pin
+  // stayed GREEN, because the real `process.env.OPENAI_API_KEY` had been eaten
+  // as a comment. A second module reading the credential, invisible.
+  //
+  // That is this unit's own thesis turned on this unit's own guard, and it is
+  // strictly worse than the false POSITIVE the stripper was added to fix: a
+  // guard that over-reports is annoying, a guard that under-reports is a
+  // guard that has stopped existing. So the match is now over TOKENS from the
+  // TypeScript scanner, which knows what a string literal is. Comment trivia
+  // is skipped by the scanner itself rather than by a pattern that guesses.
+  //
+  // The `parser self-test` block at the end of this file pins both
+  // directions, including the reviewer's exact decoy line.
+  const readsIdentifier = (src: string, name: string): boolean => {
+    const scanner = ts.createScanner(
+      ts.ScriptTarget.Latest,
+      /* skipTrivia */ true,
+      ts.LanguageVariant.Standard,
+      src,
+    );
+    for (let token = scanner.scan(); token !== ts.SyntaxKind.EndOfFileToken; token = scanner.scan()) {
+      // An identifier — `process.env.OPENAI_API_KEY` — or the same name as a
+      // string key — `process.env["OPENAI_API_KEY"]`. Both are reads; neither
+      // a comment nor an unrelated string containing the name is.
+      if (token === ts.SyntaxKind.Identifier && scanner.getTokenText() === name) return true;
+      if (
+        (token === ts.SyntaxKind.StringLiteral ||
+          token === ts.SyntaxKind.NoSubstitutionTemplateLiteral) &&
+        scanner.getTokenValue() === name
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /** Still a text strip, and still only used for the model-ID LITERAL scan. */
+  const stripComments = (src: string): string =>
+    src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+
   // ---- U25: SOLE_PAID_CLIENT ----------------------------------------------
   //
   // The other half of the module marker. `PAID_API_BUDGET` answers "which
@@ -1193,12 +1250,45 @@ describe("architecture boundaries — the real source tree", () => {
 
   it("SOLE_PAID_CLIENT: the gateway key is read only where it is declared to be", () => {
     // A ratchet in Phase 1 U18's shape, asserted as an equality so it can only
-    // change deliberately. The adapter reads the key because that is where the
+    // change deliberately. ~~The adapter reads the key because that is where the
     // `NotConfiguredError` throw lives (NOT_CONFIGURED_TOTALITY's sanctioned
     // list depends on it); the route reads it for the pre-flight that keeps a
-    // missing key a 503 instead of an error event on a committed stream.
+    // missing key a 503 instead of an error event on a committed stream.~~
+    //
+    // [2026-09-21, U33] NARROWED, 3 → 1. The three readers are now one:
+    // `src/lib/openai/config.ts`. The struck sentence above explained why each
+    // of the three READ the key; it is retired rather than deleted (§7)
+    // because the reason each of them DECIDED is unchanged — the adapters
+    // still own the sanctioned throw and the route still owns the pre-flight.
+    // What moved is the resolution, not the disposition: each now calls
+    // `resolveAiConfig()` and acts on the result.
+    //
+    // WHY THIS NARROWING IS THE RATCHET'S OWN DIRECTION, not a weakening: the
+    // set being pinned is "places that can authenticate a paid call", and it
+    // got smaller. The same edit done carelessly — a resolver added while the
+    // three sites keep their own `?? process.env.OPENAI_API_KEY` fallbacks —
+    // makes this set FOUR files, which is a widening, and U33's M9 is exactly
+    // that mutation. The number here is therefore load-bearing in both
+    // directions.
+    //
+    // The three sibling pins below (address, model id) moved for the same
+    // reason in the same commit.
+    //
+    // [2026-09-21, U33] ALL THREE SCANS NOW STRIP COMMENTS BEFORE MATCHING,
+    // and that is a real change to what they compute, so it is written down
+    // rather than slipped in. They used to match raw file text, which made a
+    // file that merely NAMES the variable in prose count as a reader —
+    // `model-adapter.ts` failed this pin after U33 solely because a docstring
+    // says "the routed model id, from `OPENAI_MODEL`". The alternative was to
+    // delete accurate prose to satisfy a text scan, which is the tail wagging
+    // the dog. A comment cannot read an environment variable, so stripping
+    // them makes the scan MORE precise, not more permissive; the sibling rule
+    // `FIRST_PARTY_BASE_URL` already draws the same distinction explicitly
+    // ("a reader is found by its env access, not by its filename"). The
+    // stripper is the one `NO_PINNED_MODEL_ID` already used for its literal
+    // scan — same function, same file, now three more callers.
     const readers = NON_TEST_SRC.filter((f) =>
-      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OPENAI_API_KEY"),
+      readsIdentifier(fs.readFileSync(path.join(REPO_ROOT, f), "utf8"), "OPENAI_API_KEY"),
     ).sort();
 
     expect(
@@ -1207,11 +1297,7 @@ describe("architecture boundaries — the real source tree", () => {
         "a place that can authenticate a paid call, so the list is pinned rather than\n" +
         "bounded — add the reason here, or route the call through the client:\n  " +
         readers.join("\n  "),
-    ).toEqual([
-      "src/app/api/advisor/route.ts",
-      "src/lib/advisor/model-adapter.ts",
-      "src/lib/lab-import/pdf-adapter.ts",
-    ]);
+    ).toEqual(["src/lib/openai/config.ts"]);
   });
 
   it("SOLE_PAID_CLIENT: the gateway ADDRESS is read only where it is declared to be", () => {
@@ -1221,6 +1307,9 @@ describe("architecture boundaries — the real source tree", () => {
     // `OPENAI_BASE_URL`, skip the validator, and dial whatever the environment
     // named, with every existing assertion still green.
     //
+    // [2026-09-21, U33] NARROWED 3 → 1 with the key pin above; the argument is
+    // written out there and not repeated here.
+    //
     // WHY THIS IS NOT REDUNDANT WITH `FIRST_PARTY_BASE_URL`. That rule says
     // every reader VALIDATES; this one says the set of readers cannot grow
     // without a decision. A reader added WITH a validator call satisfies the
@@ -1228,7 +1317,7 @@ describe("architecture boundaries — the real source tree", () => {
     // which is exactly what U32's "the validator is called from exactly two
     // sites" sentence would otherwise be: a count written once, in prose.
     const readers = NON_TEST_SRC.filter((f) =>
-      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OPENAI_BASE_URL"),
+      readsIdentifier(fs.readFileSync(path.join(REPO_ROOT, f), "utf8"), "OPENAI_BASE_URL"),
     ).sort();
 
     expect(
@@ -1237,11 +1326,7 @@ describe("architecture boundaries — the real source tree", () => {
         "a place that decides where a paid call goes, so the list is pinned rather\n" +
         "than bounded — add the reason here, or take the resolved URL as an argument:\n  " +
         readers.join("\n  "),
-    ).toEqual([
-      "src/app/api/advisor/route.ts",
-      "src/lib/advisor/model-adapter.ts",
-      "src/lib/lab-import/pdf-adapter.ts",
-    ]);
+    ).toEqual(["src/lib/openai/config.ts"]);
   });
 
   // ---- U25 / N-21: NO_PINNED_MODEL_ID -------------------------------------
@@ -1269,12 +1354,6 @@ describe("architecture boundaries — the real source tree", () => {
   // silently fix a file this unit may not open, the violation is registered:
   // asserted as an EQUALITY so it can only shrink, with a fourth appearance and
   // a silently-fixed entry both red. Phase 1 U18's shape.
-  // Comments are stripped before any model-id match, so prose EXPLAINING a
-  // retired id — including this guard's own rationale and pdf-adapter's — is
-  // not a hit. Only code counts.
-  const stripComments = (src: string): string =>
-    src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
-
   const PINNED_MODEL_ID_RATCHET: Record<string, string> = {
     // EMPTY as of U25's lab-import half. It held exactly one row — pdf-adapter's
     // `deps.model ?? "claude-haiku-4-5-20251001"` — registered rather than fixed
@@ -1331,18 +1410,19 @@ describe("architecture boundaries — the real source tree", () => {
     // reason: each reader is a place that decides which model a paid call goes
     // to, and a second resolution path is how the probe and the application
     // came to read two DIFFERENT variables while both looked correct.
+    //
+    // [2026-09-21, U33] NARROWED 3 → 1 with the two pins above. Worth noting
+    // against that last sentence: this pin was NOT in U33's plan, which named
+    // two ratchets. It is a third, and it failed on the same commit — the
+    // guard doing its job on a unit that had not enumerated it.
     const readers = NON_TEST_SRC.filter((f) =>
-      fs.readFileSync(path.join(REPO_ROOT, f), "utf8").includes("OPENAI_MODEL"),
+      readsIdentifier(fs.readFileSync(path.join(REPO_ROOT, f), "utf8"), "OPENAI_MODEL"),
     ).sort();
 
     expect(
       readers,
       "NO_PINNED_MODEL_ID: a new module resolves the routed model:\n  " + readers.join("\n  "),
-    ).toEqual([
-      "src/app/api/advisor/route.ts",
-      "src/lib/advisor/model-adapter.ts",
-      "src/lib/lab-import/pdf-adapter.ts",
-    ]);
+    ).toEqual(["src/lib/openai/config.ts"]);
   });
 
   it("RETIRED_PACKAGE: the dependency is gone from package.json", () => {
@@ -1398,5 +1478,56 @@ describe("architecture boundaries — the real source tree", () => {
         "back is a paid provider that no marker sees AND a missing dependency at build\n" +
         "time:\n  " + survivors.join("\n  "),
     ).toEqual([]);
+  });
+
+  // ---- U33: the reader pins' own parser self-test -------------------------
+  //
+  // Without these, a regression in `readsIdentifier` would make all three
+  // reader ratchets pass over nothing and look exactly like proof that only
+  // one module reads the credential. §5 rule 2: a guard not shown to go red is
+  // not a guard — and the first version of this helper was shown red by a
+  // reviewer rather than by this file, which is the reason the file now has
+  // this block. Fixtures are scanned from memory; nothing is written to disk.
+  describe("parser self-test: what counts as reading an environment variable", () => {
+    it.each([
+      ["a plain property read", "const k = process.env.OPENAI_API_KEY;"],
+      ["a bracketed string key", 'const k = process.env["OPENAI_API_KEY"];'],
+      ["a destructure", "const { OPENAI_API_KEY } = process.env;"],
+      [
+        // THE REVIEWER'S DECOY, verbatim. The previous regex stripper treated
+        // the `//` inside `"https://"` as a line comment and deleted the read
+        // that followed, so a second module could read the credential with the
+        // pin still green. This case is the whole reason the scan is tokenised.
+        "a read that follows a URL literal on the same line",
+        'const _decoy = "https://" + process.env.OPENAI_API_KEY;',
+      ],
+      [
+        "a read after a trailing comment on the PREVIOUS line",
+        "// note about https://example.com\nconst k = process.env.OPENAI_API_KEY;",
+      ],
+    ])("counts %s", (_label, src) => {
+      expect(readsIdentifier(src, "OPENAI_API_KEY")).toBe(true);
+    });
+
+    it.each([
+      ["a line comment naming the variable", "// we read OPENAI_API_KEY elsewhere"],
+      [
+        "a docstring naming the variable — the false positive that started this",
+        "/**\n * The routed model id, from `OPENAI_MODEL`.\n */\nconst x = 1;",
+      ],
+      ["an unrelated identifier", "const OPENAI_API_KEY_SUFFIX = 1;"],
+      ["a different variable entirely", "const k = process.env.SOMETHING_ELSE;"],
+    ])("does not count %s", (_label, src) => {
+      expect(readsIdentifier(src, "OPENAI_API_KEY")).toBe(false);
+      expect(readsIdentifier(src, "OPENAI_MODEL")).toBe(false);
+    });
+
+    it("a string that merely CONTAINS the name is not a read", () => {
+      // The bracketed-key case above accepts a string literal whose VALUE is
+      // exactly the variable name. A message mentioning it is not.
+      expect(readsIdentifier('const m = "set OPENAI_API_KEY in .env";', "OPENAI_API_KEY")).toBe(
+        false,
+      );
+    });
   });
 });

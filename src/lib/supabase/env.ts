@@ -13,6 +13,13 @@ export function getSupabaseEnv(): { url: string; anonKey: string } {
   if (!url || !anonKey) {
     throw new NotConfiguredError(
       "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see .env.example).",
+      // [U33] The fifth reason, and the one that is NOT an AI failure. It is in
+      // `NotConfiguredReason` but deliberately not in `AI_CONFIG_REASONS`:
+      // this is the only site whose `publicMessage` names variables — both
+      // PUBLIC ones, which is why naming them is allowed here and nowhere else
+      // — so its 503 body differs from the AI one and always has. The
+      // byte-identity assertion is over the four AI reasons for that reason.
+      "missing-supabase-env",
     );
   }
   return { url, anonKey };

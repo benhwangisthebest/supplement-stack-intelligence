@@ -15,6 +15,7 @@
 // in the diff, which is how U6 handled the same situation with lab-import's
 // preservation pin.
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { NotConfiguredError } from "@/lib/api/errors";
 import {
   AdvisorModelAdapter,
   buildToolResultMessages,
@@ -225,6 +226,11 @@ describe("AdvisorModelAdapter — stateful threading across a turn", () => {
 });
 
 describe("AdvisorModelAdapter — config guard", () => {
+  // [U33] `vi.unstubAllEnvs()` is now redundant with `unstubEnvs: true` in
+  // vitest.config.ts and is kept anyway: it costs nothing, and a file that
+  // states its own isolation still reads correctly if someone runs it under a
+  // different config. `env-stub-isolation.test.ts` is what makes the global
+  // property enforceable; this is belt and braces, not the guard.
   afterEach(() => vi.unstubAllEnvs());
 
   const call = (adapter: AdvisorModelAdapter) =>
@@ -235,27 +241,61 @@ describe("AdvisorModelAdapter — config guard", () => {
       toolResults: [],
     });
 
-  it("throws a 'not configured' error when the key is absent", async () => {
-    vi.stubEnv("OPENAI_API_KEY", "");
-    vi.stubEnv("OPENAI_BASE_URL", "https://api.openai.com");
+  /**
+   * [U33] EVERY CASE BELOW UNSETS EXACTLY ONE SETTING, and asserts the REASON
+   * rather than the message.
+   *
+   * Both halves are the fix. Before U33 these fixtures left settings unstubbed
+   * and matched `toThrow("not configured")`, so deleting the `!apiKey`
+   * condition left the whole file green — `resolveModel` threw the same
+   * message a line later (N-68). Measured again at the start of this unit:
+   * deleting the key condition, and deleting the base-URL condition, were both
+   * invisible here.
+   */
+  const COMPLETE = {
+    OPENAI_API_KEY: "k",
+    OPENAI_BASE_URL: "https://api.openai.com",
+    OPENAI_MODEL: "m",
+  } as const;
 
-    await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
+  const stubAllBut = (unset: keyof typeof COMPLETE, value = "") => {
+    for (const [k, v] of Object.entries(COMPLETE)) vi.stubEnv(k, k === unset ? value : v);
+  };
+
+  /** The thrown error, typed, or a failure if nothing was thrown. */
+  const reasonOf = async (adapter: AdvisorModelAdapter): Promise<string> => {
+    const err = await call(adapter).then(
+      () => null,
+      (e: unknown) => e,
+    );
+    expect(err, "expected the adapter to refuse, but it did not").toBeInstanceOf(
+      NotConfiguredError,
+    );
+    return (err as NotConfiguredError).reason;
+  };
+
+  it("refuses with reason 'missing-key' when the key is absent", async () => {
+    stubAllBut("OPENAI_API_KEY");
+
+    expect(await reasonOf(new AdvisorModelAdapter({}))).toBe("missing-key");
   });
 
-  it("throws a 'not configured' error when the base URL is absent", async () => {
+  it("refuses with reason 'missing-base-url' when the base URL is absent", async () => {
     // Both halves are required, and no base URL is defaulted in `src/`.
     // (Historically the reason was Omniroute's own developer default: a
     // deployed app silently pointing at localhost would fail in a way no
     // operator could read. Under OpenAI the reason is that a provider address
     // in source is a provider-specific string — `.env.example` carries it
     // instead. Same conclusion, different argument.)
-    vi.stubEnv("OPENAI_API_KEY", "k");
-    vi.stubEnv("OPENAI_BASE_URL", "");
+    stubAllBut("OPENAI_BASE_URL");
 
-    await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
+    // NOT 'disallowed-host', although `baseUrlPermitted("")` is also false.
+    // The order of those two conditions is the assertion — see the same pin
+    // in config.test.ts.
+    expect(await reasonOf(new AdvisorModelAdapter({}))).toBe("missing-base-url");
   });
 
-  it("throws a 'not configured' error when the MODEL id is absent (N-21)", async () => {
+  it("refuses with reason 'missing-model' when the MODEL id is absent (N-21)", async () => {
     // The third required setting, and the one this adapter got wrong. It
     // shipped with `DEFAULT_ADVISOR_MODEL = "claude-haiku-4-5"`, so an unset
     // variable produced a confident call with an id the owner's gateway does
@@ -263,14 +303,12 @@ describe("AdvisorModelAdapter — config guard", () => {
     // undetectable by a mock that accepts whatever id it is handed. The first
     // live probe found it. A model id is a property of the gateway INSTANCE,
     // so there is no value this repository could have defaulted to correctly.
-    vi.stubEnv("OPENAI_API_KEY", "k");
-    vi.stubEnv("OPENAI_BASE_URL", "https://api.openai.com");
-    vi.stubEnv("OPENAI_MODEL", "");
+    stubAllBut("OPENAI_MODEL");
 
-    await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
+    expect(await reasonOf(new AdvisorModelAdapter({}))).toBe("missing-model");
   });
 
-  it("throws a 'not configured' error when the base URL is not first-party (U32)", async () => {
+  it("refuses with reason 'disallowed-host' when the base URL is not first-party (U32)", async () => {
     // [2026-09-18, U32 — found by ecc:code-reviewer, BLOCKING] The three
     // fixtures above used to configure `https://gw.example`. Once this adapter
     // refused a non-first-party host, every one of them threw for the NEW
@@ -282,11 +320,9 @@ describe("AdvisorModelAdapter — config guard", () => {
     // stayed green — §5 rule 2's exact failure class. The fixtures are now
     // first-party, so each isolates its own condition again, and THIS test
     // covers the condition that displaced them.
-    vi.stubEnv("OPENAI_API_KEY", "k");
-    vi.stubEnv("OPENAI_MODEL", "m");
-    vi.stubEnv("OPENAI_BASE_URL", "https://gw.example");
+    stubAllBut("OPENAI_BASE_URL", "https://gw.example");
 
-    await expect(call(new AdvisorModelAdapter({}))).rejects.toThrow("not configured");
+    expect(await reasonOf(new AdvisorModelAdapter({}))).toBe("disallowed-host");
   });
 
   it("sends the id from OPENAI_MODEL verbatim — no normalising, no fallback", async () => {

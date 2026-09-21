@@ -24,7 +24,7 @@ import {
 import { advisorRequestSchema } from "@/lib/advisor/schema";
 import { enforceRateLimit } from "@/lib/api/rate-limit-guard";
 import { AI_SERVICE_NOT_CONFIGURED } from "@/lib/api/errors";
-import { baseUrlPermitted } from "@/lib/openai/client";
+import { resolveAiConfig } from "@/lib/openai/config";
 import {
   INTERNAL_ERROR_MESSAGE,
   fail,
@@ -78,15 +78,26 @@ export async function POST(request: NextRequest) {
   // after this handler had already committed to a 200 SSE stream — the exact
   // failure mode the paragraph above describes for a missing key. Same
   // reasoning, one more condition.
-  if (
-    !process.env.OPENAI_API_KEY ||
-    !process.env.OPENAI_BASE_URL ||
-    !process.env.OPENAI_MODEL ||
-    !baseUrlPermitted(
-      process.env.OPENAI_BASE_URL,
-      process.env.OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL === "1",
-    )
-  ) {
+  //
+  // [U33] The four conditions now live in `resolveAiConfig`, which RETURNS a
+  // reason instead of throwing one — and returning is what makes this call
+  // site possible at all: `POST` is not wrapped in `handle()`, so a throw here
+  // would escape to Next.js rather than become a 503.
+  //
+  // THIS CALL IS NOT REDUNDANT WITH THE ADAPTER'S, AND THE SHARED RESOLVER
+  // MAKES IT LOOK AS THOUGH IT WERE. It is the same question asked at a
+  // different MOMENT: here, before the 200 SSE response is committed; there,
+  // once the stream is already open. Deleting this one does not change what is
+  // decided, it changes when — turning an operational 503 into an `error`
+  // event on a stream that already claimed success. The test at
+  // `route.test.ts` — "returns 503 NOT_CONFIGURED before committing to a
+  // stream" — is what holds that, by asserting the Content-Type is not
+  // `text/event-stream` and that the turn never ran.
+  //
+  // The reason is deliberately DISCARDED here. Nothing about which setting is
+  // unset may reach a client (§2.3 rule 13), and this site has no error object
+  // to carry it internally either.
+  if (!resolveAiConfig().ok) {
     return fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503);
   }
 

@@ -46,14 +46,67 @@
  * error class carries "not configured" text, so this class cannot be bypassed
  * by re-spelling the old bare `Error`.
  */
+/**
+ * WHY EVERY CONFIGURATION FAILURE CARRIES A MACHINE-READABLE REASON (Phase 2 U33).
+ *
+ * `publicMessage` is one string for every AI configuration failure, deliberately
+ * — it names no setting, which is why two provider swaps moved no user-facing
+ * byte. That property is good for the client and terrible for a test: an
+ * assertion written as `rejects.toThrow("not configured")` cannot say WHY it
+ * passed, so an early return added ahead of an existing check silently
+ * re-points every test behind it, and nothing goes red.
+ *
+ * That is not a hypothesis. U33 measured it before changing anything: of the
+ * TWELVE condition-deletions available across the three sites that resolve this
+ * configuration, **SEVEN were invisible to the whole suite** — including every
+ * one of `pdf-adapter.ts`'s four. N-68 had registered one of the seven.
+ *
+ * So the reason is REQUIRED, not optional. An optional field re-creates the
+ * defect one un-reasoned throw at a time and makes every consumer handle
+ * `undefined`; §8.4 — prefer deleting a field over guarding it — points the same
+ * way. The compiler now enumerates the throw sites instead of a reviewer.
+ *
+ * THE REASON IS FOR TESTS AND LOGS. IT NEVER REACHES A CLIENT. `respond.ts`
+ * reads `publicMessage` and nothing else, and
+ * `not-configured-totality.test.ts` asserts the 503 body is byte-identical
+ * across all four AI reasons — because which environment variable is unset is
+ * internal state, and §2.3 rule 13 does not bend for a convenient debugging
+ * aid.
+ */
+export const AI_CONFIG_REASONS = [
+  "missing-key",
+  "missing-model",
+  "missing-base-url",
+  "disallowed-host",
+] as const;
+
+/** Why the AI gateway could not be configured. Ordered as the resolver checks. */
+export type AiConfigReason = (typeof AI_CONFIG_REASONS)[number];
+
+/**
+ * Every reason this error can carry.
+ *
+ * `missing-supabase-env` is not an AI failure and is deliberately NOT in
+ * `AI_CONFIG_REASONS`: `src/lib/supabase/env.ts` is the one site whose
+ * `publicMessage` names variables (both public), so its 503 body differs from
+ * the AI one and always has. The byte-identity assertion is therefore over the
+ * four AI reasons, not over all five — a distinction worth keeping, because the
+ * difference is the MESSAGE, never the reason.
+ */
+export type NotConfiguredReason = AiConfigReason | "missing-supabase-env";
+
 export class NotConfiguredError extends Error {
   /** Client-safe operational text. Deliberately not named `message` — see above. */
   readonly publicMessage: string;
 
-  constructor(publicMessage: string) {
+  /** Machine-readable cause. Internal: never serialised, never sent. */
+  readonly reason: NotConfiguredReason;
+
+  constructor(publicMessage: string, reason: NotConfiguredReason) {
     super(publicMessage);
     this.name = "NotConfiguredError";
     this.publicMessage = publicMessage;
+    this.reason = reason;
   }
 }
 

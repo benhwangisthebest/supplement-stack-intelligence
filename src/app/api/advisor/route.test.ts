@@ -193,6 +193,21 @@ describe("POST /api/advisor — guards before the stream", () => {
     // Status before body, for the same reason as the 401 above: if this check
     // ever moves after the stream is built, the failure must read
     // `expected 200 to be 503`, not a JSON parse error.
+    //
+    // [2026-09-21, U33] THIS TEST IS WHY THE ROUTE MAY STILL CALL THE SHARED
+    // RESOLVER AND THE ADAPTER MAY CALL IT AGAIN. Since U33 both sites ask
+    // `resolveAiConfig()` the same question, so the route's call now LOOKS
+    // redundant — and deleting it would pass every assertion about what is
+    // decided, because nothing about the decision changes. What changes is
+    // WHEN: the adapter's copy runs after the 200 SSE response is committed,
+    // so the refusal would arrive as an `error` event on a stream that already
+    // claimed success. The two lines below are the whole guard against that,
+    // and they are the reason the duplication is not deduplicated.
+    //
+    // This route deliberately asserts no `reason`. It returns `fail(...)` and
+    // never constructs a `NotConfiguredError`, so there is no object to read
+    // one off — the four reasons are enumerated in
+    // `src/lib/openai/config.test.ts` instead.
     expect(res.status).toBe(503);
 
     const body = await res.json();

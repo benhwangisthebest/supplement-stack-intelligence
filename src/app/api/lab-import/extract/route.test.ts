@@ -145,7 +145,7 @@ describe("POST /api/lab-import/extract", () => {
     // shared boundary, with copy that names no environment variable.
     getUser.mockResolvedValue(USER);
     parsePaste.mockImplementation(() => {
-      throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED);
+      throw new NotConfiguredError(AI_SERVICE_NOT_CONFIGURED, "missing-key");
     });
 
     const res = await POST(jsonReq({ kind: "paste", text: "x", columnMap: COLUMN_MAP }));

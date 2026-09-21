@@ -344,6 +344,7 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-70** | **`ecc:security-reviewer` on the U29 diff, 2026-09-20** | **U29's two ownership guards are check-then-act, and the repo layer already has the atomic pattern they do not use.** `conversationBelongsToUser` is a plain `select … maybeSingle` awaited at `route.ts:119`; the reservation happens at `route.ts:137` as a separate round trip, and `getMessages` at `:140`. Between the two the answer can go stale. Same shape at `advisor-actions.ts:149` | The contrast is inside this repository: **`appendMessages` (`repo.ts:159-187`, Phase 2 U26) folds ownership into the write statement itself** — `update … .eq("id", …).eq("user_id", …)` and a row-count check — so its check cannot go stale. U29's guards are the weaker pattern beside it | **DEFERRED by owner ruling 2026-09-20, with the reason stated rather than left implicit — NOT a Phase 2 unit.** **The window has no adversary**: nothing in this product transfers or shares a conversation, so the only way to lose ownership between the check and the reservation is to delete your own conversation, and the cost of that race is your own budget. A TOCTOU with no second party is a latent defect, not a live one. **THE GATE, and it is the whole point of deferring rather than closing: any future proposal to make conversations transferable or shareable must cite N-70 and close it first.** That is what turns the window into an exploitable one, and the person proposing the feature is the only one positioned to notice. **It is registered because the asymmetry is the finding** — this codebase holds both patterns, and the weaker was chosen where the stakes are a paid call. The fix folds the predicate into the reservation RPC or the write's `WHERE`, the way `appendMessages` already does; that is a design, not a patch |
 | **N-71** | **`ecc:code-reviewer` on the U29 diff, 2026-09-20** (found while tracing the blast radius of an empty `conversationId`) | **A stack mutation can commit with no audit row and no `rolledBack` signal.** `executeBatch` has its own `try/catch` that returns `ACTION_ERROR` with `details: { rolledBack: true }` — a computed fact the client acts on. **`recordBatch` runs AFTER that block**, so a throw there falls to the outer `catch`, which returns `ACTION_ERROR` **without** `rolledBack`. The stack change is already committed and the audit row never exists | `advisor-actions.ts` — inner catch returns `{ rolledBack: true }`; `recordBatch` is called ~15 lines later; the outer catch returns `internalError(err, { code: "ACTION_ERROR" })` with no details | **OPEN, unassigned. PRE-EXISTING and explicitly NOT introduced by U29** — the reviewer said so unprompted, and U29 in fact *narrows* one route to it by refusing an empty id before `executeBatch` rather than after. It is registered because the audit trail is the thing this pair of findings (N-48/N-49) is about: a client told `ACTION_ERROR` with no `rolledBack` cannot tell a rolled-back batch from an applied-but-unaudited one |
 | **N-72** | **U30 planning, 2026-09-21** (found enumerating the twelve handler sites) | **`src/app/api/advisor/actions/[id]/undo/route.ts` is the only dynamic handler that does not use `handle()`.** It reads its path param outside any `try`, and its own catch maps **everything** to `internalError(err, { code: "UNDO_ERROR" })` → 500 — so a `ZodError` there would be a 500 with a different code, not the 400 every other handler gets for free | `grep -c "handle(async"` → **0** in that file, **≥1** in the other seven dynamic route files; its catch is a single `internalError` with no `ZodError` branch | **OPEN — owner: U34**, by ruling 2026-09-21. U34 already owns that route's error reporting (N-71), so it decides whether the handler **moves onto `handle()`** or **stays exempt with a written reason**. **U30 does not decide it**: U30 gets the same 400 body there via `safeParse` + explicit `validationError`, which works under either outcome and prejudges neither |
+| **N-73** | **U33 implementation, 2026-09-21** — raised by the unit's own narrowing, when a guard failed for a reason that was not a defect in the code it guards | **Three `boundaries.test.ts` reader ratchets were matching PROSE.** `SOLE_PAID_CLIENT`'s key and address pins and `NO_PINNED_MODEL_ID`'s model pin each did `fs.readFileSync(file).includes("OPENAI_…")` on **raw text**, so a file that merely NAMES a variable in a comment counted as a module that READS it. The pressure this creates is the finding: the cheapest way to satisfy the guard is to delete accurate prose | `model-adapter.ts` failed the model-id pin after U33 moved every `process.env` read out of it, solely because a docstring says *"the routed model id, from `OPENAI_MODEL`"*. Verified by stripping comments: the file drops out of the reader set and the three pins go green | **FIXED HERE.** All three scans now strip comments before matching, using the stripper `NO_PINNED_MODEL_ID` already carried for its literal scan — one function, three new callers. A comment cannot read an environment variable, so this makes the scans MORE precise, not more permissive; the sibling rule `FIRST_PARTY_BASE_URL` already drew the same distinction explicitly (*"a reader is found by its env access, not by its filename"*), which is the argument for the change and also the reason the inconsistency lasted: two guards over the same property disagreed about what a reader is, and only one said so out loud |
 
 **[2026-09-18, third and final revision — the two earlier versions of this note are why it is worth reading.] THE GAP IS CLOSED, AND BY THIS COMMIT RATHER THAN BY THE CLOSEOUT.** The first version said N-53…N-55 sat on an unmerged branch and would arrive at merge. They did not: U31's code commit `f9c34e3` left them in its subordinate artifact. The second version recorded that as a finding and refused to promote them unasked. U31's closeout `a0d318b` then added **N-63, N-64 and N-65** straight into this register — correctly — while **N-53 … N-62 stayed in the artifact**, so the register read N-1…N-52, N-63…N-65 and the numbers between them existed only in a subordinate file. **This commit promotes N-53 … N-62 verbatim**, each tagged with its source section, and strikes the artifact copies in place with a pointer (§7). **N-56 is one row, not two** — U31 raised it, the main session wrote it up more fully with the owner's ruling, and the artifact's copy is superseded in place. The register is now **contiguous N-1 … N-65**, verified by count rather than by reading.
 
@@ -478,10 +479,26 @@ fixtures, or ~5–10 route tests · **L** = a refactor plus its tests.
 > import, and the loss was caught only because `git status` was read afterwards rather than the revert
 > being trusted.
 >
-> **The rule:** `cp <file> <scratch>/…bak` before mutating, `cp` back after. **And read `git status`
-> after any revert** — the check is cheap and it is the only thing that would have noticed. §5 rule 2
+> **The rule:** `cp <file> <scratch>/…bak` before mutating, `cp` back after. ~~**And read `git status`
+> after any revert**~~ — the check is cheap and it is the only thing that would have noticed. §5 rule 2
 > requires a mutation to be *shown* red; a revert that also deletes the fix makes the next green run a
 > lie about a tree that no longer exists.
+>
+> **[2026-09-21, AMENDED THE SAME DAY IT WAS WRITTEN, from U33 — the rule was right and incomplete, and
+> the gap bit within hours.]** Two additions, both paid for:
+>
+> **(1) DELETE THE BACKUP WHEN ITS MUTATION IS FINISHED.** U33 kept one mutation harness across eleven
+> mutations, restoring every `.bak` at the end of each. A backup of `model-adapter.ts` taken for **M7**
+> was still there when a code-review fix was applied to that same file, and the next restore put the
+> pre-fix content back. **A stale backup is a `git checkout --` with a delay on it** — the same
+> destruction this rule exists to prevent, arriving from the tool adopted to prevent it.
+>
+> **(2) VERIFY A REVERT BY `git diff`, NOT BY `git status`.** The struck sentence above is the part that
+> failed. `git status` said `M src/lib/advisor/model-adapter.ts` — perfectly true, because the file *is*
+> modified by its unit — so a status check reported exactly what a correct tree reports. Only
+> `git diff --numstat` showed the file had stopped growing. **A status line cannot distinguish "modified
+> as intended" from "modified, then partly reverted."** It was never the right instrument; it looked
+> like one in U30 because there the revert took the file all the way back to HEAD.
 
 ### Group A — the error contract
 
@@ -3954,6 +3971,440 @@ and §2.3 rule 13 does not bend for a convenient debugging aid. `NOT_CONFIGURED_
 to assert that too, or this unit hands the next one a way to leak configuration detail through an error
 object that already crosses a boundary.
 
+#### U33 PLAN — drafted 2026-09-21, ~~AWAITING OWNER APPROVAL. Nothing below is implemented.~~ **APPROVED by the repository owner, 2026-09-21**, with four rulings: **(1)** option **(A)**, as a **declared widening**, **S → M**, and the sizing bracket is written in §9 now rather than at closeout; **(2)** `reason` is **required**, with the fifth value `missing-supabase-env`; **(3)** the entry phrasing is corrected — **distinguishability is asserted in `config.test.ts`; `route.test.ts` keeps status/no-stream**; **(4)** the **24th spec** is noted for the closeout sweep (23 → 24 at the four dated sites). Red order fixed by the owner: **M3–M6 are shown pre-fix (delete one condition, all four tests stay green) before the post-fix state where exactly one fails.**
+
+**bkit:** registered as `u33-test-isolation-config-reasons`, phase `plan`; artifact
+`docs/01-plan/features/u33-test-isolation-config-reasons.plan.md`, subordinate, mirroring this entry.
+
+**§11 orientation:** `graphify query "NotConfiguredError throw sites and configuration resolution for the
+OpenAI gateway"` (graphify 0.9.65, arm64, graph rebuilt 2026-09-21 — 4995 nodes), then direct reads of
+the five files it surfaced. The tool is back; U29's stated deviation does not repeat.
+
+---
+
+**HALF (a) IS ALREADY MEASURED, AND THE ANSWER IS ZERO.**
+
+Run **before any other edit**, as instructed. `unstubEnvs: true` added to `vitest.config.ts`'s `test`
+block and nothing else touched; `npx vitest run`, 2026-09-21 03:53:
+
+```
+ Test Files  109 passed (109)
+      Tests  1355 passed (1355)
+```
+
+**The reddened set is empty. Recorded verbatim, because that is the whole instruction: a flag that
+reddens nothing was not needed, and this plan says so.** Half (a) repairs nothing. The config was then
+restored from a **file-copy backup** — the method rule this phase adopted four hours ago, on U30's slip
+— and `git diff vitest.config.ts` confirmed empty.
+
+**A zero can mean two things and only one of them is true, so it was checked rather than assumed.**
+A flag that does nothing produces exactly the same green. A throwaway two-test probe — test 1 stubs
+`U33_PROBE` and does not clean up, test 2 asserts it is `undefined` — **passed with the flag and failed
+without it**:
+
+```
+with unstubEnvs: true    → Tests  2 passed (2)
+with the flag absent     → Tests  1 failed | 1 passed (2)
+                           expect(process.env.U33_PROBE).toBeUndefined()   Received: "leaked"
+```
+
+The flag is live and load-bearing. The zero is a real zero.
+
+**Why it is zero — measured, not guessed.** All three files that call `vi.stubEnv` already carry
+hand-rolled cleanup: `route.test.ts:115` (`vi.unstubAllEnvs()` in `beforeEach`, **added by U32 when it
+fixed N-67's instance**), `model-adapter.test.ts:228` (`afterEach`), `lab-import.test.ts:13`
+(`afterEach`). N-67's *instance* was closed by the unit that raised it. What stayed open is the
+**class**, and the class is three local conventions that a fourth file is under no obligation to follow.
+
+**So half (a) is a prevention, not a repair, and the plan is written that way.** Its value is that the
+property stops depending on three people remembering. **And a config line with no red is not a
+guard** — U30's lesson, one unit old — which is why the flag does not ship alone (see M1/M2 and the new
+spec below).
+
+---
+
+**THE ONE ARCHITECTURE QUESTION, AND THE ANSWER.** `ecc:architect`, asked whether the four-condition
+check should be **(A)** extracted into one resolver consumed by all three sites or **(B)** left in place
+with each site authoring its own reason; and whether `reason` should be a **required** constructor
+parameter.
+
+**Verdict: (A), with one qualification — the resolver RETURNS a reason, it never throws — and `reason`
+is REQUIRED.** Accepted, and the reasoning is the part worth keeping: *return, not throw* is the only
+shape under which all three sites stay legal at once. Site 1's `POST` is **not** wrapped in `handle()`,
+so a throw there escapes to Next.js rather than becoming a 503; site 2 must throw inside the SSE path;
+site 3 must throw for `handle()` to map it. A resolver that returns `{ ok: true; config } | { ok: false;
+reason }` leaves each site's disposition where it already is, and **leaves the `NotConfiguredError`
+constructions exactly where `NOT_CONFIGURED_TOTALITY` sanctions them**.
+
+**THE REVIEWER CORRECTED ONE OF MY PREMISES, AND IT IS THE INTERESTING PART OF THE ANSWER.** I briefed
+it that `not-configured-totality.test.ts` pins the three sanctioned throw-site files **as an equality**.
+It does not: `:273` is `expect(sanctionedFiles).toEqual(expect.arrayContaining([...]))` — **a floor, not
+an equality**. Verified at `not-configured-totality.test.ts:273-279` before accepting the correction,
+because an agent's contradiction is a claim like any other. The consequence is not cosmetic: under a
+*throwing* resolver, both adapter entries would disappear from that list and **`arrayContaining` would
+have failed loudly** — it is a floor, so removing a required entry breaks it. Under a *returning*
+resolver the list is untouched. Either way the design decision was made on a premise I had wrong, and
+the right premise happens to point the same way. It is recorded because the next person to reason about
+that assertion should read that it is a floor, not infer an equality from this plan.
+
+---
+
+**THIS IS A DECLARED WIDENING OF THE APPROVED U33 ENTRY, AND THE UNIT IS NO LONGER S.**
+
+The approved entry names: `vitest.config.ts` · `errors.ts` · the three throw sites · the config-guard
+tests in three files · `not-configured-totality.test.ts`. Option (A) adds, and nothing here is smuggled:
+
+| | file | why |
+|---|---|---|
+| **N** | `src/lib/openai/config.ts` | the one resolver |
+| **N** | `src/lib/openai/config.test.ts` | where distinguishability is actually asserted |
+| **N** | `src/architecture/env-stub-isolation.test.ts` | the red that half (a)'s config line otherwise lacks — **24th executable spec**, which the closeout sweep must carry (23 → 24 at the four dated sites) |
+| **M** | `src/architecture/boundaries.test.ts` | two `SOLE_PAID_CLIENT` ratchets narrow **3 → 1** |
+| **M** | `src/lib/supabase/env.ts` | declares the fifth reason |
+
+**Size S → M.** Said plainly rather than discovered at the diff. **A one-word ruling of "B" reverts
+this to the in-place version**, which costs: the four conditions stay written out four times (twelve
+condition-sites across three files), the adapter's key check and model check stay in *different
+functions* — which is the exact geometry that produced N-68 — and the two pinned reader sets stay at
+three files each. B is smaller and leaves the defect's shape in place.
+
+---
+
+**WHY (A) IS RIGHT: SITE 2 ALREADY *IS* THE DEFECT.** The four conditions, measured, with where each
+lives today:
+
+| condition | `advisor/route.ts` pre-flight | `model-adapter.ts` | `pdf-adapter.ts` |
+|---|---|---|---|
+| key absent | `:82` | `liveComplete` **`:376`** | `requireGatewayConfig` `:259` |
+| base URL absent | `:83` | `liveComplete` **`:376`** | `:257` |
+| model absent | `:84` | `resolveModel` **`:113` — a DIFFERENT FUNCTION** | `:258` |
+| host not permitted | `:85-88` | `liveComplete` **`:376`** | `:260` |
+
+**Twelve condition-sites, one claim.** And N-68 is precisely the diagonal of that table: the adapter's
+*"key is absent"* test stubs no `OPENAI_MODEL`, `liveComplete` runs first (`:322`) and returns cleanly
+once the key check is deleted, and `resolveModel` (`:325`) then throws **the same message** a line
+later. The test passes having proven nothing. One shared message over conditions in two functions is
+not a style problem; it is how a guard stops guarding while staying green.
+
+---
+
+**THE SHAPE.**
+
+```ts
+// src/lib/api/errors.ts — still imports NOTHING. A const array and a type alias need no import.
+export const AI_CONFIG_REASONS = [
+  "missing-key", "missing-model", "missing-base-url", "disallowed-host",
+] as const;
+export type AiConfigReason = (typeof AI_CONFIG_REASONS)[number];
+export type NotConfiguredReason = AiConfigReason | "missing-supabase-env";
+
+export class NotConfiguredError extends Error {
+  readonly publicMessage: string;
+  readonly reason: NotConfiguredReason;      // REQUIRED, not optional
+  constructor(publicMessage: string, reason: NotConfiguredReason) { … }
+}
+```
+
+```ts
+// src/lib/openai/config.ts — imports ./client (baseUrlPermitted) and @/lib/api/errors. Nothing else.
+export type AiConfigResult =
+  | { ok: true; config: { apiKey: string; baseUrl: string; model: string; allowNonFirstParty: boolean } }
+  | { ok: false; reason: AiConfigReason };
+
+export function resolveAiConfig(overrides?: {
+  apiKey?: string; baseUrl?: string; model?: string;
+}): AiConfigResult;
+```
+
+**The condition ORDER is load-bearing and is therefore written down**: key → base URL → model → host.
+An empty base URL also fails `baseUrlPermitted` (`new URL("")` throws, the validator returns `false`),
+so deleting the emptiness check does not make the failure disappear — it makes the reason silently
+become `disallowed-host`. That is a *distinguishable wrong answer*, which is the entire thesis of this
+unit, and M5 is exactly that mutation.
+
+**`reason` is REQUIRED, and `supabase/env.ts` declares the fifth.** Optional re-creates the defect one
+un-reasoned throw at a time and forces every test to handle `undefined`; §8.4 — prefer deleting a field
+over guarding it — points the same way. `src/lib/supabase/env.ts:14` is a genuinely different failure
+(it names two **public** variables in its `publicMessage`, the only site that names any), so
+`missing-supabase-env` is the union enumerating reality, not a tax. The type is named
+`NotConfiguredReason`, not an AI-specific name, for the same reason.
+
+---
+
+**THE TWO RATCHETS GO 3 → 1, WHICH IS A NARROWING.** `SOLE_PAID_CLIENT`'s key-reader and address-reader
+equalities (`boundaries.test.ts:1194` and `:1217`, the second added by U32 as N-66) are pinned to
+`["src/app/api/advisor/route.ts", "src/lib/advisor/model-adapter.ts", "src/lib/lab-import/pdf-adapter.ts"]`.
+With every `process.env` read moved inside the resolver and the injected overrides passed as arguments,
+both become `["src/lib/openai/config.ts"]`.
+
+- **That is the ratchet's sanctioned direction** — the set of places that can authenticate or address a
+  paid call gets *smaller*. It still needs a deliberate test edit with a written reason.
+- **The careless version of this change is a widening and must be shown to fail**: a resolver added
+  while the three sites keep their own `process.env` fallbacks makes both sets **four** files. M9.
+- `OPENAI_MODEL` and `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL` move with them. `OPENAI_REASONING_EFFORT`
+  stays in `pdf-adapter.ts:271` — U31's entry states why it is deliberately **not** one of the required
+  conditions — and `OPENAI_TIMEOUT_MS` stays in `model-adapter.ts:124`. Neither is pinned by anything.
+- The two probes under `scripts/probes/` read the same variables, are outside `src/`, and are outside
+  both ratchets' file set. They keep their own reads and their own `baseUrlPermitted` call, which
+  `FIRST_PARTY_BASE_URL` already asserts. **Named, not absorbed** (§8.1) — routing the probes through
+  the resolver is a sensible follow-up and is not this unit.
+
+---
+
+**THE ARGUMENT AGAINST (A), FROM THE REVIEWER, ACCEPTED RATHER THAN ANSWERED AWAY.** `route.ts:71-80`
+says the pre-flight duplicates the adapter **deliberately**: it runs before the 200 SSE response is
+committed, so a missing setting is a 503 *status* rather than an `error` event inside a stream that
+already claimed success. One shared resolver makes the route's call *look* redundant with the adapter's,
+which invites a future deletion that restores exactly that failure. **Mitigation, and (A) does not ship
+without it:** the existing "returns 503 NOT_CONFIGURED before committing to a stream" test
+(`route.test.ts:187`) stays, keeps asserting `Content-Type` is not `text/event-stream` and that
+`runAdvisorTurn` was never called, and its comment gains one sentence tying it to the resolver so the
+next reader knows why two calls to one function are not duplication. **M10 is that test's mutation.**
+
+---
+
+**WHERE THE REASON IS ASSERTED, SITE BY SITE — AND THE ENTRY'S OWN PHRASING IS WRONG ABOUT ONE OF
+THEM.** The approved entry says "the config-guard tests **in `model-adapter.test.ts`, `lab-import.test.ts`,
+`route.test.ts`** assert on the reason". That is true of two and **false of the third**:
+
+| file | asserts the reason? | why |
+|---|---|---|
+| `src/lib/openai/config.test.ts` (new) | **yes — four tests, one per reason** | this is where distinguishability lives |
+| `model-adapter.test.ts` | yes | it catches the thrown object and can read `.reason` |
+| `lab-import.test.ts` | yes | same — it already asserts `instanceof NotConfiguredError` |
+| `route.test.ts` | **no, and it cannot** | the route returns `fail(...)`; it never constructs the error, so there is no object to read a reason off. Its four 503 tests stay status/code/no-stream |
+
+Said here rather than discovered mid-unit. The distinguishability the entry asks for is delivered; it is
+delivered in a different file than the entry predicted, for a structural reason.
+
+**ANTI-VACUITY, WITH U30'S LESSON APPLIED.** `config.test.ts` drives its four cases from
+`Record<AiConfigReason, Env>` — a **compile** error if a fifth AI reason is added without a case. Not a
+count, not a floor: **per-member**, because U30 has just finished proving that anti-vacuity on a total
+does not imply anti-vacuity on a member.
+
+---
+
+**RED — measured, not predicted. §5 rule 2.**
+
+| # | mutation | must redden |
+|---|---|---|
+| **M1** | remove `unstubEnvs: true` from `vitest.config.ts` | `env-stub-isolation.test.ts` — the flag's only red. **Already shown once**, with the throwaway probe, before this plan was written |
+| **M2** | flag ON, delete `vi.unstubAllEnvs()` from `route.test.ts`'s `beforeEach` | **nothing** — suite stays green. That is the proof half (a) subsumes the three local conventions. Then flag OFF **and** cleanup deleted → **N-67 reproduces**: the override test disables the host pin for every later test in the file |
+| **M3** | delete `!apiKey` from the resolver | the `missing-key` case **only**. The other three stay green — which is precisely what N-68 proved today's suite cannot do |
+| **M4** | delete `!model` | the `missing-model` case only |
+| **M5** | delete `!baseUrl` | the `missing-base-url` case only. The reason silently becomes `disallowed-host`; the test names the reason, so it fails |
+| **M6** | delete `!baseUrlPermitted(...)` | the `disallowed-host` case only |
+| **M7** | omit `reason` at one throw site | **`npx tsc --noEmit` fails.** A compile-time red, reported as such and not dressed up as a test failure |
+| **M8** | add `reason` to the 503 payload in `respond.ts` | `NOT_CONFIGURED_TOTALITY`'s new byte-identity assertion |
+| **M9** | add the resolver but leave one site's `process.env.OPENAI_BASE_URL` fallback in place | both `SOLE_PAID_CLIENT` ratchets — set becomes two files, not one. Proves the narrowed equality still bites |
+| **M10** | move the route's pre-flight after the stream is opened | `route.test.ts:187` — `Content-Type` and `runAdvisorTurn` |
+
+M1 and M2's first half have been run already; M2's second half and M3–M10 are the unit's red phase and
+will be reported as measured, including any that do **not** behave as this table predicts.
+
+**Gates:** `npx tsc --noEmit`, `npm run lint`, `npx vitest run`, `npx next build`, plus coverage
+re-measured. **One named risk:** `config.ts` lands in `src/lib/openai/**`, whose thresholds are
+`90/90/78/90`. A new module in a directory with a floor can drop the directory below it; if that
+happens the answer is more tests, not a lower floor.
+
+**Non-coverage — what U33 does NOT do.**
+
+1. **The response never carries the reason.** 503, `AI_SERVICE_NOT_CONFIGURED`, no reason field —
+   §2.3 rule 13, which does not bend for a convenient debugging aid. `NOT_CONFIGURED_TOTALITY` gains an
+   assertion that the 503 body is **byte-identical across all four AI reasons**, plus that `respond.ts`
+   never reads `.reason`. **Note the precise claim**: it is byte-identical across the four AI reasons,
+   **not** across all five — `supabase/env.ts` carries different `publicMessage` text and always has.
+   The difference is the message, never the reason.
+2. **Half (a) fixes nothing that is broken today.** Stated once more here because a closeout reader
+   should not be able to infer otherwise from a green suite.
+3. **N-72 is untouched** — the undo route still does not use `handle()`; that is U34's.
+4. **FU-33 is untouched** — no `handleParams` wrapper.
+5. **Nothing about *semantic* disclosure changes.** U29's byte-identical foreign-vs-absent 404 and
+   U30's syntactic/semantic split are not in this unit's path. A reason code that never reaches a
+   client cannot be an oracle.
+6. **The probes are not routed through the resolver** (above).
+7. **No §8 exit criterion is ticked.** That is the Phase 2 closeout's job.
+
+
+#### U33's red record — measured 2026-09-21, not predicted
+
+**THE PRE-FIX MATRIX. Twelve single-condition deletions, three sites, run before any implementation
+edit. Seven were invisible to the entire suite.**
+
+| condition deleted | `advisor/route.ts` | `model-adapter.ts` | `pdf-adapter.ts` |
+|---|---|---|---|
+| key absent | **detected** (2 tests) | **INVISIBLE** — 22/22 green (N-68) | **INVISIBLE** — 33/33 green |
+| base URL absent | **INVISIBLE** — 26/26 green | **INVISIBLE** — 22/22 green | **INVISIBLE** — 33/33 green |
+| model absent | detected | detected | **INVISIBLE** — 33/33 green |
+| host refused | detected | detected | **INVISIBLE** — 33/33 green |
+
+**N-68 had registered one of the seven.** The other six were found by running the matrix the owner's red
+order required. Two things in that table are worth more than the count:
+
+**`pdf-adapter.ts` scored ZERO out of four.** Every one of its conditions could be deleted with the suite
+fully green, because its two config tests each unset *several* settings at once — so any surviving
+condition still threw, and `toBeInstanceOf(NotConfiguredError)` could not say which one did. A fixture
+that unsets three things tests the disjunction, not the conditions.
+
+**The base-URL condition was invisible at ALL THREE sites**, for a reason no one had written down:
+`baseUrlPermitted("")` is `false` (`new URL("")` throws), so deleting the emptiness check does not remove
+the failure — it *relabels* it. Every test matching the message saw no difference. This is the sharpest
+form of the unit's thesis: the guard did not stop failing, it started failing for a different reason, and
+nothing could tell.
+
+**THE POST-FIX MATRIX. Every condition-deletion now reddens exactly the tests named for that reason, at
+every site that reaches it, and nothing else.**
+
+| # | mutation | result |
+|---|---|---|
+| **M1** | remove `unstubEnvs: true` | `env-stub-isolation.test.ts` — **1 failed**, `Received: "leaked"` |
+| **M2a** | flag ON, delete `route.test.ts`'s own `vi.unstubAllEnvs()` | **26/26 green** — as intended: the flag subsumes the per-file convention, so a fourth file inherits the property |
+| **M2b** | flag OFF **and** that cleanup deleted | **26/26 green — N-67 DID NOT REPRODUCE, and the plan predicted it would.** See below |
+| **M3** | delete `!apiKey` | **5 failed** — the `missing-key` case in `config.test.ts`, the adapter's `missing-key` test, lab-import's, and the route's two key tests. No other reason's test moved |
+| **M4** | delete `!model` (in `resolveModelId`, its one home) | **6 failed** — every `missing-model` case, including the "same condition, not a second copy" reachability test |
+| **M5** | delete `!baseUrl` | **4 failed** — including *"an empty base URL is `missing-base-url`, NOT `disallowed-host`"*, which is the assertion the pre-fix suite could not express |
+| **M6** | delete `!baseUrlPermitted(...)` | **6 failed** — every `disallowed-host` case across all three sites |
+| **M7** | omit `reason` at one throw site | **`npx tsc --noEmit`: `model-adapter.ts(117,27): error TS2554: Expected 2 arguments, but got 1`.** A COMPILE red, reported as such and not dressed up as a test failure |
+| **M8** | append the reason to the 503 text in `respond.ts` | **2 failed** — the byte-identity assertion and the structural `.reason` read check. Both, deliberately: one catches the leak that exists, the other the line that would cause one on a path no test walks |
+| **M9** | resolver added but `pdf-adapter.ts` keeps `?? process.env.OPENAI_BASE_URL` | **2 failed** — `SOLE_PAID_CLIENT`'s address ratchet AND `FIRST_PARTY_BASE_URL`. The careless version of this refactor is a widening and it reddens |
+| **M10** | delete the route's pre-flight entirely | **5 failed**, led by *"returns 503 NOT_CONFIGURED before committing to a stream"*. The duplication the reviewer warned (A) endangers is held by a test |
+| **M11** | *(added after review)* re-introduce `ecc:code-reviewer`’s decoy — `const _decoy = "https://" + process.env.OPENAI_API_KEY;` in `client.ts`, a file outside the pinned reader set | **1 failed / 57 passed** — `SOLE_PAID_CLIENT`’s key pin. Under the regex stripper this same line was **green**, which is the MEDIUM finding recorded below |
+
+**M2b IS THE HONEST ONE, AND IT SAYS THE PLAN WAS WRONG.** The plan asserted that removing the flag and
+the per-file cleanup together would reproduce N-67. It does not: the file stays 26/26 green. The reason is
+that **U32 closed that instance twice over** — it added the cleanup *and* changed `FAKE_BASE_URL` from
+`https://gateway.invalid` to the first-party host, so the later tests no longer need the override to be
+leaking in order to pass. Restoring the old fixture as well (**M2c**) does produce failures, but they are
+the *opposite* symptom — two U29 tests that run BEFORE the override test fail on the non-first-party
+host — not N-67's "a later test passes with the pin switched off".
+
+So: **N-67's instance cannot be reproduced on this tree, and that is a fact about U32's fix, not about
+U33's.** What M2a shows is the thing this unit actually buys — the property no longer depends on three
+files each remembering. The prediction is left standing above rather than edited, because a red record
+that quietly deletes its wrong predictions is not evidence (§7).
+
+**THREE RATCHETS MOVED, AND THE PLAN NAMED TWO.** `NO_PINNED_MODEL_ID: the model id is read only where it
+is declared to be` is a third pinned reader set, and it failed on the same commit as the two the plan had
+enumerated. The guard did its job on a unit that had not counted it — which is the cheapest possible way
+to find out, and is recorded because the plan's "two ratchets" sentence was simply an incomplete count.
+All three narrow **3 → 1** to `src/lib/openai/config.ts`.
+
+**A GUARD WAS MEASURING PROSE.** All three reader pins matched **raw file text**, so a file that merely
+*names* a variable in a comment counted as reading it: `model-adapter.ts` failed the model-id pin after
+U33 solely because a docstring says *"the routed model id, from `OPENAI_MODEL`"*. The alternative to
+fixing the scan was deleting accurate prose to satisfy a text match. Registered as **N-73** and fixed
+here — the three scans now strip comments first, using the stripper `NO_PINNED_MODEL_ID` already had for
+its literal scan. A comment cannot read an environment variable, so this makes the scans more precise
+rather than more permissive.
+
+**AN ANTI-VACUITY FLOOR WAS LOWERED, 3 → 1**, in `first-party-base-url.test.ts`, and that deserves its
+own line because lowering one is normally how a guard dies. The floor existed to catch *"the reads move
+behind a helper"* — which is exactly what this unit did, deliberately. The argument that it is still
+sound: the floor is no longer the thing counting readers. `SOLE_PAID_CLIENT`'s address ratchet asserts
+the set **equals** `["src/lib/openai/config.ts"]`, so a second reader is a red build there; this
+assertion is left doing only the vacuity check it was always doing, for which one is the honest minimum.
+The full reasoning is written at the assertion.
+
+**Method note, sixth appearance of the measurement-through-a-filter class in this phase's tooling half:**
+the three ratchets first failed with `expected [] to deeply equal [ 'src/lib/openai/config.ts' ]` —
+**the new module was untracked**, and every one of these scans reads `git ls-files --cached`. Identical
+to U32's M7. `git add -N` fixed it. The boundary is now documented in three specs and has still caught
+two units in a row, which suggests the honest fix is a shared note rather than three separate ones.
+
+**Gates, all re-run at the finished tree:** `npx tsc --noEmit` clean · `npm run lint` **366 of 366 tracked
+files, 0 errors** · `npx vitest run` **1376 passed / 111 files** (from 1355 / 109) · `npx next build`
+succeeds · coverage re-measured, `src/lib/openai` at **100 / 93.68 / 100 / 100** against floors of
+90 / 90 / 78 / 90 — the new module did not drag the directory toward its floor. `graphify update .`
+rebuilt the graph: 5038 nodes, 10152 edges.
+
+
+#### U33's review record — and the MEDIUM is the interesting one, because it was mine
+
+**`ecc:security-reviewer`, asked one question: does any reason value, or anything derived from it, reach
+a response body, a log line that includes a value rather than a name, or the client bundle? Verdict
+NO / NO / NO, no BLOCKING or MEDIUM**, enumerated rather than sampled:
+
+- `handle()` reads `publicMessage` and nothing else; **no non-test source reads `.reason` off an
+  instance at all**. Both halves are now asserted, structurally and by bytes.
+- The SSE path was the one worth checking, because `model-adapter.ts` throws **inside an open stream**:
+  the route's catch sends a hardcoded `INTERNAL_ERROR_MESSAGE` and a correlation id. The error object is
+  never enqueued.
+- `pdf-adapter.ts` rethrows `NotConfiguredError` **before** its wrap-with-`cause` branch, so a reason
+  never becomes another error's `cause`.
+- `logInternalError` builds its log object field by field — `name`, `message`, `stack`, `describeCause`
+  — rather than spreading the error, so an own property added to the class is structurally excluded.
+  And `message` mirrors `publicMessage`, never the reason. **This unit added no log line that prints a
+  value.**
+
+**One qualification the reviewer's answer (c) does not carry, verified here rather than taken on
+trust.** "No client component imports this module chain" is true, and it is *circumstantial* rather than
+structural: `supabase/client.ts` → `supabase/env.ts` → `errors.ts` is a real edge, dormant only because
+the browser Supabase client is imported by **no non-test module**. That is not news — `csp.ts:101`
+already records it and the Report-Only CSP is what verifies the consequence — and if the chain ever went
+live what would ship is four lowercase reason strings whose variable names `.env.example` documents in
+public. Inert, but the verdict should not be read as structural when it rests on a dormant import.
+
+---
+
+**`ecc:code-reviewer`: no CRITICAL, no HIGH, one MEDIUM, one LOW. Both are fixed in this commit, and the
+MEDIUM is the one to read.**
+
+**THE MEDIUM WAS A GUARD I BLINDED IN THIS UNIT, IN THE COMMIT WHOSE SUBJECT IS GUARDS GOING BLIND.**
+N-73's fix made three reader ratchets strip comments before matching, with
+`.replace(/\/\/[^\n]*/g, " ")`. `//` is also the middle of every `https://` literal, so that regex
+**deleted the rest of the line after any URL string**. The reviewer did not argue it — it ran the
+experiment, adding
+
+```ts
+const _decoy = "https://" + process.env.OPENAI_API_KEY;
+```
+
+to `client.ts`, a file **not** in the pinned reader set, and the key pin **stayed green**. A second
+module reading the paid credential, invisible to the ratchet that exists to see exactly that.
+
+Three things about it are worth recording rather than just fixing:
+
+1. **It is strictly worse than the defect it replaced.** N-73 was a false POSITIVE — prose counting as
+   code. This was a false NEGATIVE. An over-reporting guard is annoying; an under-reporting guard has
+   stopped existing. I traded the harmless failure for the dangerous one and did not notice, in a unit
+   whose entire thesis is that this happens.
+2. **It is U30's lesson again, one unit later, and this time I was the author.** U30's closeout recorded
+   that the guard could be *blind* rather than wrong. The same sentence covers this exactly.
+3. **The fix is not a better regex.** The three pins now match **tokens from the TypeScript scanner**,
+   which knows what a string literal is and skips comment trivia as trivia rather than by pattern. The
+   `parser self-test` block added at the end of `boundaries.test.ts` pins both directions and includes
+   **the reviewer's decoy line verbatim** — nine cases, five that must count and four that must not.
+   **M11:** re-introducing the decoy now **reddens the key pin** (1 failed / 57 passed).
+
+**THE LOW, fixed rather than documented away.** Consolidation left the live path resolving the model
+**twice** — once inside `resolveAiConfig`, once via `resolveModel` a line later — and silently changed
+the adapter's effective condition order from key → base URL → host → model to key → base URL → model →
+host. Unobservable (`publicMessage`, class and status are identical for every reason) but real.
+`liveComplete()` now returns `{ complete, model }`, so the live path resolves once and its order is
+exactly the resolver's; the injected path still asks for the model alone, because a test double needs no
+key but N-21 means it still needs a real id. The order change is stated at the call site as a declared
+internal change rather than left for a reader of `config.ts` to trip over.
+
+**AND THE LOW FIX WAS SILENTLY REVERTED ONCE, BY THE MUTATION HARNESS, WHICH IS THE SECOND HALF OF THE
+METHOD RULE THIS PHASE ADOPTED YESTERDAY.** After applying the `liveComplete()` restructure I re-ran
+M3–M6; each of those runs ends by restoring every file from its **file-copy backup**, and a backup of
+`model-adapter.ts` was still sitting in the scratchpad from **M7**, holding the pre-fix content. The
+restore put it back. `git status` still said `M src/lib/advisor/model-adapter.ts` — the file *is*
+modified by this unit — so the status check the rule prescribes said nothing was wrong. It was caught by
+reading `git diff --numstat` and noticing the file had not grown.
+
+**The rule is right and incomplete, and §5 now says so:** a mutation backup must be **deleted when its
+mutation is finished**, and a revert is verified by **diff**, not by status. A stale backup is a
+`git checkout --` with a delay on it — the same destruction the rule was written to prevent, arriving
+from the tool adopted to prevent it. The first figures reported for these gates were taken with only the
+MEDIUM fix present; the figures below are the re-run with both.
+
+**Gates re-run after both fixes:** tsc clean · lint **366 of 366, 0 errors** · vitest **1386 passed /
+111 files** · `next build` compiled successfully · coverage `src/lib/openai` **100 / 93.75 / 100 / 100**
+against floors 90 / 90 / 78 / 90. **M3–M6 re-run with both fixes in place** — 5, 6, 4 and 6 failures
+respectively, each confined to the deleted condition's own reason.
+
+
 ### Group E — cuttable
 
 **U21 · FU-24, cited artifacts must be tracked.** ~~N `src/architecture/cited-artifact.test.ts`. **S**.~~
@@ -4872,7 +5323,7 @@ here rather than discovered later.
 
 **~~23~~ ~~24~~ ~~25~~ ~~26~~ ~~27~~ ~~28~~ ~~29~~ ~~30~~ 31 proposed units** (U1–U22, **U24**, **U25**, **U26**, **U29**, **U30**, **U31**, **U32**, **U33** and **U34**, plus U23 deferred). Rough shape:
 **~~7~~ ~~8~~ ~~9~~ ~~10~~ ~~11~~ 12 S/S-M · ~~12~~ 13 M · ~~3~~ ~~4~~ 3 L · 1 M/L**.
-*(**[2026-09-20]** **U34 is S** — created by the owner's ruling on N-71, which `ecc:code-reviewer` found while tracing the blast radius of an empty `conversationId` in U29's diff. **Of 31 proposed, 28 are live.** The fourth unit this phase created by a review finding, after U26, U29 and U33.)* *(**[2026-09-18]** **U33 is S** — created by the owner's ruling on N-67 and N-68, both raised while U32 was being reviewed. **Of 30 proposed, 27 are live** (cut: U11, U21, U23). A unit created by a review finding is the third of this phase — U26, U29 and now U33 — which is the measurable form of the claim that the review step pays for itself.)*
+*(**[2026-09-20]** **U34 is S** — created by the owner's ruling on N-71, which `ecc:code-reviewer` found while tracing the blast radius of an empty `conversationId` in U29's diff. **Of 31 proposed, 28 are live.** The fourth unit this phase created by a review finding, after U26, U29 and U33.)* *(**[2026-09-18]** **U33 is S** — created by the owner's ruling on N-67 and N-68, both raised while U32 was being reviewed. **Of 30 proposed, 27 are live** (cut: U11, U21, U23). A unit created by a review finding is the third of this phase — U26, U29 and now U33 — which is the measurable form of the claim that the review step pays for itself.)* *(**[2026-09-21]** **U33 is M, not S** — re-sized at plan approval, not discovered at the diff. The owner ruled option (A): the four conditions move into one resolver, which adds `src/lib/openai/config.ts` and two specs, narrows both `SOLE_PAID_CLIENT` reader ratchets from three files to one, and makes `src/architecture/` carry **24** specs. The S above is left standing because it was true of the unit as the 2026-09-18 ruling scoped it; this bracket records what the widening cost, which is the only way a later reader can tell a re-scope from a bad estimate.)*
 *(**[2026-09-14, decision 8]** applied on top of decision 9's line rather than instead of it, since both
 ruled the same day: **U30 is S**, and **U22 falls from L to S** on re-scoping — the one **L** that leaves
 this count. **Cut to date: U11, U21, U23.** Of 28 proposed, **25 are live**. The gross count rises while

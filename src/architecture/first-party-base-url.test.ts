@@ -105,11 +105,30 @@ describe("FIRST_PARTY_BASE_URL: the host pin is reachable from every resolver", 
     const readers = addressReaders(SRC, read);
     // Anti-vacuity. If the scan stops matching — the variable is renamed, the
     // reads move behind a helper — every assertion below passes over nothing.
+    //
+    // [2026-09-21, U33] THE FLOOR WAS 3 AND IS NOW 1, and lowering an
+    // anti-vacuity floor deserves more than a number change.
+    //
+    // The floor was 3 because there were three readers. U33 moved every
+    // `process.env` read into `src/lib/openai/config.ts`, so there is exactly
+    // one — and "the reads move behind a helper", which this comment named as
+    // a FAILURE MODE, is precisely what happened, deliberately. The difference
+    // between that failure and this change is where the helper lives and
+    // whether it validates: a helper that resolves the address without calling
+    // the pin is the defect; a helper that resolves it and calls the pin IS
+    // the pin's enforcement point.
+    //
+    // What stops the floor from being a rubber stamp is that it is no longer
+    // the thing counting readers. `SOLE_PAID_CLIENT`'s address ratchet asserts
+    // the reader set EQUALS `["src/lib/openai/config.ts"]`, so a second reader
+    // is a red build there. This assertion's job is only the vacuity check it
+    // was always doing: zero readers means the scan has stopped working, and
+    // one is the honest minimum for a tree with one resolver.
     expect(
       readers.length,
       `FIRST_PARTY_BASE_URL found no module reading process.env.${ADDRESS_VAR}. ` +
         "A reach check with nothing to reach passes vacuously.",
-    ).toBeGreaterThanOrEqual(3);
+    ).toBeGreaterThanOrEqual(1);
 
     const unvalidated = readers.filter((f) => validatorCallers([f], read).length === 0);
     expect(

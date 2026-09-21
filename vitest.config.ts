@@ -10,6 +10,27 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // ---------------------------------------------------------------------
+    // Phase 2 U33 — a `vi.stubEnv` may not outlive the test that set it.
+    // ---------------------------------------------------------------------
+    // N-67: an env stub persists past its test, so one test silently
+    // reconfigures every test after it. U32's own override test disabled the
+    // brand-new host pin for the whole rest of its file, including the 200
+    // happy path, and the suite stayed green.
+    //
+    // WHAT THIS FLAG DID NOT DO, stated because a closeout reader would
+    // otherwise infer it from a green suite: it reddened NOTHING. Measured
+    // before any other edit — 109 files / 1355 tests, all passing with the
+    // flag on. Every one of the three files that call `vi.stubEnv` already
+    // carried its own `vi.unstubAllEnvs()` cleanup, so N-67's INSTANCE was
+    // already closed by the unit that raised it. What was still open is the
+    // CLASS: three local conventions that a fourth file is under no
+    // obligation to follow. This line makes the property global.
+    //
+    // A config line has no red of its own, which is U30's lesson one unit
+    // old, so it does not ship alone: `src/architecture/env-stub-isolation.test.ts`
+    // fails if this line is removed.
+    unstubEnvs: true,
     include: ["src/**/*.test.ts"],
     coverage: {
       provider: "v8",
