@@ -33,7 +33,7 @@
 |---|---|
 | **WHY** | N-51 (`ecc:security-reviewer`, U12 review) → U30 by decision 8(d), 2026-09-14. |
 | **WHO** | Twelve handlers across eight files; every client that can mistype a URL. |
-| **RISK** | The twelfth handler is not like the other eleven — `advisor/actions/[id]/undo` does not use `handle()` (see the plan entry). A guard that assumes uniformity would pass over it. |
+| **RISK** | *(**[2026-09-21] SUPERSEDED BY U34** — that handler is now on `handle()` and uses the same bare `uuidParam.parse(id)` as the other eleven. The row stays as written: it was the risk U30 faced, and U30 was right to treat it as one.)* The twelfth handler is not like the other eleven — `advisor/actions/[id]/undo` does not use `handle()` (see the plan entry). A guard that assumes uniformity would pass over it. |
 | **SUCCESS** | Malformed id → 400 at all twelve; the scan reddens on a thirteenth handler that skips the check; mutations red. |
 | **SCOPE** | Eight route files · `src/lib/validation/schemas.ts` (or wherever `uuidParam` lands) · one new architecture spec · route tests. No migration, no repo change. |
 

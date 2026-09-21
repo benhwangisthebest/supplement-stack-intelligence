@@ -146,6 +146,30 @@ Timing: **before-features** / **functional-beta** / **before-production** / **op
 - **Recommended correction:** Log the rollback failure with batch/inverse context; make `replaceFlags`
   atomic, or insert-then-delete-by-id.
 - **Timing:** **before-production** · **Blocking:** Non-blocking
+- **[2026-09-21, annotation — this finding's first half was remedied in two instalments 13 months
+  apart, and the gap between them is worth more than either.]** This text is **not rewritten** (§7, and
+  the D-3 pattern for a certified artifact): it was right, and it is recorded as it was certified.
+  **Phase 2 U20 did what this row asked** — the rollback failure is logged, under a correlation id, via
+  `reportInternalError(rollbackErr, "ROLLBACK_FAILED")`. **Nobody went back to the RESPONSE.** It kept
+  returning `details: { rolledBack: true }` unconditionally, under a comment calling that "a computed
+  fact the client acts on", while this branch ran — so the remedy installed a log beside a claim the
+  log contradicts. Registered as **N-74** by U34 planning on 2026-09-21 and fixed by **U34** the same
+  day: the rollback now counts itself and the response carries the outcome. **The lesson is in the
+  shape of this row, not in its content** — a correction that names one remedy ("log it") gets that
+  remedy, and the half nobody wrote down stays broken with a green suite over it.
+  **This row's SECOND half was delivered, and stating it as "still open" would repeat the very error
+  the paragraph above describes.** Phase 2 **U8** (done 2026-08-10, roadmap item 4, a named §8 exit
+  criterion) reversed `replaceFlags` to **insert-then-delete-by-id**, with the criterion *"`replaceFlags`
+  leaves prior flags intact under induced insert failure"* shown **red against delete-first**
+  (`expected [] to have length 3`). What remains is **not** the recommendation this row made: it is
+  **transactional atomicity**, which U8's own entry framed as a residue rather than a gap — the change
+  makes a *different* failure possible instead of making the pair atomic. Delete-first lost the user's
+  flags when the insert failed; insert-then-delete leaves **duplicates** when the delete fails, and
+  between the two statements the table transiently holds both sets, so a concurrent `listFlags` sees
+  duplicates. U8 judged that acceptable, stated rather than discovered, because the operation is
+  per-stack and user-initiated. **Excess is recoverable; loss is not** — that is the whole of why the
+  order was reversed, and the residue is a single transaction (or an RPC) that no unit in this phase
+  was scoped to write.
 
 ### T-07 · The LLM-driven write path has 0% unit coverage
 - **Reviewer:** TEST · **Severity:** high · **Category:** test coverage
