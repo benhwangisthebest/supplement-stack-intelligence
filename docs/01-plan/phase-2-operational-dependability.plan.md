@@ -3486,6 +3486,58 @@ beside the guard rather than instead of it.
 Reviews: `ecc:code-reviewer` on the diff **and** `ecc:security-reviewer`, because the unit changes what
 an unauthenticated scanner can learn from a malformed URL.
 
+**U30 STAMP ROW** *(standing disposition):*
+
+| U30 closeout | value |
+|---|---|
+| merged to `main` | **`56c8c79`** — fast-forward from `b20c3fb`, 1 commit, 21 files, +911/−99 |
+| code run | **`35578789904`** — green on `56c8c79`, **18/18 steps**, on `feat/u30-path-param-validation` |
+| post-merge `main` run | **`35579124986`** — green on `56c8c79`, 18/18, required check satisfied on the merged SHA |
+| CI figures, re-measured | lint **363 of 363, 0 errors** · vitest **1355 / 109 files** · non-live E2E **70 passed / 30 skipped** |
+| bkit | **`u30-uuid-path-params` → `completed`**, advanced 2026-09-21 as the last step of this closeout |
+
+**Read through `gh` again, and checked against local — all three match exactly.** U29's row could not
+make that claim and said so; this one can. The toolchain gap lasted exactly one unit.
+
+**THE SWEEP.** Grepped for the two phrases the category B retirement could have made false, plus the
+spec count.
+
+| Claim | Site | Action |
+|---|---|---|
+| "seven executable architecture specs" | `README.md:26`, `docs/project-status.md:333` and `:473`, `docs/02-design/architecture-boundaries.md:256` | **22 → 23**, each bracket **extended in place**: `… · 22 at U32 · 23 at U30 (2026-09-21)` |
+| *"never 400 … a weak existence oracle"* | `docs/01-plan/phase-1-verification-integrity.plan.md:780` — **a CERTIFIED Phase 1 artifact** | **ANNOTATED, NOT REWRITTEN** (the D-3 pattern this plan established): the certified text stands exactly as certified, and a dated note beside it records that the reasoning was **right about the risk and wrong about the remedy**, names the syntactic/semantic split, and points at where the live rule now lives |
+| *"must still be 404, never 400"* | `src/app/api/stacks/[id]/items/[itemId]/route.test.ts:114` | **LEFT ALONE — still true.** It is about a malformed **body** against a foreign **item**, which U30 does not touch. A sweep that edits a claim because it matched a grep is worse than one that does not grep |
+| category B's own text | `src/architecture/route-contract.test.ts:81` | already retired inside the unit, struck with both halves of the reasoning |
+
+**The third row is the one worth keeping.** Two sites matched *"never 400"*; one was false and one was
+true, and they are one line apart in intent. **The certified artifact could not be edited and the true
+claim should not be** — so this sweep's output is one annotation, one left-alone, and four dated
+counts. Grep finds candidates; only reading decides.
+
+**A note on the annotated artifact, because it is the second time this has come up:** a *certified*
+document that becomes false is not the same problem as a stale count. The count gets a dated bracket;
+the certification gets an annotation that leaves the original legible, because the value of a certified
+artifact is that it records what was believed **at certification**. D-3 established that pattern for
+re-labels; this is its first use for a **reversed decision**.
+
+**THE LESSON, and it is about guards rather than routes.** U30's designed deliverable was fourteen
+`uuidParam.parse` calls. Its most valuable output was `ecc:code-reviewer`'s two MEDIUM findings, which
+were the same defect: **the guard could be blind rather than wrong.** A handler shape the AST walker did
+not recognise — an arrow export, or `(await params).id` — produced **no report at all**, so it failed
+nothing and looked like coverage. **M8 and M9 exist because of that**, and the fix was not a comment: a
+new assertion makes an unseen handler a failure instead of an absence.
+
+**That is a different failure class from anything this phase has recorded so far.** N-67, N-68 and
+U29's blocking finding were all *assertions that stopped distinguishing*. This one is an *inventory that
+stopped enumerating* — the anti-vacuity family, but per-item rather than per-set: the floors were
+aggregate, so a blind handler could hide beside twelve visible ones. **Anti-vacuity on a total does not
+imply anti-vacuity on a member.**
+
+**Method rule added to §5 from this unit's own slip:** mutation reverts use a file-copy backup, never
+`git checkout --`, because the file under mutation carries the unit's uncommitted work. It is recorded
+because it happened here, and because the loss was caught only by reading `git status` afterwards
+rather than trusting the revert.
+
 **U31 · The LLM provider becomes OpenAI's first-party API.** *(created 2026-09-14 by the scope amendment
 in this document's header and decision 9; numbering append-only — U31 follows U30, it is not inserted)*
 M `src/lib/omniroute/**` → **`src/lib/openai/**`** (git mv, 2 files) · M `model-adapter.ts` ·

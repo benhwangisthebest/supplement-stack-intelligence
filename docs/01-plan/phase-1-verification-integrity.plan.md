@@ -783,6 +783,18 @@ distinguished "not a uuid" from "not yours" would be a weak existence oracle, th
 made §6.1.1's mismatch a 404. **These four are exempt from 400, not from ownership testing**, which is a
 separate criterion.
 
+> **[2026-09-21] ANNOTATION, NOT A REWRITE — the certified text above stands exactly as certified.**
+> Phase 2 **U30** (`56c8c79`) changed the second half of this paragraph, and the owner ruled the change
+> on a distinction this text did not draw: a **syntactic** 400 — *"this string is not a UUID"* — is
+> decidable from the string alone, **before any I/O**, so it consults no row and can leak no existence.
+> A **semantic** 400, one that answered differently for a well-formed id that is *foreign* versus one
+> that is *absent*, remains exactly the oracle described here and remains forbidden — Phase 2 U29 pinned
+> that property with a byte-identity test and a mutation.
+> **So the reasoning above was right about the risk and wrong about the remedy.** The live rule now
+> lives in `src/architecture/route-contract.test.ts` (exemption category B, retired in place with its
+> full rationale) and in `src/architecture/path-param-validation.test.ts`, whose ordering assertion is
+> what keeps the 400 syntactic. Authority: the Phase 2 plan's U30 entry.
+
 | File | Reason |
 |---|---|
 | `advisor/actions/[id]/undo/route.ts` | `POST(_request, {params})` — request deliberately unused (underscore-prefixed); unknown id → `notFound("Action")`, already-undone → 409. |
