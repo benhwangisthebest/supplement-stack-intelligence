@@ -26,11 +26,13 @@
 //   500 ACTION_ERROR                     anything else thrown in the outer try
 //   201 success               applied, with the v7 back-compat fields
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NotConfiguredError } from "@/lib/api/errors";
 import type { NextRequest } from "next/server";
 import type { AdvisorContext } from "@/types/advisor";
 import type { Stack, StackItem } from "@/types";
 
 const getUser = vi.fn();
+const createClient = vi.fn();
 const loadAdvisorContext = vi.fn();
 const cumulativeRecheck = vi.fn();
 const executeBatch = vi.fn();
@@ -42,7 +44,7 @@ const getSupplementById = vi.fn();
 const matchProducts = vi.fn();
 
 vi.mock("@/lib/auth/session", () => ({ getUser: () => getUser() }));
-vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({}) }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: (...a: unknown[]) => createClient(...a) }));
 vi.mock("@/lib/advisor/context-loader", () => ({
   loadAdvisorContext: (...a: unknown[]) => loadAdvisorContext(...a),
 }));
@@ -152,6 +154,8 @@ function arrangeSuccess() {
 }
 
 beforeEach(() => {
+  createClient.mockResolvedValue({});
+
   vi.clearAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {});
   arrangeSuccess();
@@ -661,5 +665,106 @@ describe("U4 — confirm-card inputs reach their destination", () => {
 
     expect(conversationBelongsToUser).not.toHaveBeenCalled();
     expect(recordBatch).toHaveBeenCalled();
+  });
+});
+
+// ------------------------------------------------------------------ N-76 ----
+// The second unwrapped route's pre-delegation window. Raised at (d1b) by the
+// binding assertion refusing to pass it, and by `ecc:security-reviewer`'s (A)
+// re-enumeration asking for it to carry its own number rather than a comment.
+//
+// TAKEN ON AN EXPLICIT RULING, not absorbed: (d1b)'s original scope was
+// `advisor/route.ts` alone, and widening it without one is what §8 rule 1
+// forbids. The owner widened it.
+//
+// `POST` here is not wrapped in `handle()` either. `confirmAndApply` reports its
+// own failures, so the WORK was covered — what was not was the window before it:
+// a throw from `getUser()` or `createClient()` escaped and became an
+// uncorrelated framework 500. The window is one call; that call is the same
+// `createClient()` whose throw path P2-R4 just fixed in the sibling route.
+describe("N-76 — a throw before confirmAndApply is a correlated response", () => {
+  beforeEach(() => getUser.mockResolvedValue(USER));
+
+  it("a throw from createClient answers 500 with a correlation id", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    createClient.mockRejectedValue(new Error("supabase client construction failed"));
+
+    const res = await POST(req(body(ADD_PAYLOAD)));
+    const json = (await res.json()) as { error?: { code?: string; message?: string; correlationId?: string } };
+
+    expect(res.status, "the window before delegation must answer, not escape the handler").toBe(500);
+    expect(json.error?.correlationId).toEqual(expect.any(String));
+    expect(json.error?.message, "the client never sees the driver text").not.toMatch(/failed|supabase/i);
+    expect(spy, "the record is what makes the id worth quoting").toHaveBeenCalled();
+    expect(JSON.stringify(spy.mock.calls)).toContain(String(json.error?.correlationId));
+    spy.mockRestore();
+  });
+
+  it("a NotConfiguredError from this window stays a 503, not a 500", async () => {
+    // The same taxonomy rule the sibling route carries: every handle()-wrapped
+    // route answers 503 for unset Supabase env, and a DECLARED OPERATIONAL STATE
+    // mints no id and writes no record (U1, T5).
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    createClient.mockRejectedValue(new NotConfiguredError("Supabase is not configured.", "missing-key"));
+
+    const res = await POST(req(body(ADD_PAYLOAD)));
+    const json = (await res.json()) as { error?: { code?: string; correlationId?: string } };
+
+    expect(res.status).toBe(503);
+    expect(json.error?.code).toBe("NOT_CONFIGURED");
+    expect(json.error?.correlationId).toBeUndefined();
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+});
+
+// ------------------------------------------- N-76, widened by owner ruling ----
+// [2026-09-22] The same first-statement gap as the sibling route. `getUser()`
+// runs before any `try` here too, so the window N-76 closed began one statement
+// too late. Found by `ecc:security-reviewer`'s final (A) re-enumeration.
+describe("N-76 widened — the first statement is inside the window too", () => {
+  beforeEach(() => getUser.mockResolvedValue(USER));
+
+  it("a throw from getUser answers 500 with a correlated record", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    getUser.mockRejectedValueOnce(new Error("auth-js re-threw a non-AuthError"));
+
+    const res = await POST(req(body(ADD_PAYLOAD)));
+
+    expect(res.status, "a throw from the first statement must not escape the handler").toBe(500);
+    const json = (await res.json()) as { error?: { message?: string; correlationId?: string } };
+    expect(json.error?.correlationId).toEqual(expect.any(String));
+    expect(json.error?.message, "the client never sees the auth driver text").not.toMatch(/auth-js|AuthError/i);
+    expect(spy, "the record is what makes the id worth quoting").toHaveBeenCalled();
+    expect(JSON.stringify(spy.mock.calls)).toContain(String(json.error?.correlationId));
+    expect(executeBatch, "nothing downstream may run").not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("a NotConfiguredError from getUser stays a 503, not a 500", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    getUser.mockRejectedValueOnce(new NotConfiguredError("Supabase is not configured.", "missing-key"));
+
+    const res = await POST(req(body(ADD_PAYLOAD)));
+    const json = (await res.json()) as { error?: { code?: string; correlationId?: string } };
+
+    expect(res.status).toBe(503);
+    expect(json.error?.code).toBe("NOT_CONFIGURED");
+    expect(json.error?.correlationId).toBeUndefined();
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("an unauthenticated caller still gets 401 before anything is parsed", async () => {
+    // Guarding `getUser()` must not be done by moving it after the body parse:
+    // an anonymous caller would learn whether their body validated. The 401 is
+    // §2.3 rule 11; what precedes it is this assertion.
+    getUser.mockResolvedValueOnce(null);
+
+    const res = await POST(req({ actions: [] }));
+    const json = (await res.json()) as { error?: { code?: string } };
+
+    expect(res.status).toBe(401);
+    expect(json.error?.code).toBe("UNAUTHORIZED");
   });
 });

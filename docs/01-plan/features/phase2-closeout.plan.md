@@ -266,3 +266,138 @@ constructs carries a correlated record**, with two declared exceptions —
 **`NOT_CONFIGURED`** as an operational state (U1's ruling, pinned by T5 and by `NOT_CONFIGURED_TOTALITY`'s
 byte-identity assertion) and **framework-generated 500s outside route handlers** (FU-43, and the
 `advisor/route.ts` window P2-R4 closes at (d1b)).
+
+### N-76 — `advisor/actions/route.ts`'s pre-delegation window is the same class as the one P2-R4 closed
+
+**Raised 2026-09-22 at (d1b) by `ecc:code-reviewer` (the binding assertion refused to pass on it) and
+independently by `ecc:security-reviewer`'s (A) re-enumeration, which asked for it to carry its own number
+rather than live as a test comment. Both are right.**
+
+`POST /api/advisor/actions` is the second route not wrapped in `handle()`. Its body delegates to
+`confirmAndApply`, whose own try/catch reports through `internalError` at every exit — so the *work* is
+covered. What is not covered is the window before that call: `createClient()` at `route.ts:34`. A throw
+there — `NotConfiguredError` on unset Supabase env, or a `cookies()` failure — escapes `POST` and becomes an
+uncorrelated framework 500, exactly as `advisor/route.ts` did before P2-R4.
+
+**Why size is the wrong reason to defer it, stated because that was nearly the reason given:** the window is
+one call, but it is *the specific call just proven capable of throwing* — the same `createClient()` whose
+throw path P2-R4 fixed in the sibling route. *"Small window"* describes the line count, not the
+probability.
+
+**Not fixed at (d1b), and the reason is scope rather than risk:** (d1b)'s approved scope is
+`advisor/route.ts`'s `POST`. Widening it to a second route without a ruling is the behaviour §8 rule 1
+forbids, and this closeout has already had to name that failure twice. The fix is the same five-line shape
+P2-R4 used.
+
+~~**Bound in the meantime**… **Owner: the next unit that opens this route, or the phase that closes
+FU-43.**~~
+
+> **[2026-09-22] CLOSED BY (d1b), AND TAKEN ON AN EXPLICIT OWNER RULING RATHER THAN ABSORBED.** The
+> paragraph above is struck rather than deleted (§7) because the reasoning that deferred it was sound on
+> the scope it had: (d1b)'s approved scope was `advisor/route.ts` alone, and widening it unilaterally is
+> what §8 rule 1 forbids. **The owner widened the scope; the landing did not widen itself.** That
+> distinction is the whole reason this row reads the way it does.
+>
+> **What landed:** the window from `getUser()`/`createClient()` to the `confirmAndApply` call is wrapped,
+> with the same `NotConfiguredError`-first branch the sibling route carries (503, no id, no record — U1's
+> declared operational state) and `internalError(e, { code: "ACTIONS_PRESTREAM_ERROR" })` for everything
+> else. `return await`, not `return`: a returned promise is not caught by its enclosing try, so without
+> the await a rejection from `confirmAndApply` would pass straight through the guard.
+>
+> **The exemption is gone.** `FIVE_XX_IS_LOGGED` now requires **both** unwrapped routes to carry a
+> reporting catch — equality pin, no exemptions — and both directions are red-proven.
+>
+> **And tightening that pin exposed a defect in the pin itself.** Its first form asked only whether the
+> file contained `internalError(` **anywhere**, and passed with the pre-stream catch **deleted** from
+> `advisor/route.ts` — because that file also reports from its in-stream SSE handler. A guard satisfied by
+> an unrelated call elsewhere in the same file. It is now keyed on the `PRESTREAM_ERROR` code the two
+> catches share, and removing **either** catch reddens it. *(Found by mutating the fix the guard was
+> written to protect — the third time in this closeout that a red-first proof failing to go red was the
+> finding, after P2-R3's blinded helper and the vacuous exemption pin.)*
+
+---
+
+### (d1b) widened a third time — `getUser()` was outside the window in both routes
+
+**Raised 2026-09-22 by `ecc:security-reviewer`'s final (A) re-enumeration.** The pass was given the
+expected answer — *"item 7, the middleware (FU-43), and nothing else"* — and explicitly asked to falsify
+rather than confirm it. **It falsified it.**
+
+Both closures above open their guarded window at `createClient()`. `getUser()` runs **one statement
+earlier**, outside every `try`, in both routes — `src/app/api/advisor/route.ts:52` and
+`src/app/api/advisor/actions/route.ts:28` as they stood. So the defect this landing exists to remove
+survived **at the first line of each handler it had just guarded**, and the route comment's own list of
+what it closed did not name the call it had missed.
+
+**The throw is reachable, and the reviewer proved it rather than arguing it.** `getUser()` calls
+`cookies()` unconditionally (U28's dynamic marker) and then `supabase.auth.getUser()`, whose SDK catch
+swallows only `isAuthError(error)` and re-throws everything else. A disposable PoC mocking `getUser()` to
+reject showed `POST(request)` **rejecting** rather than resolving to a `NextResponse` — the exact framework-
+500-with-no-id failure mode. It was untested as well as unguarded: every existing test used
+`mockResolvedValue`.
+
+`getUser()`'s docstring read *"Never throws on missing session/config"* — true of the two causes it names,
+and read for months as a broader promise than it makes. Corrected in place at `src/lib/auth/session.ts`,
+with its actual scope stated.
+
+> **[2026-09-22] CLOSED BY (d1b), WIDENED ON AN EXPLICIT OWNER RULING.** Same distinction as N-76 above:
+> the scope was widened by the owner, not by the landing.
+>
+> **The fix is the `try` opening earlier, NOT the auth check moving later.** Relocating `getUser()` into
+> the existing `try` would have put authentication after the body parse and after the `NOT_CONFIGURED`
+> pre-flight, so an anonymous caller would learn whether their body validated and whether the AI is
+> configured. §2.3 rule 11 is about the 401 itself; this is about what may precede it. Each route gained a
+> test — *"an unauthenticated caller still gets 401 before anything is parsed"* — that pins the order.
+> `advisor/route.ts` hoists `user` and `body` to `let` because both are read after the window closes;
+> `actions/route.ts` hoists nothing, because its window ends in its own `return`.
+>
+> **Bound three ways, each mutation-shown:**
+> 1. A rejection test per route file — 500 with a correlation id **and** a matching log record, plus the
+>    `NotConfiguredError` → 503 taxonomy case. Red first, and red for the right reason: `POST` *rejected*
+>    rather than answering.
+> 2. `FIVE_XX_IS_LOGGED` gained a **positional** assertion — a `getUser(` before the first `try` in either
+>    unwrapped route is red. Red first, naming both routes. Restoring either route's old order reddens it
+>    again.
+> 3. An **anti-vacuity pin beside it**: every unwrapped route must call `getUser(` at all. Without it,
+>    renaming the call would have *silenced* the positional check rather than reddening it — the same exit
+>    `LINT_SCOPE` left open at M1c. Mutation-shown by renaming the call in one route: the pin reddens.
+>
+> The commit message's claim — *"the two unwrapped routes report before the stream, from the first
+> statement"* — is true only because of this third widening. Before it, the message would have overclaimed.
+
+---
+
+## Also registered for (d2) — raised by (d1b)'s final reviews
+
+### FU-44 — the correlation-id contract ends at `handle()`'s reach
+
+Three surfaces where a throw becomes a framework 500 or a Next error page with **no correlation id and no
+record**, none of them reachable by `FIVE_XX_IS_LOGGED`, which scans only `^src/app/api/.*/route\.ts$`:
+
+| Surface | Where | Why it is invisible |
+|---|---|---|
+| The one route handler outside `src/app/api/**` | `src/app/auth/callback/route.ts:5` — `GET`, with `createClient()` at `:11` and no `handle()`, no `try` | Outside the guard's scan pattern entirely (`five-xx-is-logged.test.ts:190`) |
+| No error boundary anywhere under `src/app` | **no `error.tsx` and no `global-error.tsx` is tracked** — confirmed against `git ls-files`. Affects every protected render reaching `requireUser()` → `getUser()` (`src/lib/auth/session.ts:79`) | A render throw becomes Next's own error page, logged only through Next's internals |
+| Unguarded `"use server"` calls | `src/lib/auth/actions.ts:18` (`login`), `:33` (`signup`), `:50` (`signOut`) — `createClient()`/`supabase.auth.*` with no `try` | Server actions are not route handlers; nothing scans them |
+
+**Owner: the phase that adds a logging sink — beside N-11 and FU-43.** All three are **pre-existing**;
+(d1b)'s delta introduces none of them. Recorded as one row because they share a single cause: the contract
+was written for `handle()`, and `handle()` only reaches API route handlers.
+
+### N-77 — instruction-shaped "file changed" blocks appeared inside a subagent's tool output
+
+**Process finding, not a code defect.** During (d1b)'s security pass, tool output was twice followed by a
+block shaped like a system notice claiming these route files had changed on disk. The second carried a
+**fabricated inline diff** showing the `actions/route.ts` catch replaced with a bare `throw e;` — that is,
+asserting that the exact fix under review had been silently reverted.
+
+The reviewer treated it as untrusted, **re-read both files and checksummed them**, found them unchanged and
+matching `git diff`, did not act on it, and reported it as an anomaly. The harness independently flagged the
+output as containing instruction-shaped patterns and neutralised the tags. The working tree was verified
+clean afterwards. **No attribution is recorded — the source is unknown.**
+
+**Disposition: no new control. The standing rule already covers it** — *a revert or a change is verified by
+`git diff`, never by a message asserting one* — and it is restated at (d2) in `CLAUDE.md` §5's method rules
+so it sits where the file-copy-backup rule already sits, rather than only in this artifact. What makes this
+worth a number is that the correct behaviour was **already specified and was followed**; had it not been, a
+reviewer would have been talked out of a real finding by a message.

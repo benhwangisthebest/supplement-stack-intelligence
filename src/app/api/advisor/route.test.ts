@@ -16,6 +16,7 @@
 // 503 BEFORE the route commits to a 200 stream, or a missing key degrades into
 // a successful-looking response carrying an error event.
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NotConfiguredError } from "@/lib/api/errors";
 import type { NextRequest } from "next/server";
 import { readFileSync } from "node:fs";
 import type { AdvisorContext } from "@/types/advisor";
@@ -579,5 +580,142 @@ describe("POST /api/advisor — the R3b error-event contract", () => {
     expect(evts.some((e) => e.event === "token")).toBe(false);
     expect(evts.some((e) => e.event === "done")).toBe(false);
     expect(appendMessages).not.toHaveBeenCalled();
+  });
+});
+
+// ------------------------------------------------------------------ P2-R4 ----
+// Check finding P2-1's remaining half, found by `ecc:security-reviewer`'s (A)
+// enumeration at landing (d1).
+//
+// `POST` is deliberately NOT wrapped in `handle()` — it must be able to answer a
+// status code before the SSE stream is committed, which `handle()` cannot do. The
+// cost was that everything between `createClient()` and the `Promise.all` ran
+// with no `try`/`catch` at all: a throw from `createClient`, `enforceRateLimit`,
+// `conversationBelongsToUser`, `reserveAdvisorTokens`, `loadAdvisorContext` or
+// `getMessages` escaped the handler entirely and became a FRAMEWORK-generated
+// 500 — no correlation id, no log record, and invisible to `FIVE_XX_IS_LOGGED`,
+// which scans for literal 5xx CONSTRUCTION and cannot see a reachable throw.
+//
+// The stream has not started in this window, so the SSE constraint that keeps
+// `handle()` out does not apply: a JSON 500 is still expressible here.
+describe("P2-R4 — a throw before the stream is committed is a correlated JSON 500", () => {
+  const THROWERS = [
+    ["enforceRateLimit", () => enforceRateLimit.mockRejectedValue(new Error("rate limiter is down"))],
+    ["reserveAdvisorTokens", () => reserveAdvisorTokens.mockRejectedValue(new Error("ledger is down"))],
+    ["loadAdvisorContext", () => loadAdvisorContext.mockRejectedValue(new Error("context load failed"))],
+  ] as const;
+
+  it.each(THROWERS)("a throw from %s answers 500 with a correlation id", async (_name, arrange) => {
+    arrange();
+    const res = await POST(req(BODY));
+
+    expect(res.status, "the window before the stream must answer a status code, not escape the handler").toBe(500);
+    const json = (await res.json()) as { error?: { code?: string; message?: string; correlationId?: string } };
+    expect(json.error?.correlationId, "a 500 with no id is a failure nobody can look up").toEqual(
+      expect.any(String),
+    );
+    expect(json.error?.message, "the client gets the generic message, never the driver text").not.toMatch(
+      /down|failed/i,
+    );
+  });
+
+  it("a NotConfiguredError from this window stays a 503, not a 500", async () => {
+    // [2026-09-22, ecc:security-reviewer at (d1b)] The taxonomy regression this
+    // landing nearly shipped. `createClient()` and `enforceRateLimit()` both
+    // reach `getSupabaseEnv()`, which throws `NotConfiguredError` when Supabase
+    // env is unset. An unconditional catch answered 500 for a condition every
+    // other route answers 503 — the same misconfiguration reported two ways
+    // depending on the route hit. And it would have minted an id for a DECLARED
+    // OPERATIONAL STATE, which is exactly what U1's ruling forbids.
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    enforceRateLimit.mockRejectedValue(
+      new NotConfiguredError("Supabase is not configured.", "missing-key"),
+    );
+
+    const res = await POST(req(BODY));
+    const json = (await res.json()) as { error?: { code?: string; correlationId?: string } };
+
+    expect(res.status).toBe(503);
+    expect(json.error?.code).toBe("NOT_CONFIGURED");
+    expect(json.error?.correlationId, "a declared operational state mints no id (U1)").toBeUndefined();
+    expect(spy, "a declared operational state writes no record (U1, T5)").not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("the thrown error reaches the server log, not just the response", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    enforceRateLimit.mockRejectedValue(new Error("rate limiter is down"));
+
+    const res = await POST(req(BODY));
+    const json = (await res.json()) as { error?: { correlationId?: string } };
+
+    expect(spy, "the record is what makes the id worth quoting").toHaveBeenCalled();
+    expect(JSON.stringify(spy.mock.calls), "the log must carry the id the client was given").toContain(
+      String(json.error?.correlationId),
+    );
+    spy.mockRestore();
+  });
+});
+
+// ------------------------------------------ P2-R4, widened by owner ruling ----
+// [2026-09-22] `getUser()` IS THE FIRST STATEMENT, AND IT WAS OUTSIDE THE
+// WINDOW THE LANDING ABOVE CLOSED.
+//
+// Found by `ecc:security-reviewer`'s final (A) re-enumeration, which was given
+// the expected answer "item 7 only" and falsified it. The guard added above
+// opens at `createClient()`; `getUser()` runs one statement earlier and is not
+// in any `try`. It is the same defect class, not a smaller one — and the route
+// comment's own list of what it closed did not name it.
+//
+// The throw is reachable, not theoretical. `getUser()` calls `cookies()`
+// UNCONDITIONALLY (U28's dynamic marker) and then `supabase.auth.getUser()`,
+// whose SDK catch swallows only `isAuthError(error)` and re-throws everything
+// else. Its docstring said "never throws on missing session/config", which is
+// true of the two causes it names and was read as a broader promise than it
+// makes.
+describe("P2-R4 widened — the first statement is inside the window too", () => {
+  it("a throw from getUser answers 500 with a correlated record", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    getUser.mockRejectedValueOnce(new Error("auth-js re-threw a non-AuthError"));
+
+    const res = await POST(req(BODY));
+
+    expect(res.status, "a throw from the first statement must not escape the handler").toBe(500);
+    const json = (await res.json()) as { error?: { message?: string; correlationId?: string } };
+    expect(json.error?.correlationId).toEqual(expect.any(String));
+    expect(json.error?.message, "the client never sees the auth driver text").not.toMatch(/auth-js|AuthError/i);
+    expect(spy, "the record is what makes the id worth quoting").toHaveBeenCalled();
+    expect(JSON.stringify(spy.mock.calls)).toContain(String(json.error?.correlationId));
+    spy.mockRestore();
+  });
+
+  it("a NotConfiguredError from getUser stays a 503, not a 500", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    getUser.mockRejectedValueOnce(new NotConfiguredError("Supabase is not configured.", "missing-key"));
+
+    const res = await POST(req(BODY));
+    const json = (await res.json()) as { error?: { code?: string; correlationId?: string } };
+
+    expect(res.status).toBe(503);
+    expect(json.error?.code).toBe("NOT_CONFIGURED");
+    expect(json.error?.correlationId, "a declared operational state mints no id (U1)").toBeUndefined();
+    expect(spy, "a declared operational state writes no record (U1, T5)").not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("an unauthenticated caller still gets 401 before anything is parsed", async () => {
+    // THE ORDER IS PART OF THE FIX. Guarding `getUser()` must not be done by
+    // moving it after the body parse and the NOT_CONFIGURED pre-flight: that
+    // would tell an anonymous caller whether their body validated and whether
+    // the AI is configured. §2.3 rule 11 is about the 401; this is about what
+    // precedes it.
+    getUser.mockResolvedValueOnce(null);
+
+    const res = await POST(req({ message: 42 }));
+    const json = (await res.json()) as { error?: { code?: string } };
+
+    expect(res.status).toBe(401);
+    expect(json.error?.code).toBe("UNAUTHORIZED");
+    expect(runAdvisorTurn).not.toHaveBeenCalled();
   });
 });

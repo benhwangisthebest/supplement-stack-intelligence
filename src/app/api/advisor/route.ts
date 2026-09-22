@@ -7,6 +7,7 @@
 // ungrounded token (the invariant is layered AROUND streaming, never through it).
 // Plan SC-1/2/3/4/6/7.
 import type { NextRequest } from "next/server";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { getUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { runAdvisorTurn } from "@/lib/advisor/agent";
@@ -23,11 +24,12 @@ import {
 } from "@/lib/advisor/repo";
 import { advisorRequestSchema } from "@/lib/advisor/schema";
 import { enforceRateLimit } from "@/lib/api/rate-limit-guard";
-import { AI_SERVICE_NOT_CONFIGURED } from "@/lib/api/errors";
+import { AI_SERVICE_NOT_CONFIGURED, NotConfiguredError } from "@/lib/api/errors";
 import { resolveAiConfig } from "@/lib/openai/config";
 import {
   INTERNAL_ERROR_MESSAGE,
   fail,
+  internalError,
   reportInternalError,
   unauthorized,
   validationError,
@@ -47,113 +49,178 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
-  const user = await getUser();
-  if (!user) return unauthorized();
-
-  let body;
+  // [2026-09-22, P2-R4 / N-76 / Check finding P2-1] EVERYTHING BEFORE THE
+  // STREAM IS ONE GUARDED WINDOW, and it is guarded here rather than by
+  // `handle()` for the reason this route is not wrapped in the first place:
+  // `handle()` cannot answer before committing, and everything below must still
+  // be able to return a status code.
+  //
+  // What this closes: `ecc:security-reviewer`'s (A) enumeration found that a
+  // throw from any of `createClient`, `enforceRateLimit`,
+  // `conversationBelongsToUser`, `reserveAdvisorTokens`, `loadAdvisorContext` or
+  // `getMessages` escaped `POST` entirely and became a FRAMEWORK-generated 500 —
+  // no correlation id, no log record. `FIVE_XX_IS_LOGGED` could not see it: that
+  // guard scans for literal 5xx CONSTRUCTION, and this was a reachable throw.
+  //
+  // [2026-09-22, WIDENED ON OWNER RULING] The window first opened at
+  // `createClient()`, and `getUser()` runs one statement earlier — so the defect
+  // survived at the handler's FIRST LINE, in the landing that closed it. The
+  // throw is reachable: `getUser()` calls `cookies()` unconditionally, then
+  // `supabase.auth.getUser()`, whose SDK catch swallows only `isAuthError` and
+  // re-throws everything else. Found by the (A) re-enumeration being handed its
+  // expected answer and falsifying it.
+  //
+  // ORDER IS PRESERVED DELIBERATELY. The fix is the `try` opening earlier, NOT
+  // the auth check moving later: after the body parse, an anonymous caller
+  // would learn whether their body validated and whether the AI is configured.
+  // Bound by "an unauthenticated caller still gets 401 before anything is
+  // parsed" in `route.test.ts`, and positionally by `FIVE_XX_IS_LOGGED`.
+  //
+  // The stream has not started yet, so a JSON 500 is expressible and an SSE
+  // error event is not. Once `start()` runs, the existing
+  // `reportInternalError` + `error` event path owns the failure instead.
+  let user: User;
+  let body: ReturnType<typeof advisorRequestSchema.parse>;
+  let supabase: SupabaseClient;
+  let limited: Response | null;
+  let budgetRemaining: number;
+  let ctx: Awaited<ReturnType<typeof loadAdvisorContext>>;
+  let history: AdapterMessage[];
   try {
-    body = advisorRequestSchema.parse(await request.json());
-  } catch (err) {
-    if (err instanceof ZodError) return validationError(err);
-    return fail("BAD_REQUEST", "Invalid request body.", 400);
+    const session = await getUser();
+    if (!session) return unauthorized();
+    user = session;
+
+    try {
+      body = advisorRequestSchema.parse(await request.json());
+    } catch (err) {
+      if (err instanceof ZodError) return validationError(err);
+      return fail("BAD_REQUEST", "Invalid request body.", 400);
+    }
+
+    // Pre-flight the live-LLM configuration BEFORE committing to a 200 SSE
+    // response, so a missing setting still returns a proper 503 (preserves the v7
+    // contract). The route always uses the real adapter, which reads these env
+    // vars. Phase 2 U25: all THREE are required — a base URL without a key cannot
+    // authenticate, a key without a base URL has nowhere to go, and a model id is
+    // a property of the gateway INSTANCE with no portable default (finding N-21;
+    // the first live probe 400'd on the id this code used to fall back to). The
+    // client text is unchanged: `AI_SERVICE_NOT_CONFIGURED` names no environment
+    // variable, so a provider swap moves no response byte on this path.
+    //
+    // Checked here as well as in `resolveModel` on purpose, and the duplication
+    // is the point: this pre-flight runs BEFORE the 200 SSE response is committed,
+    // so an unset id is a 503 status rather than an `error` event inside a stream
+    // that already claimed success.
+    //
+    // [U32, N-63] The base URL must also be one this deployment may dial. The
+    // pin is enforced in the client too, but a throw from there would arrive
+    // after this handler had already committed to a 200 SSE stream — the exact
+    // failure mode the paragraph above describes for a missing key. Same
+    // reasoning, one more condition.
+    //
+    // [U33] The four conditions now live in `resolveAiConfig`, which RETURNS a
+    // reason instead of throwing one — and returning is what makes this call
+    // site possible at all: `POST` is not wrapped in `handle()`, so a throw here
+    // would escape to Next.js rather than become a 503.
+    //
+    // THIS CALL IS NOT REDUNDANT WITH THE ADAPTER'S, AND THE SHARED RESOLVER
+    // MAKES IT LOOK AS THOUGH IT WERE. It is the same question asked at a
+    // different MOMENT: here, before the 200 SSE response is committed; there,
+    // once the stream is already open. Deleting this one does not change what is
+    // decided, it changes when — turning an operational 503 into an `error`
+    // event on a stream that already claimed success. The test at
+    // `route.test.ts` — "returns 503 NOT_CONFIGURED before committing to a
+    // stream" — is what holds that, by asserting the Content-Type is not
+    // `text/event-stream` and that the turn never ran.
+    //
+    // The reason is deliberately DISCARDED here. Nothing about which setting is
+    // unset may reach a client (§2.3 rule 13), and this site has no error object
+    // to carry it internally either.
+    if (!resolveAiConfig().ok) {
+      return fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503);
+    }
+
+    supabase = await createClient();
+
+    // Phase 2 U5 — §4 rule 9's second half. Counted BEFORE the reservation and
+    // long before the model call: a refused request must cost nothing, so the
+    // cheapest check goes first. Also before the SSE stream is opened, so the
+    // refusal can still be a status code rather than an error event.
+    limited = await enforceRateLimit("advisor", user.id, request);
+    if (limited) return limited;
+
+    // [U29, N-48] OWNERSHIP BEFORE SPEND. Until this unit the route accepted a
+    // caller-supplied `conversationId`, reserved budget, loaded that
+    // conversation's messages and called a paid model — and never asked whose
+    // conversation it was. RLS already isolates tenants at the database
+    // (§2.3 rule 12); what RLS does not do is stop the spend, because the
+    // reservation and the model call happen before any row is read.
+    //
+    // AWAITED, NOT FOLDED INTO THE `Promise.all` BELOW, and that is the whole
+    // control: run concurrently with `reserveAdvisorTokens` and the reservation
+    // is already taken by the time the check fails. Costs one round trip per
+    // turn with a conversation id; the alternative costs a model call.
+    //
+    // A foreign id and a nonexistent id answer THE SAME BYTES — one predicate,
+    // one branch, one literal. A response that told them apart would be an
+    // existence oracle for other users' conversation ids.
+    if (
+      body.conversationId &&
+      !(await conversationBelongsToUser(supabase, user.id, body.conversationId))
+    ) {
+      return notFound("Conversation");
+    }
+
+    // Phase 2 U4: RESERVE before spending, never read-then-write.
+    //
+    // `reserveAdvisorTokens` takes this turn's upper bound off the ledger in one
+    // atomic statement and returns what it granted — 0 when the day's budget
+    // cannot cover another turn. Passing that straight through as
+    // `budgetRemaining` preserves the existing contract exactly: the loop's SC-8
+    // guard already refuses on `<= 0` with REFUSAL_BUDGET, so an exhausted budget
+    // produces the same SSE bytes it did before this change.
+    //
+    // It is no longer strictly "read-only", so the parallel load now mixes one
+    // write with two reads. That is deliberate: the reservation must happen
+    // before the model call, and doing it here keeps it on the same await.
+    [budgetRemaining, ctx, history] = await Promise.all([
+      reserveAdvisorTokens(supabase),
+      loadAdvisorContext(supabase, user.id),
+      body.conversationId
+        ? getMessages(supabase, body.conversationId).then(
+            (msgs): AdapterMessage[] =>
+              msgs.map((m) => ({ role: m.role, content: m.content })),
+          )
+        : Promise.resolve([] as AdapterMessage[]),
+    ]);
+  } catch (e) {
+    // The one exit for this window.
+    //
+    // `NotConfiguredError` FIRST, and it is not a nicety. `createClient()` and
+    // `enforceRateLimit()` both reach `getSupabaseEnv()`, which throws this class
+    // when the Supabase env is unset. Every `handle()`-wrapped route answers that
+    // condition **503 NOT_CONFIGURED**; an unconditional catch here would answer
+    // **500** for the identical cause, so the same misconfiguration would be
+    // reported two different ways depending on which route the user happened to
+    // hit. Raised by `ecc:security-reviewer` at (d1b) as a taxonomy regression in
+    // this landing's own new code, and fixed rather than registered because the
+    // defect is three days old, not three months.
+    //
+    // It also keeps U1's ruling intact: `NOT_CONFIGURED` is a DECLARED
+    // OPERATIONAL STATE, so it must mint no id and write no record. Routing it
+    // through `internalError` would have done both.
+    if (e instanceof NotConfiguredError) {
+      return fail("NOT_CONFIGURED", e.publicMessage, 503);
+    }
+    // Everything else is an unexpected exception: `internalError` logs the REAL
+    // error and hands back only the generic message plus an opaque id
+    // (§2.3 rule 13). A code distinct from the in-stream `ADVISOR_ERROR` below,
+    // so a log grep can tell a pre-stream failure from one that happened after
+    // the response was committed — the two are already distinguishable by shape,
+    // but not by the field anyone greps first.
+    return internalError(e, { code: "ADVISOR_PRESTREAM_ERROR" });
   }
-
-  // Pre-flight the live-LLM configuration BEFORE committing to a 200 SSE
-  // response, so a missing setting still returns a proper 503 (preserves the v7
-  // contract). The route always uses the real adapter, which reads these env
-  // vars. Phase 2 U25: all THREE are required — a base URL without a key cannot
-  // authenticate, a key without a base URL has nowhere to go, and a model id is
-  // a property of the gateway INSTANCE with no portable default (finding N-21;
-  // the first live probe 400'd on the id this code used to fall back to). The
-  // client text is unchanged: `AI_SERVICE_NOT_CONFIGURED` names no environment
-  // variable, so a provider swap moves no response byte on this path.
-  //
-  // Checked here as well as in `resolveModel` on purpose, and the duplication
-  // is the point: this pre-flight runs BEFORE the 200 SSE response is committed,
-  // so an unset id is a 503 status rather than an `error` event inside a stream
-  // that already claimed success.
-  //
-  // [U32, N-63] The base URL must also be one this deployment may dial. The
-  // pin is enforced in the client too, but a throw from there would arrive
-  // after this handler had already committed to a 200 SSE stream — the exact
-  // failure mode the paragraph above describes for a missing key. Same
-  // reasoning, one more condition.
-  //
-  // [U33] The four conditions now live in `resolveAiConfig`, which RETURNS a
-  // reason instead of throwing one — and returning is what makes this call
-  // site possible at all: `POST` is not wrapped in `handle()`, so a throw here
-  // would escape to Next.js rather than become a 503.
-  //
-  // THIS CALL IS NOT REDUNDANT WITH THE ADAPTER'S, AND THE SHARED RESOLVER
-  // MAKES IT LOOK AS THOUGH IT WERE. It is the same question asked at a
-  // different MOMENT: here, before the 200 SSE response is committed; there,
-  // once the stream is already open. Deleting this one does not change what is
-  // decided, it changes when — turning an operational 503 into an `error`
-  // event on a stream that already claimed success. The test at
-  // `route.test.ts` — "returns 503 NOT_CONFIGURED before committing to a
-  // stream" — is what holds that, by asserting the Content-Type is not
-  // `text/event-stream` and that the turn never ran.
-  //
-  // The reason is deliberately DISCARDED here. Nothing about which setting is
-  // unset may reach a client (§2.3 rule 13), and this site has no error object
-  // to carry it internally either.
-  if (!resolveAiConfig().ok) {
-    return fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503);
-  }
-
-  const supabase = await createClient();
-
-  // Phase 2 U5 — §4 rule 9's second half. Counted BEFORE the reservation and
-  // long before the model call: a refused request must cost nothing, so the
-  // cheapest check goes first. Also before the SSE stream is opened, so the
-  // refusal can still be a status code rather than an error event.
-  const limited = await enforceRateLimit("advisor", user.id, request);
-  if (limited) return limited;
-
-  // [U29, N-48] OWNERSHIP BEFORE SPEND. Until this unit the route accepted a
-  // caller-supplied `conversationId`, reserved budget, loaded that
-  // conversation's messages and called a paid model — and never asked whose
-  // conversation it was. RLS already isolates tenants at the database
-  // (§2.3 rule 12); what RLS does not do is stop the spend, because the
-  // reservation and the model call happen before any row is read.
-  //
-  // AWAITED, NOT FOLDED INTO THE `Promise.all` BELOW, and that is the whole
-  // control: run concurrently with `reserveAdvisorTokens` and the reservation
-  // is already taken by the time the check fails. Costs one round trip per
-  // turn with a conversation id; the alternative costs a model call.
-  //
-  // A foreign id and a nonexistent id answer THE SAME BYTES — one predicate,
-  // one branch, one literal. A response that told them apart would be an
-  // existence oracle for other users' conversation ids.
-  if (
-    body.conversationId &&
-    !(await conversationBelongsToUser(supabase, user.id, body.conversationId))
-  ) {
-    return notFound("Conversation");
-  }
-
-  // Phase 2 U4: RESERVE before spending, never read-then-write.
-  //
-  // `reserveAdvisorTokens` takes this turn's upper bound off the ledger in one
-  // atomic statement and returns what it granted — 0 when the day's budget
-  // cannot cover another turn. Passing that straight through as
-  // `budgetRemaining` preserves the existing contract exactly: the loop's SC-8
-  // guard already refuses on `<= 0` with REFUSAL_BUDGET, so an exhausted budget
-  // produces the same SSE bytes it did before this change.
-  //
-  // It is no longer strictly "read-only", so the parallel load now mixes one
-  // write with two reads. That is deliberate: the reservation must happen
-  // before the model call, and doing it here keeps it on the same await.
-  const [budgetRemaining, ctx, history] = await Promise.all([
-    reserveAdvisorTokens(supabase),
-    loadAdvisorContext(supabase, user.id),
-    body.conversationId
-      ? getMessages(supabase, body.conversationId).then(
-          (msgs): AdapterMessage[] =>
-            msgs.map((m) => ({ role: m.role, content: m.content })),
-        )
-      : Promise.resolve([] as AdapterMessage[]),
-  ]);
 
   const message = body.message;
   const requestedConversationId = body.conversationId ?? null;

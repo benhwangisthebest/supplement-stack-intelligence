@@ -6,7 +6,25 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 /**
- * Returns the current user or null. Never throws on missing session/config.
+ * Returns the current user, or null when there is no session.
+ *
+ * IT CAN THROW, AND ITS SCOPE IS NARROWER THAN ITS NAME. This line used to read
+ * "never throws on missing session/config", which is true of those two causes
+ * and was read as a general promise. It is not one:
+ *
+ *   - `cookies()` below is called UNCONDITIONALLY (see the note beneath) and
+ *     throws outside a request scope — deliberately, as the correct failure
+ *     direction;
+ *   - `supabase.auth.getUser()`'s own catch swallows only `isAuthError(error)`.
+ *     Network and API failures are `AuthError` subclasses and come back as
+ *     `{ error }`; anything else is RE-THROWN and arrives here.
+ *
+ * [2026-09-22, P2-R4/N-76 widened] Both unwrapped API routes called this ahead
+ * of every `try`, so such a throw became a framework 500 with no correlation id
+ * and no record. `handle()`-wrapped routes were always covered because they
+ * call it inside the wrapper. Callers outside a guarded window are now a red
+ * build — see `FIVE_XX_IS_LOGGED`. FU-44 tracks the render and server-action
+ * callers, which have no such window to sit inside yet.
  *
  * ---------------------------------------------------------------------------
  * THE `cookies()` CALL BELOW IS LORE-BEARING. DO NOT "OPTIMISE" IT AWAY.

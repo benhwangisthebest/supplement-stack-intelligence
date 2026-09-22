@@ -31,6 +31,15 @@
 //   · Its structural half matches `NextResponse.json(`/`new Response(` with a
 //     numeric status literal. A status computed at runtime is invisible to it
 //     (N-14's class). The behavioural half is what actually binds the property.
+//   · IT SEES CONSTRUCTION, NOT REACHABILITY — and that limit has a name and a
+//     cost. `ecc:security-reviewer` enumerated the 5xx paths at (d1) and found
+//     two this guard structurally cannot see, because neither constructs a
+//     literal 5xx: an unguarded window in a route that is not wrapped in
+//     `handle()` (a throw escapes and Next.js generates the 500), and a throw in
+//     edge middleware. The first is closed by **P2-R4** and BOUND BELOW by
+//     `UNWRAPPED_ROUTES` — because a fix nothing asserts is a fix that lasts
+//     until the next refactor. The second is **FU-43**, owned by the phase that
+//     adds a logging sink, alongside N-11.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -166,6 +175,136 @@ describe("FIVE_XX_IS_LOGGED — every 5xx carries a correlated record", () => {
     const parsed = await body(res);
     expect(parsed.error.correlationId).toBe("supplied-id-0001");
     expect(logged.length, "fail() must not re-log an id its caller already logged").toBe(0);
+  });
+
+  it("every route handler is wrapped in handle(), or guards its own window — P2-R4", () => {
+    // REACHABILITY, not construction. A route not wrapped in `handle()` lets a
+    // throw escape into a framework-generated 500 with no id and no record, and
+    // the structural scan above cannot see it because nothing in the file
+    // constructs a 5xx.
+    //
+    // Two routes are deliberately unwrapped, each for a stated reason, and each
+    // must therefore carry its own catch. Pinned as an EQUALITY so a third
+    // cannot appear silently: a new unwrapped route is a red build and a written
+    // reason, not a quiet regression.
+    const routes = SOURCE.filter((f) => /^src\/app\/api\/.*\/route\.ts$/.test(f));
+    expect(routes.length, "found no API routes to check").toBeGreaterThan(20);
+
+    const unwrapped = routes.filter((f) => {
+      const text = readFileSync(path.join(ROOT, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+      return !/\bhandle[(<]/.test(text);
+    });
+
+    expect(
+      unwrapped.sort(),
+      "these API routes are not wrapped in handle(). Each must guard its own\n" +
+        "pre-response window with a try/catch that reports through\n" +
+        "internalError/reportInternalError, or a throw becomes a framework 500\n" +
+        "with no correlation id and no log record — invisible to the scan above:\n  " +
+        unwrapped.join("\n  "),
+    ).toEqual(["src/app/api/advisor/actions/route.ts", "src/app/api/advisor/route.ts"]);
+
+    // BOTH unwrapped routes must carry a reporting catch. No exemptions.
+    //
+    // [2026-09-22, N-76] This block previously exempted
+    // `advisor/actions/route.ts` on the ground that it delegates to
+    // `confirmAndApply`, which reports its own failures. True of the WORK and
+    // false of the WINDOW before it: a throw from `createClient()` escaped and
+    // became an uncorrelated framework 500. The exemption was removed by owner
+    // ruling in the same landing that closed the gap, so the pin now says what a
+    // reader would assume it said.
+    //
+    // A literal check, deliberately: proving each catch is REACHED is what the
+    // route tests do (P2-R4's cases in advisor/route.test.ts, N-76's in
+    // actions/route.test.ts). This stops one being deleted.
+    // KEYED ON THE PRE-STREAM CODE, not on "the file reports somewhere".
+    //
+    // [2026-09-22] The first form of this check asked only whether the file
+    // contained `internalError(` or `reportInternalError(` anywhere. It passed
+    // with the pre-stream catch DELETED from `advisor/route.ts`, because that
+    // file also reports from its in-stream SSE handler — a guard satisfied by an
+    // unrelated call elsewhere in the same file. Found by mutating the fix it
+    // was written to protect, which is the only way this class is ever found.
+    //
+    // The two pre-stream catches share a naming convention ending
+    // `PRESTREAM_ERROR`; keying on it makes the check specific to the window
+    // being guarded. Brittle by design: renaming the code is a deliberate act
+    // that should redden and be re-read, not a silent one.
+    const unreported = unwrapped.filter((f) => {
+      const text = readFileSync(path.join(ROOT, f), "utf8");
+      return !(
+        /catch\s*\(/.test(text) &&
+        /internalError\(\s*e\s*,\s*\{\s*code:\s*"[A-Z_]*PRESTREAM_ERROR"/.test(text)
+      );
+    });
+    expect(
+      unreported,
+      "these routes are unwrapped AND do not report a caught throw, so a failure in\n" +
+        "them becomes a framework 500 with no correlation id and no log record:\n  " +
+        unreported.join("\n  "),
+    ).toEqual([]);
+
+    // THE WINDOW MUST OPEN AT THE FIRST STATEMENT, NOT THE SECOND.
+    //
+    // [2026-09-22, widened on owner ruling] The first form of this landing
+    // opened each route's guarded window at `createClient()`. `getUser()` runs
+    // one statement earlier, outside every `try` — so the very defect being
+    // closed survived in the same handler, at its first line. Found by
+    // `ecc:security-reviewer`'s final (A) re-enumeration, which was handed the
+    // expected answer and falsified it.
+    //
+    // Positional, because the defect was positional: a route may call
+    // `getUser()` wherever it likes, but not before it has somewhere for a
+    // throw to land.
+    // STATED LIMITATION (`ecc:code-reviewer`, (d1b)): this strips comments with
+    // two regexes and is NOT lexer-aware. A `//` inside a string or template
+    // literal — a URL, say — would blind the rest of that line, hiding a real
+    // `try {` or `getUser(` from the scan. Neither scanned file contains one
+    // today, checked; it is recorded because a guard's blind spot belongs beside
+    // the guard, not in a review nobody reads again. An AST scan is the fix if
+    // this ever governs more than two hand-read files — the same trade U33's
+    // `readsIdentifier` eventually had to make, for the same reason.
+    const codeOf = (f: string) =>
+      readFileSync(path.join(ROOT, f), "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, " ")
+        .replace(/\/\/[^\n]*/g, " ");
+
+    // ANTI-VACUITY FIRST. The positional check below is a no-op for a route that
+    // does not call `getUser` at all, so a rename would silence it rather than
+    // redden it. Pinning that every unwrapped route authenticates removes that
+    // exit — and is §2.3 rule 11 for the two routes `handle()` does not cover.
+    expect(
+      unwrapped.filter((f) => /\bgetUser\s*\(/.test(codeOf(f))),
+      "an unwrapped route stopped calling getUser(), which both drops §2.3 rule 11\n" +
+        "and makes the position check below pass by matching nothing",
+    ).toEqual(unwrapped);
+
+    const authOutsideWindow = unwrapped.filter((f) => {
+      const text = codeOf(f);
+      const firstTry = text.search(/\btry\s*\{/);
+      const firstAuth = text.search(/\bgetUser\s*\(/);
+      return firstAuth >= 0 && (firstTry < 0 || firstAuth < firstTry);
+    });
+    expect(
+      authOutsideWindow,
+      "these unwrapped routes call getUser() before opening any try, so a throw from\n" +
+        "it — cookies() outside a request scope, or any non-AuthError the SDK re-throws —\n" +
+        "escapes as a framework 500 with no correlation id and no log record, exactly as\n" +
+        "the rest of the pre-response window did before this landing:\n  " +
+        authOutsideWindow.join("\n  "),
+    ).toEqual([]);
+
+    // Each must also answer a NotConfiguredError as the declared operational
+    // state it is, rather than collapsing it into a generic 500 — the taxonomy
+    // regression `ecc:security-reviewer` caught in this landing's own new code.
+    for (const f of unwrapped) {
+      const text = readFileSync(path.join(ROOT, f), "utf8");
+      expect(
+        /instanceof NotConfiguredError/.test(text),
+        `${f} no longer special-cases NotConfiguredError, so unset Supabase env answers\n` +
+          "500 here and 503 everywhere else, and mints an id U1's ruling forbids.",
+      ).toBe(true);
+    }
   });
 
   it("no 5xx response is constructed outside fail() — inventory non-empty and pinned", () => {
