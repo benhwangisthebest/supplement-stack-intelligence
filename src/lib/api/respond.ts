@@ -31,6 +31,53 @@ export function ok<T>(data: T, status = 200): NextResponse<ApiEnvelope<T>> {
   return NextResponse.json({ data, error: null }, { status });
 }
 
+/** The threshold is the criterion's own word, "5xx". 4xx is the caller's input. */
+const INTERNAL_FAILURE_STATUS = 500;
+
+/**
+ * 5xx CODES THAT ARE A KNOWN OPERATIONAL STATE, NOT AN INTERNAL FAILURE.
+ *
+ * Phase 2 **U1** decided this deliberately and wrote the reason down:
+ * *"A configuration gap is a known operational state, not an unexpected
+ * exception: no id is minted and nothing is written to the error log."*
+ * It is pinned in two places — `respond.test.ts`'s **T5**, and U33's
+ * `NOT_CONFIGURED_TOTALITY` assertion that the 503 body is **byte-identical**
+ * across every AI reason, which a per-request id would break.
+ *
+ * P2-R1 therefore logs every 5xx **except** these, rather than overriding a
+ * reasoned decision to satisfy a criterion's literal wording. The exemption is
+ * ONE central set with a written reason — not an opt-out each call site can
+ * reach for, which is the arrangement P2-R1 exists to remove.
+ *
+ * `FIVE_XX_IS_LOGGED` pins THIS EXPORTED SET — it imports the binding rather than
+ * re-typing the literal, because a test that re-types what it checks is checking
+ * itself. (`ecc:code-reviewer` proved the re-typed form vacuous at (d1): adding a
+ * second, unused entry here left the guard 7/7 green.)
+ *
+ * WHAT THE PIN STILL DOES NOT CATCH, stated rather than implied: it guards
+ * ADDING a code, not REUSING this one. A future call site passing
+ * `"NOT_CONFIGURED"` for an unrelated internal failure would dodge the log and no
+ * guard here would see it. Not attacker-reachable — `code` is a literal at every
+ * call site — but it is a review risk, and `NOT_CONFIGURED_TOTALITY`'s "one class
+ * owns the 503" is what actually holds the line.
+ */
+export const DECLARED_OPERATIONAL_STATES: ReadonlySet<string> = new Set(["NOT_CONFIGURED"]);
+
+/**
+ * Marks a 5xx that was DECLARED by a call site rather than thrown.
+ *
+ * The three sites P2-R1 fixes answer a known operational state — a provider is
+ * unconfigured, an extraction failed — so there is no exception to hand the log.
+ * A purpose-built marker says that in the record, instead of leaving a reader of
+ * `logInternalError`'s output to infer why the usual exception fields are absent.
+ */
+class DeclaredFailure extends Error {
+  constructor(code: string, status: number) {
+    super(`declared ${status} (${code}) — no exception; see the responding call site`);
+    this.name = "DeclaredFailure";
+  }
+}
+
 export function fail(
   code: string,
   message: string,
@@ -38,8 +85,22 @@ export function fail(
   details?: unknown,
   correlationId?: string,
 ): NextResponse<ApiEnvelope<never>> {
+  // P2-R1 / Check finding P2-1. Logging lives HERE, not at the three call sites
+  // the Check found unlogged, because three sites are three things to remember
+  // and this is one thing that cannot be forgotten — including by the fourth
+  // site nobody has written yet (§3 rule 5's ceiling).
+  //
+  // An id the CALLER supplied is passed through untouched and NOT re-logged:
+  // `internalError` already logged it, and logging again would write two records
+  // under one id, which is worse than one. That asymmetry is the whole rule.
+  const id =
+    correlationId ??
+    (status >= INTERNAL_FAILURE_STATUS && !DECLARED_OPERATIONAL_STATES.has(code)
+      ? reportInternalError(new DeclaredFailure(code, status), code)
+      : undefined);
+
   return NextResponse.json(
-    { data: null, error: { code, message, details, correlationId } },
+    { data: null, error: { code, message, details, correlationId: id } },
     { status },
   );
 }

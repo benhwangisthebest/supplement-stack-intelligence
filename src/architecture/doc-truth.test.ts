@@ -113,6 +113,29 @@ export function testIdsIn(source: string): string[] {
 }
 
 /**
+ * NAMED-GUARD TOKENS — the convention §4's table uses for derived-set guards.
+ *
+ * P2-R2 / Check finding **P2-4**. `testIdsIn` matches only `B<n>` ids, so rows 5,
+ * 7 and 9 — which cite `DOMAIN_IS_PURE`, `CLIENT_PROPS`, `PAID_API_BUDGET` — were
+ * **never checked against anything**. The certifier proved it (**M-G**): renaming
+ * row 9's `PAID_API_BUDGET` to a fictional token left all 21 tests green, so C7
+ * was ticked on a justification that did not establish it.
+ *
+ * RESOLVED AGAINST A TEST TITLE **OR** A DECLARED IDENTIFIER, and the disjunction
+ * is not laziness — it is what the documentation actually needs. Measured before
+ * building: row 9 also cites `PAID_PACKAGES`, which is a `const` at
+ * `boundaries.test.ts:923` and **not** a test title
+ * (`grep -c 'it("PAID_PACKAGES' → 0`). It is the marker set the row describes, and
+ * saying so is true and useful. A rule demanding every cited token be a test
+ * title would force the docs to get worse so this guard could be simpler.
+ */
+export function guardTokensIn(source: string): string[] {
+  const titles = [...source.matchAll(/it\(\s*"([A-Z][A-Z0-9_]{3,}):/g)].map((m) => m[1]);
+  const declared = [...source.matchAll(/(?:^|\n)\s*(?:export\s+)?(?:const|let|function|class|type|interface)\s+([A-Z][A-Z0-9_]{3,})\b/g)].map((m) => m[1]);
+  return [...new Set([...titles, ...declared])];
+}
+
+/**
  * The step chain §5 declares, e.g. "`npm ci` → typecheck → `vitest run` →
  * **coverage thresholds** → `next build`", as plain labels in order.
  *
@@ -228,6 +251,34 @@ describe("DOC_TRUTH — CLAUDE.md §4's enforcement table", () => {
       missing,
       "DOC_TRUTH: §4's table claims enforcement by a file that does not exist:\n  " +
         missing.join("\n  "),
+    ).toEqual([]);
+  });
+
+  it("names only guard tokens that exist in src/architecture — P2-R2, closes P2-4", () => {
+    // P2-R2 / Check finding P2-4. Every `CAPS_TOKEN` §4 cites must resolve to a
+    // test title or a declared identifier under src/architecture/. Anti-vacuity
+    // both ways: the resolved universe and the cited set are each asserted
+    // non-empty, so a regex that stops matching cannot pass by finding nothing
+    // to check — which is precisely how M-G stayed green.
+    const specs = fs
+      .readdirSync(path.join(REPO_ROOT, "src/architecture"))
+      .filter((f) => f.endsWith(".test.ts"));
+    const universe = new Set<string>();
+    for (const f of specs) {
+      for (const t of guardTokensIn(read(`src/architecture/${f}`))) universe.add(t);
+    }
+    expect(universe.size, "resolved no guard tokens at all from src/architecture").toBeGreaterThan(5);
+
+    const cited = new Set<string>();
+    for (const m of SECTION_4.matchAll(/`([A-Z][A-Z0-9_]{3,})`/g)) cited.add(m[1]);
+    expect(cited.size, "CLAUDE.md §4 cites no guard tokens — the parse found nothing").toBeGreaterThan(2);
+
+    const unresolved = [...cited].filter((t) => !universe.has(t));
+    expect(
+      unresolved,
+      `CLAUDE.md §4 cites guard token(s) that exist nowhere in src/architecture/: ${unresolved.join(", ")}.\n` +
+        "A row claiming Enforced by a guard that does not exist is what M-G planted,\n" +
+        "and what this closes: DOC_TRUTH previously matched only B<n> ids.",
     ).toEqual([]);
   });
 

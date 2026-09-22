@@ -1178,27 +1178,58 @@ describe("architecture boundaries — the real source tree", () => {
   //
   // The `parser self-test` block at the end of this file pins both
   // directions, including the reviewer's exact decoy line.
+  /**
+   * Does this source READ the given env name — as an identifier or a string key?
+   *
+   * [2026-09-22, P2-R3] REWRITTEN FROM A RAW SCANNER TO AN AST WALK, and this is
+   * a correctness fix to an existing control, not a refactor.
+   *
+   * The scanner form terminated early on a TEMPLATE LITERAL WITH A SUBSTITUTION.
+   * `ts.createScanner`'s bare `scan()` does not carry template continuation
+   * state, so after a `TemplateHead` it mis-tokenises and stops — everything
+   * after the first `\`…\${…}…\`` in a file was invisible. Two-line repro:
+   *
+   *     const a = \`x \${1} y\`;
+   *     const k = process.env.SUPABASE_SERVICE_ROLE_KEY;   // NOT detected
+   *
+   * Remove the template and the same read IS detected. Found by P2-R3's red
+   * proof: a planted read in `src/lib/safety/index.ts` did not redden the new
+   * pin, because that file's env access sat at offset 18552 and the scan died at
+   * token 964 inside a template literal.
+   *
+   * THE BLAST RADIUS IS THE REASON THIS IS WRITTEN DOWN AT LENGTH. Four pins
+   * used this helper — `OPENAI_API_KEY` and `OPENAI_BASE_URL` (both halves of
+   * the paid boundary), `OPENAI_MODEL`, and the service-role key. Any module
+   * that read one of those after a substitution template was invisible to all of
+   * them. The ratchets were narrower than they claimed, and their own
+   * self-tests did not catch it because none used a template literal.
+   *
+   * An AST walk has no continuation state to lose: comments are not nodes, so
+   * the reads-not-mentions property is preserved by construction rather than by
+   * a stripper, and template SPANS are walked like any other expression.
+   */
   const readsIdentifier = (src: string, name: string): boolean => {
-    const scanner = ts.createScanner(
-      ts.ScriptTarget.Latest,
-      /* skipTrivia */ true,
-      ts.LanguageVariant.Standard,
-      src,
-    );
-    for (let token = scanner.scan(); token !== ts.SyntaxKind.EndOfFileToken; token = scanner.scan()) {
-      // An identifier — `process.env.OPENAI_API_KEY` — or the same name as a
-      // string key — `process.env["OPENAI_API_KEY"]`. Both are reads; neither
-      // a comment nor an unrelated string containing the name is.
-      if (token === ts.SyntaxKind.Identifier && scanner.getTokenText() === name) return true;
-      if (
-        (token === ts.SyntaxKind.StringLiteral ||
-          token === ts.SyntaxKind.NoSubstitutionTemplateLiteral) &&
-        scanner.getTokenValue() === name
-      ) {
-        return true;
+    const sf = ts.createSourceFile("scan.ts", src, ts.ScriptTarget.Latest, /* setParentNodes */ false, ts.ScriptKind.TS);
+    let found = false;
+    const visit = (node: ts.Node): void => {
+      if (found) return;
+      // `process.env.NAME` and bare `NAME`.
+      if (ts.isIdentifier(node) && node.text === name) {
+        found = true;
+        return;
       }
-    }
-    return false;
+      // `process.env["NAME"]` and `process.env[\`NAME\`]`.
+      if (
+        (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
+        node.text === name
+      ) {
+        found = true;
+        return;
+      }
+      ts.forEachChild(node, visit);
+    };
+    ts.forEachChild(sf, visit);
+    return found;
   };
 
   /** Still a text strip, and still only used for the model-ID LITERAL scan. */
@@ -1298,6 +1329,67 @@ describe("architecture boundaries — the real source tree", () => {
         "bounded — add the reason here, or route the call through the client:\n  " +
         readers.join("\n  "),
     ).toEqual(["src/lib/openai/config.ts"]);
+  });
+
+  // ---- P2-R3: SERVICE_ROLE_CONFINEMENT -----------------------------------
+  //
+  // `CLAUDE.md` §2.3 rule 14 is RANK-1 and until now held by convention and
+  // grep. The Check raised it as P2-12: "it currently holds only because
+  // nothing else references it." A reader ratchet is ten lines, and rule 14 is
+  // the rule that keeps a key able to bypass every RLS policy in the schema out
+  // of anything the browser can reach.
+  //
+  // IT KEYS ON A READ, NOT A MENTION — and that distinction is not theoretical
+  // here, it is the first thing measuring found. `git grep -ln` returns TWO
+  // tracked files, and the second is `scripts/probes/load-env.ts`, which names
+  // the key only in a comment explaining why it deliberately does NOT load it:
+  // "a general-purpose loader would put it into the environment of every probe
+  // process for no reason at all". A grep-based ratchet would pin a file that
+  // exists to EXCLUDE the key, and would redden if that comment were ever
+  // improved. That is the defect C1 and C5 were struck for at this very
+  // closeout, and it nearly recurred inside the remediation for a different
+  // finding. So this reuses U33's scanner-token detection, exactly as the two
+  // sibling pins above do.
+  //
+  // SCOPE LIMITATION, NAMED RATHER THAN IMPLIED (`ecc:security-reviewer`, d1):
+  // this scans `NON_TEST_SRC`, which `trackedPathsUnderSrc()` restricts to
+  // `src/`. A genuine read introduced under `scripts/` — which is exactly where
+  // `load-env.ts` lives — or in a root config file would NOT redden this. No
+  // violation exists today: `load-env.ts` fences the key out structurally with
+  // `ALLOWED_PREFIX = "OPENAI_"`, so it is parsed and discarded, never assigned.
+  // But the guarantee this pin provides is narrower than "the key is read only
+  // by the dev seed script" reads, and widening the scan is follow-up work, not
+  // a silent assumption.
+  it("SERVICE_ROLE_CONFINEMENT: the service-role key is read only by the dev seed script", () => {
+    const readers = NON_TEST_SRC.filter((f) =>
+      readsIdentifier(fs.readFileSync(path.join(REPO_ROOT, f), "utf8"), "SUPABASE_SERVICE_ROLE_KEY"),
+    ).sort();
+
+    expect(
+      readers,
+      "SERVICE_ROLE_CONFINEMENT: a module outside the dev seed script reads the\n" +
+        "service-role key. That key bypasses every RLS policy in the schema, and\n" +
+        "`CLAUDE.md` §2.3 rule 14 confines it to `src/lib/db/seed.ts`. This is rank-1:\n" +
+        "route the work through an RLS-scoped client, or the rule changes first:\n  " +
+        readers.join("\n  "),
+    ).toEqual(["src/lib/db/seed.ts"]);
+  });
+
+  it("SERVICE_ROLE_CONFINEMENT: a file that only NAMES the key is not a reader", () => {
+    // The counterexample that shaped the rule above, asserted so the
+    // reads-not-mentions property cannot be lost to a future refactor of the
+    // scanner. `scripts/probes/load-env.ts` mentions the key in prose and must
+    // never count; if it ever genuinely reads it, THAT is a rank-1 finding and
+    // this assertion is where it surfaces.
+    const text = fs.readFileSync(path.join(REPO_ROOT, "scripts/probes/load-env.ts"), "utf8");
+    expect(text, "the counterexample file no longer mentions the key at all — re-point this pin").toContain(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    );
+    expect(
+      readsIdentifier(text, "SUPABASE_SERVICE_ROLE_KEY"),
+      "scripts/probes/load-env.ts now READS the service-role key. It previously only\n" +
+        "explained why it refuses to load it. §2.3 rule 14 — this is rank-1.",
+    ).toBe(false);
   });
 
   it("SOLE_PAID_CLIENT: the gateway ADDRESS is read only where it is declared to be", () => {
@@ -1504,6 +1596,24 @@ describe("architecture boundaries — the real source tree", () => {
       [
         "a read after a trailing comment on the PREVIOUS line",
         "// note about https://example.com\nconst k = process.env.OPENAI_API_KEY;",
+      ],
+      [
+        // [2026-09-22, P2-R3] THE BUG THAT FORCED THE AST REWRITE, pinned so a
+        // future "simplification" back toward a raw token scanner cannot pass.
+        // `ts.createScanner`'s bare scan() carries no template-continuation
+        // state: after a TemplateHead it mis-tokenises and STOPS, so everything
+        // after the first substitution template in a file was invisible. Four
+        // pins depended on this helper — both halves of the paid boundary, the
+        // model id, and the service-role key — and every one of them was
+        // narrower than it claimed. The fixtures above are all comment-shaped,
+        // which is why none of them caught it (§5 rule 2: a guard not shown red
+        // against the bug it targets is not a guard).
+        "a read AFTER a template literal with a substitution",
+        "const a = `x ${1} y`;\nconst k = process.env.OPENAI_API_KEY;",
+      ],
+      [
+        "a read INSIDE a template substitution",
+        "const a = `${process.env.OPENAI_API_KEY}`;",
       ],
     ])("counts %s", (_label, src) => {
       expect(readsIdentifier(src, "OPENAI_API_KEY")).toBe(true);

@@ -9,7 +9,7 @@ import { parsePaste } from "@/lib/lab-import/paste";
 import { extractFromPdf, ExtractionError } from "@/lib/lab-import/pdf-adapter";
 import { columnMapSchema } from "@/lib/lab-import/schema";
 import type { ParsedMarkerCandidate } from "@/types/lab";
-import { fail, handle, ok, unauthorized } from "@/lib/api/respond";
+import { fail, handle, ok, reportInternalError, unauthorized } from "@/lib/api/respond";
 import { enforceRateLimit } from "@/lib/api/rate-limit-guard";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB cap (Design §7)
@@ -88,7 +88,31 @@ export async function POST(request: NextRequest) {
         if (e.code === "UNREADABLE_DOCUMENT") {
           return fail("UNREADABLE_DOCUMENT", "Couldn't read this file — try CSV or paste.", 422);
         }
-        return fail("EXTRACTION_FAILED", "Extraction failed — try CSV or paste.", 502);
+        // [2026-09-22, P2-R1 / N-11] The REAL exception is reported here, and its
+        // id is handed to `fail()`.
+        //
+        // `fail()` now logs every unexempt 5xx by construction, so this line is
+        // not what makes the failure recorded — it is what makes the record
+        // DIAGNOSTIC. Without it `fail()` synthesises a `DeclaredFailure` whose
+        // message is a fixed string, and `pdf-adapter.ts` throws
+        // `ExtractionError` for at least four distinct causes — non-JSON adapter
+        // output, a schema failure, and two transcription paths, the last two
+        // carrying a `cause`. All four would land as the same undistinguishable
+        // line, which satisfies "one record was written" and defeats the reason
+        // N-11 and Check finding P2-1 were raised: that a recorded 5xx can be
+        // diagnosed afterwards.
+        //
+        // `reportInternalError` cannot be handed a client message — by
+        // construction, so no call site can reopen the disclosure — and the
+        // friendly text below is unchanged. §2.3 rule 13 holds: the client still
+        // receives only the authored string plus an opaque id.
+        return fail(
+          "EXTRACTION_FAILED",
+          "Extraction failed — try CSV or paste.",
+          502,
+          undefined,
+          reportInternalError(e, "EXTRACTION_FAILED"),
+        );
       }
       throw e;
     }
