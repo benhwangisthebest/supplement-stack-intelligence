@@ -5746,17 +5746,28 @@ Written with Phase 1 criterion 1's lesson in mind: **every clause must be mechan
 check is written beside it.** Where a criterion needs an exemption list to be decidable, the list is named
 here rather than discovered later.
 
-- [ ] **Zero `for all` policies on constraining-counter tables.** Check:
-      **`! grep -q "for all"`** over the policies naming `advisor_usage` and any rate-limit table (negated
-      match, not `grep -c … = 0` — see GATE B1), and
-      each has a select-only policy plus a `security definer` writer. *(Exemption: user-owned content
-      tables keep `for all` — the list is the 11 non-counter tables, named in U3.)*
+- [ ] **Zero `for all` policies on constraining-counter tables.** Check: ~~**`! grep -q "for all"`** over
+      the policies naming `advisor_usage` and any rate-limit table (negated match, not `grep -c … = 0` —
+      see GATE B1)~~ → **[2026-09-22, struck at the Phase 2 closeout per §7, with the reason kept beside
+      it]** **`RLS_COVERAGE` green with a non-empty policy inventory**, asserting that each
+      constraining-counter table carries a **select-only** policy and a `security definer` writer, and
+      that every `drop policy` / `alter policy` / `disable row level security` appears in
+      `DECLARED_WEAKENINGS` with a written reason, as an **equality**. *(Exemption unchanged: user-owned
+      content tables keep `for all` — the 11 non-counter tables named in U3.)*
+      **Why the literal form is struck rather than kept beside the guard: a check that a comment can fail
+      was never a check.** Measured at close, the negated grep **fails** — on `0008:10,12,23` and
+      `0009:12`, which are the comment block explaining the rule the migration implements. Its polarity is
+      **inverted**: the better a migration documents its own reasoning, the more certainly the check
+      reddens, which punishes the one behaviour this repository asks for in every other file. The property
+      — *no counter table grants the user a write* — is about **effective policies**, and only a parser
+      that applies statements in position order can see those. `RLS_COVERAGE` is that parser; the grep was
+      a stand-in for it written before it existed.
 - [ ] **Every `SECURITY DEFINER` function sets `search_path`.** Check: `SQL_FUNCTION_REGISTRY` green, and
       its inventory is non-empty (anti-vacuity).
-- [ ] **A concurrency test proves the daily token budget cannot be exceeded**, shown **red** against the
+- [ ] **[P2-X2]** **A concurrency test proves the daily token budget cannot be exceeded**, shown **red** against the
       read-then-write implementation with the red text recorded in `docs/`. Check: the test exists, its
       mock is stateful, and the red text is in the phase report.
-- [ ] **Both paid-API routes enforce a rate limit and a budget reservation**, where "paid-API route" is
+- [ ] **[P2-X3]** **Both paid-API routes enforce a rate limit and a budget reservation**, where "paid-API route" is
       defined mechanically as ~~*a tracked `route.ts` whose import graph reaches `@anthropic-ai/sdk`*~~ →
       **[2026-08-10, effective at U25]** *a tracked `route.ts` whose import graph reaches
       `src/lib/omniroute/client.ts`, the one module permitted to spend money* — **today exactly 2 under
@@ -5768,20 +5779,32 @@ here rather than discovered later.
       operative one.)*
 - [ ] **No paid call bypasses the one client module, and `@anthropic-ai/sdk` is gone.**
       *(Added 2026-08-10 by the U25 scope amendment.)* Check: `SOLE_PAID_CLIENT` green and shown red
-      against an inline `fetch` in a route (**M5**); zero tracked `src/` files reference
-      `@anthropic-ai/sdk` and it appears in neither `dependencies` nor `devDependencies`, with the scanned
-      set asserted non-empty.
+      against an inline `fetch` in a route (**M5**); ~~zero tracked `src/` files reference
+      `@anthropic-ai/sdk`~~ → **[2026-09-22, struck at the Phase 2 closeout per §7]** **`RETIRED_PACKAGE`
+      green**, which resolves **import specifiers** rather than file bytes, and `@anthropic-ai/sdk`
+      appears in neither `dependencies` nor `devDependencies` — with both scanned sets asserted non-empty.
+      **Why the literal form is struck, and this one is stronger than C1's case: as written the criterion
+      could not be satisfied at all while the guard that supersedes it exists.** Measured at close,
+      `git grep "@anthropic-ai/sdk" -- src/` returns **9 hits across 7 files**, and one of them —
+      `boundaries.test.ts:1470` — is `e.specifier.startsWith("@anthropic-ai/sdk")`, **the string
+      `RETIRED_PACKAGE` matches against**. Passing the grep would mean deleting the matcher, which deletes
+      the enforcement; the check and the guard were in direct opposition. The other eight are comments
+      recording the migration (`route.ts:33`, `pdf-adapter.ts:192`, `client.ts:10`, `types/advisor.ts:89`,
+      `boundaries.test.ts:916,950,1060`) and the guard's own failure message at `:1476`.
+      **The `package.json` clause is kept exactly as written** — it is the half the literal form gets
+      right, it is measured clean in both blocks, and an import with no dependency and a dependency with no
+      import fail differently.
 - [ ] **A turn whose provider response omits `usage` settles nothing.**
       *(Added 2026-08-10.)* The reservation stays charged — over-charging by at most one reservation is the
       safe direction, and estimating is forbidden (§2.2 rule 7: never assert a figure the system did not
       compute). Check: the pin exists and was shown red against defaulting absent usage to zero (**M16**).
 - [ ] **`CLAUDE.md` §4 row 9 reads `Enforced` and names `PAID_API_BUDGET` in `boundaries.test.ts`.** Check:
       `doc-truth.test.ts` green *(it binds this in both directions already)*.
-- [ ] **Client disconnect terminates the advisor loop and settles its reservation.** Check: two assertions
+- [ ] **[P2-X4]** **Client disconnect terminates the advisor loop and settles its reservation.** Check: two assertions
       — `adapter.send` call count, and `settleUsage` called with the reserved amount.
-- [ ] **`replaceFlags` leaves prior flags intact under induced insert failure.** Check: the test exists and
+- [ ] **[P2-X5]** **`replaceFlags` leaves prior flags intact under induced insert failure.** Check: the test exists and
       was shown red against delete-first.
-- [ ] **`error-disclosure` scans `src/app/api/**`, `src/services/**` and `src/lib/**`**, with a violation
+- [ ] **[P2-X1]** **`error-disclosure` scans `src/app/api/**`, `src/services/**` and `src/lib/**`**, with a violation
       list of `[]` and an allowlist that is empty or ratcheted. Check:
       `grep -cE '^const [A-Z_]+ = trackedFiles\(' src/architecture/error-disclosure.test.ts` = **3**, and
       each inventory asserted non-empty. **[2026-08-08 — corrected at approval]** This criterion carried
@@ -5790,7 +5813,7 @@ here rather than discovered later.
       second site, found by re-reading the criteria against the gates. Both now use the binding-count form.
       *(Stated non-coverage, so the claim stays true: `src/app/**/page.tsx`, `src/components/**`, and the
       **one** `"use server"` module of N-7 remain unscanned.)*
-- [x] **Security headers present in the config and in a real response.** ✅ **MET 2026-08-10 by U13,
+- [x] **[P2-X8]** **Security headers present in the config and in a real response.** ✅ **MET 2026-08-10 by U13,
       `a7f36fd`** — ruled accepted by the owner. Check: the unit test asserts the config (**19 tests**);
       the **ungated** E2E asserts the bytes (**5 tests**, executed against a production build, 5 passed);
       the path-scoping mutation reddens the E2E and not the config — **config 19/19 green, E2E 4/5 red**,
@@ -5813,7 +5836,7 @@ here rather than discovered later.
       — a green run reporting "39 of 39" with 316 files unlinted.** The criterion is met by the
       git-derived form, and the counterfactual is recorded in U18's entry precisely because the criterion's
       own wording does not exclude the weaker one.)*
-- [x] **A user can export their data and delete all of it across the 12 tables**, with the surviving auth
+- [x] **[P2-X9]** **A user can export their data and delete all of it across the 12 tables**, with the surviving auth
       identity stated in the response. Check: both route tests green; a test asserts the export payload
       passes through no logging path. ✅ **MET 2026-08-17 by U16 (`a087715`) + U17 (`55c74f6`).**
       `GET /api/account/export` returns all twelve tables with a `notIncluded[]` statement of what it
@@ -5838,7 +5861,7 @@ here rather than discovered later.
       lists `src/components/layout/TopNav.tsx` and `CLAUDE.md` together. *(The `grep` clause and §7's
       "struck, not deleted" clause are jointly satisfiable only by relocating the rationale — see **N-31**
       and `docs/archive/retired-nav-divergence-note.md`.)*
-- [ ] **`db:migrate` exists, and CI proves the migration set is coherent** by applying every file in
+- [x] **[P2-X7]** **`db:migrate` exists, and CI proves the migration set is coherent** by applying every file in
       `supabase/migrations/` in order to a throwaway Postgres and failing on the first error. *(Reworded on
       approval — decision 5. The original said "deployed schema matches migrations, verified in CI", which
       needs live credentials that ruling 3 refuses.)* Check: `package.json` has a `db:migrate` script;
@@ -5846,10 +5869,37 @@ here rather than discovered later.
       updated `CLAUDE.md` §5's declared chain in the **same commit** (GATE D1, already mechanical).
       *(Residue, stated not dropped: matching the **live** database stays a dated manual record, exactly
       like the E2E baseline. It is not claimed by this criterion.)*
+      ✅ **MET 2026-08-12 by U15 — TICKED 2026-09-22 AT THE PHASE 2 CLOSEOUT.** All three clauses checked
+      as written: `package.json` carries `db:migrate`; `ci.yml` declares a `postgres:16` service and a
+      **Migration coherence** step applying every file in `supabase/migrations/` in order behind the
+      checked-in `supabase/ci/auth-prelude.sql` double; green on runs `31560224886` and `31560792889`;
+      GATE D1's §5 declared-chain update landed in the same commit and is held by `DOC_TRUTH`. The stated
+      residue is discharged by `docs/05-qa/2026-08-12-deployed-schema-record.md`.
+      **Why it went thirteen months unticked with the evidence in hand:** `docs/roadmap.md`'s paired copy
+      **was** ticked on 2026-08-12 and this one was not — the **N-44 asymmetry, running the opposite way to
+      the security-headers instance**. Nothing bound the two lists in either direction. `[P2-X7]` and
+      `CRITERIA_PARITY` are what make that impossible from this commit forward.
 - [ ] **`npx tsc --noEmit` clean · `npx vitest run` green · `npx next build` succeeds · CI green on the
       integration commit**, with the suite count recorded at close and re-measured, not copied.
 - [ ] **Every guard added in this phase has its red output recorded in `docs/`** — the Phase 1 criterion,
       retained because it is the one that produced the most value.
+- [x] **[P2-X6]** **A checked-in reference-ID manifest exists, and removing a published ID fails CI.**
+      *(Added 2026-09-22 at the Phase 2 closeout, by owner ruling — the counterpart to `docs/roadmap.md`'s
+      Phase 2 item 5 criterion, which had **no entry in this list at all**. Pairing precedes the guard:
+      `CRITERIA_PARITY` asserts set equality of ids in both directions, so an unpaired roadmap criterion
+      is a red build, and it could not be allowed to start life red.)* Check: `src/data/id-manifest.json`
+      exists and is read **from disk** by `src/data/id-stability.test.ts` as an independent ledger — never
+      derived from the arrays it validates, since an expectation that renames with the thing it checks
+      cannot detect a rename; the namespace inventory is asserted non-empty; the spec runs in CI's
+      `Unit and architecture tests` step.
+      ✅ **MET BEFORE THIS PHASE OPENED, by Phase 0 U8** (`src/data/id-manifest.json`, **328 lines**;
+      `src/data/id-stability.test.ts`), with U20 closing the header's false "eight namespaces" **by
+      removing the count rather than incrementing it** (FU-32). `docs/roadmap.md:35-37` already recorded
+      this as out-of-order delivery. *(Stated honestly, because it is the finding and not the achievement:
+      **this criterion was satisfied for the whole of Phase 2 and this list never knew.** A criterion
+      delivered early and tracked nowhere is indistinguishable at close from one that was forgotten — which
+      is the concrete cost of two criteria lists with nothing between them, and the reason `[P2-X6]` is
+      written here rather than simply ticked in the roadmap.)*
 - [ ] **The follow-up register is complete and each row re-derived at close.** Check: FU numbering
       contiguous with no gaps and no duplicates; every row's condition re-measured. *(Added because
       FU-22's figures survived from U13 to closeout unchallenged — a register row is a claim.)*
@@ -5907,3 +5957,599 @@ user can do to their own rows.
 **Estimate withheld deliberately.** Phase 1's estimate was made before any unit ran and its error was the
 useful artifact. The measured Phase 1 cost per unit is the better input, and it is recorded in that plan's
 §6.5.
+
+---
+
+## 10. Closeout
+
+**Dated 2026-09-22.** Owner rulings of that date are recorded here **beside** the measurements, not instead
+of them: where a ruling and a measurement disagree the disagreement is printed, because a closeout that
+prints only the ruling is a closeout that cannot be audited.
+
+**Method, stated so it can be checked.** Every figure below was **re-derived by command against `main` @
+`82f9109`** in the closeout session of 2026-09-21. A read-only orientation report produced in the previous
+session was **not** consulted as evidence and is **not** committed; it was re-derived from scratch. This is
+C18's own instruction — *"re-derived at close" cannot quietly become "re-typed at close"* — applied to the
+closeout that wrote it.
+
+**Nothing in §10 is landed.** §10 is the plan of record for four landings, each taking its own approval.
+
+---
+
+### 10.1 Baseline, re-measured
+
+| Gate | Result | Delta against `CLAUDE.md` §5's declared baseline |
+|---|---|---|
+| `npx tsc --noEmit` | **clean** (exit 0) | unchanged |
+| `npm run lint` | **366 of 366** tracked source files, **0 exempt**, **0 errors** | §5 does not carry a file count; U18 recorded 356 of 356. The delta is **growth, not rot** — the expected set is derived from `git ls-files` |
+| `npx vitest run` | **1406 passed / 1406 · 111 files** | §5 declares **859 / 73** (Phase 1 close). **Stale by +547 tests and +38 files** |
+| `npx next build` | **succeeds**; `find .next/server/app -name '*.html'` → **empty** | U28's rendering-determinism property holds locally as well as in CI |
+| `npx vitest run src/architecture/` | **366 passed / 366 · 24 spec files** | The documented figure is **"seven"** at four sites — see §10.5 |
+
+`ci.yml` declares **12 named steps** (checkout · node · install · typecheck · lint · unit+architecture ·
+coverage · migration coherence · build · rendering determinism · playwright install · E2E non-live); `gh`
+reports these as **18/18** including setup and post steps, which is the figure the U-unit STAMP ROWs use.
+
+---
+
+### 10.2 §8 exit criteria — re-derived
+
+**18 criteria, not 19**, measured: `grep -cE '^- \[ \]'` = **14**, `grep -cE '^- \[x\]'` = **4**.
+**The R6 ruling below takes it to 19.**
+
+| # | Criterion | Measured verdict | Evidence |
+|---|---|---|---|
+| **C1** | Zero `for all` on counter tables | **MET by the guard · WRITTEN CHECK FAILS** | `advisor_usage` post-`0008` is `for select` only; `api_rate_limits` (`0009:59-60`) likewise. `RLS_COVERAGE` **22/22**. The written `! grep -q "for all"` hits `0008:10,12,23` and `0009:12` — **comments explaining the rule the migration implements** |
+| **C2** | Every `SECURITY DEFINER` sets `search_path` | **MET** | `SQL_FUNCTION_REGISTRY` **24/24**, incl. the anti-vacuity `it("finds the functions it is supposed to govern")` |
+| **C3** | Concurrency test, red recorded **in the phase report** | **PARTIAL → closes at (b)** | Test green; red text present in **this plan** (U4: M14 `expected [400×5] to have a length of 2 but got 5`; M15 `expected 300 to be 600`). **No `docs/04-report/phase-2-*.report.md` exists** |
+| **C4** | Both paid routes: rate limit + budget | **MET** | `PAID_API_BUDGET` ×4 green incl. *"the derived set is exactly the two routes it should be"* |
+| **C5** | No paid call bypasses the client module; `@anthropic-ai/sdk` gone | **MET by the guards · WRITTEN CHECK FAILS** | `SOLE_PAID_CLIENT` ×3 and `RETIRED_PACKAGE` ×2 green; `package.json` carries **zero** anthropic entries in either dependency block. But `git grep "@anthropic-ai/sdk" -- src/` returns **9 hits across 7 files** |
+| **C6** | A turn omitting `usage` settles nothing | **MET** | `route.test.ts:474` *"fails CLOSED when the adapter carries no usageReported at all"*; `model-adapter.test.ts:210` sticky-false; `client.test.ts:56` absent-usage case |
+| **C7** | `CLAUDE.md` §4 row 9 = `Enforced`, names `PAID_API_BUDGET` | **MET** | `CLAUDE.md:171`; `doc-truth.test.ts` **21/21**, binding it in both directions |
+| **C8** | Disconnect terminates the loop and settles | **MET** | `route.test.ts:411-463`, two `status: "aborted"` assertions |
+| **C9** | `replaceFlags` intact under induced insert failure | **MET** | `evaluation-flag-repo.test.ts:222-247` |
+| **C10** | `error-disclosure` scans three trees, violations `[]` | **MET** | binding-count grep = **3** (the corrected, non-vacuous form); spec **31/31** |
+| **C11** | Security headers — config **and** real response | **MET** ✅ | both halves CI-enforced since U14 (`61ad255`, run `31473581501`) |
+| **C12** | `npm run lint` lints a non-empty set | **MET** ✅ | re-measured **366 of 366** |
+| **C13** | Export + delete across 12 tables | **MET** ✅ | route tests green; OP-7 discharged |
+| **C14** | Exactly three nav pillars | **MET** ✅ | `nav-pillars.test.ts` **10/10** |
+| **C15** | `db:migrate` + CI migration coherence | **MET, UNTICKED** | `db:migrate` present; `ci.yml` has the `Migration coherence` step; `migration-tooling.test.ts` **13/13**. **The roadmap's paired copy is `[x]` and this one is `[ ]`** |
+| **C16** | tsc · vitest · build · CI green, count re-measured at close | **PARTIAL → closes at (b)/(d)** | local four green (§10.1); "recorded at close" needs the phase report; CI-green-on-integration-commit needs the pushed SHA |
+| **C17** | Every guard's red output recorded in `docs/` | **MET** | **359** `M<n>` mutation references across this plan, red tables per unit |
+| **C18** | Register complete and each row re-derived; **two binding guards owed** | **NOT MET** | Neither guard exists (`git grep -l roadmap -- src/` returns prose mentions only). The contiguity clause is **false** — see §10.3 |
+
+**Tally: 12 MET · 2 MET-with-a-failing-written-check · 3 PARTIAL · 1 NOT MET.**
+
+#### Rulings applied to §8
+
+**C1 and C5 — the guard is the check.** *Owner ruling: rewrite each check text to name the guard and its
+anti-vacuity; strike the literal grep per §7 with the reason.*
+
+The reason, recorded because §7 requires the rationale and not only the strike: **a check that a comment
+can fail was never a check.** It tests the *file's bytes*, not the *property*. Both literal greps are worse
+than useless here — they are **inverted**: `0008`'s comment block exists precisely *because* the migration
+fixes the thing the comment names, so the better the file documents its own reasoning the more certainly
+the check fails. A check with that polarity punishes the behaviour this repository asks for everywhere else.
+
+**C5's nine hits include the guard's own matcher literal.** `boundaries.test.ts:1470` is
+`e.specifier.startsWith("@anthropic-ai/sdk")` — the string `RETIRED_PACKAGE` compares against. The written
+check therefore **cannot be satisfied while the guard that supersedes it exists**: satisfying the grep means
+deleting the matcher, which deletes the enforcement. The other eight are comments recording the migration
+(`route.ts:33`, `pdf-adapter.ts:192`, `client.ts:10`, `types/advisor.ts:89`, `boundaries.test.ts:916,950,1060`
+and the guard's own failure message at `:1476`). **`package.json` is clean in both dependency blocks**, which
+is the half of C5 the literal form gets right and which the rewrite keeps.
+
+**C15 — ticked**, on U15's evidence: `db:migrate` in `package.json`; the `Migration coherence` step applying
+every file in order to a stock `postgres:16` behind `supabase/ci/auth-prelude.sql`; green on runs
+`31560224886` / `31560792889`; the residue discharged by `docs/05-qa/2026-08-12-deployed-schema-record.md`.
+**The asymmetry N-44 names is now measured in both directions** — R8/C11 has the plan ticked and the roadmap
+not; R7/C15 had the roadmap ticked and the plan not. That it ran *both* ways is the argument for the guard:
+a one-way drift reads as a convention, a two-way drift reads as nothing binding the lists.
+
+**R8/C11 — the roadmap's copy is ticked**, dated, and the deliberate divergence is **retired**: both halves
+have been CI-enforced since U14, so the reason the divergence existed ("the response half is developer-run")
+expired on `2026-08-11` and the note outlived it by thirteen months of commits.
+
+**R6 — the unpaired roadmap criterion gains a §8 counterpart, and both are ticked.** *Owner ruling: pairing
+precedes the guard.* Measured: `src/data/id-manifest.json` (**328 lines**) and `src/data/id-stability.test.ts`
+exist and are green; the manifest is read from disk as an **independent checked-in ledger**, which is what
+makes a rename a reviewable diff rather than an expectation that renames with the thing it validates.
+Delivered by **Phase 0 U8**; the header's false "eight namespaces" was closed by **U20** by *removing* the
+count rather than incrementing it. `roadmap.md:35-37` already records this as out-of-order delivery.
+**The criterion was met before Phase 2 opened, and §8 never tracked it** — which is exactly the state the
+parity guard exists to make impossible, and the reason pairing must precede the guard rather than follow it.
+
+**C3, C16, C17, C18 close via (b) and (c) by construction.** C18's contiguity clause is **false today** and
+(b) is what makes it true — see §10.3. Recorded plainly rather than ticked early: a criterion ticked on work
+that has not landed is the defect C15's own roadmap note ("a criterion whose CI half has never been green is
+a claim about a YAML file") was written to prevent.
+
+**§8 therefore becomes 19 criteria**, and the count is itself a claim the parity guard will bind.
+
+---
+
+### 10.3 The register, re-derived
+
+#### N — contiguous, and one measurement caveat that matters to whoever writes a register guard
+
+`N-1 … N-74`, **no gaps**, every id defined as a §4.4/§4.5 table row.
+
+**Caveat, stated because a naive guard would report it as a defect:** `grep -oE '^\| \*\*N-[0-9]+\*\*'`
+reports **N-21, N-22, N-23 and N-24 twice**. The second occurrence of each is U25's closeout summary table
+(*"The four findings this unit produced, and where each landed"*, a **two-column** table), not a second
+register row. They are **not duplicates**. A future contiguity guard must key on the register tables' own
+**five-column** shape or on section bounds, or it will fail on a cross-reference — the `LINT_SCOPE` lesson
+one level out: the expectation must come from the structure, not from a pattern that happens to match today.
+
+**One of those cross-references is stale and contradicts the register.** U25's summary row still reads
+*"**N-22 · OPEN.** `auto/*` aliases complete a tool loop and return an empty answer"* — the very claim the
+§4.5 row **withdraws** (`[2026-08-10] RE-SCOPED — the evidence behind it does not support the claim it was
+written as`). The register is right and the summary is stale. **Landing (b) dates the summary row and points
+it at §4.5** rather than rewriting it, per §7.
+
+#### Eight stale rows — dispositioned
+
+*Owner ruling: N-29 relabel only (its closure text exists); N-48, N-49, N-51, N-63–N-66 re-dispositioned by
+dating, citing the landing unit.*
+
+| Row | Reads today | Landing unit | Commit | Action at (b) |
+|---|---|---|---|---|
+| **N-29** | `OPEN — deliberately NOT fixed in U13` … trailing `[2026-08-11] CLOSED BY U14` | U14 | `61ad255` | **Relabel only.** The closure is already *in* the cell; only the leading label is stale. Nothing is re-argued |
+| **N-48** | `OPEN → owned by U29` | U29 | `1f0077c` | **CLOSED by U29**, dated |
+| **N-49** | `OPEN → owned by U29` | U29 | `1f0077c` | **CLOSED by U29**, dated |
+| **N-51** | `TAKEN AS U30` | U30 | `56c8c79` | **CLOSED by U30**, dated |
+| **N-63** | `TAKEN AS U32` | U32 | `104a111` | **CLOSED by U32**, dated. **OP-5 itself stays OPEN** — this row is OP-5's *code* half only |
+| **N-64** | `FOLDED INTO U32` | U32 | `104a111` | **CLOSED by U32**, dated |
+| **N-65** | `FOLDED INTO U32` | U32 | `104a111` | **CLOSED by U32**, dated — verified: the template is now `docs/05-qa/openai-probe-record.template.md` |
+| **N-66** | `FOLDED INTO U32` | U32 | `104a111` | **CLOSED by U32**, dated; **M7** is its red proof |
+
+**N-29 is a different shape from the other seven and is treated differently.** Its cell *does* carry the
+closure; seven cells carry an assignment that was never converted. The distinction is worth preserving
+because it names two different failure modes — a label that lagged its own text, and seven rows where the
+closing sentence was never written at all.
+
+#### N-11 — re-owned, because its closing condition became unreachable
+
+The row reads *"Closes when **U23** lands (`path`, `userId`, a real sink)."* **U23 is cut** (§9's cut order:
+U11, U21, U23). The row has been open against a unit that will never exist.
+
+*Owner ruling: re-own to "the phase that adds a logging sink", dated; carried as a residue with U23's.*
+Recorded rather than closed, because the finding is still true: `ExtractionError` carries `cause` and
+nothing logs it, so the diagnostic value is captured in the object and never reaches a sink. **U2 bought
+"the data is captured"; nobody has yet bought "the data is observable."**
+
+#### N-50 and N-52
+
+- **N-50** — *"should every API 404 carry one uniform `error.message`?"* **Product decision, deferred to
+  Phase 4** by owner ruling; the reasoning is already recorded in the row (rule 13 governs *internal* error
+  text, not resource names; a single-resource route has no oracle) and is **not re-argued here**. Not a
+  defect: no path in it discloses another user's data.
+- **N-52** — **struck and dated, both halves.** The **mechanism** half is closed by the spec-count guard of
+  §10.5. The **content** half — `README.md:26`'s per-spec test counts, stale by 11 and 1 — is closed by
+  **dropping the breakdown**, not by correcting it: a per-file count restacks a bracket on every unit that
+  adds a test, which is the "counts-written-once" class reproducing itself at the finest possible grain.
+
+#### FU — **not contiguous**, and C18's clause is false today
+
+| Range | State |
+|---|---|
+| FU-1 … FU-28 | Defined in the **Phase 1** plan §12, contiguous, incl. FU-3 |
+| **FU-29** | **Promised and never written.** N-3's disposition says *"Register as FU-29"*. **One occurrence in the entire repository** — the promise |
+| **FU-30** | **Promised and never written.** N-4's disposition says *"Register as FU-30"*. **One occurrence** — the promise |
+| **FU-31** | **Promised and never written as a row.** N-7 says *"Register as FU-31"*. Two occurrences, both references — but it **is** recorded in an executable location, `src/architecture/error-disclosure.test.ts:92` (*"Recorded as FU-31; unclosed"*) |
+| FU-32 | Never given a canonical row either; **13 occurrences**, and substantively **CLOSED by U20** |
+| FU-33, FU-34 | Full rows in §4.3, both 2026-09-21 |
+
+**This is the single largest register defect at close, and it is exactly what C18 was written to catch.**
+The mechanism is worth naming: *"Register as FU-nn"* inside another row's disposition cell **reads like an
+action and is not one.** Four numbers were issued that way; two (FU-31, FU-32) survived because something
+else — a guard header, a unit that opened the file — carried them; two (FU-29, FU-30) did not survive at all.
+
+*Owner ruling: write FU-29, FU-30 and FU-31 now, from N-3, N-4 and the `error-disclosure.test.ts:92` text,
+dated as late-registered.* **Dated as late-registered rather than backdated**, so the gap is visible in the
+register that failed to prevent it.
+
+- **FU-29** ← **N-3.** `mappers.ts` casts at **13** sites against plain `text`/`text[]` columns with no CHECK
+  constraint: `:56,67,69,73,75,100,138,139,154,155,167,168,172` (15 casts, of which `:40` `ratings jsonb` and
+  `:57` `severity smallint` with a CHECK are legitimately excluded). *Value* drift stays silent though U8
+  closed *shape* drift. **Owner: a dedicated unit, sequenced after U15** — it needs a migration against a
+  **deployed** database plus 13 separate value-domain decisions, so it carries its own OP row.
+- **FU-30** ← **N-4.** Four dead `safetyCopy` helpers with zero production callers: `labCaution`,
+  `labSupported`, `medicationCaution`, `productReasonValue`, measured against all 31 `safetyCopy` methods.
+  **§8 rule 4 applies** — prefer deleting over guarding.
+- **FU-31** ← **N-7** and the guard header. Exactly **one** module carries `"use server"` as its first
+  statement (`src/lib/auth/actions.ts`); it is an HTTP endpoint that `AUTH_COVERAGE` (which scans
+  `src/app/api/**/route.ts`) and `error-disclosure` both miss on its non-caught reads. The ratchet pins the
+  count at 1 so a second cannot appear ungoverned. **Not a live leak** — the text is user-facing auth copy.
+
+#### FU-35 … FU-38 — U31's four open C-table obligations, accepted as registered
+
+*Owner ruling: U31 C6, C7, C9, C10 → FU-35–FU-38, each with the remedy already proposed and owner
+"next operational phase"; accepted with a written reason, not built.*
+
+| New | From | Finding | Remedy already proposed |
+|---|---|---|---|
+| **FU-35** | U31 **C6** | **No guard covers `scripts/`.** N-58 is what the absence costs: a probe drifted one field from production, 400'd, and printed a misleading diagnosis | At minimum, assert the probe scripts **import** their request bodies from `src/` rather than defining them |
+| **FU-36** | U31 **C7** | **The `ClaudeAdapter` port name is two providers stale.** Measured: `src/types/advisor.ts:124` still declares it, and `agent.ts`, `mock-adapter.ts`, `model-adapter.ts` all name it | Rename, **or accept with the reason recorded**. The case for accepting is real — it opens `src/types/`, governed by §4 rules 1–2, for zero behavioural gain |
+| **FU-37** | U31 **C9** | **`.env.local` goes stale after a worktree split** (N-57) | *Loader warns on a populated file with zero matching keys*, **constrained** by the probe record: the observed case had three keys matching and a fourth swallowed, so that candidate would not have caught it |
+| **FU-38** | U31 **C10** | **The lab-import probe verifies shape, never content** (N-61) | *Compare the transcript against the fixture's known synthetic values and print only match/mismatch counts — **compare, never print***. That shape is what makes it buildable without putting health-shaped content in a record |
+
+**Owner on all four: "next operational phase."** Accepted with a written reason rather than built: none is a
+live defect, and three of the four are instrumentation for work that phase will own.
+**FU therefore runs 1 … 38, contiguous, at the end of landing (b)** — which is what makes C18 true.
+**[2026-09-22, corrected at landing (a)]** **1 … 39** — `ecc:code-reviewer` raised **FU-39** on
+(a)'s diff; see §10.10.
+
+**Note on FU-36 and the §3 classification ruling.** The (d) ruling renames the ports-and-adapters row to
+`model-adapter.ts` + `openai/client.ts` and keeps **P**. FU-36 is the *type* name, not the file name; the
+files were renamed at U31 and the port type was not. The row and the follow-up are consistent: the seam is
+P **because** it survived two provider swaps, and the stale type name is the residue of the second one.
+
+#### OP — `OP-1 … OP-7`, contiguous · **6 of 7 discharged**
+
+| Row | State | Record |
+|---|---|---|
+| OP-1 | ✅ 2026-08-10 | `2026-08-10-deployed-migration-record.md` — **residual stands**: a code rollback leaving `0008` applied reproduces the failure |
+| OP-2 | ✅ 2026-08-10 | `2026-08-10-ledger-policy-verification.md` |
+| OP-3 | ✅ 2026-08-12 | `2026-08-12-deployed-schema-record.md` Part 2 |
+| OP-4 | ✅ 2026-08-10 | `2026-08-10-omniroute-probe-record.md` |
+| **OP-5** | **OPEN** | `2026-09-18-op5-provider-record.md` filed at U32's closeout. **Three account facts remain UNKNOWN**, and the DPA page returned **HTTP 403** on 2026-09-18, so even the *terms* could not be read from here. **The one operational item Phase 2 does not close** |
+| OP-6 | ✅ 2026-08-10 | `2026-08-10-rate-limit-policy-verification.md` |
+| OP-7 | ✅ 2026-08-17 | `2026-08-17-op7-deletion-function-sitting.md` |
+
+*Owner ruling: §4.6's OP-6/OP-7 print order is fixed in place, and noted.* The table prints **OP-7 before
+OP-6**. Contiguity is fine; the ordering is not, and a reader scanning for the last row finds the
+second-to-last. **Noted rather than silently swapped**, because the same class appears once more in this
+repository — U31's C-table prints `C1…C7, C10, C9, C8`. Both are append-order artifacts of rows edited after
+they were written; neither changes a disposition.
+
+---
+
+### 10.4 Roadmap Phase 2 paired against §8
+
+`docs/roadmap.md` carries **9** criteria; §8 carries **18** (**19** after R6's counterpart lands).
+**8 pairs · 1 roadmap-only · 10 plan-only.**
+
+| Roadmap | Tick | §8 | Tick | Divergence |
+|---|---|---|---|---|
+| **R1** every 5xx has a correlating log **and** zero raw internal messages | `[ ]` | C10 | `[ ]` | **Text divergence, not tick divergence.** R1 has two clauses; C10 covers only the disclosure half. **The logging half has no §8 criterion at all** |
+| R2 concurrent-request budget test | `[ ]` | C3 | `[ ]` | parity |
+| R3 rate limits on both LLM routes | `[ ]` | C4 | `[ ]` | parity |
+| R4 client disconnect terminates the loop | `[ ]` | C8 | `[ ]` | parity |
+| R5 `replaceFlags` atomicity | `[ ]` | C9 | `[ ]` | parity |
+| **R6** ID manifest exists; removing a published ID fails CI | `[ ]` | **— none —** | — | **UNPAIRED.** Met by Phase 0 U8, unticked, untracked. **Paired and both ticked at (b)** |
+| **R7** `db:migrate` + CI coherence | **`[x]`** | **C15** | **`[ ]`** | **TICK DIVERGENT** — roadmap ticked 2026-08-12, plan never was. **C15 ticked at (b)** |
+| **R8** security headers verified by a response-header test | **`[ ]`** | **C11** | **`[x]`** | **TICK DIVERGENT**, deliberately since 2026-08-11 and now expired. **Roadmap ticked at (b)** |
+| R9 export + delete across 12 tables | `[x]` | C13 | `[x]` | parity |
+
+**Plan-only (10):** C1, C2, C5, C6, C7, C12, C14, C16, C17, C18. These are genuinely plan-only — mechanism
+criteria the roadmap never claimed — and the parity guard must **not** demand roadmap counterparts for them.
+That is why the ruling specifies **set equality of ids both directions over the criteria that carry ids**,
+rather than "every §8 criterion has a roadmap twin": the second would be false by design.
+
+**R1's unpaired logging half is recorded, not resolved.** It is the criterion behind the Observability
+classification, and §10.6 rules on that; the criterion itself stays `[ ]` in the roadmap with no §8 twin,
+because Phase 2 did not deliver a sink and no §8 criterion should imply it did.
+
+**The roadmap's phase-status line is materially false.** `roadmap.md:30-33` reads *"Phase 2 — planned and
+approved, **not started** … **No Phase 2 unit has been executed.** Phases 3–4 — not started."*
+**Twenty-eight units have landed.** Corrected at **(d)** with the dated phase status, per the ruling.
+
+---
+
+### 10.5 The two binding guards — landing (a)
+
+Both are vitest specs under `src/architecture/`. **Both shown red before they are believed** (§5 rule 2).
+
+#### Guard 1 — criterion parity (N-44)
+
+Stable ids on every criterion in **both** lists. The guard asserts three things and **deliberately not** a
+fourth:
+
+1. **Set equality of ids, both directions** — an id in §8 with no roadmap entry fails, and the reverse fails
+   too. This is what R6's pairing has to exist *before*, hence "pairing precedes the guard."
+2. **Tick-state parity** — `[x]` on one side and `[ ]` on the other fails, naming the id.
+3. **Never text equality.** The two wordings differ by design: the roadmap states the *product* obligation,
+   §8 states the *mechanical check*. A guard that compared text would force one to become the other and
+   would destroy the reason both exist.
+
+**Mutations, per the ruling:** (i) untick one side → red naming the id; (ii) add an id to one list only →
+red naming the direction; (iii) remove an id → red. Each recorded verbatim.
+
+**Anti-vacuity:** the id inventory is asserted non-empty and pinned at **19**, so a guard that parses
+nothing cannot pass. It would go red **today** on two pairs — R7/C15 and R8/C11 — which is the strongest
+available evidence that it is not measuring itself.
+
+#### Guard 2 — architecture-spec count
+
+**N** derived from `src/architecture/*.test.ts` **via `git ls-files`**, never from a hand-written list, and
+asserted against every documented occurrence. Measured today: **N = 24**.
+
+*Owner ruling: FOUR sites.* §8 named three; the fourth is `README.md:26`, which is where **N-52** actually
+lives:
+
+| # | Site | Reads | State |
+|---|---|---|---|
+| 1 | `docs/project-status.md:333` | "**Seven** … not two" + stacked bracket `20 · 21 · 22 · 23 · 24` | dated; guard binds the bracket's last value |
+| 2 | `docs/project-status.md:472` | "all **seven** architecture specs" | **dated** — bracket on the following lines, same five stacked values |
+| 3 | `docs/02-design/architecture-boundaries.md:254` | "includes all **seven** executable specs" | **dated** — bracket in the following comment lines of the same fenced block |
+| 4 | `README.md:26` | "**seven** executable architecture specs" + stacked bracket `21 · 22 · 23 · 24` | dated; **the per-spec breakdown beside it is DROPPED** (N-52 content half) |
+
+> **[2026-09-22, CORRECTED AT LANDING (a) — this closeout's own measurement error, recorded rather than
+> quietly fixed.]** ~~Sites 2 and 3 carry no bracket and are corrected by dating in the same commit.~~
+> **All four sites were already dated**, every one of them ending at `24 at U33 (2026-09-21)`. The error
+> was a **single-line `grep`**: at site 2 the bracket begins on the *next* line, and at site 3 it lives in
+> the following comment lines of the same fenced block. There is nothing to date, and the ruling's
+> "corrected by dating in the same commit" clause has **no work to do**.
+>
+> **What this changes, stated plainly:** guard 2 is **green on its first run** rather than red on two
+> sites, so its red evidence comes only from the mutation the ruling names — *a documented count that
+> disagrees with the directory*. The premise was wrong; the guard is not, and neither is the reason for
+> it. **The four brackets still need retiring**, which is what the guard does and what the same-commit
+> note at each site now says.
+>
+> **Why this is the right error to have made in public:** the instrument that produced it was a one-line
+> `grep` over prose — the same instrument C1 and C5 are being struck for, failing the same way, inside
+> the closeout that strikes them.
+
+**Why the count stopped fitting "date beside, never rewrite."** Every other standing claim this repository
+dates is a *fact that was true once*. A monotonically changing number is not — it restacks a bracket every
+time a unit adds a spec, and `project-status.md:333` is already carrying **five** stacked values. The bracket
+was the right instrument for a claim that changed twice and the wrong one for a claim that changes every
+unit. The guard is what retires it.
+
+**Mutation:** change one documented occurrence to a wrong N → red naming the site and both numbers; delete a
+spec file without updating the docs → red. Anti-vacuity: the derived set is asserted non-empty and the
+occurrence list is asserted to have found **4** sites, so a regex that matches nothing cannot pass — the
+`LINT_SCOPE` M1c shape, which produced a green run reporting "39 of 39" with 316 files unlinted.
+
+#### GATE D1
+
+**Does not apply.** Both guards run under `npx vitest run`; **no CI step is added**. Discharged the way the
+U-units already discharge it — **`git diff` showing zero lines against `.github/workflows/ci.yml`, stated in
+the closeout** rather than asserted. Recorded explicitly because the landing instruction names GATE D1, and
+the honest discharge of a gate that does not apply is *"here is the proof it does not"*, not silence.
+
+---
+
+### 10.6 Classifications — landing (d)
+
+Each lands in `docs/project-status.md` §3 **with a dated reason**. Where this session's measurement and the
+owner's ruling differ, both are printed.
+
+| Row | Was | Becomes | Dated reason |
+|---|---|---|---|
+| **API layer** | B | **P** | Every route authenticates and 401s; `ROUTE_CONTRACT` binds the validating/non-validating split as a **set equality**; `error-disclosure` scans all three trees with an empty allowlist; `PATH_PARAM_VALIDATION` covers fourteen positions after U30; `NOT_FOUND_UNIFORMITY` after U12; both paid routes carry a rate limit and a reservation, membership pinned |
+| **Observability** | X | **B** | **See the note below — this is the one row where the measurement and the ruling differ.** |
+| **Release / integration process** | X | **B** | CI is **12 named steps** (18/18 as `gh` reports them), **required** on `main` with `enforce_admins: true`, linear history, force-push and deletion forbidden. **Residual, stated:** an admin can still *reconfigure* the protection, and there is **no release identity** — no tag, no version, no artifact that names what is deployed |
+| **Migration process** | B | **stays B** | Tooling and CI coherence are delivered (`db:migrate`, `verify:migrations` against a real Postgres). **Production application is still owner-run against dated records.** **P when it is not** — the condition is written so the next reader knows what would move it |
+| **Ports-and-adapters** | P (`claude-adapter.ts`) | **P** (`model-adapter.ts` + `openai/client.ts`) | **The row named a file that does not exist** — `git grep -l claude-adapter` hits **docs only, zero under `src/`**. The **P holds, and is strengthened**: the seam survived two provider swaps (U25 Anthropic→Omniroute, U31 Omniroute→OpenAI) without the domain agent loop changing. The stale **type** name is FU-36 |
+| **AI advisor write path** | B | **B on FU-34** | U26 binds the owner in four functions, U29 checks ownership before spend, U34 reports partial-failure state honestly. **B because FU-34 is open**: nothing renders `PARTIALLY_APPLIED`, so the user is still never told part of their batch may have been applied |
+| **Testing infrastructure** | B | **B** | Unchanged as a classification; the **figures** are stale — §2.9 says 859/73, measured **1406/111** |
+| All others | — | **unchanged** | — |
+
+#### Observability: what this session measured, and what the owner ruled
+
+**Measured as X, on the sink alone.** Structured correlation-id records exist on every 500 with field-by-field
+logging, `ROLLBACK_FAILED` and U34's counts; U19 surfaces the reference on the two paths `AdvisorPanel` owns,
+with the other **13** components held in `ui-error-text.test.ts`'s shrink-only ratchet by a recorded ruling.
+What does not exist: any sink beyond `console.error`, a logging library, request IDs outside the error path,
+or aggregation. Roadmap item 1's *"target a real sink"* is undelivered, and **N-11 is open against a cut
+unit**. On that basis this session recorded **X**.
+
+**The owner ruled B, on the definition, and the ruling is the one that lands.** `CLAUDE.md` §8 rule 5 asks
+for *production-suitable / bounded refactor / prototype-only* — not for a score. The subsystem is **not
+prototype-only**: the records are structured, the fields are deliberate, and the one missing piece is a
+**bounded** step (point the existing writer at a sink). **X was the wrong instrument, not the wrong
+observation** — this session graded the outcome and the scale grades the remediation.
+
+**Both are recorded** because the disagreement is the useful artifact: it shows the classification scale
+being applied to a subsystem that is *incomplete but not unsound*, which is the distinction §8 rule 5 exists
+to draw and the one this project has historically got wrong in the other direction.
+
+---
+
+### 10.7 What survives the phase — residues
+
+To be carried into the phase report's **"What survives the phase"** section. **Every row has an owner or a
+written owner-condition; none is dropped.**
+
+| Residue | Owner / condition |
+|---|---|
+| **OP-5** — three account facts UNKNOWN; the DPA page returned **HTTP 403** on 2026-09-18, so its terms could not be read from here | **Owner.** Not closeable from inside this repository. Until closed, advisor traffic's provider-side handling of health context is **unestablished** |
+| **N-22** — two `auto/*` aliases returned no second-step text against an empty fixture where `cc/claude-haiku…` returned some | **Owner condition.** A difference in how strictly models honour *"never guess"*. The original defect claim is **withdrawn** |
+| **N-25** — PDF transcription accuracy is measured on **clean image-only renders**, never on scans | **Owner condition:** a dated probe against a real photographed or faxed lab report. **No synthetic substitute counts** — the artefacts a render cannot produce are the whole point. Until then, claims must say *clean image-only renders*, not *scans* |
+| **N-70** — U29's two ownership guards are check-then-act beside `appendMessages`, which folds ownership into the write | **Owner condition, and it is a gate:** the window has no adversary today because nothing transfers or shares a conversation. **Any future proposal to make conversations transferable or shareable must cite N-70 and close it first** |
+| **`replaceFlags` transactional residue** | U8 **met the criterion** (prior flags survive an induced insert failure); the operation is still three round trips with no transaction around them |
+| **Live E2E** — **BLOCKED(env)** | Ruling 3: no secrets enter this public repository. The `[LIVE]` half stays an owner-run local baseline. **FU-25** is its per-worker-isolation half |
+| **U-DEFER-4** | Outstanding by dated exception since Phase 1; `HARNESS_GAP` still hard-fails a tracked `*.test.tsx` |
+| **U23's sink + N-11** | **The phase that adds a logging sink.** Carried together — N-11's closing condition was U23's and the two now share an owner |
+| **FU-33** — `handleParams(params, schema, fn)` | Deferred by ruling; **U30's two-layer guard is the interim control, and not a placeholder**: if the wrapper lands, U30's behavioural layer is what proves it is wired |
+| **FU-34** — nothing renders `PARTIALLY_APPLIED` | **N-71 is MITIGATED by U34, not closed.** The confirm surface owes the user a sentence. If a renderer lands, the `details.unreverted` objection collapses to sequencing |
+| **FU-29, FU-30, FU-31, FU-35 … FU-38** | Registered at (b); owners as recorded in §10.3 |
+| **N-50** | Product decision, **Phase 4** |
+
+---
+
+### 10.8 Landings
+
+Standard path. **Separate approval for each commit, push, merge, tag and branch deletion, every time**
+(`CLAUDE.md` §10 rule 5 — prior approval of one does not carry to the next).
+
+| | Landing | Contents | Gate |
+|---|---|---|---|
+| **(a)** | `feat` | The two binding guards, both red-proven | GATE D1 **N/A**, discharged by a zero-line diff against `ci.yml`. **Carries the §8/roadmap id-stamping, the R6 pairing and the C15/R8 ticks** — see the open question below |
+| **(b)** | `docs` | §8 and register re-derivation; `docs/04-report/phase-2-operational-dependability.report.md` | Closes C3, C16, C17, C18 by construction. **FU becomes contiguous 1–38 here** |
+| **(c)** | `docs` | The independent Check against **(b)'s pushed SHA**, in `docs/reviews/phase-1-closeout-check.md`'s shape → `docs/reviews/phase-2-closeout-check.md` | **`ecc:architect` · `ecc:code-reviewer` · `ecc:security-reviewer` · `ecc:tdd-guide`**, each owning a section. **This session is clerk only and authors no finding and no verdict** |
+| **(d)** | `docs` | The Check's findings; the six classification changes of §10.6; `roadmap.md:30-33`'s phase-status line; `CLAUDE.md` §5's baseline | Baseline **re-measured at (d)** — 1406/111, 24 specs — **not copied from (b)** |
+
+#### One open question, raised rather than decided
+
+**The §8/roadmap id-stamping, the R6 pairing and the C15/R8 ticks are documentation, but landing (a)'s guard
+cannot pass without them.** The ruling says *"pairing precedes the guard"*, which settles the order and not
+the packaging. Two readings:
+
+- **(a) carries them**, so the guard and the thing it binds land in one commit. This matches the
+  repository's idiom — GATE D1's "same commit" rule, and C14's clause requiring `TopNav.tsx` and `CLAUDE.md`
+  in one commit. **This section is written assuming it**, and it is the reading this closeout recommends.
+- **A pre-(a) docs commit** carries them, and (a) is guards only.
+
+**Approval of §10 should say which.** The difference is one commit boundary and no content.
+
+---
+
+### 10.9 STAMP ROW
+
+| Phase 2 closeout | value |
+|---|---|
+| **measured against** | `main` @ **`82f9109`** — re-derived by command 2026-09-21; the previous session's orientation report was **not** consulted and is **not** committed |
+| **§10 written** | 2026-09-22, carrying the owner's CLOSEOUT RULINGS of that date beside the measurements |
+| **exit criteria** | **18** measured → **19** after R6's counterpart. 12 MET · 2 MET-with-a-failing-written-check · 3 PARTIAL · 1 NOT MET |
+| **register** | N **1–74** contiguous · OP **1–7** contiguous, 6 of 7 discharged · **FU skips 29, 30, 31** — made contiguous **1–38** at (b) |
+| **suite** | **1406 / 111** · `src/architecture/` **24 specs, 366 tests** · lint **366 of 366, 0 errors** · tsc clean · build succeeds |
+| **landed** | **nothing** — §10 is awaiting owner approval; (a) has not started |
+
+**bkit:** registered as `phase2-closeout`, phase `plan`; artifact
+`docs/01-plan/features/phase2-closeout.plan.md`, subordinate to this entry (`CLAUDE.md` §9).
+Per **N-56**'s standing rule the bkit line has its own row above rather than being folded into prose, and
+the advance is made by the session that closes the cycle, not by a later one tidying up.
+
+---
+
+### 10.10 Landing (a) — the two binding guards
+
+**Dated 2026-09-22.** One commit, as ruled: the guards and the documentation they bind land together,
+because a guard committed ahead of its docs is red on its own SHA and the fast-forward-only flow forbids
+that by construction. The same-commit rule GATE D1 and C14 already model.
+
+#### What landed
+
+| | Change | Why it is in this commit and not a later one |
+|---|---|---|
+| **`src/architecture/criteria-parity.test.ts`** | `CRITERIA_PARITY`, **9 tests** | — |
+| **`src/architecture/spec-count.test.ts`** | `SPEC_COUNT`, **5 tests** | — |
+| §8 | Stable ids `[P2-X1] … [P2-X9]` on the nine paired criteria | `CRITERIA_PARITY` asserts set equality both ways; without the ids it is red |
+| §8 | **`[P2-X6]` added** — the reference-ID manifest criterion, ticked | The roadmap carried it and §8 did not. An unpaired id is a red build, so it could not start life unpaired |
+| §8 | **`[P2-X7]` ticked** (C15, `db:migrate` + CI coherence) | Tick parity is asserted; the roadmap ticked this on 2026-08-12 |
+| §8 | **C1 and C5 check texts struck and rewritten** per §7 | Not required by the guards — required by the ruling, and grouped here because splitting a §8 edit across two commits is how the two lists drifted in the first place |
+| `docs/roadmap.md` | Same nine ids; **`[P2-X6]` and `[P2-X8]` ticked** | Tick parity |
+| `docs/project-status.md` ×2, `docs/02-design/architecture-boundaries.md`, `README.md` | `BOUND BY SPEC_COUNT at 26` at all four sites | `SPEC_COUNT` asserts it finds **exactly four** claims and that each equals the directory |
+| `README.md` | Per-spec test breakdown **dropped** (N-52 content half) | It was stale by **22 and 1**, and a per-file count restacks a bracket on every unit that adds a test |
+
+#### The count is 26, not 24 — and the landing moved it
+
+`SPEC_COUNT` derives N from **`git ls-files src/architecture`**, and the two guards are themselves
+architecture specs. **N went from 24 to 26 in the commit that made it executable.** The four sites
+therefore carry `26`, and each records that this is the **last hand-written value**.
+
+*(A consequence worth stating rather than discovering: a new spec needs `git add -N` before this guard can
+see it, because `git ls-files` does not report untracked files. That is deliberate — a verdict must be a
+property of the repository, not of one working tree, which is `boundaries.test.ts`'s **R1** rule and the
+same mechanic `RLS_COVERAGE`'s **M8** was proved under both ways.)*
+
+#### Red evidence — mutation-checked, reverted by file-copy backup
+
+Per the standing rule: **mutation reverts use file-copy backups, never `git checkout --`**, because a file
+under `git add -N` is restored to *empty* by a checkout rather than to its content.
+
+| # | Mutation | Result | Verbatim |
+|---|---|---|---|
+| **M1** | Untick **one side** — §8's `[P2-X7]` → `[ ]` | **RED**, 1 failed / 13 passed | `tick state diverges — P2-X7: §8=[ ] roadmap=[x]: expected [ 'P2-X7: §8=[ ] roadmap=[x]' ] to deeply equal []` |
+| **M2** | Add an id to **one list only** — roadmap gains `[P2-X10]` | **RED ×2**, 2 failed / 12 passed | `docs/roadmap.md carries P2-X10 and §8 does not. This is P2-X6's failure mode: an obligation tracked in one list only.: expected [ 'P2-X10' ] to deeply equal []` · and the pinned-set assertion: `expected [ 'P2-X1', 'P2-X10', 'P2-X2', …(7) ] to deeply equal [ 'P2-X1', 'P2-X2', 'P2-X3', …(6) ]` |
+| **M3** | **Remove an id** — §8 loses `[P2-X6]` | **RED ×3**, 3 failed / 11 passed | `docs/roadmap.md carries P2-X6 and §8 does not…` · pinned set `…(5) to deeply equal …(6)` · and the plan-only count `expected 11 to be 10` |
+| **M4** | **A documented count that disagrees with the directory** — `README.md` says `25` | **RED**, 1 failed / 13 passed | ``documented architecture-spec counts disagree with `git ls-files src/architecture``` |
+| **revert** | all four restored from backup | **GREEN**, 14 / 14 | — |
+
+**M1 is the one that matters most, and it is not a synthetic mutation: it reproduces the repository's
+actual state at `82f9109` exactly**, down to the id. `P2-X7: §8=[ ] roadmap=[x]` is the divergence that had
+been live since 2026-08-12 and that no check could see. **M3 reddens three assertions rather than one** —
+the pinned set, the cross-list equality and the plan-only count — which is the defence-in-depth the
+`LINT_SCOPE` M1c lesson asks for: a single assertion can be satisfied vacuously, three with different
+derivations cannot.
+
+#### GATE D1 — discharged, not assumed
+
+**Does not apply: no CI step is added.** Both guards run inside the existing `Unit and architecture tests`
+step. Discharged the way the U-units discharge it:
+
+```
+git diff -- .github/workflows/ci.yml | wc -l   →   0
+```
+
+**Zero lines.** `CLAUDE.md` §5's declared chain is unchanged, and `DOC_TRUTH`'s
+`binds the declared step chain to ci.yml's steps EXACTLY, in order` is green.
+
+#### Gates re-measured, on the tree this landing produces
+
+| Gate | Result | Was, at `82f9109` |
+|---|---|---|
+| `npx tsc --noEmit` | **clean** (exit 0) | clean |
+| `npm run lint` | **368 of 368** tracked source files, **0 errors** | 366 of 366 |
+| `npx vitest run` | **1420 passed / 1420 · 113 files** | 1406 / 111 |
+| `npm run test:coverage` | **exit 0** — thresholds hold | exit 0 |
+| `npx next build` | **succeeds** | succeeds |
+| `src/architecture/` | **26 specs** | 24 |
+
+**`CLAUDE.md` §5's baseline is NOT touched here.** It is landing **(d)**'s, re-measured there rather than
+carried from here — and the ruling's figures for (d) (`1406/111, 24 specs`) were the `82f9109` measurement
+and are **superseded by this landing**: (d) will record **1420+/113+ and 26+**, re-measured against its own
+tree. Stated now so the discrepancy is not read later as drift.
+
+#### Review
+
+`ecc:code-reviewer` on the diff. **`ecc:security-reviewer` was deliberately NOT run, and the reason is
+stated rather than left to inference:** this landing moves **no request path**. It adds two test files
+that read documents and shell out to `git ls-files`, and edits Markdown. No route, no middleware, no
+schema, no policy, no environment reader and no paid-API surface is touched — `git diff --stat` over
+`src/app/**`, `src/lib/**`, `src/services/**` and `supabase/**` is empty. A security review with no attack
+surface in scope produces a finding-free report that later reads as assurance it did not provide.
+
+#### `ecc:code-reviewer` on the diff — APPROVE with one MEDIUM, and the MEDIUM is upheld
+
+**0 CRITICAL · 0 HIGH · 1 MEDIUM · 0 LOW.** The reviewer did not take either guard's header at its word: it
+re-ran the anti-vacuity claims as its own mutations — renaming the roadmap's Phase 2 heading (guard
+**throws**, does not silently scan nothing), planting `SPEC_COUNT at 27` in the fenced block (**red**,
+names site and both numbers), deleting a `BOUND BY` clause (**red on two assertions**), unticking
+`[P2-X6]` on one side (**red**, names the id and both states) — and hand-counted both criteria lists
+independently of the parser (19 items / 9 ids; 9 items / 9 ids) against the parser's answer. It confirmed
+no false captures from nested content, blockquotes or code fences, correct `section()` boundaries, correct
+matching of the marker **split across two `#` comment lines**, and no stateful `/g` reuse.
+
+On the pinned constants (`EXPECTED_IDS`, `EXPECTED_PLAN_CRITERIA = 19`, `N === 26`): **a deliberate false
+red on the next legitimate edit, which is the same shape as `DOC_TRUTH`'s table pins and is the trade-off
+that replaces the stacked bracket.** Accepted as the right call rather than defended as a necessary evil.
+
+**MEDIUM — UPHELD, and it is this closeout's own omission, not the reviewer's stretch.**
+*"Stale per-file test counts left standing in two of the three sites this very diff is auditing for exactly
+this defect class."* §10.3 recorded that three sites carry per-spec counts and that the ruling named
+**`README.md` only**; it then said those two would be registered as a finding for (b) — **and no such
+finding was ever written.** A sentence in a working note is not a register row; that is FU-29's mechanism
+reproduced inside the commit that fixes FU-29's mechanism.
+
+**Measured now**, since the diff already had everything needed to know:
+
+| Site | Documented | Measured | Stale by |
+|---|---|---|---|
+| `boundaries.test.ts` | **36** | **58** | **22** |
+| `error-disclosure.test.ts` | **30** | **31** | **1** |
+| `rls-coverage.test.ts` | **14** | **22** | **8** — *found by the reviewer, in neither N-52 nor §10.3* |
+| `schema-type-drift.test.ts` · `doc-truth.test.ts` · `auth-coverage.test.ts` · `e2e-live-tagging.test.ts` | 23 · 21 · 13 · 11 | 23 · 21 · 13 · 11 | accurate |
+| `src/services/evaluation.test.ts` *(listed in the boundaries doc's command block)* | **11** | **13** | **2** |
+
+Sites: `docs/project-status.md:336-338` and `docs/02-design/architecture-boundaries.md:262-269` — the
+second sitting a few lines **below the `SPEC_COUNT` bracket this landing just inserted**.
+
+**NOT corrected here. Named, and routed to (b) as `FU-39`.** *(Reasons, in the order they bind: the ruling
+scoped the drop to `README.md`, and quietly widening an approved scope is the behaviour §8 rule 1 forbids —
+this closeout does not get to absorb work because the work is easy. `SPEC_COUNT` deliberately does not bind
+per-file counts, so nothing here is a guard defect. And the disposition is a real choice — **drop** them as
+`README.md`'s were, or **bind** them — which is the owner's to make, not a landing's.)*
+
+> **FU-39 — NEW, 2026-09-22.** Per-spec test counts at `docs/project-status.md:336-338` and
+> `docs/02-design/architecture-boundaries.md:262-269`, three of them stale (**22 · 8 · 2**) and four
+> accurate. **N-52's content half is closed for `README.md` only.** Disposition due at (b): **drop, as
+> `README.md`'s were**, or **bind, extending `SPEC_COUNT` to per-file counts**. Raised by
+> `ecc:code-reviewer` on landing (a)'s diff. **Owner: landing (b).**
+
+**FU therefore runs 1 … 39 at the end of (b)**, not 1 … 38 as §10.3 states — corrected there by date rather
+than rewrite.

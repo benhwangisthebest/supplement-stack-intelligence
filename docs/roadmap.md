@@ -362,14 +362,22 @@ is reachable from client code after Phase 0's push, and confirm the service-role
 the dev seed script.
 
 **Exit criteria (measurable)**
-- [ ] Every 5xx has a correlating server-side log entry with a request ID; zero raw internal messages in
+- [ ] **[P2-X1]** Every 5xx has a correlating server-side log entry with a request ID; zero raw internal messages in
       any client response (test-enforced).
-- [ ] A concurrent-request test proves the daily token budget cannot be exceeded.
-- [ ] Rate limits enforced on both LLM-backed routes, with tests.
-- [ ] Client disconnect provably terminates the advisor loop.
-- [ ] `replaceFlags` atomicity test passes under induced insert failure.
-- [ ] ID manifest exists; removing a published ID fails CI.
-- [x] **[REWORDED 2026-08-08 · MET 2026-08-12 by U15]** `db:migrate` exists, and **CI proves the migration set is coherent** by
+- [ ] **[P2-X2]** A concurrent-request test proves the daily token budget cannot be exceeded.
+- [ ] **[P2-X3]** Rate limits enforced on both LLM-backed routes, with tests.
+- [ ] **[P2-X4]** Client disconnect provably terminates the advisor loop.
+- [ ] **[P2-X5]** `replaceFlags` atomicity test passes under induced insert failure.
+- [x] **[P2-X6]** ID manifest exists; removing a published ID fails CI.
+      > **[2026-09-22] TICKED AT THE PHASE 2 CLOSEOUT — met before this phase opened, by Phase 0 U8.**
+      > `src/data/id-manifest.json` (**328 lines**) is read from disk by `src/data/id-stability.test.ts`
+      > as an **independent checked-in ledger**, never derived from the arrays it validates; U20 closed the
+      > header's false "eight namespaces" by **removing** the count (FU-32). This document's own
+      > lines 35–37 have recorded the out-of-order delivery since 2026-08-08 — *"its exit criterion is
+      > already met"* — and the box was never ticked, because a sentence in a preamble and a checkbox in a
+      > list had nothing binding them. It now has a counterpart in the Phase 2 plan's §8 under the same
+      > id, and `CRITERIA_PARITY` binds the tick states in both directions.
+- [x] **[P2-X7]** **[REWORDED 2026-08-08 · MET 2026-08-12 by U15]** `db:migrate` exists, and **CI proves the migration set is coherent** by
       applying every file in `supabase/migrations/` in order to a **throwaway Postgres** and failing on the
       first error. ~~`db:migrate` exists; deployed schema matches migrations, verified in CI.~~
       *Why:* verifying against the **deployed** database needs live credentials in CI, which the 2026-08-08
@@ -388,8 +396,15 @@ the dev seed script.
       > `31560224886` and `31560792889` (1–2 s; the Postgres service container adds ~20–24 s), and the
       > owner-run record `docs/05-qa/2026-08-12-deployed-schema-record.md` is complete — **all three parts
       > PASS**, discharging the live-database residue and, in the same sitting, **OP-3** and **N-28**.
-- [ ] Security headers present, verified by a response-header test.
-- [x] **[REWORDED 2026-08-08]** A user can **export their data and delete all of it across the 12 tables**,
+- [x] **[P2-X8]** Security headers present, verified by a response-header test.
+      > **[2026-09-22] TICKED AT THE PHASE 2 CLOSEOUT, and the deliberate divergence is RETIRED.** The
+      > Phase 2 plan's §8 ticked this on 2026-08-10 for the config half and recorded the response half as
+      > developer-run (**N-29**); this copy was deliberately left unticked while that split held. **U14
+      > discharged it on 2026-08-11** — `61ad255`, green on run `31473581501` (`a1a9fc0`, full non-live
+      > suite, 70/30) — so both halves have been enforced on every push since, and the reason for the
+      > divergence expired that day. It survived here for thirteen months of commits because nothing read
+      > both lists. `CRITERIA_PARITY` now does.
+- [x] **[P2-X9]** **[REWORDED 2026-08-08]** A user can **export their data and delete all of it across the 12 tables**,
       with the **surviving auth identity stated in the response**.
       > **MET 2026-08-17 — U16 (export, `a087715`) + U17 (deletion, `55c74f6`).** `GET /api/account/export`
       > returns all twelve tables with a `notIncluded[]` statement of what it omits; `DELETE /api/account`

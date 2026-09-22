@@ -333,7 +333,7 @@ test" part does not.
   close). **Seven** executable architecture specs, not two **[2026-09-14, observed at U12: **20** · **21 at U22 (2026-09-15)** · **22 at U32 (2026-09-18)** · **23 at U30 (2026-09-21)** · **24 at U33 (2026-09-21)**, the
   directory count — the figure below is the 2026-08-06 measurement and stays as written; the thirteen
   added since are Phase 2's, most recently `not-found-uniformity.test.ts` (U12) and the specs added by
-  U13–U28]**: `boundaries.test.ts` (**36**),
+  U13–U28 · **[2026-09-22, Phase 2 closeout] BOUND BY `SPEC_COUNT` at `26` — the two guards this landing adds are themselves architecture specs, so 24 became 26 in the same commit that made the number executable. Derived from `git ls-files` over `src/architecture/*.test.ts` and asserted against this site: a unit that adds a spec now reddens the build instead of appending a further value here. This is the last hand-written value; do not restack**]**: `boundaries.test.ts` (**36**),
   `error-disclosure.test.ts` (**30**), `schema-type-drift.test.ts` (**23**), `doc-truth.test.ts` (**21**),
   `rls-coverage.test.ts` (**14**), `auth-coverage.test.ts` (**13**) and `e2e-live-tagging.test.ts` (**11**). Six of the seven derive
   their inventory from `git ls-files`, so a verdict is a property of the repository rather than of one
@@ -472,7 +472,7 @@ purity is unenforced, the presentation layer is untestable-by-config, and none o
 `DOMAIN_IS_PURE` is enforced as a ratchet (U18), and all seven architecture specs run on every push via
 CI (including a coverage gate) **[2026-09-14, observed at U12: **20** · **21 at U22 (2026-09-15)** · **22 at U32 (2026-09-18)** · **23 at U30 (2026-09-21)** · **24 at U33 (2026-09-21)**, and the "all" is the load-bearing
 word — it was true when written and is still true, because CI runs the whole suite rather than a named
-list; only the count aged]**. **The presentation layer is still untestable by config**: `include` is
+list; only the count aged · **[2026-09-22, Phase 2 closeout] BOUND BY `SPEC_COUNT` at `26` — the two guards this landing adds are themselves architecture specs, so 24 became 26 in the same commit that made the number executable. Derived from `git ls-files` over `src/architecture/*.test.ts` and asserted against this site: a unit that adds a spec now reddens the build instead of appending a further value here. This is the last hand-written value; do not restack**]**. **The presentation layer is still untestable by config**: `include` is
 `src/**/*.test.ts` with `environment: "node"`, so a `.test.tsx` cannot run — though since U13 a tracked
 `.test.tsx` at least fails loudly via `HARNESS_GAP` instead of being silently skipped. Plus two
 content/process issues:
