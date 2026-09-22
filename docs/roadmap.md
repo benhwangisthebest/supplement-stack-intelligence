@@ -27,10 +27,19 @@ commit. **Phase 1 — complete with follow-up (2026-08-06)**: the plan at
 the FU-23 rider) shipped; **10 of 11 exit criteria are met and one is PARTIAL** — U17's live-E2E half is
 **BLOCKED(env)** on credentials no agent can supply. Outcome:
 `docs/04-report/phase-1-verification-integrity.report.md`.
-**Phase 2 — planned and approved, not started (plan approved 2026-08-08).** The plan is
-`docs/01-plan/phase-2-operational-dependability.plan.md`, **status APPROVED**, so it is rank 5 under
-`CLAUDE.md` §6 and sequences the phase. ~~Planning (2026-08-06): a DRAFT plan exists; it is not approved
-and authorises nothing.~~ No Phase 2 unit has been executed. Phases 3–4 — not started.
+**Phase 2 — COMPLETE WITH FOLLOW-UP (2026-09-22).** The plan is
+`docs/01-plan/phase-2-operational-dependability.plan.md`, **status APPROVED** (rank 5 under `CLAUDE.md`
+§6), with its **§10 Closeout** approved 2026-09-22. All 28 units shipped; **all 19 exit criteria are met**
+and the register is contiguous at **N-1…N-77 · FU-1…FU-46 · OP-1…OP-7**. An independent four-reviewer
+Check — `docs/reviews/phase-2-closeout-check.md`, findings **P2-1…P2-13** — returned **COMPLETE WITH
+FOLLOW-UP**; four of its findings were remediated in code at landings (d1)/(d1b) and the rest dispositioned
+at (d2). Outcome: `docs/04-report/phase-2-operational-dependability.report.md`.
+**What "with follow-up" means here, named rather than implied:** **OP-5** carries three UNKNOWNs (the DPA
+page returned HTTP 403); the **live E2E half stays BLOCKED(env)** by ruling 3; and **N-11, FU-41, FU-43 and
+FU-44 all wait on the same thing — a logging sink that does not exist.** Observability is classified **B**
+by ruling and was **measured X** on the sink alone; both readings are recorded in `project-status.md` §2.8.
+~~Planning (2026-08-06): a DRAFT plan exists; it is not approved and authorises nothing.~~
+~~No Phase 2 unit has been executed.~~ **Phases 3–4 — not started.**
 
 **Two Phase 2 items were already delivered out of order** and the plan marks them so rather than
 scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` +
@@ -362,8 +371,28 @@ is reachable from client code after Phase 0's push, and confirm the service-role
 the dev seed script.
 
 **Exit criteria (measurable)**
-- [x] **[P2-X1]** Every 5xx has a correlating server-side log entry with a request ID; zero raw internal messages in
-      any client response (test-enforced).
+- [x] **[P2-X1]** ~~Every 5xx~~ **Every 5xx that reports an unexpected failure** has a correlating
+      server-side log entry with a correlation id; **a declared operational state answers without one, by
+      ruling**; zero raw internal messages in any client response (test-enforced).
+      > **[2026-09-22, (d2)] RE-WORDED on Check finding P2-1, with the decision cited — which is the whole
+      > point of the rewording.** The old text said *every 5xx*, and `ecc:architect` re-derived **three**
+      > sites that answered 5xx while returning before any log ran. C15 carries a formal reworded-criterion
+      > citation; this one did not, and `docs/roadmap.md`'s own tick-note had silently substituted *"every
+      > unexpected error"* for *"every 5xx"* — a redefinition doing real work with nothing ratifying it.
+      > **The two carve-outs are now IN the criterion instead of under it:**
+      > **(1) `NOT_CONFIGURED` → 503 is a DECLARED OPERATIONAL STATE (U1's ruling)** — it mints no id and
+      > writes no record deliberately, because an unset environment variable is a known state, not an
+      > exception, and every `handle()`-wrapped route answers it identically. Pinned by
+      > `DECLARED_OPERATIONAL_STATES`, **imported** by the guard rather than re-typed (that re-typing was
+      > the closeout's own HIGH 1).
+      > **(2) The middleware's pre-handler window is FU-43** — `supabase.auth.getUser()` runs in the Edge
+      > runtime before any handler exists, so no route-level window can reach it and there is no sink there
+      > to reach. **It is the last item of `ecc:security-reviewer`'s (A) enumeration inside the request
+      > path**, and it is a follow-up rather than a defect-to-fix because the missing half is the sink.
+      > **What the closeout actually closed, so the carve-outs are not doing hidden work:** P2-R1 (d1)
+      > routed every unexpected 5xx through the logger and fixed `extract/route.ts` discarding the real
+      > exception; P2-R4 and N-76 (d1b) guarded both `handle()`-exempt routes, **from their first
+      > statement**. **FU-44** records the three surfaces outside `handle()`'s reach entirely.
       > **[2026-09-22] TICKED AT LANDING (b) — ON THE CRITERION AS WRITTEN, and the gap between that and
       > item 1's ambition is stated rather than absorbed.** Both clauses hold: `handle()` writes a
       > structured record carrying a correlation ID, the public error code and the error's
@@ -378,6 +407,9 @@ the dev seed script.
       > rather than production-suitable.
       > *(This is C15's shape a second time: a criterion narrower than the ambition that produced it. Ticked
       > because it is met as written; the shortfall is named where shortfalls live.)*
+      > **[2026-09-22, (d2)] The note above says "every unexpected error" where the criterion said "every
+      > 5xx".** That substitution was doing the carve-out's work informally. It is now in the criterion
+      > text, cited. **Re-ticked on the re-worded text** against (d1) `bac5928` and (d1b) `a27ab0a`.
 - [x] **[P2-X2]** A concurrent-request test proves the daily token budget cannot be exceeded.
       > **[2026-09-22] TICKED AT LANDING (b), in the same edit as the Phase 2 plan's §8 copy — because
       > `CRITERIA_PARITY` refused the commit that ticked only one.** U4 (`54ef19b`) closed **both** races,
@@ -464,6 +496,17 @@ with no derivation — **four** of them Grade A (there are eight Grade A in all;
 carry an `evidenceProfile`), some with zero linked papers — in a product that declares the
 Library its trust layer.
 
+> **[2026-09-22, Phase 2 closeout (d2), Check finding P2-6] PHASE 3 CANNOT SATISFY ITS OWN UI CRITERION
+> WITHOUT A DECISION THAT IS NOT YET MADE.** This phase's criterion *"every surface that can show partial
+> coverage states its coverage limit; **test-verified**"* needs a component-test harness that **does not
+> exist**: `vitest` collects `src/**/*.test.ts` under `environment: "node"`, so a `.test.tsx` cannot run,
+> and `HARNESS_GAP` hard-fails any tracked one. That is **U-DEFER-4**, outstanding by dated exception since
+> Phase 1, and its owner-condition names *"the phase that introduces component testing"* — which **this
+> roadmap places in Phase 4**. So the criterion's verification method is owned by a later phase than the
+> criterion. **Two ways out, and the choice is the owner's:** Phase 3 opens by building the harness, or the
+> UI criterion is re-sequenced to Phase 4. **Naming the conflict is what the Check owed; deciding it is
+> not.** Recorded in plan §10.7 as a residue and in report §11.
+
 **Why Phase 3 and not Phase 1.** It is the product's most important gap but also its most expensive, and
 it must not precede verification and operations: grounding generates large content diffs, and without CI,
 enforced guards, and an ID contract, that work would be unreviewable and would risk re-introducing the
@@ -518,6 +561,15 @@ offline — never a runtime fetch reachable from a request path.
 operable, and grounded.
 
 **Included work (candidates, prioritized by product value — not a commitment)**
+0. **N-50 — the uniform-404 question, deferred here from Phase 2 by ruling.**
+   **[2026-09-22, Phase 2 closeout (d2), Check finding P2-11.]** Registered as a **product decision about
+   the API's voice**, not a defect: `NOT_FOUND_UNIFORMITY` makes every 404 answer the same bytes, which is
+   correct as a security property and may be wrong as a product one — a user who mistypes a stack id and a
+   user asking for someone else's get the same sentence. **Deciding whether that is the voice this product
+   wants is Phase 4's, and it must be decided rather than inherited.** It was recorded in the plan and the
+   report and **named nowhere in this file, the sequencing authority** — an item deferred *into* a phase
+   whose own section does not name it is the N-11 shape: a disposition pointing at something that will not
+   look back.
 1. **Context-adjusted evidence** — resume `docs/01-plan/features/context-adjusted-evidence.plan.md`. The
    plan must be revised first: it was halted at design and assumed a `populationRelevance` seam that
    exists for only 8 of 27 effects. Phase 3 removes that blocker.

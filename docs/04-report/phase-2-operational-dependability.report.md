@@ -222,7 +222,20 @@ Full table with per-criterion evidence: plan §8 and §10.2. Four are worth surf
 
 ## 9. Follow-up register — final state
 
-**N-1 … N-74 · OP-1 … OP-7 · FU-1 … FU-39.** Contiguous, no gaps, no duplicates, every row re-derived.
+~~**N-1 … N-74 · OP-1 … OP-7 · FU-1 … FU-39.** Contiguous, no gaps, no duplicates, every row re-derived.~~
+
+**[2026-09-22, (d2)] RESTATED, and the original was false in a way the Check had to find.**
+**N-1 … N-77 · OP-1 … OP-7 · FU-1 … FU-46 — contiguous, no gaps, no duplicates**, re-derived at (d2) by a
+section-bounded parse. **Four of those rows were written LATE, and one was found by the Check** (P2-13):
+**FU-32** had been cited thirteen times as the authority for dropping a number rather than correcting it,
+and no row existed to read. The sentence above claimed *every row re-derived* over a row that was never
+written. **That is the promise-shaped disposition the closeout had just finished fixing for FU-29, FU-30
+and FU-31 — a fourth number issued the same way, in the landing that fixed the first three, and caught
+only because an independent reviewer parsed the register instead of reading the headline.**
+
+*(Late-registered: **FU-32** at (d2) on P2-13; **FU-39** at (b) on landing (a)'s own diff; **N-75** at (d1)
+by a red proof that failed to redden; **N-76** at (d1b) by a guard refusing to pass. Added at (d2):
+**FU-40…FU-46**, **N-77**.)*
 
 **The register's own failure is the headline, and it is recorded rather than repaired quietly.** FU-29,
 FU-30 and FU-31 were each promised by the formula *"Register as FU-nn"* inside another row's disposition
@@ -248,7 +261,17 @@ anomalies noted (§4.6 reordered; U31's C-table left in place and annotated).
 
 ## 10. What survives the phase
 
-Twelve residues, each with an owner or a written owner-condition. Full table: plan §10.7.
+**Fourteen** residues, each with an owner or a written owner-condition. Full table: plan §10.7.
+
+> **[2026-09-22, (d2)] Check finding P2-2 — this section's opening was FALSE, and the mechanism is worth
+> more than the correction.** Plan §10.7's header (*"every row has an owner or a written owner-condition"*)
+> was true of the twelve rows in that table. **This section promoted it into a claim about the phase**, and
+> two OPEN register rows were in neither: **N-69**, security-relevant and the only open row anywhere with
+> no owner at all, and **N-40**, directly §2.3 rule 15. Both are now residues; N-69 has an owner-condition.
+> **What generalises: a true statement about a table becomes a false statement about a phase simply by being
+> quoted one level up**, and nothing in this project's apparatus compares a summary against the thing it
+> summarises. **This section holds the residues that CONSTRAIN future work — not every open register row.**
+> There are at least eleven more, each with a written reason, in plan §4.4/§4.5.
 
 **The ones that constrain future work rather than merely awaiting it:**
 
@@ -262,6 +285,14 @@ Twelve residues, each with an owner or a written owner-condition. Full table: pl
 - **FU-34** — nothing renders `PARTIALLY_APPLIED`. **N-71 is MITIGATED by U34, not closed**: the server can
   now say it truthfully and the user is still never told.
 - **U23's sink + N-11** — carried together, because they are one piece of work seen from two directions.
+  **[(d2)] FU-41, FU-43 and FU-44 join them**: health-bearing error text, the middleware's unguarded
+  `getUser()`, and the three surfaces `handle()` never reached. All four want the same sink.
+- **N-69** — `recordBatch` can stamp another user's `advisor_actions.conversation_id`. **SECURITY-RELEVANT.**
+  **[(d2), on P2-2]** **Owner-condition: the next unit touching `recordBatch` or the `advisor_actions`
+  schema.** Latent only because there is one writer and conversations cannot change hands; **a second
+  writer, or a transferable conversation, makes it live** — the same gate shape as N-70.
+- **N-40** — nothing structurally prevents health-bearing error text reaching a log record. **§2.3 rule 15**,
+  STRUCTURAL, no leak observed. **[(d2), on P2-2]** Registered as a class in **FU-41**.
 
 ---
 
@@ -273,9 +304,21 @@ Phase 3 is **evidence grounding** — the Library's central claim. It inherits:
   manifest must exist before any seed-ID renaming begins. It does.
 - **FU-29** — the 13 uncast-checked `mappers.ts` sites, which want a migration against a deployed database
   and 13 value-domain decisions. Sequenced after U15's apparatus, which exists to verify exactly that.
-- **The unenforced §4 rules** — rule 7 (client components take props) would fail today on 7 of 31
+- **The unenforced §4 rules** — rule 7 (client components take props) would fail today on **8 of 31**
+  *([2026-09-22, P2-9] ~~7 of 31~~ — this section repeated the figure unmeasured; re-derived at (d2) with the
+  predicate now stated in `CLAUDE.md` §4)*
   components; rule 8 has no general mechanical form.
 - **N-50 → Phase 4**, not Phase 3: a product decision about the API's voice.
+- **U-DEFER-4 — and Phase 3 cannot satisfy its own UI criterion without deciding it first.**
+  **[2026-09-22, (d2), Check finding P2-6.]** Roadmap Phase 3's criterion *"every surface that can show
+  partial coverage states its coverage limit; **test-verified**"* needs a component-test harness that does
+  not exist: `vitest` collects `src/**/*.test.ts` under `environment: "node"`, so a `.test.tsx` cannot run,
+  and `HARNESS_GAP` hard-fails any tracked one. U-DEFER-4 is still unmet by dated exception, and its
+  owner-condition names *"the phase that introduces component testing"* — which the roadmap places in
+  **Phase 4**. **So Phase 3 inherits a criterion whose verification method is owned by Phase 4.** It was in
+  plan §10.7's residue table and absent from this section — the one a Phase 3 planner reads.
+  **Two ways out, and choosing is the owner's, not this report's:** Phase 3 opens by building the harness,
+  or Phase 3's UI criterion is re-sequenced. **Naming the conflict is what was owed.**
 
 **What Phase 3 must not inherit quietly:** OP-5. Content grounding does not touch it, and a phase boundary
 is where an open operational item becomes invisible.
@@ -347,3 +390,54 @@ and **a tick-state guard thereby surfaced a specification question.**
 > stronger case is this one: the paragraph was written, understood, and still not obeyed** — twice, within
 > hours, by the people who had just written it. Sixteen boundary violations accumulated in this repository
 > while a rule lived only in prose. The reason is not that nobody read it.
+
+### A red-first proof that fails to redden — **3 instances**, all inside the closeout's own remediations
+
+**[2026-09-22, added at (d2).]** The fifth class, and the only one this phase discovered about *itself*.
+Every instance has the same shape: a guard was written, a mutation was run to prove it bites, **the
+mutation left the suite green — and the finding was the guard, not the mutation.** All three would have
+passed review as green, because a blinded guard and a satisfied guard are the same colour.
+
+- **N-75 — the blinded helper.** (d1)'s P2-R3 planted a service-role-key read in `src/lib/db/seed.ts` and
+  the new ratchet stayed green. Traced rather than re-planted: `readsIdentifier` used `ts.createScanner`
+  with a bare `scan()` loop, which carries no template-continuation state, so the walk **terminated at the
+  first `` `…${…}` ``** and everything after it in the file was unread. **Four** credential ratchets were
+  affected. Rewritten as an AST walk with two regression fixtures. **The part that matters for the phase:
+  those four ratchets were certified sound at (c) on 64/64 green** — the Check read them and could not
+  have seen this.
+- **The vacuous exemption pin.** `ecc:code-reviewer` mutated (d1)'s new `DECLARED_OPERATIONAL_STATES`
+  assertion by adding a second, unused entry to the production set: **7/7 still green.** The guard re-typed
+  its own `["NOT_CONFIGURED"]` array instead of importing the real one, so it was checking itself. **This
+  is the anti-vacuity defect the closeout exists to remove, found inside the closeout's own remediation.**
+- **The predicate satisfied by an unrelated call.** (d1b) tightened `UNWRAPPED_ROUTES` and then deleted the
+  pre-stream catch from `advisor/route.ts` to prove the tightening bit. **Still green** — the predicate
+  asked only whether the file contained `internalError(` *anywhere*, and that file also reports from its
+  in-stream SSE handler. Now keyed on the `PRESTREAM_ERROR` code the two catches share.
+
+> **Rule produced: a mutation that does not redden is a finding, not a mistake in the mutation.** The
+> tempting reading is always *"I mutated the wrong line"* — and twice here that reading was available and
+> wrong. **Trace before re-planting.**
+
+**A fourth was ANTICIPATED rather than discovered, which is the only evidence that the rule took.** (d1b)'s
+new positional check — *a `getUser(` before the first `try` is red* — is a no-op for a route that stops
+calling `getUser(` at all, so a rename would have **silenced** it rather than reddening it. That exit was
+closed with an anti-vacuity pin *before* the guard shipped, and the pin was itself mutation-shown. It is
+not counted among the three: nothing had to fail first.
+
+### The closeout's own two HIGHs
+
+**[2026-09-22, added at (d2).]** Both were raised by `ecc:code-reviewer` and `ecc:security-reviewer`
+against **(d1)'s remediations** — code written by this closeout to fix the Check's findings — and both are
+instances of classes already named above.
+
+- **HIGH 1 — the vacuous pin** (above). *Says-vs-does, at the scale of a single `expect`.*
+- **HIGH 2 — the real exception discarded.** P2-R1 routed every unexpected 5xx through the logger, and at
+  `src/app/api/lab-import/extract/route.ts` the caught `ExtractionError` was branched on and then **thrown
+  away**: `fail()` synthesised its own error with a fixed message, so **four distinct causes collapsed into
+  one undistinguishable log line.** The correlation id existed and pointed at nothing worth reading. Fixed
+  by reporting the real error and passing its id to `fail()`. *A remedy applied to the half that was
+  reported — N-74's lesson, recurring in the fix for a different finding.*
+
+> **What the pair says about the closeout as a method:** the remediations were reviewed as adversarially as
+> the code they remediated, and that is where both HIGHs came from. A closeout that reviews the phase and
+> not its own repairs is measuring the easier thing.

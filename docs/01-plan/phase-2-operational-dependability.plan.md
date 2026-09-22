@@ -159,7 +159,7 @@ confines the user to their own row, so no other user's data is reachable. It cos
 | **F5** correlation ID in UI | ~~not started — zero `correlationId` in any `.tsx`; `AdvisorPanel.tsx:286` receives one and discards it~~ → **CLOSED 2026-08-20 by U19**. The row undercounted: the discard was **two** sites (`:286` SSE and `:248` envelope) across a **14-file** surface, not one site in one file | `errorText()` in `src/lib/api/error-text.ts` (100/100/100/100, 11 tests); `AdvisorPanel` converted at both sites; `ui-error-text.test.ts` scans all 65 tracked `.tsx` with a **13-entry shrink-only ratchet** (owner ruling 2026-08-20) and pins the SSE branch separately, since no envelope regex can see it. Evidence: 8 mutations red, incl. M3 `(Reference: undefined)`, M6 green-untracked/red-staged, M7 anti-vacuity |
 | **Slug append-only manifest** (§7 ruling 3) | not started — no `slugs` namespace; **`id === slug` for all 15 supplements**; slugs persisted in **no** DB column | → **U20** (two schema decisions — §7) |
 | **§4 rule 9** budget + rate limit | **UNENFORCED**, no guard | → **U7** |
-| **§4 rule 7** client components take props | UNENFORCED; **7 of 31** would fail. **Denominator defined here, once:** *tracked files under `src/components/**` carrying a `"use client"` directive* = **31** (30 `.tsx` + 1 `.ts`). Measured — `CLAUDE.md` §4 and `project-status.md` both use this figure and neither defines it; a guard for this rule must adopt this predicate or state its own | **Deferred → Phase 3/4.** Correctly marked, and `DOC_TRUTH` now prevents silent relabelling |
+| **§4 rule 7** client components take props | UNENFORCED; ~~**7 of 31**~~ **8 of 31** would fail *([2026-09-22, P2-9] re-derived at (d2); the eighth is `profile/LabMarkerModal.tsx`)*. **Denominator defined here, once:** *tracked files under `src/components/**` carrying a `"use client"` directive* = **31** (30 `.tsx` + 1 `.ts`). Measured — `CLAUDE.md` §4 and `project-status.md` both use this figure and neither defines it; a guard for this rule must adopt this predicate or state its own | **Deferred → Phase 3/4.** Correctly marked, and `DOC_TRUTH` now prevents silent relabelling |
 | **§4 rule 8** trust boundaries | UNENFORCED generally | **Partially addressed** by U5's IP-identity function and U10; no general rule proposed |
 | **F7** detector gaps (destructured bodies, two-arg `.then`) | open, tracked in Phase 1 plan §5 | **Deferred, condition restated:** close if any route adopts either form. U2 does not |
 
@@ -293,10 +293,21 @@ defect; none is dropped.
 >   CHECK constraint — `:56,67,69,73,75,100,138,139,154,155,167,168,172` (15 casts; `:40` `ratings jsonb`
 >   and `:57` `severity smallint` with a CHECK are legitimately excluded). **U8 closed *shape* drift;
 >   *value* drift stays silent.** **Owner: a dedicated unit sequenced after U15** — closing it means a
->   migration adding CHECK constraints to a **deployed** database, so it carries its own **OP row** and a
->   deployment-order decision, on top of **13 separate value-domain decisions**, one per cast site, each of
->   which must first establish what the legal value set actually *is*. *(Re-derived at close: the 13 sites
->   are still there and still uncovered.)*
+>   migration adding CHECK constraints to a **deployed** database, so **that unit WILL NEED to open its own
+>   OP row** and a deployment-order decision, on top of **13 separate value-domain decisions**, one per cast
+>   site, each of which must first establish what the legal value set actually *is*. *(Re-derived at close:
+>   the 13 sites are still there and still uncovered.)*
+>
+>   > **[2026-09-22, (d2)] Check finding P2-5 SETTLED — the reading, not the row.** `ecc:architect` read
+>   > *"it carries its own OP row"* as a present-tense claim and called it promise-is-not-a-record recurring
+>   > inside the row written to fix that class; `ecc:tdd-guide` declined to confirm, calling it genuinely
+>   > ambiguous between that and a forward-looking scoping phrase. **Re-derived by command at (d2):** §4.6
+>   > holds exactly `OP-1…OP-7` and **none concerns `mappers.ts` casts or CHECK constraints** — so the
+>   > present-tense reading is FALSE and the forward-looking one is what was meant. `ecc:tdd-guide`'s
+>   > reading holds. **The sentence is rewritten above so the false reading is no longer available**, which
+>   > is the whole remedy: no OP row is owed today, and one becomes owed the moment the unit is scheduled.
+>   > *Recorded rather than silently reworded, because a Major that resolves to "the prose was ambiguous"
+>   > still cost two reviewers a disagreement, and the next ambiguous disposition should be cheaper to spot.*
 > - **FU-30** ← **N-4.** **Four** dead `safetyCopy` helpers with zero production callers — `labCaution`,
 >   `labSupported`, `medicationCaution`, `productReasonValue` — measured against all **31** `safetyCopy`
 >   methods. **§8 rule 4 applies and points one way: prefer deleting the field over guarding it.** Owner:
@@ -348,6 +359,165 @@ defect; none is dropped.
 > reproduced inside the landing that fixes FU-29's mechanism**. The reviewer caught it. A working note is
 > not a register row; that is the whole of what FU-29 and FU-30 have to teach, demonstrated once more
 > against the people who had just finished writing it down.
+
+> ### FU-32 — the counts-written-once class, cited thirteen times and defined nowhere until here
+>
+> **[2026-09-22] LATE-REGISTERED at (d2), on Check finding P2-13.** This row is the only one in either
+> register written *after* its own id had been used as an authority: thirteen citations across the plan, the
+> report and `docs/project-status.md` name **FU-32** as the precedent for dropping a number rather than
+> correcting it — and there was no row to read. A promise-shaped disposition is what FU-29 and FU-30 taught;
+> **a citation-shaped one is the same defect wearing a number**, and it survived the (b) re-derivation, the
+> report's contiguity headline and the independent Check's first four sections before §5.4 caught it.
+>
+> **The class:** *a number written into prose is true when written and false thereafter.* It has no bug, no
+> reproduction and no owner in the usual sense, because the defect is the authoring act, not the value.
+> **Instances found in Phase 2:** README's per-spec counts (N-52), the spec total itself (N-52's mechanism
+> half), `project-status.md`'s and `architecture-boundaries.md`'s breakdowns (FU-39), `CLAUDE.md` §4 rule 7's
+> "7 of 31" (P2-9, re-derived to **8 of 31** at (d2)), §2.9's `859/73` test figures, and report §11's repeat
+> of the same 7-of-31. **Six.**
+>
+> **Remedy, and it is a choice between exactly two options — never a third:** *bind it mechanically* (the
+> `SPEC_COUNT` route) or *delete it* (the FU-39 route). **Correcting it and moving on is what created every
+> instance above.** Owner: whoever next writes a count into prose; the row exists so that person has
+> something to be pointed at.
+
+> ### FU-40 — `RLS_COVERAGE` cannot see an in-place `create policy` edit; CI's catalog check is the control
+>
+> **[2026-09-22] Raised by Check finding P2-7, PROBED rather than argued, and dispositioned by the owner.**
+> `rls-coverage.test.ts` reads migration files as **text** and asks whether a policy exists, so widening an
+> existing policy in place — changing its `using` clause rather than adding a statement — moves no fact the
+> guard reads.
+>
+> **What the probe established.** A throwaway branch `probe/p2-7-rls-widening` carried M-B's in-place
+> widening alone and was pushed: **run `35700784778` failed at the `Migration coherence` step**, on the
+> `pg_policies.cmd` catalog interrogation — *the command Postgres computed, not the one the SQL declares*.
+> The branch was deleted unmerged. **U15 predicted this exact failure in its own failure text**, which is
+> the part worth keeping: the control existed and was already documented, and nobody had run the case.
+>
+> **Disposition: CI is the control; the unit test is not being taught to do CI's job.** A text scan cannot
+> reach semantics a database computes, and building a SQL parser into a vitest file to chase it would be the
+> speculative abstraction §3 rule 4 forbids. **What this row owes the next reader is the boundary, written
+> down:** `RLS_COVERAGE` answers *does a policy exist*; only the migration-coherence step answers *what does
+> it permit*. **Owner: the phase that changes how migrations are verified** — and the condition that would
+> move this row is CI ceasing to apply migrations, which would silently remove the only control.
+
+> ### FU-41 — N-40's class: nothing structurally prevents health-bearing error text reaching a log record
+>
+> **[2026-09-22] Registered at (d2) on Check finding P2-2, which found N-40 open and in no residue list.**
+> `internalError` records `err.name`, `err.message`, `err.stack` and `err.cause` field-by-field to
+> `console.error` (`src/lib/api/respond.ts`), and every route funnels failures through it — including
+> `/api/account/export`, whose payload is the user's complete health record. If any error raised on that
+> path embeds row data in its message, **§2.3 rule 15 is breached by the error contract rather than by the
+> route**.
+>
+> **STRUCTURAL, not an observed leak, and the distinction is load-bearing:** no failure carrying row data
+> has been seen, and claiming one would be the unverified-provenance defect §2.2 rule 8 forbids. What is
+> verified is that nothing *prevents* it.
+>
+> **The surface widened during this closeout and the row must say so.** (d1)'s P2-R1 routed every
+> unexpected 5xx through `internalError`, and (d1b) added two more call sites at the pre-stream windows of
+> the unwrapped routes. Both are strictly before any stack, profile or lab data is loaded, so **neither adds
+> health-shaped content to the surface** — checked at (d1b) by `ecc:security-reviewer` — but both add
+> *volume*, and a reviewer reading the count alone would reach the wrong conclusion. **Owner: the phase that
+> adds a logging sink**, which is the first point at which a redaction layer has somewhere to live.
+
+> ### FU-42 — `CRITERIA_PARITY` cannot express a partial criterion, so it shapes the record it measures
+>
+> **[2026-09-22] Registered at (d2) on Check finding P2-10.** `criteria-parity.test.ts`'s line regex is
+> `/^- \[( |x)\] (.*)$/` — it matches ticked and unticked and **skips** a `[~]` line entirely. Since the
+> guard also pins the criterion count at 19, marking any criterion partial drops the parse to 18 and reddens
+> the build. `docs/roadmap.md` already uses `[~]` for Phase 1's partial criterion, so the notation exists in
+> the project and is unavailable in the one place a guard reads.
+>
+> **The finding is about the practice, not the fact:** `ecc:tdd-guide` independently verified C16's
+> condition IS discharged, both runs green on `b2ab0b6`. What P2-10 names is that **a guard made one
+> honest answer more expensive than the other** — the only pressure a binding guard must never create.
+>
+> **Remedy: teach the parser `[~]` — accept it, count it, treat it as not-ticked — so partial is
+> expressible without reddening.** Deliberately NOT done at (d2): it changes a guard that is currently
+> binding this landing's own edits, and a guard rewritten in the commit it polices is not a control.
+> **Owner: the next unit that touches `criteria-parity.test.ts`**, or Phase 3's first closeout, whichever
+> comes first.
+
+> ### FU-43 — `src/middleware.ts`'s `getUser()` runs with no guard and no window to put one in
+>
+> **[2026-09-22] Registered at (d2); raised by `ecc:security-reviewer` at (d1) and carried through three
+> re-enumerations of the same question.** `src/lib/supabase/middleware.ts` calls `supabase.auth.getUser()`
+> on every matched request with no `try/catch`. A throw there is an Edge-runtime failure before any route
+> handler exists — so `handle()` cannot reach it, the two route-level windows (d1b) built cannot reach it,
+> and `FIVE_XX_IS_LOGGED` cannot see it.
+>
+> **This is the last surviving item of the (A) enumeration inside `src/app/api/**` and its request path.**
+> (d1) closed the `advisor/route.ts` window, (d1b) closed `actions/route.ts` and then both routes'
+> first statements; what remains before the request reaches a handler at all is this.
+>
+> **Why it is a follow-up and not a remediation:** an uncorrelated 500 is only half the defect; the other
+> half is that there is nowhere for the record to go from the Edge runtime, which has no `console.error`
+> sink this project controls. **Owner: the phase that adds a logging sink — beside N-11 and FU-44.** The
+> condition that closes it is a sink reachable from middleware, not a `try/catch`.
+
+> ### FU-44 — the correlation-id contract ends at `handle()`'s reach
+>
+> **[2026-09-22] Registered at (d2) on `ecc:security-reviewer`'s final (A) re-enumeration at (d1b), which
+> was handed the expected answer and falsified it.** Three surfaces answer a failure with **no correlation
+> id and no record**, none of them reachable by `FIVE_XX_IS_LOGGED`, whose scan is
+> `/^src\/app\/api\/.*\/route\.ts$/` (`five-xx-is-logged.test.ts:190`):
+>
+> | Surface | Where | Why the guard cannot see it |
+> |---|---|---|
+> | The one route handler outside `src/app/api/**` | `src/app/auth/callback/route.ts:5` (`GET`), `createClient()` at `:11`, no `handle()`, no `try` | Outside the scan pattern entirely |
+> | No error boundary anywhere under `src/app` | **no `error.tsx` and no `global-error.tsx` is tracked** — confirmed against `git ls-files`. Affects every protected render through `requireUser()` → `getUser()` (`src/lib/auth/session.ts:79`) | A render throw becomes Next's own error page |
+> | Unguarded `"use server"` calls | `src/lib/auth/actions.ts:18` (`login`), `:33` (`signup`), `:50` (`signOut`) | Server actions are not route handlers; nothing scans them |
+>
+> **All three are PRE-EXISTING; (d1b)'s delta introduces none of them.** Recorded as one row because they
+> share one cause: **the contract was written for `handle()`, and `handle()` only reaches API route
+> handlers.** The guard's scope was never wrong — it was never stated as a limit, so its silence read as
+> coverage. **Owner: the phase that adds a logging sink — beside N-11 and FU-43.**
+
+
+> ### FU-45 — cycle artifacts have a stated cap and nothing measures it
+>
+> **[2026-09-22] Registered at (d2); the over-run was found by counting the file, not by any check.**
+> `docs/01-plan/features/phase2-closeout.plan.md` reached **403 lines against a stated 200-line cap**,
+> growing across three landings — (d1)'s plan block, (d1b)'s N-76 record, then (d1b)'s widening, FU-44 and
+> N-77. **No landing measured it, because nothing does.** The cap is written in the instruction that
+> creates these artifacts and nowhere that runs.
+>
+> **Why the over-run mattered rather than merely happening:** at 403 lines the artifact had stopped being a
+> mirror of the register and had become a second, longer record of the same findings — so a reader could
+> get a fuller account from the subordinate document than from the authoritative one, which inverts the
+> hierarchy §6 declares. Compressed to a true mirror at (d2) on owner ruling; the narrative now lives only
+> in §4.3 and §4.5.
+>
+> **Remedy: a length assertion on `docs/01-plan/features/*.plan.md`, built on `SPEC_COUNT`'s pattern** —
+> derive the file set from `git ls-files`, assert each is within its cap, and pin the set non-empty so a
+> guard that globs nothing cannot pass. That last clause is not boilerplate here: a cap check whose glob
+> stops matching is exactly as green as one whose files are all short. **Owner: the next operational
+> phase.**
+
+> ### FU-46 — the register uses four row shapes, and a section-bounded parse gave three wrong answers
+>
+> **[2026-09-22] Registered at (d2), raised by (d2)'s own contiguity re-derivation for AC-3.** Check §5.1
+> established that a column-count predicate cannot key both N tables and that section bounds are the
+> reliable frame. **True, and it understates the problem: section bounds alone were not sufficient.** A
+> parse keyed on them still had to be corrected three times before it agreed with a hand read:
+>
+> | Wrong answer | Cause |
+> |---|---|
+> | `FU-33, FU-34` reported MISSING | They are **dated inline headings** (`> **[2026-09-21] FU-33 — …**`), a fourth shape beside the table row, the blockquoted heading and the bullet |
+> | `FU-35` reported DUPLICATE | `> ### FU-35 … FU-38` is a **range container, not a definition**; its members define themselves in the bullets beneath it |
+> | A phantom `FU-3` | Without a digit boundary, `FU-(\d+)` backtracks out of `FU-35` and matches `FU-3` with `5` left over |
+>
+> **The finding is not that the parse was hard — it is that the register's shape is undeclared**, so every
+> instrument built to read it infers a different one, and each inference is green until something
+> contradicts it. Three sessions have now written a register parse; none could reuse the last.
+>
+> **Remedy: one declared row shape, and a guard keyed on it** — a mechanical check that every register row
+> matches a single anchored pattern within its section bounds, that the ids are contiguous, and that the
+> section set is itself pinned. Prose shapes that do not match become the guard's failure output rather
+> than a future reader's problem. **Owner: the next operational phase** — the same owner as FU-45, and for
+> the same reason: both are the register measuring itself, which no unit has ever been asked to do.
+
 
 ### 4.4 Found while orienting — not previously in any register
 
@@ -435,12 +605,15 @@ as a reminder. **Proposed owner: Phase 2 closeout, with the parity guard** |
 | **N-66** | **`ecc:architect` during U32 planning, 2026-09-18** (the one question the unit put to it: client module or env reader) | **`SOLE_PAID_CLIENT`'s reader ratchet pins readers of `OPENAI_API_KEY` and nothing else, so a new module that reads `OPENAI_BASE_URL` and dials it without the validator is green.** The key half of the paid boundary is ratcheted; the address half is not, and U32's control lives on the address | `boundaries.test.ts:1194` pins the key readers as an equality; no assertion anywhere names a base-URL reader. Measured readers today: `model-adapter.ts:365`, `pdf-adapter.ts:244`, `route.ts:74` | **FOLDED INTO U32 by owner ruling 2026-09-18, declared as a widening.** The ruling's reason: it is what stops U32's *"the validator is called from exactly two sites"* clause from being a count written once (FU-32's class). An anti-vacuity assertion proves the validator is called somewhere; only a pinned reader list proves nothing reads the variable *instead*. **M7** is its red proof  **[2026-09-22, Phase 2 closeout] CLOSED BY U32** — `104a111`, with **M7** as its red proof. The reader ratchet now pins **both** halves of the paid boundary — the key and the address — so a new module that reads `OPENAI_BASE_URL` and dials it without the validator reddens rather than passing. **This is the row that stopped U32's own *"called from exactly two sites"* clause from being a count written once**, which is why it was folded in rather than deferred. |
 | **N-67** | **U32 implementation, 2026-09-18 — raised by this unit's own test, which is the uncomfortable part** | **`vi.stubEnv` leaks across tests in `src/app/api/advisor/route.test.ts`, and a test that sets an escape-hatch flag therefore disables that control for every test AFTER it.** Nothing in the file or in `vitest.config.ts` unstubs. U32's new *"proceeds when the override is set"* test stubbed `OPENAI_ALLOW_NON_FIRST_PARTY_BASE_URL=1`, and the happy-path test 200 lines later — which configures the non-first-party `https://gateway.invalid` — **passed with a 200 while the brand-new host pin was switched off**. A green suite over a disabled control, introduced by the commit that added the control | Observed: run at 19:58:38 on 2026-09-18, `route.test.ts` **23 passed** with `FAKE_BASE_URL = "https://gateway.invalid"` and the pre-flight live — arithmetic that only works if the override leaked. Confirmed by `git show HEAD:src/app/api/advisor/route.test.ts | grep -c unstub` → **0**, and `grep -c unstub vitest.config.ts` → **0** | **[2026-09-21] CLOSED BY U33 — the class, not only the instance.** `unstubEnvs: true` in `vitest.config.ts` makes the property global, and `src/architecture/env-stub-isolation.test.ts` is the red a config line otherwise cannot have. **It reddened nothing when flipped** — all three files already cleaned up after themselves — so U33 bought prevention, not repair, and says so. Worth recording against the last sentence of this row: the mechanical fix did NOT redden tests that depended on leakage, because by then none did. ~~**INSTANCE FIXED HERE**~~ — `vi.unstubAllEnvs()` added to `beforeEach`, and `FAKE_BASE_URL` changed to the first-party host so the happy path exercises a permitted address rather than a tolerated one. **THE CLASS IS OPEN, unassigned**: `grep -rl "vi.stubEnv" --include=*.test.ts src/` returns **three** files — this one plus `src/lib/advisor/model-adapter.test.ts` and `src/lib/lab-import/lab-import.test.ts` — and nothing in the project asserts that a stub is ever undone. The mechanical fix is `unstubEnvs: true` in `vitest.config.ts` — one line, and it may redden tests that currently depend on leakage, which is why it is a decision and not a patch smuggled into this unit |
 | **N-68** | **U32 review follow-through, 2026-09-18** — found while proving the fix for `ecc:code-reviewer`'s BLOCKING finding, by running the same mutation against `HEAD` | **`model-adapter.test.ts`'s "key is absent" test has been green for the wrong reason since before this unit.** Deleting the `!apiKey` clause leaves the suite **21/21 green on `HEAD`**, because the test stubs no `OPENAI_MODEL` and `resolveModel` throws the same shared `AI_SERVICE_NOT_CONFIGURED` a moment later. `rejects.toThrow("not configured")` cannot tell two causes apart when one message serves every cause | `git show HEAD:…model-adapter.ts` with `!apiKey` removed, `git show HEAD:…model-adapter.test.ts` unchanged → **Tests 21 passed (21)**. The same mutation on the U32 tree: **22 passed** | **[2026-09-21] CLOSED BY U33.** The test now asserts `reason === "missing-key"` and its fixture unsets exactly one setting, so the mutation that left it green is the mutation that reddens it (M3). U33 also measured the row's last sentence at scale: the same blindness held at **seven of twelve** condition-deletions, and `pdf-adapter.ts` scored **zero of four**. ~~**OPEN, unassigned — NOT fixed here, deliberately.**~~ It predates U32 and belongs to whichever unit owns that guard; fixing a pre-existing green-for-the-wrong-reason test inside a unit about base URLs is the absorption §8.1 forbids, and this register row is what stops it being forgotten instead. **The fix is one line** — stub `OPENAI_MODEL` in that test so the key check is the only thing that can throw. **The class is the real finding**: a single shared error message across every configuration failure makes `toThrow(<that message>)` structurally unable to distinguish causes, so any test written that way is one new early-return away from silently stopping. U32's own BLOCKING finding was the same mechanism, one commit later |
-| **N-69** | **`ecc:architect` during U29 planning, 2026-09-19** (the one question: route, service or repo) | **`recordBatch` can persist an `advisor_actions` row pointing at ANOTHER user's conversation, and every existing guard passes.** The row's `user_id` is stamped correctly, so `repo-scoping.test.ts` is satisfied; the column's foreign key constrains **existence, never ownership** | `0004_advisor_actions.sql:16-17` — `conversation_id uuid references public.advisor_conversations(id) on delete set null`, so a *nonexistent* id is refused by Postgres and a *foreign* one is accepted. `recordBatch` itself takes the id from its caller | **OPEN, unassigned.** **U29 closes the path through `confirmAndApply` and does NOT close `recordBatch`** — which is the distinction worth keeping: U29 guards a caller, not the function every future caller will reach. Candidate fixes, neither chosen here: scope `recordBatch` to verified conversations, or add a composite constraint so the database itself refuses a cross-owner reference |
+| **N-69** | **`ecc:architect` during U29 planning, 2026-09-19** (the one question: route, service or repo) | **`recordBatch` can persist an `advisor_actions` row pointing at ANOTHER user's conversation, and every existing guard passes.** The row's `user_id` is stamped correctly, so `repo-scoping.test.ts` is satisfied; the column's foreign key constrains **existence, never ownership** | `0004_advisor_actions.sql:16-17` — `conversation_id uuid references public.advisor_conversations(id) on delete set null`, so a *nonexistent* id is refused by Postgres and a *foreign* one is accepted. `recordBatch` itself takes the id from its caller | **OPEN, unassigned.** **U29 closes the path through `confirmAndApply` and does NOT close `recordBatch`** — which is the distinction worth keeping: U29 guards a caller, not the function every future caller will reach. Candidate fixes, neither chosen here: scope `recordBatch` to verified conversations, or add a composite constraint so the database itself refuses a cross-owner reference **[2026-09-22, (d2), Check finding P2-2] OWNER-CONDITION WRITTEN. This was the only open register row in either document with neither an owner nor an owner-condition, and it is security-relevant — §10.7's own header forbids that state, so the header was false rather than the row being merely incomplete.** **Owner: the next unit that touches `recordBatch` or the `advisor_actions` schema — whichever comes first — and it may not ship without closing this or restating the condition.** **The condition that makes it urgent rather than latent:** today the only writer of `advisor_actions.conversation_id` is a path U29 guards, so a cross-owner stamp requires a second writer; **any new caller of `recordBatch`, or any feature that lets a conversation change hands, makes it reachable and must cite N-69 first.** Between the two candidate fixes the composite constraint is preferred on this project's own precedent — `appendMessages` folds ownership into the write and cannot go stale (see N-70) — but the choice stays with the unit that has the migration in hand |
 | **N-70** | **`ecc:security-reviewer` on the U29 diff, 2026-09-20** | **U29's two ownership guards are check-then-act, and the repo layer already has the atomic pattern they do not use.** `conversationBelongsToUser` is a plain `select … maybeSingle` awaited at `route.ts:119`; the reservation happens at `route.ts:137` as a separate round trip, and `getMessages` at `:140`. Between the two the answer can go stale. Same shape at `advisor-actions.ts:149` | The contrast is inside this repository: **`appendMessages` (`repo.ts:159-187`, Phase 2 U26) folds ownership into the write statement itself** — `update … .eq("id", …).eq("user_id", …)` and a row-count check — so its check cannot go stale. U29's guards are the weaker pattern beside it | **DEFERRED by owner ruling 2026-09-20, with the reason stated rather than left implicit — NOT a Phase 2 unit.** **The window has no adversary**: nothing in this product transfers or shares a conversation, so the only way to lose ownership between the check and the reservation is to delete your own conversation, and the cost of that race is your own budget. A TOCTOU with no second party is a latent defect, not a live one. **THE GATE, and it is the whole point of deferring rather than closing: any future proposal to make conversations transferable or shareable must cite N-70 and close it first.** That is what turns the window into an exploitable one, and the person proposing the feature is the only one positioned to notice. **It is registered because the asymmetry is the finding** — this codebase holds both patterns, and the weaker was chosen where the stakes are a paid call. The fix folds the predicate into the reservation RPC or the write's `WHERE`, the way `appendMessages` already does; that is a design, not a patch |
 | **N-71** | **`ecc:code-reviewer` on the U29 diff, 2026-09-20** (found while tracing the blast radius of an empty `conversationId`) | **A stack mutation can commit with no audit row and no `rolledBack` signal.** `executeBatch` has its own `try/catch` that returns `ACTION_ERROR` with `details: { rolledBack: true }` — a computed fact the client acts on. **`recordBatch` runs AFTER that block**, so a throw there falls to the outer `catch`, which returns `ACTION_ERROR` **without** `rolledBack`. The stack change is already committed and the audit row never exists | `advisor-actions.ts` — inner catch returns `{ rolledBack: true }`; `recordBatch` is called ~15 lines later; the outer catch returns `internalError(err, { code: "ACTION_ERROR" })` with no details | **[2026-09-21] MITIGATED BY U34 AT THE API. NOT CLOSED AT THE PRODUCT — see FU-34.** The audit-failure path now reverts through the same counting `revertAll` the batch's own rollback uses, and the response names the STATE: `ACTION_ERROR` with no details when nothing was rolled back, `ACTION_ERROR` + `{rolledBack:true}` when every inverse succeeded, **`PARTIALLY_APPLIED` + `{rolledBack:false, reverted, unreverted}`** when one did not. The third state is not decoration: `recordBatch` fails by losing the database and the compensating replay needs the same database, so a partial revert is this branch's EXPECTED outcome. **Why MITIGATED and not CLOSED:** nothing renders any of it — no component reads `error.details` — so a correct code reaches the log, the E2E suite and the support path, and stops there. The user is still not told that part of their batch may stand. That is FU-34, and the distinction is the one U32 was required to draw for N-63. ~~**OPEN, unassigned. PRE-EXISTING and explicitly NOT introduced by U29** — the reviewer said so unprompted, and U29 in fact *narrows* one route to it by refusing an empty id before `executeBatch` rather than after. It is registered because the audit trail is the thing this pair of findings (N-48/N-49) is about: a client told `ACTION_ERROR` with no `rolledBack` cannot tell a rolled-back batch from an applied-but-unaudited one |
 | **N-72** | **U30 planning, 2026-09-21** (found enumerating the twelve handler sites) | **`src/app/api/advisor/actions/[id]/undo/route.ts` is the only dynamic handler that does not use `handle()`.** It reads its path param outside any `try`, and its own catch maps **everything** to `internalError(err, { code: "UNDO_ERROR" })` → 500 — so a `ZodError` there would be a 500 with a different code, not the 400 every other handler gets for free | `grep -c "handle(async"` → **0** in that file, **≥1** in the other seven dynamic route files; its catch is a single `internalError` with no `ZodError` branch | **[2026-09-21] CLOSED BY U34 — moved onto `handle()`, and the reason was not the one anyone expected.** U34 first justified the move by new guard coverage and was wrong: `error-disclosure.test.ts:395` names the file and `auth-coverage.test.ts` derives its set from `git ls-files`, so **both already scanned it** and the move bought zero new coverage. The real defect, found while checking that premise: `await params` and `await createClient()` ran **outside the try**, so a throw at either escaped the handler entirely and Next.js answered with a non-envelope 500 carrying **no correlation id** — the one 500 in this application invisible to the log. `handle()` gained an optional `{ code }` so `UNDO_ERROR` survives the move, and U30's `safeParse` special case reverted to the bare `uuidParam.parse(id)` the other eleven use. **M9 pins that the 400 is byte-identical either way.** ~~**OPEN — owner: U34**, by ruling 2026-09-21. U34 already owns that route's error reporting (N-71), so it decides whether the handler **moves onto `handle()`** or **stays exempt with a written reason**. **U30 does not decide it**: U30 gets the same 400 body there via `safeParse` + explicit `validationError`, which works under either outcome and prejudges neither |
 | **N-73** | **U33 implementation, 2026-09-21** — raised by the unit's own narrowing, when a guard failed for a reason that was not a defect in the code it guards | **Three `boundaries.test.ts` reader ratchets were matching PROSE.** `SOLE_PAID_CLIENT`'s key and address pins and `NO_PINNED_MODEL_ID`'s model pin each did `fs.readFileSync(file).includes("OPENAI_…")` on **raw text**, so a file that merely NAMES a variable in a comment counted as a module that READS it. The pressure this creates is the finding: the cheapest way to satisfy the guard is to delete accurate prose | `model-adapter.ts` failed the model-id pin after U33 moved every `process.env` read out of it, solely because a docstring says *"the routed model id, from `OPENAI_MODEL`"*. Verified by stripping comments: the file drops out of the reader set and the three pins go green | **FIXED HERE.** All three scans now strip comments before matching, using the stripper `NO_PINNED_MODEL_ID` already carried for its literal scan — one function, three new callers. A comment cannot read an environment variable, so this makes the scans MORE precise, not more permissive; the sibling rule `FIRST_PARTY_BASE_URL` already drew the same distinction explicitly (*"a reader is found by its env access, not by its filename"*), which is the argument for the change and also the reason the inconsistency lasted: two guards over the same property disagreed about what a reader is, and only one said so out loud |
 | **N-74** | **U34 planning, 2026-09-21** — found reading `executeBatch` before asking the architect anything | **`details: { rolledBack: true }` is ASSERTED, not computed — and nothing reads it.** Two halves of one claim about one field. (i) `execute.ts:128-151` rolls back **best-effort** and SWALLOWS each failure — `reportInternalError(rollbackErr, "ROLLBACK_FAILED")`, continue, then rethrow the ORIGINAL error — so the caller cannot know whether the rollback worked, yet `advisor-actions.ts:189` returns `rolledBack: true` unconditionally under a comment reading *"it is a computed fact the client acts on"*. (ii) `grep -rn "rolledBack" src/ tests/` finds the service and two test files: **no component, no hook**. Neither half of that comment is true | `execute.ts:133-148` catches `rollbackErr` and does not rethrow; `advisor-actions.ts:186-189` has no branch on rollback success; the grep returns three files, all of them the service or its tests | **OWNED BY U34, half (a), fixed there rather than deferred.** Splitting it would be worse than leaving it: if the audit-failure path computed rollback honestly while the execute-failure path kept asserting `true`, the same field would carry different truth on two paths, and a reader who checked one would generalise. **The history is the point** — **T-06** (2026-07-30) found this rollback swallowing failures silently and asked for a LOG; **U20 added exactly that log**; nobody went back to the RESPONSE, so the fix installed a log beside a claim the log contradicts. A remedy applied to the half that was reported |
+| **N-75** | **Landing (d1)'s own red proof for P2-R3, 2026-09-22** — the planted violation did not redden | **`boundaries.test.ts`'s `readsIdentifier` stopped scanning at the first template literal with a substitution, blinding FOUR credential ratchets.** It used `ts.createScanner` with a bare `scan()` loop, which carries no template-continuation state: on reaching `` `…${…}…` `` the scanner needs `reScanTemplateToken`, never gets it, and the walk terminates. Everything after that point in the file was unread. The four pins over `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL` and `SUPABASE_SERVICE_ROLE_KEY` were therefore green over files they had not finished reading | Minimal repro at (d1): a fixture whose identifier sits after a substituting template literal returns `false` on the old helper and `true` on the new. P2-R3's planted read in `src/lib/db/seed.ts` failed to redden the ratchet, which is how it was found — not by review | **CLOSED BY (d1), `bac5928`.** Rewritten as an AST walk (`ts.createSourceFile` + `ts.forEachChild`), matching identifiers and string/no-substitution-template literals, with **two regression fixtures** pinning the exact shape that blinded it. **Certified sound at (c) on 64/64 green, which is the finding's real content:** the Check's security section read these four ratchets and could not have seen this — a blinded guard and a satisfied guard are the same colour. **The (d3) addendum must state that and re-verify all four on the rewritten helper** |
+| **N-76** | **`ecc:code-reviewer` at (d1b)** — the tightened `UNWRAPPED_ROUTES` pin refused to pass it — and **`ecc:security-reviewer`**, which asked for it to carry a number rather than live as a test comment | **`src/app/api/advisor/actions/route.ts`'s pre-delegation window was unguarded — the same class P2-R4 closed in the sibling route.** `POST` is not wrapped in `handle()`. `confirmAndApply` reports its own failures at every exit, so the WORK was covered; the window before it was not. A throw from `createClient()` — `NotConfiguredError` on unset Supabase env, or a `cookies()` failure — escaped `POST` and became a framework 500 with no correlation id and no record | Red-first at (d1b): `createClient` rejecting gave `→ supabase client construction failed` escaping `POST` uncaught, no status. The window is one call, and it is the same `createClient()` whose throw path P2-R4 had just proven reachable next door | **CLOSED BY (d1b), `a27ab0a` — TAKEN ON AN EXPLICIT OWNER RULING, NOT ABSORBED.** (d1b)'s approved scope was `advisor/route.ts` alone; widening it unilaterally is what §8.1 forbids, so it was registered and deferred with a stated reason, and the owner widened the scope. **The declared exemption is gone:** both unwrapped routes must carry a reporting catch — equality pin, no exemptions (`five-xx-is-logged.test.ts:205`, `:245`). **And tightening that pin exposed a defect in the pin:** its first form asked only whether the file contained `internalError(` anywhere, and passed with the pre-stream catch DELETED from `advisor/route.ts`, satisfied by that file's unrelated in-stream SSE reporter. Now keyed on the `PRESTREAM_ERROR` code the two catches share |
+| **N-77** | **The session itself, at (d1b), 2026-09-22** — reported unprompted by `ecc:security-reviewer` mid-review | **Instruction-shaped blocks claiming "this file changed on disk" appeared twice inside a subagent's tool output, the second carrying a fabricated diff.** The fabricated diff asserted that `actions/route.ts`'s catch had been replaced with a bare `throw e;` — that is, that the exact fix under review had been silently reverted. A reviewer who believed it would have withdrawn a correct finding, or re-applied a fix that was already in place | The reviewer treated the block as untrusted, re-read both files and checksummed them, found them unchanged and matching `git diff`, did not act on it, and reported it. The harness independently flagged the output as instruction-shaped and neutralised the tags. The working tree was verified clean afterwards. **Source unknown — no attribution is recorded, and none should be invented** | **NO NEW CONTROL, and that is the disposition rather than an absence of one.** The standing rule already covers it: **a revert or a change is verified by `git diff`, never by a message asserting one** — the same rule that already forbids `git checkout --` for mutation reverts in favour of file-copy backups. Restated at (d2) in `CLAUDE.md` §5's method rules so it sits beside its sibling rather than only in a closeout artifact. **What makes this worth a number is that the correct behaviour was already specified AND was followed** — the control was load-bearing on its first real contact, which is the only evidence a process rule ever gets |
 
 **[2026-09-18, third and final revision — the two earlier versions of this note are why it is worth reading.] THE GAP IS CLOSED, AND BY THIS COMMIT RATHER THAN BY THE CLOSEOUT.** The first version said N-53…N-55 sat on an unmerged branch and would arrive at merge. They did not: U31's code commit `f9c34e3` left them in its subordinate artifact. The second version recorded that as a finding and refused to promote them unasked. U31's closeout `a0d318b` then added **N-63, N-64 and N-65** straight into this register — correctly — while **N-53 … N-62 stayed in the artifact**, so the register read N-1…N-52, N-63…N-65 and the numbers between them existed only in a subordinate file. **This commit promotes N-53 … N-62 verbatim**, each tagged with its source section, and strikes the artifact copies in place with a pointer (§7). **N-56 is one row, not two** — U31 raised it, the main session wrote it up more fully with the owner's ruling, and the artifact's copy is superseded in place. The register is now **contiguous N-1 … N-65**, verified by count rather than by reading.
 
@@ -5866,6 +6039,13 @@ here rather than discovered later.
       operative one.)*
       ✅ **MET — ticked 2026-09-22 at landing (b).** `PAID_API_BUDGET` green across four assertions, including *"the derived set is exactly the two routes it should be"* and *"the module marker names a file that exists"*. Membership pinned at 2. Evidence: §10.2.
 - [x] **No paid call bypasses the one client module, and `@anthropic-ai/sdk` is gone.**
+      **[2026-09-22, (d2)] RE-TICKED, and the check text's own figure was wrong.** Check finding **P2-8**:
+      the re-derivation prose said *9 hits across 7 files*; re-measured at (d2) it is **9 hits across 5
+      files**, all of them prose, comments or the `RETIRED_PACKAGE` matcher itself — `package.json` carries
+      zero anthropic entries in either dependency block. **The literal grep was struck at approval (§7)
+      precisely because a comment can fail it while the guards are green; P2-8 is that same instrument
+      failing a second time, in the sentence explaining why it was struck.** The criterion stands on
+      `SOLE_PAID_CLIENT` ×3 and `RETIRED_PACKAGE` ×2, green.
       *(Added 2026-08-10 by the U25 scope amendment.)* Check: `SOLE_PAID_CLIENT` green and shown red
       against an inline `fetch` in a route (**M5**); ~~zero tracked `src/` files reference
       `@anthropic-ai/sdk`~~ → **[2026-09-22, struck at the Phase 2 closeout per §7]** **`RETIRED_PACKAGE`
@@ -5873,7 +6053,9 @@ here rather than discovered later.
       appears in neither `dependencies` nor `devDependencies` — with both scanned sets asserted non-empty.
       **Why the literal form is struck, and this one is stronger than C1's case: as written the criterion
       could not be satisfied at all while the guard that supersedes it exists.** Measured at close,
-      `git grep "@anthropic-ai/sdk" -- src/` returns **9 hits across 7 files**, and one of them —
+      `git grep "@anthropic-ai/sdk" -- src/` returns **9 hits across ~~7~~ 5 files** *([2026-09-22, P2-8] the
+      file count was wrong when written; the hit count was not — re-derived at (d2): 9 hits, 5 files)*, and
+      one of them —
       `boundaries.test.ts:1470` — is `e.specifier.startsWith("@anthropic-ai/sdk")`, **the string
       `RETIRED_PACKAGE` matches against**. Passing the grep would mean deleting the matcher, which deletes
       the enforcement; the check and the guard were in direct opposition. The other eight are comments
@@ -5888,7 +6070,13 @@ here rather than discovered later.
       safe direction, and estimating is forbidden (§2.2 rule 7: never assert a figure the system did not
       compute). Check: the pin exists and was shown red against defaulting absent usage to zero (**M16**).
       ✅ **MET — ticked 2026-09-22 at landing (b).** `route.test.ts:474` *"fails CLOSED when the adapter carries no usageReported at all"*; `model-adapter.test.ts:210` sticky-false once any step omits usage; `client.test.ts:56` the absent-usage case. Red: **M16**, against defaulting absent usage to zero. Evidence: §10.2.
-- [x] **`CLAUDE.md` §4 row 9 reads `Enforced` and names `PAID_API_BUDGET` in `boundaries.test.ts`.** Check:
+- [x] **`CLAUDE.md` §4 row 9 reads `Enforced` and names `PAID_API_BUDGET` in `boundaries.test.ts`.**
+      **[2026-09-22, (d2)] RE-TICKED ON A CHECK THAT NOW ESTABLISHES IT.** Check finding **P2-4** found
+      that `DOC_TRUTH` did not bind named-guard tokens, so this criterion's stated check did not establish
+      the criterion — the row could name a guard that did not exist and nothing would notice. **Closed by
+      P2-R2 at (d1) (`bac5928`):** `guardTokensIn` now resolves each `SCREAMING_CASE` token in §4's table
+      against the guard's **test titles or its declared identifiers**, the second half being required
+      because `PAID_PACKAGES` is a `const` in `boundaries.test.ts`, not a test title. Original check:
       `doc-truth.test.ts` green *(it binds this in both directions already)*.
       ✅ **MET — ticked 2026-09-22 at landing (b).** `CLAUDE.md:171`; `DOC_TRUTH` **21/21** green, binding the row in both directions — it names an enforcer on every row it calls Enforced, **and** mentions every rule test that exists. Evidence: §10.2.
 - [x] **[P2-X4]** **Client disconnect terminates the advisor loop and settles its reservation.** Check: two assertions
@@ -6131,7 +6319,7 @@ reports these as **18/18** including setup and post steps, which is the figure t
 | **C2** | Every `SECURITY DEFINER` sets `search_path` | **MET** | `SQL_FUNCTION_REGISTRY` **24/24**, incl. the anti-vacuity `it("finds the functions it is supposed to govern")` |
 | **C3** | Concurrency test, red recorded **in the phase report** | **PARTIAL → closes at (b)** | Test green; red text present in **this plan** (U4: M14 `expected [400×5] to have a length of 2 but got 5`; M15 `expected 300 to be 600`). **No `docs/04-report/phase-2-*.report.md` exists** |
 | **C4** | Both paid routes: rate limit + budget | **MET** | `PAID_API_BUDGET` ×4 green incl. *"the derived set is exactly the two routes it should be"* |
-| **C5** | No paid call bypasses the client module; `@anthropic-ai/sdk` gone | **MET by the guards · WRITTEN CHECK FAILS** | `SOLE_PAID_CLIENT` ×3 and `RETIRED_PACKAGE` ×2 green; `package.json` carries **zero** anthropic entries in either dependency block. But `git grep "@anthropic-ai/sdk" -- src/` returns **9 hits across 7 files** |
+| **C5** | No paid call bypasses the client module; `@anthropic-ai/sdk` gone | **MET by the guards · WRITTEN CHECK FAILS** | `SOLE_PAID_CLIENT` ×3 and `RETIRED_PACKAGE` ×2 green; `package.json` carries **zero** anthropic entries in either dependency block. But `git grep "@anthropic-ai/sdk" -- src/` returns **9 hits across ~~7~~ 5 files** ([2026-09-22, P2-8]) |
 | **C6** | A turn omitting `usage` settles nothing | **MET** | `route.test.ts:474` *"fails CLOSED when the adapter carries no usageReported at all"*; `model-adapter.test.ts:210` sticky-false; `client.test.ts:56` absent-usage case |
 | **C7** | `CLAUDE.md` §4 row 9 = `Enforced`, names `PAID_API_BUDGET` | **MET** | `CLAUDE.md:171`; `doc-truth.test.ts` **21/21**, binding it in both directions |
 | **C8** | Disconnect terminates the loop and settles | **MET** | `route.test.ts:411-463`, two `status: "aborted"` assertions |
@@ -6479,6 +6667,16 @@ to draw and the one this project has historically got wrong in the other directi
 
 ### 10.7 What survives the phase — residues
 
+> **[2026-09-22, (d2)] Check finding P2-2: this table's completeness claim was false, and the report
+> promoted it.** The header below was true of the rows *in the table* and was read as a claim about the
+> phase. Two OPEN register rows were in no list — **N-69**, the only open row anywhere with neither owner
+> nor owner-condition and security-relevant with it, and **N-40**, directly §2.3 rule 15. Both are now
+> rows here. **The claim is also restated to say what it covers:** this table holds the residues that
+> *constrain future work*, not every open register row — `ecc:architect` counted at least eleven more
+> (N-26, N-27, N-30, N-32, N-35, N-36, N-37, N-41, N-43, N-45, N-47), each with its own written reason, and
+> they live in §4.4/§4.5 where a reader looking for open rows should go. **A residue list and an open-row
+> list are different documents; conflating them is what made a true table into a false claim.**
+
 To be carried into the phase report's **"What survives the phase"** section. **Every row has an owner or a
 written owner-condition; none is dropped.**
 
@@ -6495,7 +6693,9 @@ written owner-condition; none is dropped.**
 | **FU-33** — `handleParams(params, schema, fn)` | Deferred by ruling; **U30's two-layer guard is the interim control, and not a placeholder**: if the wrapper lands, U30's behavioural layer is what proves it is wired |
 | **FU-34** — nothing renders `PARTIALLY_APPLIED` | **N-71 is MITIGATED by U34, not closed.** The confirm surface owes the user a sentence. If a renderer lands, the `details.unreverted` objection collapses to sequencing |
 | **FU-29, FU-30, FU-31, FU-35 … FU-38** | Registered at (b); owners as recorded in §10.3 |
-| **N-50** | Product decision, **Phase 4** |
+| **N-50** | Product decision, **Phase 4** — and named in `docs/roadmap.md` Phase 4 as of (d2), which is what P2-11 found missing |
+| **N-69** — `recordBatch` can stamp another user's `advisor_actions.conversation_id` · **SECURITY-RELEVANT** | **[2026-09-22, added at (d2) on P2-2]** **Owner-condition:** the next unit touching `recordBatch` or the `advisor_actions` schema. Reachable only with a second writer or a transferable conversation; either makes it live |
+| **N-40** — nothing structurally prevents health-bearing error text reaching a log record · **§2.3 rule 15** | **[2026-09-22, added at (d2) on P2-2]** **Owner: the phase that adds a logging sink** — the first point at which a redaction layer has somewhere to live. Registered as a class in **FU-41**; STRUCTURAL, no leak observed |
 
 ---
 
@@ -6539,6 +6739,28 @@ the packaging. Two readings:
 
 **bkit:** registered as `phase2-closeout`, phase `plan`; artifact
 `docs/01-plan/features/phase2-closeout.plan.md`, subordinate to this entry (`CLAUDE.md` §9).
+
+#### STAMP ROWS per landing — figures re-measured at each tree, never carried
+
+> **[2026-09-22] A COUNTING CONVENTION, CORRECTED ONCE HERE SO IT STOPS DRIFTING.** CI has **12 named work
+> steps** — Checkout, Set up Node, Install dependencies, Typecheck, Lint, Unit and architecture tests,
+> Coverage thresholds, Migration coherence, Production build, Rendering determinism, Install Playwright
+> browser, E2E (non-live) — inside **18 entries** as `gh run view` reports them; the other six are
+> `Set up job`, `Initialize containers`, two `Post` steps, `Stop containers` and `Complete job`. §10.6
+> already used **12**; (d1b) was reported once in session as *14 named*, having counted `Set up job` and
+> `Initialize containers`. **12 is the convention from here on.** Recorded rather than silently fixed,
+> because a step count is exactly the counts-written-once class (**FU-32**) and the remedy for that class
+> is never *correct it and move on*.
+
+| Landing | SHA | Branch run | Steps | Three CI figures, checked against local |
+|---|---|---|---|---|
+| **(d1)** | `bac5928` | post-merge **35705970606** ✓ | 12 / 18 | as recorded at (d1) |
+| **(d1b)** | `a27ab0a` | branch **35710031462** ✓ · post-merge **35710426933** ✓ | 12 / 18 | lint **369 of 369, 0 errors** · vitest **1446 / 114** · rendering determinism **no prerendered page HTML** — all three identical to local |
+| **(d2)** | *this landing* | recorded in the **(d3) addendum**, which verifies against (d2)'s pushed SHA | 12 / 18 expected; **GATE D1: `ci.yml` 0 lines** | local: tsc clean · lint **369 of 369, 0 errors** · vitest **1446 / 114** · coverage exit 0 · build exit 0 |
+
+**(d1b) also ran `npm run test:e2e` locally** — **70 passed, 30 skipped**, the skips being the
+`[LIVE]`-tagged specs, which stay BLOCKED(env) under ruling 3. (d2) touches no `src/app` file and does not
+re-run it.
 Per **N-56**'s standing rule the bkit line has its own row above rather than being folded into prose, and
 the advance is made by the session that closes the cycle, not by a later one tidying up.
 
@@ -6724,3 +6946,59 @@ residue, not the criterion's** — carried as N-11 + U23's cut, and the reason O
 the strongest argument in this closeout for preferring the mechanical check *even where the prose looked
 settled* — §10.4 had looked at this exact pair, described it correctly, and drawn the wrong conclusion
 about what followed.
+
+---
+
+### 10.11 Landings (d1), (d1b) and (d2) — the Check discharged
+
+**Dated 2026-09-22.** (c) returned **COMPLETE WITH FOLLOW-UP** on thirteen findings. Four were remediated
+in code; the rest are dispositioned here. **This section records dispositions; the rows themselves live in
+§4.3 and §4.5, and where the two disagree the register wins.**
+
+#### What landed in code
+
+| | SHA | Content |
+|---|---|---|
+| **(d1)** | `bac5928` | **P2-R1** every unexpected 5xx reaches the logger · **P2-R2** `DOC_TRUTH` binds named-guard tokens (closes **P2-4**) · **P2-R3** the service-role key gains a reader ratchet (closes **P2-12**) |
+| **(d1b)** | `a27ab0a` | **P2-R4** and **N-76** — both `handle()`-exempt routes report before the stream, **from their first statement** |
+
+**Three defects were found inside these remediations, by reviewing the repairs as adversarially as the
+code they repaired** — and none was found by a test going red. Two were HIGHs raised by `ecc:code-reviewer`
+and `ecc:security-reviewer` (the vacuous exemption pin; the real exception discarded at
+`extract/route.ts`), and one was **N-75**, found because P2-R3's red proof *failed* to redden. Report §12
+counts the class.
+
+#### The thirteen findings
+
+| | Disposition |
+|---|---|
+| **P2-1** | `[P2-X1]` **re-worded with the decision cited**, in `docs/roadmap.md`. Two carve-outs moved into the criterion text: `NOT_CONFIGURED` → 503 is a **declared operational state** (U1), and the middleware's pre-handler window is **FU-43**. The logging half closed by P2-R1 and P2-R4 |
+| **P2-2** | **N-69** given an owner-condition — it was the only open row in either document with none, and security-relevant. **N-69 and N-40 added to §10.7 and report §10**, and both documents now say this table holds *residues that constrain future work*, not every open row. N-40's class → **FU-41** |
+| **P2-3** | `project-status.md` §2.6 and §2.8 moved **with** their §3 rows in one edit, each with a dated reason; §2.9's figures re-measured. Verified by parse: all nine §2.x headings, their prose and their §3 rows agree |
+| **P2-4** | **CLOSED** by P2-R2 at (d1) |
+| **P2-5** | **Settled by command, and the finding was the prose.** §4.6 holds exactly OP-1…OP-7 and none concerns `mappers.ts` casts, so FU-29's *"it carries its own OP row"* was false read as present tense and true read as scoping. `ecc:tdd-guide` declined to confirm on exactly that ambiguity and was right. **Rewritten so the false reading is unavailable** |
+| **P2-6** | **U-DEFER-4 named in report §11 and in roadmap Phase 3 itself**, with the conflict stated: Phase 3's UI criterion is *test-verified* and its harness is owned by Phase 4. **Choosing is the owner's; naming it was owed** |
+| **P2-7** | **Settled by probe, not argument.** `probe/p2-7-rls-widening` carried M-B's in-place widening alone; run **35700784778** failed at **Migration coherence** on the `pg_policies.cmd` catalog check; branch deleted unmerged. **CI is the control** → **FU-40** records the boundary |
+| **P2-8** | Corrected at both sites: **9 hits across 5 files**, not 7 — the instrument that mis-measured it is the same literal grep §7 struck this criterion's check for |
+| **P2-9** | **8 of 31**, corrected in `CLAUDE.md` §4, report §11 and §4.1, **with the predicate stated beside it** so the next reader can re-derive rather than trust. The eighth is `profile/LabMarkerModal.tsx`; `auth/AuthForm.tsx` is type-only |
+| **P2-10** | Recorded as **FU-42**. **Deliberately not fixed here:** it changes a guard that is binding this landing's own edits, and a guard rewritten in the commit it polices is not a control |
+| **P2-11** | **N-50 named in roadmap Phase 4's included work**, the sequencing authority — it had been recorded in the plan and the report and nowhere that sequences |
+| **P2-12** | **CLOSED** by P2-R3 at (d1) |
+| **P2-13** | **FU-32 written** as a late-registered row, and the report's contiguity headline restated — it had claimed *every row re-derived* over a row that was never written |
+
+#### Registered at (d2)
+
+**N-77** (instruction-shaped blocks in tool output — no new control; the standing verify-by-`git diff`
+rule, restated in `CLAUDE.md` §5 as rule 11) · **FU-32, FU-40, FU-41, FU-42, FU-43, FU-44** ·
+**FU-45** (cycle artifacts have a cap and nothing measures it — this one reached **403 lines against 200**)
+· **FU-46** (the register uses **four** row shapes and a section-bounded parse gave **three** wrong answers
+before it agreed with a hand read).
+
+> **FU-45 and FU-46 are the closeout measuring its own instruments, and both were found the same way:** by
+> running something over the register and not believing the first green. Neither is a defect in the phase;
+> both are defects in how the phase is *read*, which is what a closeout is for.
+
+#### Register, re-derived at (d2)
+
+**N-1…N-77 · FU-1…FU-46 · OP-1…OP-7 — contiguous, no gaps, no duplicates**, by a section-bounded parse
+taught all four row shapes. **The parse is not yet a guard**, which is FU-46.

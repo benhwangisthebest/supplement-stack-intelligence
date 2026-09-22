@@ -261,7 +261,7 @@ test" part does not.
   by design (seed data is code, not a table).
 - **Classification: B.**
 
-### 2.6 API layer (`src/app/api/**`) — **B**
+### 2.6 API layer (`src/app/api/**`) — **P**
 
 > **[2026-08-10, Phase 2 U25 · provider superseded by U31] Both paid routes reach ONE provider, and there
 > is no second one.** *(U25 made that provider OmniRoute; U31 made it OpenAI's first-party API. The
@@ -298,7 +298,13 @@ test" part does not.
   `validationError`). **Still open:** `handle()` dispatches on error-message *substrings*
   (`includes("not configured")`) rather than typed errors — Phase 2 F3. No rate limiting on any route,
   including the paid LLM endpoint (CLAUDE.md §4.9, unenforced). No security headers in `next.config.ts`.
-- **Classification: B.**
+- **Classification: P.** **[2026-09-22, Phase 2 closeout (d2)]** ~~B~~ → **P**, per plan §10.6. Every route authenticates and 401s
+  (`auth-coverage.test.ts`, set derived from `git ls-files`); `ROUTE_CONTRACT` binds the
+  validating/non-validating split as a **set equality**; `error-disclosure` scans all three trees with an
+  empty allowlist; `PATH_PARAM_VALIDATION` covers fourteen positions after U30; `NOT_FOUND_UNIFORMITY`
+  after U12; both paid routes carry a rate limit and a reservation, with membership itself pinned.
+  **P means production-suitable, not finished** — FU-44 records that the correlation-id contract stops at
+  `handle()`'s reach, and the two `handle()`-exempt routes carry their own guarded windows as of (d1b).
 
 ### 2.7 UI (`src/app`, `src/components`) — **B**
 - **Works:** production build succeeds; Library is SSG across 15 pages; advisor output renders as plain
@@ -310,7 +316,7 @@ test" part does not.
   supplements; a bundle cliff at 1,000.
 - **Classification: B.**
 
-### 2.8 Observability & operations — **X (absent)**
+### 2.8 Observability & operations — **B**
 - **[2026-08-02] Partly addressed.** `handle()` no longer discards the exception: every unexpected error
   is written to the server log as a structured record carrying a correlation ID, the public error code,
   and the error's name/message/stack/cause, with the same ID returned to the client. Non-`Error` throws
@@ -326,10 +332,26 @@ test" part does not.
   every server error and converts it to an HTTP response **without recording anything**.
 - **Risk:** a production incident involving a partial write or swallowed rollback would be
   undiagnosable after the fact.
-- **Classification: X.** The largest operational gap.
+- **Classification: B.** **[2026-09-22, Phase 2 closeout (d2)]** ~~X (absent)~~ → **B**, per plan §10.6 — **and this is the one row where
+  the closeout's measurement and the owner's ruling differ, so both are printed.**
+  **Measured X, on the sink alone:** structured correlation-id records exist on every 500 with
+  field-by-field logging, plus `ROLLBACK_FAILED` and U34's counts; U19 surfaces the reference on the two
+  paths `AdvisorPanel` owns, with the other 13 components held in `ui-error-text.test.ts`'s shrink-only
+  ratchet. What does not exist: any sink beyond `console.error`, a logging library, request IDs outside
+  the error path, or aggregation. Roadmap item 1's *"target a real sink"* is undelivered and **N-11 is
+  open against a cut unit**.
+  **Ruled B, on the definition, and the ruling is what lands:** `CLAUDE.md` §8 rule 5 asks for
+  *production-suitable / bounded refactor / prototype-only*, not for a score. The subsystem is **not
+  prototype-only** — the records are structured, the fields are deliberate, and the one missing piece is a
+  **bounded** step: point the existing writer at a sink. **X was the wrong instrument, not the wrong
+  observation.**
+  **Both are recorded because the disagreement is the useful artifact:** it shows the scale being applied
+  to a subsystem that is *incomplete but not unsound*, which is the distinction §8 rule 5 exists to draw.
+  **Open against this row: N-11, FU-41, FU-43, FU-44 — all four want the same sink.**
 
 ### 2.9 Testing infrastructure — **B**
-- **[2026-08-06] Updated at Phase 1 close:** **859 unit tests across 73 files** (was 524/42 at Phase 0
+- **[2026-09-22, Phase 2 closeout (d2)]** **1446 unit tests across 114 files**, lint **369 of 369**, **27** architecture specs — re-measured
+  at (d2)'s tree, not carried. ~~**[2026-08-06] Updated at Phase 1 close:** **859 unit tests across 73 files**~~ (was 524/42 at Phase 0
   close). **Seven** executable architecture specs, not two **[2026-09-14, observed at U12: **20** · **21 at U22 (2026-09-15)** · **22 at U32 (2026-09-18)** · **23 at U30 (2026-09-21)** · **24 at U33 (2026-09-21)**, the
   directory count — the figure below is the 2026-08-06 measurement and stays as written; the thirteen
   added since are Phase 2's, most recently `not-found-uniformity.test.ts` (U12) and the specs added by
@@ -397,18 +419,36 @@ test" part does not.
 | Domain engines (`lib/*` pure logic) | **P** |
 | Safety layer | **P** |
 | `lib/validation/schemas.ts` compile-time conformance | **P** |
-| `claude-adapter.ts` ports-and-adapters | **P** |
+| Ports-and-adapters (`advisor/model-adapter.ts` + `openai/client.ts`) | **P** |
 | Migration schema + RLS design | **P** |
 | AI advisor write path / orchestration | **B** |
 | Persistence repos, mappers, migration *process* | **B** |
-| API layer | **B** |
+| API layer | **P** |
 | UI | **B** |
 | Testing infrastructure | **B** |
 | Evidence content / knowledge base | **X** |
 | Content delivery (authoring format) | **X** |
-| Observability | **X** |
-| Release/integration process | **X** |
+| Observability | **B** |
+| Release/integration process | **B** |
 | `db/seed.ts` shared demo fixture | **X** |
+
+**[2026-09-22, Phase 2 closeout (d2)] Six rows moved or were re-examined; each reason is dated here rather
+than left to the table's single letter.**
+
+| Row | Was | Now | Why |
+|---|---|---|---|
+| **API layer** | B | **P** | §2.6 — every route authenticates and 401s; `ROUTE_CONTRACT` binds the validating split as a set equality; `error-disclosure` scans three trees with an empty allowlist; `PATH_PARAM_VALIDATION` covers fourteen positions; both paid routes carry a rate limit and a reservation with membership pinned |
+| **Observability** | X | **B** | §2.8 — **measurement and ruling differ and both are printed there.** Measured X on the sink alone; **ruled B on the definition**, because §8 rule 5 asks production-suitable / bounded / prototype-only and the missing piece is a *bounded* step |
+| **Release / integration process** | X | **B** | CI is **12 named work steps** (18 entries as `gh` reports them), **required** on `main` with `enforce_admins: true`, linear history, force-push and deletion forbidden. **Residual, stated:** an admin can still *reconfigure* the protection, and there is **no release identity** — no tag, no version, no artifact naming what is deployed |
+| **Ports-and-adapters** | P (`claude-adapter.ts`) | **P** (renamed) | **The row named a file that does not exist** — `git grep -l claude-adapter` hits docs only, zero under `src/`. The **P holds and is strengthened**: the seam survived two provider swaps (U25 Anthropic→Omniroute, U31 Omniroute→OpenAI) without the domain agent loop changing. The stale **type** name is **FU-36** |
+| **Migration schema + RLS design** | B | **stays B** | Tooling and CI coherence are delivered (`db:migrate`, `verify:migrations` against a real Postgres). **Production application is still owner-run against dated records. P when it is not** — the condition is written so the next reader knows what would move it. **FU-40** records the boundary CI's catalog check owns and `RLS_COVERAGE` does not |
+| **AI advisor write path** | B | **B on FU-34** | U26 binds the owner in four functions, U29 checks ownership before spend, U34 reports partial-failure state honestly. **B *because* FU-34 is open**: nothing renders `PARTIALLY_APPLIED`, so the user is still never told part of their batch may have been applied |
+| **Testing infrastructure** | B | **B** | Unchanged as a classification. The **figures** moved: §2.9 now reads **1446/114**, re-measured at (d2) |
+
+**Why the reasons are dated and the letters are not.** A classification letter with no date is the
+counts-written-once class (**FU-32**) wearing a single character: it was true when written and says nothing
+about when. The table stays terse because it is an index; the dated reasons are what a reader checks it
+against.
 
 ---
 

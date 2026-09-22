@@ -19,6 +19,15 @@
 > action, all six classification changes, the residue list and the four-landing sequence. Re-asking them
 > would be ceremony, not verification.
 
+> **[2026-09-22, (d2)] COMPRESSED TO A TRUE MIRROR ON OWNER RULING. Nothing was deleted; it was MOVED to
+> the rows named below.** This file stood at **403 lines against a stated 200-line cap**, having grown
+> across (d1), (d1b) and (d1b)'s widening. At that length it had stopped mirroring the register and had
+> become a second, fuller account of the same findings — so a reader could learn more from the subordinate
+> document than from the authoritative one, which inverts §6. The narrative approved at (d1b) now lives in
+> the phase plan: **N-75, N-76, N-77** in §4.5, and **FU-32, FU-40…FU-46** in §4.3. The over-run itself is
+> registered as **FU-45**, because nothing measured it — the cap is written where these artifacts are
+> created and nowhere that runs.
+
 ---
 
 ## Executive Summary
@@ -56,348 +65,82 @@
 Each landing takes its own approval to commit, push and merge (`CLAUDE.md` §10 rule 5).
 
 ---
+## Landings as executed
 
-## Landing (d1) — remediation plan. **NOTHING BELOW IS IMPLEMENTED.**
-
-**Dated 2026-09-22.** Three remediations, not four: the **P2-7 probe settled it** (below). Each is
-red-first, mutation-shown, and carries its GATE D1 status.
-
-### P2-7 — SETTLED BY PROBE. Not a remediation.
-
-**Probe run `35700784778`, SHA `b9dc6fb`, branch `probe/p2-7-rls-widening` — pushed, run, deleted
-unmerged.** It carried only M-B's in-place widening of `api_rate_limits` (`for select` →
-`for all … with check`, no `drop`/`alter`/`disable`).
-
-| Step | Result |
-|---|---|
-| **Unit and architecture tests** | **success** — `RLS_COVERAGE` green on the widened tree, exactly as M-B showed (22/22 locally on the same commit) |
-| **Migration coherence** | **FAILURE** — `##[error]Process completed with exit code 1` |
-| Build · Rendering determinism · Playwright · E2E | skipped |
-
-**Verbatim, from run `35700784778`:**
-
-```
-verify:migrations — COUNTER TABLE WIDENED — "api_rate_limits" carries a write policy:
-read_own_api_rate_limits (ALL).
-
-This is finding N-16. A user who can write this table can reset the
-limit it exists to impose: deleting an `advisor_usage` row clears the
-daily token budget, and deleting an `api_rate_limits` row clears the
-rate limit. Writes belong in `SECURITY DEFINER` functions, which is what
-migration 0008 established and 0009 applied at birth.
-
-NOTE FOR WHOEVER SEES THIS FAIL: `rls-coverage.test.ts` is very likely
-still green. It reads the migration TEXT and its policy pattern discards
-the command clause, so a widening policy is invisible to it. That is the
-reason this assertion lives here against `pg_policies.cmd` instead.
-```
-
-**Disposition, per the owner's rule: the CI step is the control.** U15 predicted this failure **in its own
-failure text**, named the guard that would stay green, and said why the assertion lives against
-`pg_policies.cmd` instead. The probe did not discover a gap — **it confirmed a control, and confirmed that
-the control's author had already described the exact hole the Check later found independently.**
-`FU-40` is registered at (d2) for `RLS_COVERAGE` to see it too. **P2-7 does not join (d1).**
-
-*(Worth its line: the Check found P2-7 by mutation and called `RLS_COVERAGE` blind. Both are true. The
-repository was never unguarded — the guard that covers it is one CI step away and was built for this
-reason. A finding can be correct about a guard and wrong about the system.)*
-
----
-
-### P2-R1 — every 5xx reaches the logger (P2-1)
-
-**Defect.** Three sites answer 5xx and return before `logInternalError()` runs, so those responses carry no
-server-side log entry and no correlation id — while `[P2-X1]`/R1 claims *"every 5xx has a correlating
-server-side log entry with a request ID"*.
-
-| Site | Shape |
-|---|---|
-| `src/lib/api/respond.ts:272` | `NotConfiguredError` caught **inside** `handle()`'s catch; returns `fail("NOT_CONFIGURED", err.publicMessage, 503)` before reaching `internalError()` |
-| `src/app/api/advisor/route.ts:101` | `fail("NOT_CONFIGURED", AI_SERVICE_NOT_CONFIGURED, 503)` — returned before `handle()` is entered; this route's `POST` is not wrapped |
-| `src/app/api/lab-import/extract/route.ts:91` | a **local** `try/catch` intercepts `ExtractionError` → `fail("EXTRACTION_FAILED", …, 502)`; `handle()`'s outer catch never sees it |
-
-**Approach — `fail()` logs by construction at status ≥ 500, rather than routing three sites by hand.**
-Three hand-routed sites is three things to remember; a status-keyed rule in `fail()` is one thing that
-cannot be forgotten, and it governs the fourth site nobody has written yet. *(§3 rule 5's ceiling — the
-difference between a rule that is checked and a rule that cannot be broken, which is the same argument
-FU-33 makes against U30's guard.)* **`422` and every 4xx are unaffected** — the threshold is the criterion's
-own word, "5xx".
-
-**Guard: `FIVE_XX_IS_LOGGED`.** Asserts no 5xx response is constructed outside the logging path; inventory
-of 5xx construction sites asserted **non-empty** and pinned. **Red-first evidence: the three sites as they
-stand today** — the guard must name all three before the fix, which is the strongest available proof it
-is not measuring itself.
-
-**Also in this landing:** `[P2-X1]`'s Check clause names `src/lib/api/respond.test.ts`'s **T2** explicitly,
-so the mechanism that proves the logging half is pointed at by the criterion `CRITERIA_PARITY` reads.
-**Files:** `src/lib/api/respond.ts`, `src/app/api/advisor/route.ts`,
-`src/app/api/lab-import/extract/route.ts`, `src/architecture/five-xx-is-logged.test.ts` (new),
-plan §8. **GATE D1: does not apply** — no CI step; discharge with a zero-line `ci.yml` diff.
-**Note: this adds a 27th architecture spec, so `SPEC_COUNT`'s four sites move 26 → 27 in the same commit.**
-
----
-
-### P2-R2 — `DOC_TRUTH` validates named-guard tokens (P2-4)
-
-**Defect.** `readRuleTable()`'s id capture is `/\bB\d+[a-z]?\b/g`, so rows naming **derived-set guards**
-are never checked against anything. **M-G:** renaming `PAID_API_BUDGET` in `CLAUDE.md` row 9 to a fictional
-token left `Tests 21 passed (21)` — fully green.
-
-**A design constraint found before building, which changes the guard's shape.** The naive rule — *every
-named-guard token in §4's table must be an `it()` title in `src/architecture/`* — **would go red today on
-correct documentation.** Measured: §4's table names five tokens (`DOMAIN_IS_PURE`, `PAID_API_BUDGET`,
-`PAID_PACKAGES`, `RETIRED_PACKAGE`, `SOLE_PAID_CLIENT`), and **`PAID_PACKAGES` is not a test title** —
-`grep -c 'it("PAID_PACKAGES' src/architecture/boundaries.test.ts` → **0**. It is a `const` at
-`boundaries.test.ts:923`, cited by row 9 as the *marker set*, which is a true and useful thing for the row
-to say.
-
-**So the guard resolves a token against either an `it()` title or a declared identifier in
-`src/architecture/`**, and asserts the resolved set is non-empty. A token that is neither is the failure.
-*(The alternative — forcing every cited token to be a test title — would make the documentation worse to
-make the guard simpler.)*
-
-**Red-first: M-G verbatim.** **C7 then becomes MET on its own justification** rather than on a
-justification that does not establish it. **Files:** `src/architecture/doc-truth.test.ts`, plan §8.
-**GATE D1: does not apply.**
-
----
-
-### P2-R3 — the service-role key has a reader ratchet (P2-12)
-
-**Defect.** `CLAUDE.md` §2.3 rule 14 is **rank-1** and holds today only by convention and grep.
-
-**A design constraint found before building, and it is C1/C5's lesson recurring inside the fix for it.**
-`git grep -ln "SUPABASE_SERVICE_ROLE_KEY" -- src/ scripts/` returns **two** files:
-`src/lib/db/seed.ts` **and** `scripts/probes/load-env.ts`. The second is **not a reader** — it mentions the
-key in a comment explaining why it deliberately does *not* load it:
-
-> *"`.env.local` on a developer machine also carries `SUPABASE_SERVICE_ROLE_KEY`. `CLAUDE.md` §2.3 rule 14
-> confines that key to the dev seed script, and a general-purpose loader would put it into the environment
-> of every probe process for no reason at all… So this reads the file and exports ONLY names matching
-> `OPENAI_`."*
-
-**A grep-based ratchet would pin two files, one of which exists to exclude the key** — and would redden if
-that comment were ever improved. **The guard must key on a read** (`process.env.SUPABASE_SERVICE_ROLE_KEY`
-or equivalent access), **not a mention.** This is exactly the defect C1 and C5 were struck for, appearing
-in the remediation for a different finding, and it is the reason this constraint is written down before any
-code rather than discovered by a false red.
-
-**Pinned set: exactly one file**, `src/lib/db/seed.ts`. **Red-first: a planted read in `src/lib`.**
-**Files:** `src/architecture/service-role-confinement.test.ts` (new), or an assertion added to
-`boundaries.test.ts` beside `SOLE_PAID_CLIENT`'s reader ratchet, whose shape this mirrors.
-**GATE D1: does not apply.** **If written as a new spec, `SPEC_COUNT` moves again — see the note below.**
-
----
-
-### Cross-cutting: the spec count moves, and the guard is why we know
-
-P2-R1 and possibly P2-R3 add architecture specs. `SPEC_COUNT` pins **26** and binds four documented sites,
-so **(d1) must move all four in the same commit** or land red. **This is the guard working as designed** —
-the count cannot drift silently any more — and it is the first time it constrains a landing rather than
-recording one. The exact target (27 or 28) depends on whether P2-R3 is a new spec or an addition to
-`boundaries.test.ts`; **P2-R3's placement is the one open design question in this block.**
-
-### Verification for (d1)
-
-`npx tsc --noEmit` · `npm run lint` · `npx vitest run` · `npm run test:coverage` · `npx next build`, plus
-each guard shown red then green, and `git diff -- .github/workflows/ci.yml | wc -l` → **0** for GATE D1.
-`ecc:code-reviewer` on the diff. `ecc:security-reviewer` **is** warranted this time, unlike (a):
-**P2-R1 changes a response path and P2-R3 touches a rank-1 credential rule.**
-
----
-
-## Registered for (d2) — findings raised by landing (d1) itself
-
-### N-75 — `readsIdentifier` terminated at the first substitution template, blinding all four credential ratchets
-
-**Raised 2026-09-22 by P2-R3's red proof failing to redden. Owner: registered here, fixed in (d1).**
-
-`readsIdentifier` in `boundaries.test.ts` was a raw `ts.createScanner` loop. Bare `scan()` carries no
-template-continuation state, so after a `TemplateHead` it mis-tokenises and **stops**. Everything after the
-first `` `x ${…}` `` in a file was invisible to it. Two-line repro:
-
-```ts
-const a = `x ${1} y`;
-const k = process.env.SUPABASE_SERVICE_ROLE_KEY;   // NOT detected
-```
-
-Remove the template and the same read **is** detected. In the real case the scan died at token **964**; the
-planted read sat at offset **18552**.
-
-**Blast radius — four pins, all of them credential ratchets:** `OPENAI_API_KEY` and `OPENAI_BASE_URL` (both
-halves of the paid boundary), `OPENAI_MODEL`, and the `SUPABASE_SERVICE_ROLE_KEY` pin P2-R3 was adding.
-Every one was **narrower than it claimed**: a module reading any of those after a substitution template was
-governed by nothing.
-
-**It was certified sound.** `ecc:security-reviewer` verified the paid-boundary ratchets at landing (c) and
-reported **64/64 green**, and `ecc:code-reviewer` reviewed `boundaries.test.ts` at (a). Neither could have
-seen this: the helper's own eight self-test fixtures are all **comment-shaped** — the class of input that
-motivated the tokenised scan in the first place — and not one contains a template literal. **The guard was
-hardened against the last bug and blind to the next one, and its self-tests encoded that history.**
-
-**How it surfaced:** not by review and not by reasoning. P2-R3's red proof planted a real read in
-`src/lib/safety/index.ts` and the new pin **stayed green**. Tracing that rather than accepting it is the
-whole of the finding — a red-first proof that does not go red is a result, not a formality.
-
-**Fixed in (d1)** by rewriting the helper as a `ts.createSourceFile` AST walk (no continuation state to
-lose; comments are not nodes, so reads-not-mentions holds by construction rather than by a stripper), with
-**two regression fixtures** added to the self-test block. Verified old-vs-new: *"a read AFTER a template
-literal with a substitution"* → old `false`, new `true`. *(The second fixture, a read **inside** a
-substitution, the old scanner already caught — recorded because only the first is load-bearing.)*
-
-**(d3) ADDENDUM OBLIGATION, and it is not optional:** the certifier must state that **(c)'s security
-section could not have seen this**, and **re-verify the four ratchets on the rewritten helper**. A
-certification that reported 64/64 against a detector with this hole is a claim about the detector as much
-as about the ratchets, and the addendum is where that gets said.
-
-### FU-43 — `src/middleware.ts`'s unguarded `getUser()`
-
-**Raised 2026-09-22 by `ecc:security-reviewer`'s (A) enumeration at (d1).** `updateSession()` calls
-`supabase.auth.getUser()` with no `try`/`catch`; a throw — network failure, malformed cookie — surfaces as
-a framework-level edge response that never reaches `fail()` or `logInternalError`. **Edge runtime, outside
-`handle()`'s reach**, so neither the new `fail()` rule nor `FIVE_XX_IS_LOGGED` can govern it.
-**Owner: the phase that adds a logging sink**, carried alongside **N-11** and U23's cut residue — the same
-owner, because it is the same missing piece seen from a third direction.
-
-### `[P2-X1]` is re-worded at (d2), not re-ticked as-is
-
-Its current text claims *every* 5xx. After (d1) the true statement is: **every 5xx the application
-constructs carries a correlated record**, with two declared exceptions —
-**`NOT_CONFIGURED`** as an operational state (U1's ruling, pinned by T5 and by `NOT_CONFIGURED_TOTALITY`'s
-byte-identity assertion) and **framework-generated 500s outside route handlers** (FU-43, and the
-`advisor/route.ts` window P2-R4 closes at (d1b)).
-
-### N-76 — `advisor/actions/route.ts`'s pre-delegation window is the same class as the one P2-R4 closed
-
-**Raised 2026-09-22 at (d1b) by `ecc:code-reviewer` (the binding assertion refused to pass on it) and
-independently by `ecc:security-reviewer`'s (A) re-enumeration, which asked for it to carry its own number
-rather than live as a test comment. Both are right.**
-
-`POST /api/advisor/actions` is the second route not wrapped in `handle()`. Its body delegates to
-`confirmAndApply`, whose own try/catch reports through `internalError` at every exit — so the *work* is
-covered. What is not covered is the window before that call: `createClient()` at `route.ts:34`. A throw
-there — `NotConfiguredError` on unset Supabase env, or a `cookies()` failure — escapes `POST` and becomes an
-uncorrelated framework 500, exactly as `advisor/route.ts` did before P2-R4.
-
-**Why size is the wrong reason to defer it, stated because that was nearly the reason given:** the window is
-one call, but it is *the specific call just proven capable of throwing* — the same `createClient()` whose
-throw path P2-R4 fixed in the sibling route. *"Small window"* describes the line count, not the
-probability.
-
-**Not fixed at (d1b), and the reason is scope rather than risk:** (d1b)'s approved scope is
-`advisor/route.ts`'s `POST`. Widening it to a second route without a ruling is the behaviour §8 rule 1
-forbids, and this closeout has already had to name that failure twice. The fix is the same five-line shape
-P2-R4 used.
-
-~~**Bound in the meantime**… **Owner: the next unit that opens this route, or the phase that closes
-FU-43.**~~
-
-> **[2026-09-22] CLOSED BY (d1b), AND TAKEN ON AN EXPLICIT OWNER RULING RATHER THAN ABSORBED.** The
-> paragraph above is struck rather than deleted (§7) because the reasoning that deferred it was sound on
-> the scope it had: (d1b)'s approved scope was `advisor/route.ts` alone, and widening it unilaterally is
-> what §8 rule 1 forbids. **The owner widened the scope; the landing did not widen itself.** That
-> distinction is the whole reason this row reads the way it does.
->
-> **What landed:** the window from `getUser()`/`createClient()` to the `confirmAndApply` call is wrapped,
-> with the same `NotConfiguredError`-first branch the sibling route carries (503, no id, no record — U1's
-> declared operational state) and `internalError(e, { code: "ACTIONS_PRESTREAM_ERROR" })` for everything
-> else. `return await`, not `return`: a returned promise is not caught by its enclosing try, so without
-> the await a rejection from `confirmAndApply` would pass straight through the guard.
->
-> **The exemption is gone.** `FIVE_XX_IS_LOGGED` now requires **both** unwrapped routes to carry a
-> reporting catch — equality pin, no exemptions — and both directions are red-proven.
->
-> **And tightening that pin exposed a defect in the pin itself.** Its first form asked only whether the
-> file contained `internalError(` **anywhere**, and passed with the pre-stream catch **deleted** from
-> `advisor/route.ts` — because that file also reports from its in-stream SSE handler. A guard satisfied by
-> an unrelated call elsewhere in the same file. It is now keyed on the `PRESTREAM_ERROR` code the two
-> catches share, and removing **either** catch reddens it. *(Found by mutating the fix the guard was
-> written to protect — the third time in this closeout that a red-first proof failing to go red was the
-> finding, after P2-R3's blinded helper and the vacuous exemption pin.)*
-
----
-
-### (d1b) widened a third time — `getUser()` was outside the window in both routes
-
-**Raised 2026-09-22 by `ecc:security-reviewer`'s final (A) re-enumeration.** The pass was given the
-expected answer — *"item 7, the middleware (FU-43), and nothing else"* — and explicitly asked to falsify
-rather than confirm it. **It falsified it.**
-
-Both closures above open their guarded window at `createClient()`. `getUser()` runs **one statement
-earlier**, outside every `try`, in both routes — `src/app/api/advisor/route.ts:52` and
-`src/app/api/advisor/actions/route.ts:28` as they stood. So the defect this landing exists to remove
-survived **at the first line of each handler it had just guarded**, and the route comment's own list of
-what it closed did not name the call it had missed.
-
-**The throw is reachable, and the reviewer proved it rather than arguing it.** `getUser()` calls
-`cookies()` unconditionally (U28's dynamic marker) and then `supabase.auth.getUser()`, whose SDK catch
-swallows only `isAuthError(error)` and re-throws everything else. A disposable PoC mocking `getUser()` to
-reject showed `POST(request)` **rejecting** rather than resolving to a `NextResponse` — the exact framework-
-500-with-no-id failure mode. It was untested as well as unguarded: every existing test used
-`mockResolvedValue`.
-
-`getUser()`'s docstring read *"Never throws on missing session/config"* — true of the two causes it names,
-and read for months as a broader promise than it makes. Corrected in place at `src/lib/auth/session.ts`,
-with its actual scope stated.
-
-> **[2026-09-22] CLOSED BY (d1b), WIDENED ON AN EXPLICIT OWNER RULING.** Same distinction as N-76 above:
-> the scope was widened by the owner, not by the landing.
->
-> **The fix is the `try` opening earlier, NOT the auth check moving later.** Relocating `getUser()` into
-> the existing `try` would have put authentication after the body parse and after the `NOT_CONFIGURED`
-> pre-flight, so an anonymous caller would learn whether their body validated and whether the AI is
-> configured. §2.3 rule 11 is about the 401 itself; this is about what may precede it. Each route gained a
-> test — *"an unauthenticated caller still gets 401 before anything is parsed"* — that pins the order.
-> `advisor/route.ts` hoists `user` and `body` to `let` because both are read after the window closes;
-> `actions/route.ts` hoists nothing, because its window ends in its own `return`.
->
-> **Bound three ways, each mutation-shown:**
-> 1. A rejection test per route file — 500 with a correlation id **and** a matching log record, plus the
->    `NotConfiguredError` → 503 taxonomy case. Red first, and red for the right reason: `POST` *rejected*
->    rather than answering.
-> 2. `FIVE_XX_IS_LOGGED` gained a **positional** assertion — a `getUser(` before the first `try` in either
->    unwrapped route is red. Red first, naming both routes. Restoring either route's old order reddens it
->    again.
-> 3. An **anti-vacuity pin beside it**: every unwrapped route must call `getUser(` at all. Without it,
->    renaming the call would have *silenced* the positional check rather than reddening it — the same exit
->    `LINT_SCOPE` left open at M1c. Mutation-shown by renaming the call in one route: the pin reddens.
->
-> The commit message's claim — *"the two unwrapped routes report before the stream, from the first
-> statement"* — is true only because of this third widening. Before it, the message would have overclaimed.
-
----
-
-## Also registered for (d2) — raised by (d1b)'s final reviews
-
-### FU-44 — the correlation-id contract ends at `handle()`'s reach
-
-Three surfaces where a throw becomes a framework 500 or a Next error page with **no correlation id and no
-record**, none of them reachable by `FIVE_XX_IS_LOGGED`, which scans only `^src/app/api/.*/route\.ts$`:
-
-| Surface | Where | Why it is invisible |
+| Landing | SHA | What it did |
 |---|---|---|
-| The one route handler outside `src/app/api/**` | `src/app/auth/callback/route.ts:5` — `GET`, with `createClient()` at `:11` and no `handle()`, no `try` | Outside the guard's scan pattern entirely (`five-xx-is-logged.test.ts:190`) |
-| No error boundary anywhere under `src/app` | **no `error.tsx` and no `global-error.tsx` is tracked** — confirmed against `git ls-files`. Affects every protected render reaching `requireUser()` → `getUser()` (`src/lib/auth/session.ts:79`) | A render throw becomes Next's own error page, logged only through Next's internals |
-| Unguarded `"use server"` calls | `src/lib/auth/actions.ts:18` (`login`), `:33` (`signup`), `:50` (`signOut`) — `createClient()`/`supabase.auth.*` with no `try` | Server actions are not route handlers; nothing scans them |
+| **(a)** | `749dbfc` | `criteria-parity.test.ts` + `spec-count.test.ts`, both red-proven; the four `SPEC_COUNT` sites; README's per-spec breakdown dropped |
+| **(b)** | `b2ab0b6` | §8 and register re-derived; `docs/04-report/phase-2-operational-dependability.report.md` |
+| **(c)** | `854c44c` | Independent Check, four reviewers, one section each; **COMPLETE WITH FOLLOW-UP**, P2-1…P2-13 |
+| **(d1)** | `bac5928` | P2-R1, P2-R2, P2-R3; N-75 found by P2-R3's red proof failing to redden |
+| **(d1b)** | `a27ab0a` | P2-R4 and N-76; both unwrapped routes guarded from their first statement |
+| **(d2)** | *this landing* | The Check's remaining findings, the register rows below, classifications, roadmap, `CLAUDE.md` §5 |
+| **(d3)** | *pending* | Certifier addendum — P2-1…P2-13 re-verified against (d2)'s pushed SHA |
 
-**Owner: the phase that adds a logging sink — beside N-11 and FU-43.** All three are **pre-existing**;
-(d1b)'s delta introduces none of them. Recorded as one row because they share a single cause: the contract
-was written for `handle()`, and `handle()` only reaches API route handlers.
+---
 
-### N-77 — instruction-shaped "file changed" blocks appeared inside a subagent's tool output
+## The mirror — every row this cycle raised
 
-**Process finding, not a code defect.** During (d1b)'s security pass, tool output was twice followed by a
-block shaped like a system notice claiming these route files had changed on disk. The second carried a
-**fabricated inline diff** showing the `actions/route.ts` catch replaced with a bare `throw e;` — that is,
-asserting that the exact fix under review had been silently reverted.
+**Read the register, not this table.** One line each: id, the finding in a sentence, disposition, and where
+the authoritative row lives. Where the two disagree, **the register wins** (`CLAUDE.md` §6, ranks 5 and 3).
 
-The reviewer treated it as untrusted, **re-read both files and checksummed them**, found them unchanged and
-matching `git diff`, did not act on it, and reported it as an anomaly. The harness independently flagged the
-output as containing instruction-shaped patterns and neutralised the tags. The working tree was verified
-clean afterwards. **No attribution is recorded — the source is unknown.**
+### Check findings
 
-**Disposition: no new control. The standing rule already covers it** — *a revert or a change is verified by
-`git diff`, never by a message asserting one* — and it is restated at (d2) in `CLAUDE.md` §5's method rules
-so it sits where the file-copy-backup rule already sits, rather than only in this artifact. What makes this
-worth a number is that the correct behaviour was **already specified and was followed**; had it not been, a
-reviewer would have been talked out of a real finding by a message.
+| id | Finding | Disposition |
+|---|---|---|
+| **P2-1** | `[P2-X1]`/R1's first clause false as written; the tested half unbound | Criterion re-worded at (d2); logging half closed by P2-R1 at (d1) and P2-R4 at (d1b) |
+| **P2-2** | §10.7's completeness claim false — N-69 and N-40 in no list, N-69 with no owner | (d2): both added to §10.7 and report §10; N-69 given an owner-condition; N-40's class → **FU-41** |
+| **P2-3** | Landing (d) as specified would make `project-status.md` contradict itself | (d2): §2.x prose and §3 table moved together, dated |
+| **P2-4** | `DOC_TRUTH` did not bind named-guard tokens, so C7's check did not establish C7 | **CLOSED** by P2-R2 at (d1) |
+| **P2-5** | FU-29's disposition asserts an OP row that does not exist | (d2): corrected to the row that does |
+| **P2-6** | Report §11 omits U-DEFER-4; roadmap Phase 3 not satisfiable without it | (d2): named in both |
+| **P2-7** | `RLS_COVERAGE` blind to an in-place `create policy` edit | **Settled by probe, not argument** — run `35700784778` failed at Migration coherence; CI is the control → **FU-40** |
+| **P2-8** | Plan's C5 re-derivation prose says 7 files; it is 5 | (d2): corrected wherever it appears |
+| **P2-9** | `CLAUDE.md` §4 rule 7's "7 of 31" re-derives to 8 of 31 | (d2): corrected and dated, predicate stated beside it |
+| **P2-10** | C16 ticked conditionally; `CRITERIA_PARITY` cannot express `[~]` | (d2): recorded → **FU-42**; the guard is not rewritten in the landing it polices |
+| **P2-11** | N-50's Phase 4 deferral absent from the roadmap, the sequencing authority | (d2): named in roadmap Phase 4 |
+| **P2-12** | Service-role-key confinement had no executable guard | **CLOSED** by P2-R3 at (d1) |
+| **P2-13** | FU-32 cited thirteen times, defined zero | (d2): written as a late-registered row → **FU-32** |
+
+### Register rows this cycle added
+
+| id | Finding | Disposition | Authoritative row |
+|---|---|---|---|
+| **N-75** | `readsIdentifier` stopped at the first substituting template literal, blinding four credential ratchets | **CLOSED (d1)** `bac5928` — AST walk + 2 regression fixtures | plan §4.5 |
+| **N-76** | `actions/route.ts`'s pre-delegation window unguarded — P2-R4's class | **CLOSED (d1b)** `a27ab0a`, on owner ruling; exemption removed | plan §4.5 |
+| **N-77** | Instruction-shaped "file changed" blocks in a subagent's output, once with a fabricated diff | **No new control** — verify by `git diff`, never by a message; restated in `CLAUDE.md` §5 | plan §4.5 |
+| **FU-32** | The counts-written-once class, cited as authority before it existed | Late-registered; remedy is bind-or-delete, never correct-and-move-on | plan §4.3 |
+| **FU-40** | `RLS_COVERAGE` sees policy existence, not policy semantics | CI's catalog check is the control; boundary written down | plan §4.3 |
+| **FU-41** | Nothing structurally prevents health-bearing error text reaching a log record (N-40's class) | Owner: the phase that adds a logging sink | plan §4.3 |
+| **FU-42** | `CRITERIA_PARITY` cannot express a partial criterion, so it shapes the record it measures | Owner: next unit touching that guard | plan §4.3 |
+| **FU-43** | `src/middleware.ts`'s `getUser()` has no guard and no window to put one in | Owner: the phase that adds a logging sink | plan §4.3 |
+| **FU-44** | The correlation-id contract ends at `handle()`'s reach — three surfaces | Owner: the phase that adds a logging sink | plan §4.3 |
+| **FU-45** | Cycle artifacts have a stated cap and nothing measures it; this one reached 403 lines | Remedy: a length assertion on `SPEC_COUNT`'s pattern | plan §4.3 |
+| **FU-46** | Four row shapes; a section-bounded parse gave three wrong answers before it was sound | Remedy: one declared shape and a guard keyed on it | plan §4.3 |
+
+### Remediations executed
+
+| id | Target | Landed |
+|---|---|---|
+| **P2-R1** | Every unexpected 5xx reaches the logger; `DECLARED_OPERATIONAL_STATES` imported, not re-typed | (d1) `bac5928` |
+| **P2-R2** | `DOC_TRUTH` resolves guard tokens against titles **or** declared identifiers | (d1) `bac5928` |
+| **P2-R3** | Service-role key reader ratchet, pinned to `src/lib/db/seed.ts` | (d1) `bac5928` |
+| **P2-R4** | `advisor/route.ts`'s pre-stream window guarded, then widened to its first statement | (d1b) `a27ab0a` |
+
+---
+
+## What this cycle learned about its own method
+
+**Three times** a red-first proof that failed to redden was itself the finding, and each would have passed
+review as green: P2-R3's blinded `readsIdentifier` (**N-75**); the exemption pin that re-typed its own
+array instead of importing it; and the `UNWRAPPED_ROUTES` predicate satisfied by an unrelated call in the
+same file. **A fourth was anticipated rather than discovered** — the positional `getUser(` check, whose
+silent exit was a rename, closed with an anti-vacuity pin before it shipped — and is not counted, because
+nothing had to fail first. The full account is in the phase report §12.
+
+## Verification
+
+Each landing ran `npx tsc --noEmit` · `npm run lint` · `npx vitest run` · `npm run test:coverage` ·
+`npx next build`, plus `npm run test:e2e` where `src/app` changed, with every new guard shown red then
+green and GATE D1 discharged by a zero-line diff against `.github/workflows/ci.yml`. Per-landing figures
+are in the phase plan's §10.9 STAMP ROW, re-measured at each tree rather than carried forward.
