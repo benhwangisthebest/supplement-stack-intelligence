@@ -6756,7 +6756,7 @@ the packaging. Two readings:
 |---|---|---|---|---|
 | **(d1)** | `bac5928` | post-merge **35705970606** ✓ | 12 / 18 | as recorded at (d1) |
 | **(d1b)** | `a27ab0a` | branch **35710031462** ✓ · post-merge **35710426933** ✓ | 12 / 18 | lint **369 of 369, 0 errors** · vitest **1446 / 114** · rendering determinism **no prerendered page HTML** — all three identical to local |
-| **(d2)** | *this landing* | recorded in the **(d3) addendum**, which verifies against (d2)'s pushed SHA | 12 / 18 expected; **GATE D1: `ci.yml` 0 lines** | local: tsc clean · lint **369 of 369, 0 errors** · vitest **1446 / 114** · coverage exit 0 · build exit 0 |
+| **(d2)** | `40fc2b6` | branch **35726892537** ✓ · post-merge **35727291891** ✓ | 12 / 18 · **GATE D1: `ci.yml` 0 lines** | lint **369 of 369, 0 errors** · vitest **1446 / 114** · rendering determinism **no prerendered page HTML** — all three identical to local. **A fourth, CI-only:** E2E non-live **70 passed / 30 skipped**, not re-run locally because (d2) changed no `src/app` file; the last local run was (d1b)'s and was identical. *(Back-filled in (d3)'s commit, as this row said it would be.)* |
 
 **(d1b) also ran `npm run test:e2e` locally** — **70 passed, 30 skipped**, the skips being the
 `[LIVE]`-tagged specs, which stay BLOCKED(env) under ruling 3. (d2) touches no `src/app` file and does not

@@ -555,3 +555,103 @@ absorbed): **P2-4**, **P2-5**, **P2-6**, **P2-7**, **P2-9**, **P2-10**, **P2-12*
 ---
 
 # PHASE 2 COMPLETE WITH FOLLOW-UP
+
+## 7. Resolution addendum
+
+**Certifier for this addendum: this session, dispatched separately from the four §2–§5 reviewers.**
+Verified against `40fc2b6` (`git rev-parse HEAD` confirmed at start and unchanged throughout). Per the
+brief, my own earlier participation as one of the four §6-adjacent reviewers on the original Check is
+**not evidence here** — everything below was re-derived fresh, on this tree, by command.
+
+### 7.1 The three rules, verbatim
+1. **Published docs are claims, not evidence.**
+2. **Re-derive by command.**
+3. **A prior review passing is not evidence** — including this certifier's own.
+
+### 7.2 The thirteen findings, re-verified
+
+| # | Verdict | Settled by |
+|---|---|---|
+| P2-1 | **VERIFIED** | `docs/roadmap.md:374-399` reworded with decision cited; `src/architecture/five-xx-is-logged.test.ts` binds `fail()`-level logging; `DECLARED_OPERATIONAL_STATES` (`respond.ts:64`) and FU-43 are the two real carve-outs. Mutation: stripped `ADVISOR_PRESTREAM_ERROR` from `advisor/route.ts` → red; restored byte-identical |
+| P2-2 | **VERIFIED** | N-69 (plan:608) carries an actual condition ("next unit touching `recordBatch`… may not ship without closing this"), not a restatement; N-40 and N-69 both in plan §10.7 and report §10 (report:290-294); header at plan:6668-6677 now scoped to residues, not all open rows |
+| P2-3 | **NOT VERIFIED** | `docs/project-status.md` §2.6 (~line 289-300) still reads *"Route count is 23"* against a re-derived **25** (`git ls-files 'src/app/api/**/route.ts' \| wc -l`), and its **"Still open"** bullet (substring dispatch / no rate limiting / no security headers) is unstruck, directly under the new **Classification: P** paragraph that asserts the opposite — `respond.ts:322` confirms typed `instanceof NotConfiguredError`, not substring dispatch. §2.8/§3 got the reconciliation the disposition promised; §2.6 did not get the specific "route count and three bullets, struck and dated" fix the disposition named |
+| P2-4 | **VERIFIED — CLOSED** | `doc-truth.test.ts`'s `guardTokensIn()` (~line 128) resolves against test titles OR declared identifiers; full suite green |
+| P2-5 | **VERIFIED** | Re-derived by script: §4.6 (plan:653-736) holds exactly `OP-1…OP-7`, none about `mappers.ts`. FU-29's text (plan:292-299) rewritten to future tense ("that unit **WILL NEED to** open its own OP row"), closing the ambiguity `ecc:tdd-guide` declined to resolve |
+| P2-6 | **VERIFIED** | U-DEFER-4 named in report §11 (line 312) and in `docs/roadmap.md` Phase 3 itself (lines 498-508), conflict stated, not decided |
+| P2-7 | **VERIFIED** | FU-40 (plan:384-402) recorded as CI's boundary, not the unit's. Re-derived live: `gh run view 35700784778` — branch `probe/p2-7-rls-widening` failed at **Migration coherence**, `pg_policies.cmd`; branch since deleted |
+| P2-8 | **VERIFIED** | `git grep -l "@anthropic-ai/sdk" -- src/` → 5 files; `git grep -c` sums to 9. Matches corrected text at plan:6043-6057 |
+| P2-9 | **VERIFIED** | Re-derived independently: 31 `"use client"` components under `src/components/**`, 8 import `@/lib` or `@/data` (incl. `LabMarkerModal.tsx`, `LabMarkerTable.tsx`; `AuthForm.tsx` type-only). Matches `CLAUDE.md:169` |
+| P2-10 | **VERIFIED (deliberately unfixed)** | FU-42 (plan:424-440) registered. Re-confirmed `criteria-parity.test.ts`'s `/^- \[( \|x)\] (.*)$/` skips `[~]` while `EXPECTED_PLAN_CRITERIA=19` is pinned — marking C16 partial would still redden. The stated reason for not fixing it here (it would rewrite a guard binding this landing's own edits) holds structurally |
+| P2-11 | **VERIFIED** | N-50 named in `docs/roadmap.md` Phase 4, item 0 (lines 564-570) |
+| P2-12 | **VERIFIED — CLOSED** | `SERVICE_ROLE_CONFINEMENT` ratchet exists. Mutation: planted a `SUPABASE_SERVICE_ROLE_KEY` read (after a substituting template literal) in `src/lib/safety/index.ts` → red, named the file; restored byte-identical |
+| P2-13 | **VERIFIED — see 7.3** | `FU-32` is now a genuine row, plan:363-382 |
+
+### 7.3 P2-13, classified
+
+**Genuine register row, not another citation.** `FU-32` (plan:363-382) carries a class definition, six
+named instances, a two-option remedy and an owner — the same shape every other FU row uses, re-derived by
+reading it directly rather than trusting the "written" claim. The report's contiguity headline
+(report:225-232) is restated to name the omission rather than assert unqualified completeness. Register
+contiguity independently re-derived by script over `docs/01-plan/phase-2-operational-dependability.plan.md`
++ `phase-1-verification-integrity.plan.md`: **N-1…N-77** (77 rows, no gaps, no dupes, §4.3-§4.5 bounds),
+**OP-1…OP-7** (§4.6), **FU-1…FU-46** (28 in the Phase 1 plan + 29-46 each with one definitional block here).
+
+### 7.4 The N-75 obligation
+
+**Landing (c) certified four credential ratchets on 64/64 green and could not have seen the
+template-literal blindness — a blinded guard and a satisfied guard are the same colour.** `ecc:security-reviewer`
+re-verified in parallel (relay read directly, not re-run): the helper is confirmed AST-based
+(`boundaries.test.ts:1211-1233`); the derived set of dependent ratchets is confirmed as exactly **four**;
+**all four verified RED** under the exact shape that blinded the old scanner (file-copy-backup mutation,
+byte-identical restore, 62/62 green after). **N-75's obligation is discharged for the ratchets.**
+
+**Two new findings, neither visible to (c) or to (d1)/(d2), both spot-verified by me directly against source:**
+
+1. Of the "two regression fixtures" (d1)'s commit, the N-75 row, and plan §10.11 all claim, **only one
+   actually pins the bug.** The "read AFTER a substitution template" fixture reddens against the
+   reconstructed old scanner; the "read INSIDE a substitution" fixture does not — the old tokeniser reads
+   `process.env.OPENAI_API_KEY` before reaching the brace that mis-tokenises. Confirmed by reading
+   `boundaries.test.ts:1611-1616` directly: the second fixture is a real correctness check for an adjacent
+   property, not a second N-75 regression proof. The "two fixtures" claim should be corrected to one.
+2. **The identical sibling failure mode — a non-anchored `/\/\/[^\n]*/g` comment-strip blanking a `//`
+   inside a string/URL literal — is live, undisclosed, in three specs I confirmed directly:**
+   `boundaries.test.ts:1237` (backs `NO_PINNED_MODEL_ID`; its own "HONEST LIMITS" comment at 1437-1448 does
+   not name this one), `five-xx-is-logged.test.ts:194` (undisclosed), and `not-found-uniformity.test.ts:70`
+   (undisclosed) — against `five-xx-is-logged.test.ts:267-270`'s `codeOf()`, added the same landing, which
+   **does** disclose the identical limit. No live undetected violation was found in tracked source today
+   (checked near current model-id literals) — this is a demonstrated blind spot, not an observed miss, the
+   same standing P2-7's finding had. **Not Critical; registered below as new follow-ups.**
+
+### 7.5 Verdict: **PHASE 2 COMPLETE WITH FOLLOW-UP** (restated, not unchanged)
+
+Zero Critical findings anywhere in this addendum's own re-derivation. Twelve of thirteen Check findings are
+genuinely discharged or correctly carried. **P2-3 is the exception and is reopened here**: the specific fix
+its own disposition promised — striking and dating `project-status.md` §2.6's stale route count and three
+"Still open" bullets — was not executed, leaving a **P** classification sitting over prose that
+contradicts it. That is a record defect of the identical shape this whole closeout exists to catch (§2.2
+rule 7's binding, applied to a status document rather than a rendered claim), not a hidden hazard: every
+underlying fact re-derives true (25 routes, typed dispatch, rate limiting, security headers). N-75's two
+new findings are the same class — real, but about a guard's self-description and a sibling guard's
+undisclosed limit, not about an unmitigated live violation. **Nothing here rises to a rank-1 violation, a
+fabricated result, or a defect in verification's mechanism producing a false green** — CI is independently
+re-confirmed at `40fc2b6` (`gh run view 35727291891`, `headSha` matches, success) and the local suite is
+unchanged (tsc clean, 1446/1446/114, lint 369/369, build succeeds). **Is any single finding disqualifying?
+No — but P2-3 must not be marked closed, and the two N-75 findings must be registered, before this record
+stands as final.**
+
+### 7.6 Follow-up set — corrected, not copied
+
+**The clerk's proposed 16-item list is inaccurate** — it conflates "registered at (d2)" with "the residues
+table" (plan §10.7 / report §10), which is the actual authoritative "survives the phase" list and is
+longer: it also carries **FU-29, FU-30, FU-31, FU-33, FU-34, FU-35, FU-36, FU-37, FU-38, N-50**, plus two
+unnumbered rows (`replaceFlags` transactional residue; Live E2E BLOCKED(env)) that the clerk's list drops
+entirely. Conversely, **FU-45 and FU-46 — genuinely open, both with forward-looking effect — are absent
+from §10.7 and from report §10**, present only in the register-contiguity narrative (report:228,238). That
+is P2-2's exact pattern recurring, undiscovered until this pass: **new finding, register FU-45 and FU-46
+into §10.7 and report §10 before Phase 3 reads either.**
+
+**Phase 3 should inherit `docs/01-plan/phase-2-operational-dependability.plan.md` §10.7 directly, corrected
+to add FU-45/FU-46, plus:** **P2-3, reopened** (§7.2 above) · two new rows from §7.4, proposed as **N-78**
+(the "two fixtures" overclaim) and **N-79** (the shared undisclosed `stripComments` blind spot in
+`NO_PINNED_MODEL_ID`, `five-xx-is-logged.test.ts:194`, `not-found-uniformity.test.ts:70`) — numbers are this
+certifier's proposal, not an enactment; I hold no mandate to edit the plan.
