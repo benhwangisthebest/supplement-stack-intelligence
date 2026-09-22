@@ -261,7 +261,47 @@ anomalies noted (§4.6 reordered; U31's C-table left in place and annotated).
 
 ## 10. What survives the phase
 
-**Fourteen** residues, each with an owner or a written owner-condition. Full table: plan §10.7.
+**Twenty-two** residues, each with an owner or a written owner-condition. **Plan §10.7 is the
+authoritative table; the list below is DERIVED FROM IT BY COMMAND at (d4), not retyped** — that
+distinction is the whole of FU-46 and of the finding that produced this rewrite.
+
+> **[2026-09-22, (d4)] THIS IS THE LIST PHASE 3 INHERITS.** The certifier at (d3) refused to accept the
+> clerk's proposed follow-up set and was right twice over: it **omitted** FU-29–FU-31, FU-33–FU-38, N-50
+> and both unnumbered residues, and it did not notice that **FU-45 and FU-46 were absent from §10.7 and
+> from this section altogether** — registered at (d2) and never added to the list of what survives.
+> **P2-2's exact pattern, recurring in the landing that fixed P2-2, and again in the landing that
+> registered the rows.** Rebuilding it from §10.7 by command then found six more missing (FU-40…FU-44) and
+> that a *range* row, `FU-35 … FU-38`, silently dropped FU-36 and FU-37 from any parse. **A list nobody
+> can re-derive is not a list.**
+
+| # | Residue | Owner or condition |
+|---|---|---|
+| **OP-5** | Three account facts UNKNOWN; the DPA page returned HTTP 403 | The repository owner |
+| **N-11 + U23's sink** | No sink beyond `console.error` | The phase that adds a logging sink |
+| **N-22** | Two `auto/*` aliases returned no second-step text | As recorded in §10.7 |
+| **N-25** | PDF accuracy measured on clean image-only renders, never scans | No synthetic substitute closes it |
+| **N-40 + FU-41** | Health-bearing error text can reach a log record · **§2.3 rule 15**, structural | The phase that adds a logging sink |
+| **N-50** | The uniform-404 question — a product decision about the API's voice | **Phase 4**, and named there since (d2) |
+| **N-69** | `recordBatch` can stamp another user's `conversation_id` · **SECURITY-RELEVANT** | The next unit touching `recordBatch` or the `advisor_actions` schema |
+| **N-70** | U29's ownership guards are check-then-act | **A gate:** any proposal to make conversations transferable must cite it first |
+| **U-DEFER-4** | No component-test harness; `HARNESS_GAP` hard-fails a tracked `*.test.tsx` | *The phase that introduces component testing* — **Phase 4**, which is later than the Phase 3 criterion that needs it (**P2-6**) |
+| **FU-29, FU-30, FU-31** | The rows this register owed itself | As recorded in §10.3 |
+| **FU-33** | `handleParams(params, schema, fn)` | Deferred by ruling; U30's guard is the interim control |
+| **FU-34** | Nothing renders `PARTIALLY_APPLIED` | The confirm surface owes the user a sentence |
+| **FU-35, FU-36, FU-37, FU-38** | U31's four open C-table obligations | The next operational phase |
+| **FU-40** | `RLS_COVERAGE` sees policy existence, not semantics | The phase that changes how migrations are verified |
+| **FU-42** | `CRITERIA_PARITY` cannot express a partial criterion | The next unit touching that guard |
+| **FU-43** | `src/middleware.ts`'s `getUser()` has no guard and nowhere to report | The phase that adds a logging sink |
+| **FU-44** | The correlation-id contract ends at `handle()`'s reach — three surfaces | The phase that adds a logging sink |
+| **FU-45** | Cycle artifacts have a stated cap and nothing measures it | The next operational phase |
+| **FU-46** | Four register row shapes; a section-bounded parse gave three wrong answers | The next operational phase |
+| **FU-47** | Four private comment-strippers, three non-anchored and blind to a `//` in a URL literal (**N-79**) | The next operational phase; seven sibling specs already use the anchored form |
+| *(unnumbered)* | `replaceFlags` transactional residue — three round trips, no transaction | The next unit adding a second writer to `evaluation_flags` |
+| *(unnumbered)* | **Live E2E — BLOCKED(env)** | Ruling 3: no secrets enter this public repository |
+
+**Four of these want the same thing.** N-11, FU-41, FU-43 and FU-44 are one piece of work seen from four
+directions: **a logging sink that does not exist.** A phase that builds it closes four rows; a phase that
+does not inherits all four again.
 
 > **[2026-09-22, (d2)] Check finding P2-2 — this section's opening was FALSE, and the mechanism is worth
 > more than the correction.** Plan §10.7's header (*"every row has an owner or a written owner-condition"*)
@@ -402,7 +442,9 @@ passed review as green, because a blinded guard and a satisfied guard are the sa
   the new ratchet stayed green. Traced rather than re-planted: `readsIdentifier` used `ts.createScanner`
   with a bare `scan()` loop, which carries no template-continuation state, so the walk **terminated at the
   first `` `…${…}` ``** and everything after it in the file was unread. **Four** credential ratchets were
-  affected. Rewritten as an AST walk with two regression fixtures. **The part that matters for the phase:
+  affected. Rewritten as an AST walk with ~~two regression fixtures~~ **one** — *[2026-09-22, (d4), N-78]*
+  *the second was tested against the reconstructed old scanner at (d3) and was already green against the*
+  *bug it was filed under, so it never pinned N-75; it is kept and retitled as a coverage case.* **The part that matters for the phase:
   those four ratchets were certified sound at (c) on 64/64 green** — the Check read them and could not
   have seen this.
 - **The vacuous exemption pin.** `ecc:code-reviewer` mutated (d1)'s new `DECLARED_OPERATIONAL_STATES`

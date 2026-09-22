@@ -65,7 +65,16 @@ export function trackedRoutes(pathspec = "src/app/api"): string[] {
   return files;
 }
 
-/** Block and line comments removed — N-14's class: a guard must not match a mention in a comment. */
+/**
+ * Block and line comments removed — N-14's class: a guard must not match a mention
+ * in a comment.
+ *
+ * [2026-09-22, N-79] STATED LIMITATION: this strip is NOT lexer-aware — the
+   * `//` pattern is unanchored, so a `//` inside a string or template literal (a
+   * URL, say) blanks the REST OF THAT LINE, hiding whatever else it holds from the
+   * scan. Seven sibling specs use the anchored `/^\s*\/\/.*$/gm` and are immune;
+   * converging on one shared anchored stripper is FU-47.
+ */
 export function stripComments(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 }

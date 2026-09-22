@@ -190,6 +190,14 @@ describe("FIVE_XX_IS_LOGGED — every 5xx carries a correlated record", () => {
     const routes = SOURCE.filter((f) => /^src\/app\/api\/.*\/route\.ts$/.test(f));
     expect(routes.length, "found no API routes to check").toBeGreaterThan(20);
 
+    // [2026-09-22, N-79] SAME STATED LIMITATION AS `codeOf` BELOW, and it was
+    // undisclosed here while `codeOf` — added in the same landing, in this same
+    // file — carried the disclosure. One blind spot, one file, one written down
+    // and one walked past. The strip is not lexer-aware: an unanchored `//`
+    // inside a string or URL literal blanks the rest of that line, which here
+    // could hide a `handle(` and misreport a wrapped route as unwrapped. No
+    // tracked route contains such a line today; checked at (d4). FU-47 is the
+    // shared anchored stripper that removes the class.
     const unwrapped = routes.filter((f) => {
       const text = readFileSync(path.join(ROOT, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
       return !/\bhandle[(<]/.test(text);

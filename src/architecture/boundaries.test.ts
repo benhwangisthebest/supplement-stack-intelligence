@@ -1232,7 +1232,20 @@ describe("architecture boundaries — the real source tree", () => {
     return found;
   };
 
-  /** Still a text strip, and still only used for the model-ID LITERAL scan. */
+  /**
+   * Still a text strip, and still only used for the model-ID LITERAL scan.
+   *
+   * [2026-09-22, N-79] STATED LIMITATION: this strip is NOT lexer-aware — the
+   * `//` pattern is unanchored, so a `//` inside a string or template literal (a
+   * URL, say) blanks the REST OF THAT LINE, hiding whatever else it holds from the
+   * scan. Seven sibling specs use the anchored `/^\s*\/\/.*$/gm` and are immune;
+   * converging on one shared anchored stripper is FU-47.
+   *
+   * Empirically blind today on a line such as
+   * `docs: "https://example.com/models", fallback: "some-model-id"` — everything
+   * from `https:` onward is blanked and the literal beside it is never seen. No
+   * such line exists in tracked source now; checked at (d4).
+   */
   const stripComments = (src: string): string =>
     src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 
@@ -1612,7 +1625,17 @@ describe("architecture boundaries — the real source tree", () => {
         "const a = `x ${1} y`;\nconst k = process.env.OPENAI_API_KEY;",
       ],
       [
-        "a read INSIDE a template substitution",
+        // [2026-09-22, N-78] COVERAGE CASE, NOT AN N-75 REGRESSION GUARD, and the
+        // distinction was found by testing the fixture against the bug it was
+        // filed under. Reconstructing the pre-`bac5928` scanner and running this
+        // input through it returns `true` — it was ALREADY green against the
+        // blindness, because the old tokeniser reads `process.env.OPENAI_API_KEY`
+        // as ordinary identifiers before reaching the `CloseBraceToken` that
+        // triggers the mis-tokenisation. Only the sibling above ("a read AFTER a
+        // template literal with a substitution") reddens against the old helper.
+        // Kept because the property is worth covering; retitled because §5 rule 2
+        // applies to a fixture exactly as it applies to a guard.
+        "a read inside a template substitution (coverage, not an N-75 regression proof)",
         "const a = `${process.env.OPENAI_API_KEY}`;",
       ],
     ])("counts %s", (_label, src) => {

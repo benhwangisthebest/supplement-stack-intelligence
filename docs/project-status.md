@@ -284,20 +284,48 @@ test" part does not.
 > message plus an opaque correlation ID and logs the full exception server-side under that ID (`9e9e15d`,
 > **R3**); four further handlers that bypassed `handle()` were fixed in `1792f9f` (**R3b**), and
 > `src/architecture/error-disclosure.test.ts` enforces the rule across every tracked route. Route count is
-> **23**, of which ~~20 use `handle()` at 28 call sites~~ → **[2026-08-06] 19 use `handle()` at 26 call
-> sites** (the earlier pair was never re-measured after the Phase 0 fixes; corrected at Phase 1 close).
-> All 23 have route tests — see §2.9.
-- **Works:** **[2026-08-06] all 23 routes call `getUser()` and return 401** — ~~22–23~~, a hedge that outlived the measurement; now verified exhaustively **and enforced** by `src/architecture/auth-coverage.test.ts`. Zod
+> ~~**23**~~ **25**, of which ~~20 use `handle()` at 28 call sites~~ → ~~**[2026-08-06] 19 use `handle()`
+> at 26 call sites**~~ → **[2026-09-22, Phase 2 closeout (d4), Check finding P2-3 reopened at (d3)]** **23 use `handle()` at 31 call sites**, and the **2** that do not are
+> `advisor/route.ts` and `advisor/actions/route.ts`, each carrying its own guarded pre-response window
+> since (d1b) and **pinned as an equality** by `five-xx-is-logged.test.ts` so a third cannot appear
+> silently. All ~~23~~ **25** have route tests — see §2.9.
+> *(Predicate, stated so the next reader re-derives rather than trusts: routes = `git ls-files
+> 'src/app/api/**/route.ts'`; wrapped = those whose comment-stripped source matches `/\bhandle[(<]/`.
+> This figure has now been re-measured three times and been wrong twice — it is the counts-written-once
+> class, **FU-32**, and the reason the predicate is written beside it.)*
+- **Works:** ~~**[2026-08-06] all 23 routes**~~ **[2026-09-22, (d4)] all 25 routes call `getUser()` and return 401** — ~~22–23~~, a hedge that outlived the measurement; now verified exhaustively **and enforced** by `src/architecture/auth-coverage.test.ts`. Zod
   validation on all mutation routes. Consistent `{data, error}` envelope.
 - **Incomplete:** ~~**zero tests**; the directory is excluded from coverage measurement entirely. Raw
   error messages returned verbatim to clients (`respond.ts:54`) — PostgREST text can leak constraint,
-  table, and column names.~~ **[2026-08-06] all three are stale.** All **23** route files have a
-  `route.test.ts` (Phase 1 U1–U4); the directory is measured, not excluded — `coverage.include` is
+  table, and column names.~~ **[2026-08-06] all three are stale.** All ~~**23**~~ **[2026-09-22, (d4)] 25** route files have a
+  `route.test.ts` (Phase 1 U1–U4; re-derived at (d4): `git ls-files 'src/app/api/**/route.test.ts'` = **25**, one per route); the directory is measured, not excluded — `coverage.include` is
   `src/**/*.{ts,tsx}` and `src/app/api` sits at **94.11 % statements**; and raw disclosure was fixed in
   `9e9e15d`/`1792f9f` and is enforced by `error-disclosure.test.ts` (`respond.ts:54` is now
-  `validationError`). **Still open:** `handle()` dispatches on error-message *substrings*
-  (`includes("not configured")`) rather than typed errors — Phase 2 F3. No rate limiting on any route,
-  including the paid LLM endpoint (CLAUDE.md §4.9, unenforced). No security headers in `next.config.ts`.
+  `validationError`). ~~**Still open:** `handle()` dispatches on error-message *substrings* (`includes("not configured")`)
+  rather than typed errors — Phase 2 F3. No rate limiting on any route, including the paid LLM endpoint
+  (CLAUDE.md §4.9, unenforced). No security headers in `next.config.ts`.~~
+  **[2026-09-22, Phase 2 closeout (d4), Check finding P2-3 reopened at (d3)]** **ALL THREE CLOSED, each by a named unit, each re-derived by command at (d4):**
+  - **Substring dispatch → CLOSED by Phase 2 U1.** `respond.ts:322` is
+    `if (err instanceof NotConfiguredError)`; `git grep 'includes("not configured")' -- src/` returns
+    **zero** matches in production code — the only hits are two comments in `respond.test.ts` recording
+    what the check used to be, and one at `respond.ts:323` saying what it replaced.
+  - **Rate limiting → CLOSED by Phase 2 U5.** Both paid routes carry `enforceRateLimit`
+    (`advisor/route.ts`, `lab-import/extract/route.ts`), and `PAID_API_BUDGET` in `boundaries.test.ts`
+    derives the governed set from an import-graph walk rather than a list, so a third paid route is a red
+    build rather than a forgotten one.
+  - **Security headers → CLOSED by Phase 2 U13 and U14.** Delivered from `src/middleware.ts` rather than
+    `next.config.ts` — **which is why the bullet as written could have stayed true forever while the
+    property held**; it named a location, not a property. Asserted at source by
+    `src/architecture/security-headers.test.ts` and on real responses by the non-live E2E suite, which
+    U14 wired into CI. U27's liveness proof rides on the same stage: the Report-Only CSP it asserts
+    cannot appear unless the middleware actually executed.
+
+  **Why this bullet survived (d2) and had to be reopened at (d3):** (d2) moved this subsystem to **P** and
+  reconciled §2.8 and §3, but left this paragraph standing — so a **P** classification sat directly over
+  prose asserting the opposite, and every fact in that prose was false. **The facts were never the
+  problem; the document contradicting itself was.** That is §2.2 rule 7's binding applied to a status
+  document rather than to rendered copy, and it is the defect this closeout exists to catch, committed by
+  the landing that catches it.
 - **Classification: P.** **[2026-09-22, Phase 2 closeout (d2)]** ~~B~~ → **P**, per plan §10.6. Every route authenticates and 401s
   (`auth-coverage.test.ts`, set derived from `git ls-files`); `ROUTE_CONTRACT` binds the
   validating/non-validating split as a **set equality**; `error-disclosure` scans all three trees with an

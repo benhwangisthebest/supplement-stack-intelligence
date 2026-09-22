@@ -106,7 +106,7 @@ the authoritative row lives. Where the two disagree, **the register wins** (`CLA
 
 | id | Finding | Disposition | Authoritative row |
 |---|---|---|---|
-| **N-75** | `readsIdentifier` stopped at the first substituting template literal, blinding four credential ratchets | **CLOSED (d1)** `bac5928` — AST walk + 2 regression fixtures | plan §4.5 |
+| **N-75** | `readsIdentifier` stopped at the first substituting template literal, blinding four credential ratchets | **CLOSED (d1)** `bac5928` — AST walk + **1** regression fixture (~~2~~; see **N-78**) | plan §4.5 |
 | **N-76** | `actions/route.ts`'s pre-delegation window unguarded — P2-R4's class | **CLOSED (d1b)** `a27ab0a`, on owner ruling; exemption removed | plan §4.5 |
 | **N-77** | Instruction-shaped "file changed" blocks in a subagent's output, once with a fabricated diff | **No new control** — verify by `git diff`, never by a message; restated in `CLAUDE.md` §5 | plan §4.5 |
 | **FU-32** | The counts-written-once class, cited as authority before it existed | Late-registered; remedy is bind-or-delete, never correct-and-move-on | plan §4.3 |
