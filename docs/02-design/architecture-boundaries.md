@@ -265,14 +265,18 @@ npm test                                              # includes all seven execu
                                                       #  Derived from git ls-files and asserted against
                                                       #  this site. Last hand-written value; do not
                                                       #  restack.]
-npx vitest run src/architecture/boundaries.test.ts     # layer boundaries only (36)
-npx vitest run src/architecture/error-disclosure.test.ts # error disclosure only (30)
-npx vitest run src/architecture/auth-coverage.test.ts     # AUTH_COVERAGE only (13)
-npx vitest run src/architecture/rls-coverage.test.ts      # RLS_COVERAGE only (14)
-npx vitest run src/architecture/schema-type-drift.test.ts # SCHEMA_DRIFT only (23)
-npx vitest run src/architecture/doc-truth.test.ts         # DOC_TRUTH only (21)
-npx vitest run src/architecture/e2e-live-tagging.test.ts  # LIVE_TAGGING only (11)
-npx vitest run src/services/evaluation.test.ts            # reachability only (11)
+# [2026-09-22, FU-39] The per-spec test counts that stood in these
+# comments are DROPPED, not corrected: three of them were stale (by 22,
+# 8 and 2). The DIRECTORY total is bound by SPEC_COUNT; a per-file count
+# restacks on every unit that adds a test and is not worth binding.
+npx vitest run src/architecture/boundaries.test.ts        # layer boundaries only
+npx vitest run src/architecture/error-disclosure.test.ts  # error disclosure only
+npx vitest run src/architecture/auth-coverage.test.ts     # AUTH_COVERAGE only
+npx vitest run src/architecture/rls-coverage.test.ts      # RLS_COVERAGE only
+npx vitest run src/architecture/schema-type-drift.test.ts # SCHEMA_DRIFT only
+npx vitest run src/architecture/doc-truth.test.ts         # DOC_TRUTH only
+npx vitest run src/architecture/e2e-live-tagging.test.ts  # LIVE_TAGGING only
+npx vitest run src/services/evaluation.test.ts            # reachability only
 ```
 
 A failure lists **every** offending `file:line` in one run, with the raw specifier, its

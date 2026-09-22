@@ -413,6 +413,13 @@ at closeout. "Unassigned" is not a state this table permits.
 | **C9** | **N-57 — `.env.local` goes stale after a worktree split.** Accepted as registered by the owner, 2026-09-18. Remedy candidates ruled at closeout: *loader warns on a populated file with zero matching keys*, or *a documented split procedure*. **The probe record adds a constraint on that ruling:** the first candidate would not have caught the observed case, because three keys did match and a fourth was swallowed into another key's value | **Closeout ruling** | **OPEN, decision point** |
 | **C8** | **[2026-09-18 DISCHARGED — see the Phase 2 register's N-56 row and its owner ruling; u12, u22 and u31 are all `completed`, and the advance is now a standing STAMP ROW line. The condition below is kept as written, per §7.]** ~~**N-56: the bkit tracker shows `u12` at `report`, not `completed`**, despite closeout commit `f74fcb8`. Not U31's state and not touched here. Surfaced because `CLAUDE.md` §9's revived-tracker condition holds *only* while every unit from U26 onward is driven to completion — a unit parked at `report` is exactly the half-use the retired note forbade, and the note reinstates itself as written if it stays that way | Owner / U12's closeout | **OPEN, referred** |
 
+> **[2026-09-22, Phase 2 closeout] PRINT-ORDER NOTE.** This table prints `C1…C7, C10, C9, C8` — an
+> append-order artifact of rows edited after they were written. It changes no disposition and is left in
+> place; recorded because it is the **same class** as the Phase 2 register's §4.6, which printed OP-7
+> before OP-6 and was reordered at this closeout. Two instances is a pattern worth a reader knowing about:
+> a table whose rows are revised out of sequence stops being scannable for "what is last".
+> **C6, C7, C9 and C10 are now registered as FU-35…FU-38** in the Phase 2 plan §4.3.
+
 **C1 and C2 are the two that cannot be satisfied from inside this repository**, and they are the two that
 matter. §5 R1 and §7's "Stated limits" both say it plainly: no test here can prove the swap works, and no
 test here can prove where the health context goes. Everything else in this table is bookkeeping by

@@ -362,12 +362,42 @@ is reachable from client code after Phase 0's push, and confirm the service-role
 the dev seed script.
 
 **Exit criteria (measurable)**
-- [ ] **[P2-X1]** Every 5xx has a correlating server-side log entry with a request ID; zero raw internal messages in
+- [x] **[P2-X1]** Every 5xx has a correlating server-side log entry with a request ID; zero raw internal messages in
       any client response (test-enforced).
-- [ ] **[P2-X2]** A concurrent-request test proves the daily token budget cannot be exceeded.
-- [ ] **[P2-X3]** Rate limits enforced on both LLM-backed routes, with tests.
-- [ ] **[P2-X4]** Client disconnect provably terminates the advisor loop.
-- [ ] **[P2-X5]** `replaceFlags` atomicity test passes under induced insert failure.
+      > **[2026-09-22] TICKED AT LANDING (b) — ON THE CRITERION AS WRITTEN, and the gap between that and
+      > item 1's ambition is stated rather than absorbed.** Both clauses hold: `handle()` writes a
+      > structured record carrying a correlation ID, the public error code and the error's
+      > name/message/stack/cause on every unexpected error, returning the same id to the client; and
+      > `error-disclosure` scans `src/app/api/**`, `src/services/**` and `src/lib/**` with a violation list
+      > of `[]` and **no allowlist**, test-enforced on every push.
+      > **What is NOT claimed by this tick:** item 1's *"target a real sink, not `console.error` alone"*.
+      > There is no logging library, no error-reporting service, no request ids outside the error path and
+      > no aggregation. That is **item 1's residue, not this criterion's** — the criterion says *server-side
+      > log entry*, and one exists. The residue is carried as **N-11 + U23's cut** (Phase 2 plan §10.7) and
+      > is the reason `docs/project-status.md` §3 classifies Observability as a **bounded refactor**
+      > rather than production-suitable.
+      > *(This is C15's shape a second time: a criterion narrower than the ambition that produced it. Ticked
+      > because it is met as written; the shortfall is named where shortfalls live.)*
+- [x] **[P2-X2]** A concurrent-request test proves the daily token budget cannot be exceeded.
+      > **[2026-09-22] TICKED AT LANDING (b), in the same edit as the Phase 2 plan's §8 copy — because
+      > `CRITERIA_PARITY` refused the commit that ticked only one.** U4 (`54ef19b`) closed **both** races,
+      > each with its own red: `getRemainingBudget` → `recordUsage` at **M14**, and the select-then-upsert
+      > **inside** `recordUsage` at **M15**, which was *losing* usage. The fake is stateful and yields at
+      > the start of every operation; without that yield the old implementation passes and the test proves
+      > nothing. Red text: `docs/04-report/phase-2-operational-dependability.report.md` §3.1.
+- [x] **[P2-X3]** Rate limits enforced on both LLM-backed routes, with tests.
+      > **[2026-09-22] TICKED AT LANDING (b).** `PAID_API_BUDGET` derives the governed set from the import
+      > graph rather than from a list, so a third paid route is a red build on the day it is written; today
+      > it is pinned at exactly two, `/api/advisor` and `/api/lab-import/extract`, each asserting 429.
+- [x] **[P2-X4]** Client disconnect provably terminates the advisor loop.
+      > **[2026-09-22] TICKED AT LANDING (b).** Two assertions in `src/app/api/advisor/route.test.ts`: the
+      > adapter's call count stops, **and** `settleUsage` is called with the reserved amount — so the
+      > disconnect settles the billing rather than leaving the reservation charged for the day.
+- [x] **[P2-X5]** `replaceFlags` atomicity test passes under induced insert failure.
+      > **[2026-09-22] TICKED AT LANDING (b).** Shown red against delete-first. **Narrower than "atomic",
+      > deliberately:** the operation is still three round trips with no transaction around them, and that
+      > residue is carried openly in the Phase 2 plan §10.7. What the criterion asks — *prior flags survive
+      > an induced insert failure* — is what is proved.
 - [x] **[P2-X6]** ID manifest exists; removing a published ID fails CI.
       > **[2026-09-22] TICKED AT THE PHASE 2 CLOSEOUT — met before this phase opened, by Phase 0 U8.**
       > `src/data/id-manifest.json` (**328 lines**) is read from disk by `src/data/id-stability.test.ts`
