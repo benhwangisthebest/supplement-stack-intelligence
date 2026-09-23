@@ -119,11 +119,9 @@ describe("seed integrity (Plan SC-5/6)", () => {
     for (const e of profiled) expect(validateProfile(e.evidenceProfile!)).toBe(true);
   });
 
-  it("derived grade matches each effect's curated grade (honesty)", () => {
-    for (const e of profiled) {
-      expect(deriveGrade(e.evidenceProfile!), `${e.id}`).toBe(e.grade);
-    }
-  });
+  // [2026-09-23, Phase 3 U3] "derived grade matches each effect's curated grade"
+  // moved to G4b in src/data/seed-integrity.test.ts, which reads the authored JSON
+  // and also fails a grade with no profile outside a shrink-only allowlist.
 
   // [2026-09-23, Phase 3 U2, P-06] "every cited paperId references a real seed
   // paper" moved to G3 in src/data/seed-integrity.test.ts, which reads the

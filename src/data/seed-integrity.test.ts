@@ -3,6 +3,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { SEED_PAPERS } from "@/data/seed-papers";
 import { SEED_PRODUCTS } from "@/data/seed-products";
+import { deriveGrade } from "@/lib/evidence-grading";
+import type { EvidenceProfile } from "@/types/evidence-grading";
 
 // Design Ref: §8.2 — anti-fabrication guards for the trust layer.
 // Plan SC: SC-1, SC-2 (G1, G2)
@@ -124,5 +126,102 @@ describe("G3 — every paperIds entry in content/seed/ resolves to a seed paper"
   it("no dangling paperId", () => {
     const dangling = refs.filter((r) => typeof r.id !== "string" || !paperIds.has(r.id));
     expect(dangling.map((r) => `${r.where} = ${JSON.stringify(r.id)}`)).toEqual([]);
+  });
+});
+
+// G4 — an effect's grade is DERIVED where a profile exists (Phase 3 U3).
+// Reads the authored source, content/seed/seed-effects.json, as G3 does. The JSON
+// keeps `grade` (the generator is plain node and cannot reach the TypeScript
+// derivation without a second copy of the rubric), so the letter is a cache of
+// deriveGrade(evidenceProfile) and any other letter fails here. Runtime already
+// re-derives it (resolveEffect, src/lib/evidence/index.ts). Design:
+// docs/01-plan/features/p3-u3-derived-grade.plan.md §3.
+//
+// A grade with NO profile is a hand-typed claim with no derivation behind it and
+// fails, except for the effects below. SHRINK-ONLY: U4 authors their profiles and
+// deletes each entry in the same change (G4e reddens a stale entry); nothing may
+// be added (G4d: the list stays a subset of ALLOWLIST_ORIGIN, the 19 measured at
+// 697a79c — owner ruling 2026-09-23, FU-55, replacing a size ceiling that would
+// have let a new id back in once U4 had removed some).
+const ALLOWLIST_ORIGIN: ReadonlySet<string> = new Set([
+  "magnesium-stress",
+  "magnesium-metabolic",
+  "creatine-recovery",
+  "vitamin-d-immune",
+  "fish-oil-mood",
+  "fish-oil-longevity",
+  "l-theanine-focus",
+  "l-theanine-stress",
+  "glycine-sleep",
+  "ashwagandha-sleep",
+  "berberine-metabolic",
+  "zinc-immune",
+  "zinc-deficiency",
+  "vitamin-b12-deficiency",
+  "caffeine-training",
+  "taurine-training",
+  "nac-antioxidant",
+  "protein-powder-training",
+  "protein-powder-recovery",
+]);
+const UNPROFILED_GRADE_ALLOWLIST: readonly string[] = [
+  "magnesium-stress",
+  "magnesium-metabolic",
+  "creatine-recovery",
+  "vitamin-d-immune",
+  "fish-oil-mood",
+  "fish-oil-longevity",
+  "l-theanine-focus",
+  "l-theanine-stress",
+  "glycine-sleep",
+  "ashwagandha-sleep",
+  "berberine-metabolic",
+  "zinc-immune",
+  "zinc-deficiency",
+  "vitamin-b12-deficiency",
+  "caffeine-training",
+  "taurine-training",
+  "nac-antioxidant",
+  "protein-powder-training",
+  "protein-powder-recovery",
+];
+
+describe("G4 — an effect's grade is derived from its evidenceProfile", () => {
+  type AuthoredEffect = { id: string; grade: string; evidenceProfile?: EvidenceProfile };
+  const effects = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, "content/seed/seed-effects.json"), "utf8"),
+  ) as AuthoredEffect[];
+  const effectIds = new Set(effects.map((e) => e.id));
+  const allowed = new Set(UNPROFILED_GRADE_ALLOWLIST);
+
+  it("G4a reads the authored effects, profiled and not (anti-vacuity)", () => {
+    expect(effects.length).toBeGreaterThan(0);
+    expect(effects.some((e) => e.evidenceProfile)).toBe(true);
+  });
+
+  it("G4b a profiled effect's grade equals deriveGrade(evidenceProfile)", () => {
+    const mismatched = effects
+      .filter((e) => e.evidenceProfile && deriveGrade(e.evidenceProfile) !== e.grade)
+      .map((e) => `${e.id}: authored ${e.grade}, derived ${deriveGrade(e.evidenceProfile!)}`);
+    expect(mismatched).toEqual([]);
+  });
+
+  it("G4c a grade without a profile fails unless allowlisted", () => {
+    const underived = effects.filter((e) => !e.evidenceProfile && !allowed.has(e.id)).map((e) => e.id);
+    expect(underived).toEqual([]);
+  });
+
+  it("G4d the allowlist only shrinks: every entry is in ALLOWLIST_ORIGIN", () => {
+    expect(UNPROFILED_GRADE_ALLOWLIST.filter((id) => !ALLOWLIST_ORIGIN.has(id))).toEqual([]);
+  });
+
+  it("G4e no allowlisted effect has a profile (stale entry)", () => {
+    const stale = effects.filter((e) => e.evidenceProfile && allowed.has(e.id)).map((e) => e.id);
+    expect(stale).toEqual([]);
+  });
+
+  it("G4f every allowlisted id is an effect id, listed once", () => {
+    expect(UNPROFILED_GRADE_ALLOWLIST.filter((id) => !effectIds.has(id))).toEqual([]);
+    expect(allowed.size).toBe(UNPROFILED_GRADE_ALLOWLIST.length);
   });
 });
