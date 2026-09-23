@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { IllustrativeDatasetNotice } from "@/components/evidence/IllustrativeDatasetNotice";
 import { citationHref } from "@/lib/advisor/citation-href";
-import { getPaperById } from "@/lib/evidence";
+import { defaultLibrary, getPaperById } from "@/lib/evidence";
 import type { Citation } from "@/types/advisor";
 
 // Phase 3 U6 (a0), N-84: kinds whose chip text comes from the seed evidence corpus
@@ -21,7 +21,22 @@ const EVIDENCE_DATASET_KINDS: ReadonlySet<Citation["kind"]> = new Set(["paper", 
 // chip resolves a paper by its refId at render time instead: a verified paper shows
 // its current, fixture-verified title, and the stale note is not shown. An unknown
 // refId falls back to what was stored.
-function displayed(c: Citation): { label: string; detail?: string } {
+//
+// Phase 3 U4, owner ruling R2: an effect-grade chip's label stores the letter the
+// grade had when the message was written ("… Grade A"), and U4 derives grades from
+// verified profiles, so some letters change. The rows are not edited. The chip shows
+// the effect's CURRENT grade (defaultLibrary pre-resolves it), and when that differs
+// from the stored letter it says so. A label with no stored letter, or an unknown
+// refId, falls back to what was stored.
+const STORED_GRADE = /Grade ([ABCD])$/;
+
+function displayed(c: Citation): { label: string; detail?: string; gradeUpdated?: boolean } {
+  if (c.kind === "effect-grade") {
+    const stored = STORED_GRADE.exec(c.label)?.[1];
+    const current = defaultLibrary.effects.find((e) => e.id === c.refId)?.grade;
+    if (!stored || !current || stored === current) return { label: c.label, detail: c.detail };
+    return { label: c.label.replace(STORED_GRADE, `Grade ${current}`), detail: c.detail, gradeUpdated: true };
+  }
   if (c.kind !== "paper") return { label: c.label, detail: c.detail };
   const paper = getPaperById(c.refId);
   if (!paper || !(paper.doi || paper.pmid)) return { label: c.label, detail: c.detail };
@@ -51,6 +66,11 @@ export function ProvenanceChips({ citations }: { citations: Citation[] }) {
             <>
               <span className="font-medium text-muted">{KIND_LABEL[c.kind]}</span>
               <span className="text-body">{shown.label}</span>
+              {shown.gradeUpdated && (
+                <span className="text-muted" data-testid="grade-updated">
+                  · grade updated since this message
+                </span>
+              )}
             </>
           );
           const className =

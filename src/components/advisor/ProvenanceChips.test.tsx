@@ -5,7 +5,7 @@
 // tests (docs/01-plan/features/p3-u6-corpus-verified.plan.md).
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { getPaperById } from "@/lib/evidence";
+import { defaultLibrary, getPaperById } from "@/lib/evidence";
 import type { Citation } from "@/types/advisor";
 import { ProvenanceChips } from "./ProvenanceChips";
 
@@ -74,5 +74,44 @@ describe("ProvenanceChips — historic paper citations (U6 closeout)", () => {
   it("falls back to the stored label for a refId the corpus does not hold", () => {
     render(<ProvenanceChips citations={[{ kind: "paper", refId: "p-unknown", label: "Stored label" }]} />);
     expect(screen.getByText("Stored label")).toBeTruthy();
+  });
+});
+
+// Phase 3 U4, owner ruling R2: an effect-grade chip stores the letter from when the
+// message was written. U4 derives grades from verified profiles, so a stored letter
+// can be stale. The chip shows the current grade and says it changed. Red proof:
+// removing the marker from ProvenanceChips fails the first test
+// (docs/01-plan/features/p3-u4-profiles.plan.md).
+describe("ProvenanceChips — effect-grade citations after a grade change (U4 R2)", () => {
+  const effect = defaultLibrary.effects.find((e) => e.id === "creatine-strength")!;
+  const other = (["A", "B", "C", "D"] as const).find((g) => g !== effect.grade)!;
+  const marker = () => screen.queryByTestId("grade-updated");
+
+  it("shows the current grade and marks it when the stored letter differs", () => {
+    const stored: Citation = {
+      kind: "effect-grade",
+      refId: effect.id,
+      label: `Creatine → ${effect.name}, Grade ${other}`,
+    };
+    render(<ProvenanceChips citations={[stored]} />);
+    const sources = screen.getByRole("list", { name: "Sources" });
+    expect(within(sources).getByText(`Creatine → ${effect.name}, Grade ${effect.grade}`)).toBeTruthy();
+    expect(within(sources).queryByText(stored.label)).toBeNull();
+    expect(marker()?.textContent).toMatch(/grade updated since this message/);
+  });
+
+  it("shows no marker when the stored letter is still current", () => {
+    const label = `Creatine → ${effect.name}, Grade ${effect.grade}`;
+    render(<ProvenanceChips citations={[{ kind: "effect-grade", refId: effect.id, label }]} />);
+    expect(screen.getByText(label)).toBeTruthy();
+    expect(marker()).toBeNull();
+  });
+
+  it("falls back to the stored label for an effect the corpus does not hold", () => {
+    render(
+      <ProvenanceChips citations={[{ kind: "effect-grade", refId: "no-such-effect", label: "X → Y, Grade A" }]} />,
+    );
+    expect(screen.getByText("X → Y, Grade A")).toBeTruthy();
+    expect(marker()).toBeNull();
   });
 });
