@@ -424,7 +424,7 @@ export const SEED_EFFECTS: Effect[] = [
     name: "Mood support",
     outcomeCategory: "mood",
     grade: "B",
-    confidence: "low",
+    confidence: "moderate",
     summary: "Some evidence for depressive symptoms with higher-EPA formulations.",
     relevantPopulation: "adults with depressive symptoms",
     studiedDose: {
@@ -562,7 +562,7 @@ export const SEED_EFFECTS: Effect[] = [
     name: "Stress & relaxation",
     outcomeCategory: "stress",
     grade: "D",
-    confidence: "moderate",
+    confidence: "low",
     summary: "May reduce acute stress and support relaxation without sedation.",
     relevantPopulation: "adults under acute stress",
     studiedDose: {
@@ -608,7 +608,7 @@ export const SEED_EFFECTS: Effect[] = [
     name: "Sleep quality",
     outcomeCategory: "sleep",
     grade: "D",
-    confidence: "moderate",
+    confidence: "low",
     summary: "Pre-bed glycine may improve subjective sleep quality and next-day alertness.",
     relevantPopulation: "adults with mild sleep complaints",
     studiedDose: {
@@ -746,7 +746,7 @@ export const SEED_EFFECTS: Effect[] = [
     name: "Sleep quality",
     outcomeCategory: "sleep",
     grade: "B",
-    confidence: "low",
+    confidence: "moderate",
     summary: "Some evidence for improved sleep, often secondary to stress reduction.",
     relevantPopulation: "stressed adults with sleep complaints",
     studiedDose: {

@@ -85,6 +85,19 @@ phrase planted in one rationale, then the file restored.
 
 **Live calls under U4 (R7, R11):** S4 search **12**, plus S2 resolve **8** (`s2d`, `s2e` and `s2f` refused B-2; `s2g` wrote both). All 20 returned 200, $0. The dated record is `docs/05-qa/2026-09-23-p3-u6-verification-record.md`.
 
+**R14: confidence follows the grade** (A `high` · B `moderate` · C/D `low`), enforced exactly by G5 (`seed-integrity.test.ts`). **Every confidence change in U4, against anchor `fe0441d`:**
+
+| Effect | Grade | Confidence |
+|---|---|---|
+| zinc-deficiency | A → C | high → **low** (B1, R8) |
+| vitamin-b12-deficiency | A → B | high → **moderate** (B1, R8) |
+| fish-oil-mood | C → B | low → **moderate** (R14) |
+| l-theanine-stress | B → D | moderate → **low** (R14) |
+| glycine-sleep | B → D | moderate → **low** (R14) |
+| ashwagandha-sleep | C → B | low → **moderate** (R14) |
+
+**Red proofs for G5 under R14:** (i) the tightened guard failed on exactly the four R14 rows before their confidence was set. (ii) Once green, a planted `creatine-strength` A/`moderate` failed it. The file was restored from backup (shasum equal), after which 17/17 passed.
+
 ## 4. Appendices
 
 - [B1 — the four Grade A effects](p3-u4-profiles.b1.md)

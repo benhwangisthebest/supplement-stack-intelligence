@@ -236,23 +236,29 @@ describe("G4 — an effect's grade is derived from its evidenceProfile", () => {
   });
 });
 
-// G5 — confidence cannot outrun the grade (Phase 3 U4, owner ruling R8, 2026-09-23).
-// U4 derives grades from verified profiles, and several fall (zinc-deficiency A → C).
-// `confidence` is a separate hand-authored field, so an effect could keep "high"
-// beside a Grade C, and every surface showing both would contradict itself.
-// Red proof: zinc-deficiency at C with confidence "high" failed this test before
-// its confidence was set (docs/01-plan/features/p3-u4-profiles.plan.md).
-describe("G5 — confidence \"high\" requires Grade A or B", () => {
+// G5 — confidence follows the grade exactly (Phase 3 U4; owner rulings R8, then R14,
+// 2026-09-23). `confidence` is hand-authored beside a DERIVED grade, so once U4 moved
+// letters an effect could say "high" at Grade C, or "low" at Grade B, and every
+// surface showing both would contradict itself. R8 forbade only "high" below B
+// (red: zinc-deficiency, C/high). R14 fixes the whole mapping: A → high,
+// B → moderate, C and D → low. Red proof for R14: the 4 effects then mismatched
+// (fish-oil-mood, l-theanine-stress, glycine-sleep, ashwagandha-sleep) failed
+// G5b before their confidence was set, and a planted mismatch failed after
+// (docs/01-plan/features/p3-u4-profiles.plan.md).
+const CONFIDENCE_FOR_GRADE: Readonly<Record<string, string>> = { A: "high", B: "moderate", C: "low", D: "low" };
+
+describe("G5 — confidence follows the grade (A high · B moderate · C/D low)", () => {
   const effects = JSON.parse(
     readFileSync(path.join(REPO_ROOT, "content/seed/seed-effects.json"), "utf8"),
   ) as { id: string; grade: string; confidence: string }[];
 
-  it("G5a reads the authored effects, and some carry confidence high (anti-vacuity)", () => {
-    expect(effects.some((e) => e.confidence === "high")).toBe(true);
+  it("G5a reads the authored effects, with every grade mapped (anti-vacuity)", () => {
+    expect(effects.length).toBeGreaterThan(0);
+    expect(effects.filter((e) => !(e.grade in CONFIDENCE_FOR_GRADE)).map((e) => e.id)).toEqual([]);
   });
 
-  it("G5b no effect below Grade B carries confidence high", () => {
-    const bad = effects.filter((e) => e.confidence === "high" && e.grade !== "A" && e.grade !== "B");
-    expect(bad.map((e) => `${e.id}: Grade ${e.grade}, confidence high`)).toEqual([]);
+  it("G5b every effect's confidence is the one its grade maps to", () => {
+    const bad = effects.filter((e) => e.confidence !== CONFIDENCE_FOR_GRADE[e.grade]);
+    expect(bad.map((e) => `${e.id}: Grade ${e.grade}, confidence ${e.confidence} (expected ${CONFIDENCE_FOR_GRADE[e.grade]})`)).toEqual([]);
   });
 });
