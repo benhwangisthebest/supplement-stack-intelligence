@@ -8,7 +8,25 @@
 // a disclosure that exists but isn't reachable from production is the same class of
 // defect as the v11 rule that passed 385 unit tests while being dead code.
 // Plan SC: SC-4 (reachability, asserted via the production render path — guard G3)
-export function IllustrativeDatasetNotice() {
+//
+// Phase 3 U6 (a0), N-84: the advisor's source chips were such a surface and had no
+// notice — a chip's text IS the illustrative title. The `inline` variant is the
+// chips' copy of the same disclosure (ProvenanceChips.test.tsx). Both variants live
+// here so U6 (c) revises one file when verified papers make the wording untrue.
+export function IllustrativeDatasetNotice({
+  variant = "panel",
+}: {
+  variant?: "panel" | "inline";
+}) {
+  if (variant === "inline") {
+    return (
+      <p data-testid="illustrative-dataset-notice" className="mt-1.5 text-xs text-muted">
+        <span className="font-medium">Illustrative dataset.</span> Evidence summaries
+        and grades cited here are sample data, not real studies — nothing here is a
+        citation.
+      </p>
+    );
+  }
   return (
     <aside
       data-testid="illustrative-dataset-notice"
