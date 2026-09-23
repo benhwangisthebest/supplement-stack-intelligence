@@ -142,3 +142,43 @@ per claim with the contact address attached. Result: all assertions passed.
 
 Restored from the copy. The `shasum` values match (`f57967e9…`), `git diff content/seed` is empty, and the
 file → **8 passed (8)**.
+
+## 6. Do / Check — (b), live search (S1). STOPPED for owner decisions
+
+**Spend:** **96 calls** of ≤130 (32 Crossref, 32 filtered `esearch`, 0 widened, 32 `efetch`), all HTTP 200,
+all `S1`, ≥400 ms apart, **$0**, no OpenAI, no deployed DB. Dated record:
+`docs/05-qa/2026-09-23-p3-u6-verification-record.md`. Captures: `content/verification/captures/2026-09-23-s1/`
+(66 committed files, 464 KB, plus 32 local `efetch.xml` whose SHA-256 values are committed).
+
+**AC-3.** The candidate table has **32 claim rows and 99 candidates**, every one judged, each traceable to
+the named response file: `crossref.json`, or `efetch.xml` via its committed SHA-256. The table is the
+appendix, **`p3-u6-corpus-verified.candidates.md`**. Verdicts are the agent's judgement against the
+row's Library claim. **They are not decisions.** Tally: 36 supports · 34 partial · 23 doesn't · 6 title only.
+
+| Status | Claims |
+|---|---|
+| A candidate **supports** (23) | 2, 3, 6, 7, 8, 9, 11, 12, 13, 15, 17, 18, 19, 21–23, 25–29, 31, 32 |
+| **No full support**, owner decides (8) | 1 `p-creatine-strength` (hypertrophy/LBM only; see #25's PMID 39519498 for strength), 4 `p-magnesium-sleep`, 5 `p-vitamin-d-deficiency` (see #28's PMID 22552031), 10 `p-glycine-sleep` (two Crossref titles match, no abstract), 16 `p-caffeine-focus` (Crossref titles only), 20 `p-nac-antioxidant` (GlyNAC combination only), 24 `magnesium-sleep/populationRelevance`, 30 `melatonin-sleep/populationRelevance` (review abstract states no findings; no DOI) |
+| **No candidate supports** — stop condition (1) | 14 `p-zinc-deficiency`: all three are diet-pattern, fertility or children's-diet reviews |
+
+**Stop conditions that fired, recorded rather than acted on:**
+1. **A claim with no supporting candidate:** #14. Under R1, this is a retirement unless the owner approves a
+   re-search (S3) or a candidate from another row.
+2. **A withdrawn paper surfaced:** PMID 25924708 (#13) is a WITHDRAWN Cochrane review, marked *doesn't*.
+   It must never be approved.
+3. **Grade or score tensions, for U4 and the owner.** Nothing was edited (hard rule 3). **`caffeine-focus`
+   (Grade A):** PMID 23108937 reports that tolerance leaves habitual users little net alertness gain. That
+   bears on the A grade and on `populationRelevance` (score 2). **`magnesium-sleep` (Grade B):** PMID
+   33865376 grades its evidence **low to very low** quality, which bears on `studyQuality` (score 2) and the
+   B. Neither is a proven contradiction. Both go to U4's re-judgement.
+
+**Finding for (c), R1 × shared papers.** Four paper ids are each cited by **two** effects:
+`p-magnesium-sleep` (sleep + stress), `p-vitamin-d-deficiency` (deficiency + immune), `p-ashwagandha-stress`
+(stress + sleep) and `p-protein-mps` (MPS + recovery). No candidate addresses the second effect. If R1 keeps
+the id and retitles it, the second effect would cite a real paper that says nothing about it. **The owner
+decides** per id: uncite it from the second effect (which U4 then re-judges), or source a separate paper.
+A separate paper is a new id, a manifest `add`, and more S1/S3 calls.
+
+**What (c) needs from the owner, per claim:** the approved PMID and/or DOI, or *retire*, or *re-search*
+(S3, with the query to use). **Nothing was written:** the fixture is still `{}`, `content/seed/` is
+unchanged, and no `verifiedBy` exists.

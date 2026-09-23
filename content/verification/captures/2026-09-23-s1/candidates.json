@@ -1,0 +1,3803 @@
+[
+  {
+    "claimId": "paper:p-creatine-strength",
+    "libraryClaim": "Creatine Monohydrate — Strength & power output (Grade A): Robust evidence for improved strength, power, and lean mass when combined with resistance training.",
+    "illustrativeDetails": "Creatine monohydrate with resistance training increases maximal strength and lean body mass vs placebo (trained and untrained adults, 3-5 g/day)",
+    "queries": {
+      "pubmed": "creatine supplementation resistance training strength lean mass meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "creatine supplementation strength lean body mass resistance training meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-creatine-strength/crossref.json",
+        "committed": true,
+        "sha256": "dd298404e2df1d5f2ba176e085f4e7a82ffddc8f9579be07897db310e11d97ed"
+      },
+      {
+        "path": "paper_p-creatine-strength/esearch.json",
+        "committed": true,
+        "sha256": "d48152c441d874741fc4423a9bf97d36d0a4b28b46249a947ec512b27a951e5d"
+      },
+      {
+        "path": "local/paper_p-creatine-strength/efetch.xml",
+        "committed": false,
+        "sha256": "d4ecc539ae59d7fa0e36e058b58362af0d2a2e80aa51ba2b2c8ba6cba1a1cc89"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37432300",
+        "doi": "10.3390/nu15092116",
+        "title": "The Effects of Creatine Supplementation Combined with Resistance Training on Regional Measures of Muscle Hypertrophy: A Systematic Review with Meta-Analysis.",
+        "journal": "Nutrients",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "The purpose of this paper was to carry out a systematic review with a meta-analysis of randomized controlled trials that examined the combined effects of resistance training (RT) and creatine supplementation on regional changes in muscle mass, with direct imaging measures of hypertrophy. Moreover, w",
+        "abstractChars": 1551,
+        "abstractSha256": "600509149f01b8b047e54b9a50b92707b366cb39fdcbc87370085dfa185b79b0"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39074168",
+        "doi": "10.1519/JSC.0000000000004862",
+        "title": "The Effect of Creatine Supplementation on Resistance Training-Based Changes to Body Composition: A Systematic Review and Meta-analysis.",
+        "journal": "Journal of strength and conditioning research",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "Desai, I, Wewege, MA, Jones, MD, Clifford, BK, Pandit, A, Kaakoush, NO, Simar, D, and Hagstrom, AD. The effect of creatine supplementation on resistance training-based changes to body composition: A systematic review and meta-analysis. J Strength Cond Res 38(10): 1813-1821, 2024-The purpose of this ",
+        "abstractChars": 1865,
+        "abstractSha256": "1794a2db9dbd7652791549d99aac2216065a7ba0f71e03481b872c8d2e165244"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35986981",
+        "doi": "10.1016/j.nut.2022.111791",
+        "title": "Influence of age, sex, and type of exercise on the efficacy of creatine supplementation on lean body mass: A systematic review and meta-analysis of randomized clinical trials.",
+        "journal": "Nutrition (Burbank, Los Angeles County, Calif.)",
+        "year": "2022",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "Creatine supplementation has been shown to increase measures of lean body mass (LBM); however, there often is high heterogeneity across individual studies. Therefore, the aim of this study was to systematically review and meta-analyze randomized controlled trials (RCTs) investigating creatine supple",
+        "abstractChars": 1683,
+        "abstractSha256": "cfc51f5a76fe1896318ca30caf84edc387bc1164399fb42e751ce4cc2bc67063"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fnut.2026.1800546",
+        "title": "Creatine supplementation in young men under resistance versus non-resistance training: a systematic review and meta-analysis of strength, performance, and lean mass",
+        "journal": "Frontiers in Nutrition",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fnut.2026.1854605",
+        "title": "Correction: Creatine supplementation in young men under resistance versus non-resistance training: a systematic review and meta-analysis of strength, performance, and lean mass",
+        "journal": "Frontiers in Nutrition",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.2147/oajsm.s123529",
+        "title": "Effect of creatine supplementation during resistance training on lean tissue mass and muscular strength in older adults: a meta-analysis",
+        "journal": "Open Access Journal of Sports Medicine",
+        "year": "2017",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-creatine-cognition",
+    "libraryClaim": "Creatine Monohydrate — Cognitive performance (Grade C): Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians.",
+    "illustrativeDetails": "Creatine (5 g/day) gives modest cognitive benefit in healthy adults, most apparent under sleep deprivation",
+    "queries": {
+      "pubmed": "creatine supplementation cognitive performance sleep deprivation",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "creatine supplementation cognitive performance sleep deprivation"
+    },
+    "files": [
+      {
+        "path": "paper_p-creatine-cognition/crossref.json",
+        "committed": true,
+        "sha256": "fef02dd79a27387c27df5281574de78f224dd93d70fad313aba7c88ce2b00c55"
+      },
+      {
+        "path": "paper_p-creatine-cognition/esearch.json",
+        "committed": true,
+        "sha256": "a1025f626b8c083625849572411f74b8b7d64dc37ca7d938e20fe2e7e28d1f96"
+      },
+      {
+        "path": "local/paper_p-creatine-cognition/efetch.xml",
+        "committed": false,
+        "sha256": "4607d049d3df7b94017d7c856f7478f374c9ea291dd3096928ed31d7e1a84fce"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "42075005",
+        "doi": "10.3390/nu18081192",
+        "title": "Single-Dose Creatine Reduces Sleep Deprivation-Induced Deterioration in Cognitive Performance.",
+        "journal": "Nutrients",
+        "year": "2026",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Background/Objectives: Creatine is a supplement that, beyond its physiological effects, has been shown to have positive effects on cognitive abilities. In our previous study, we showed that a single dose of 0.35 g/kg creatine induces changes in brain metabolism during sleep deprivation and reduces d",
+        "abstractChars": 1356,
+        "abstractSha256": "21983d99b6b7c52a0ddb0f39cf82c3be0fc2f3fdf510631b1ccd0bf8cca7a317"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "17046034",
+        "doi": "10.1016/j.physbeh.2006.08.024",
+        "title": "Creatine supplementation, sleep deprivation, cortisol, melatonin and behavior.",
+        "journal": "Physiology & behavior",
+        "year": "2007",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "The effect of creatine supplementation and sleep deprivation, with intermittent moderate-intensity exercise, on cognitive and psychomotor performance, mood state, effort and salivary concentrations of cortisol and melatonin were examined. Subjects were divided into a creatine supplementation group a",
+        "abstractChars": 1811,
+        "abstractSha256": "259de00080307854957fd1b23a7333eb8e21dbdb8e4912f89c3d3faff80a06ce"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "18579168",
+        "doi": "10.1016/j.physbeh.2008.05.009",
+        "title": "Creatine supplementation does not improve cognitive function in young adults.",
+        "journal": "Physiology & behavior",
+        "year": "2008",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Creatine supplementation has been reported to improve certain aspects of cognitive and psychomotor function in older individuals and in young subjects following 24 and 36 h of sleep deprivation. However, the effects of creatine supplementation on cognitive processing and psychomotor performance in n",
+        "abstractChars": 1598,
+        "abstractSha256": "7407e8cf94fb2c8c13fea70700cf3be4d2a46e42b31b58597879df04d7b7d387"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1177/27683605261456529",
+        "title": "Creatine Supplementation and Acute Sleep Deprivation: A Systematic Review of Cognitive, Psychomotor, and Mood Outcomes",
+        "journal": "Journal of Integrative and Complementary Medicine",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1523/jneurosci.3113-14.2015",
+        "title": "Creatine Supplementation Enhances Corticomotor Excitability and Cognitive Performance during Oxygen Deprivation",
+        "journal": "The Journal of Neuroscience",
+        "year": "2015",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1017/cbo9780511783005.016",
+        "title": "Nutritional countermeasures for cognitive performance decrements following sleep deprivation",
+        "journal": "Sleep Deprivation, Stimulant Medications, and Cognition",
+        "year": "2012",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-melatonin-sleep",
+    "libraryClaim": "Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient.",
+    "illustrativeDetails": "Melatonin (0.5-5 mg) reduces sleep-onset latency and improves total sleep time in adults with sleep difficulties (meta-analysis)",
+    "queries": {
+      "pubmed": "melatonin sleep onset latency meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "melatonin sleep onset latency total sleep time meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-melatonin-sleep/crossref.json",
+        "committed": true,
+        "sha256": "61cdcad8b438c67caea2e38e0ed10c7c7538fbb1e70bf04909029980e7af714c"
+      },
+      {
+        "path": "paper_p-melatonin-sleep/esearch.json",
+        "committed": true,
+        "sha256": "fab46a4a684cd72255bdf0ca13eb0e68b76e681f95a6a878d3126f574ec26286"
+      },
+      {
+        "path": "local/paper_p-melatonin-sleep/efetch.xml",
+        "committed": false,
+        "sha256": "90c3f9caae1636ac68277e65910572c496fe2595fba4278ae4d0645987ba0df6"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "38888087",
+        "doi": "10.1111/jpi.12985",
+        "title": "Optimizing the Time and Dose of Melatonin as a Sleep-Promoting Drug: A Systematic Review of Randomized Controlled Trials and Dose-Response Meta-Analysis.",
+        "journal": "Journal of pineal research",
+        "year": "2024",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "Previous studies have reported inconsistent results about exogenous melatonin's sleep-promoting effects. A possible explanation relies on the heterogeneity in administration schedule and dose, which might be accountable for differences in treatment efficacy. In this paper, we undertook a systematic ",
+        "abstractChars": 1743,
+        "abstractSha256": "8c2a2735b2de0b94b52307665d5965a538660bf027204292a9384071d66418f1"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "23691095",
+        "doi": "10.1371/journal.pone.0063773",
+        "title": "Meta-analysis: melatonin for the treatment of primary sleep disorders.",
+        "journal": "PloS one",
+        "year": "2013",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, N.I.H., Extramural",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "STUDY OBJECTIVES: To investigate the efficacy of melatonin compared to placebo in improving sleep parameters in patients with primary sleep disorders. DESIGN: PubMed was searched for randomized, placebo-controlled trials examining the effects of melatonin for the treatment of primary sleep disorders",
+        "abstractChars": 1912,
+        "abstractSha256": "44298fd5259fca9742eda21a7dd906a2d5b4b282a4ae539421b77be82c39d6f0"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36701954",
+        "doi": "10.1016/j.smrv.2023.101746",
+        "title": "Efficacy and tolerability of pharmacological treatments for insomnia in adults: A systematic review and network meta-analysis.",
+        "journal": "Sleep medicine reviews",
+        "year": "2023",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't",
+          "Network Meta-Analysis"
+        ],
+        "abstractExcerpt": "Insomnia is one of the most common and burdensome disorders in adults. We compared and ranked insomnia medication on the basis of their efficacy and tolerability. We performed a systematic review and network meta-analysis of placebo-controlled or head-to-head randomized controlled trials for primary",
+        "abstractChars": 2066,
+        "abstractSha256": "d7c608d806373bf4134c8c99dc3b5e636df20415aad8462226db59c0d315372d"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1046/j.1365-2869.1996.t01-1-00006.x",
+        "title": "Day‐time melatonin administration: Effects on core temperature and sleep onset latency",
+        "journal": "Journal of Sleep Research",
+        "year": "1996",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.7717/peerj.5172/supp-15",
+        "title": "Figure S15: Forest plot of comparison: 5 Sleep onset latency: exercise versus control, outcome: 5.1 Sleep onset latency",
+        "journal": null,
+        "year": null,
+        "pubTypes": [
+          "component"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.sleep.2019.12.029",
+        "title": "Total sleep time and all cancer mortality: a meta-analysis",
+        "journal": "Sleep Medicine",
+        "year": "2020",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-magnesium-sleep",
+    "libraryClaim": "Magnesium — Sleep quality (Grade B): May improve subjective sleep quality, particularly in older adults or those with low intake. | Magnesium — Stress & relaxation (Grade C): Emerging evidence for stress symptom reduction, often combined with B6.",
+    "illustrativeDetails": "Magnesium (500 mg/day) improves sleep efficiency and subjective insomnia scores in older adults with insomnia vs placebo",
+    "queries": {
+      "pubmed": "magnesium supplementation insomnia elderly randomized placebo",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "magnesium supplementation primary insomnia elderly double-blind placebo"
+    },
+    "files": [
+      {
+        "path": "paper_p-magnesium-sleep/crossref.json",
+        "committed": true,
+        "sha256": "2d0ae285bd4530a9d42cc8f4e2c57cd8aca36e77880bba0dc84f83f6720387bb"
+      },
+      {
+        "path": "paper_p-magnesium-sleep/esearch.json",
+        "committed": true,
+        "sha256": "995f8fe085bbb122febaaf7d8a95340bbe33d3f7568990788b1f69418116e41c"
+      },
+      {
+        "path": "local/paper_p-magnesium-sleep/efetch.xml",
+        "committed": false,
+        "sha256": "6d767f4d1182da5abd3ea990e7f22f36b3c5ec8e3e2b0e9240338c3048481a00"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33865376",
+        "doi": "10.1186/s12906-021-03297-z",
+        "title": "Oral magnesium supplementation for insomnia in older adults: a Systematic Review & Meta-Analysis.",
+        "journal": "BMC complementary medicine and therapies",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Magnesium supplementation is often purported to improve sleep; however, as both an over-the-counter sleep aid and a complementary and alternative medicine, there is limited evidence to support this assertion. The aim was to assess the effectiveness and safety of magnesium supplementation",
+        "abstractChars": 1881,
+        "abstractSha256": "fd80b9e31a0dfbd29d9f7caed0f9b0659029d0bcada4a611760dd1dcf38910c0"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39534260",
+        "doi": "10.3389/fendo.2024.1370733",
+        "title": "Effects of magnesium and potassium supplementation on insomnia and sleep hormones in patients with diabetes mellitus.",
+        "journal": "Frontiers in endocrinology",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "OBJECTIVES: Diabetes mellitus is a metabolic condition with hyperglycemia. Literature has shown a correlation between poor sleep quality and duration with an increased incidence of insomnia in diabetic individuals. The goal of this study was to determine the magnesium and potassium supplementation e",
+        "abstractChars": 1708,
+        "abstractSha256": "bc01cd47af061ad102b4f8c63ef18229749473e63d9584f35c7d622cd64f97bc"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "40923590",
+        "doi": "10.1177/10815589251378179",
+        "title": "Effects of magnesium and potassium on insulin resistance and blood sugar level among insomniac patients with diabetes mellitus-A randomized controlled trial.",
+        "journal": "Journal of investigative medicine : the official publication of the American Federation for Clinical Research",
+        "year": "2026",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "The aim of this study is to compare the effect of magnesium and potassium on insulin resistance and blood sugar levels among insomniac patients with diabetes mellitus. A randomized controlled study was conducted on 320 subjects enrolled in placebo (T1), Magnesium (T2), Potassium (T3), and Magnesium ",
+        "abstractChars": 1300,
+        "abstractSha256": "088cf749644603a1c22331f9f0faf06b3acdedbd62f1dbd0cf1e64f05c82073f"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1093/sleep/29.3.335",
+        "title": "Effect of Tiagabine on Sleep in Elderly Subjects With Primary Insomnia: A Randomized, Double-Blind, Placebo-Controlled Study",
+        "journal": "Sleep",
+        "year": "2006",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.ypdi.2012.01.037",
+        "title": "The Effect of Melatonin, Magnesium, and Zinc on Primary Insomnia in Long-Term Care Facility Residents in Italy: A Double-Blind, Placebo-Controlled Clinical Trial",
+        "journal": "Yearbook of Pulmonary Disease",
+        "year": "2012",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1186/isrctn01133608",
+        "title": "A randomised double-blind placebo-controlled study of energy, protein and micronutrients supplementation of elderly patients in active rehabilitation settings",
+        "journal": "http://isrctn.org/>",
+        "year": "2012",
+        "pubTypes": [
+          "dataset"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-vitamin-d-deficiency",
+    "libraryClaim": "Vitamin D3 — Correcting deficiency (Grade A): Effectively raises serum 25(OH)D in deficient individuals. | Vitamin D3 — Immune support (Grade C): Mixed evidence; respiratory infection benefit appears largest in deficient people.",
+    "illustrativeDetails": "In vitamin D-deficient adults, D3 raises serum 25(OH)D more effectively than D2 (1000-4000 IU/day)",
+    "queries": {
+      "pubmed": "vitamin D3 versus vitamin D2 serum 25-hydroxyvitamin D meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "vitamin D3 versus D2 raising serum 25-hydroxyvitamin D meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-vitamin-d-deficiency/crossref.json",
+        "committed": true,
+        "sha256": "55b680f0d3dff6b6392af0a4e6c93dad2c180ecb624a0ae9ff1e6f6eec67016f"
+      },
+      {
+        "path": "paper_p-vitamin-d-deficiency/esearch.json",
+        "committed": true,
+        "sha256": "83075b09b52a3eb485693cca50ac3163cd6602a2cfc116798c217896a07dbf5f"
+      },
+      {
+        "path": "local/paper_p-vitamin-d-deficiency/efetch.xml",
+        "committed": false,
+        "sha256": "c069d2c5b9afd9b373bdaa73f03fcf72896eaee293fc71e4ad3ddd6279b8049e"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39385006",
+        "doi": "10.1038/s41430-024-01520-x",
+        "title": "Effect of cholecalciferol versus calcifediol on serum 25(OH)D concentrations: a systematic review with meta-analysis.",
+        "journal": "European journal of clinical nutrition",
+        "year": "2025",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review",
+          "Meta-Analysis",
+          "Comparative Study"
+        ],
+        "abstractExcerpt": "BACKGROUND: Deficiency in vitamin D is widely prevalent around the world. Oral vitamin D supplementation is suggested for older adults to sustain appropriate 25-hydroxyvitamin D (25(OH)D) levels throughout the year. At present, cholecalciferol (vitamin D3) and ergocalciferol (vitamin D2) are the mos",
+        "abstractChars": 2063,
+        "abstractSha256": "7e86a9d80504d39018447ab73a5c960cec82484ea37f5717f504df5da6099e6a"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "25025896",
+        "doi": "10.3310/hta18450",
+        "title": "Vitamin D supplementation in pregnancy: a systematic review.",
+        "journal": "Health technology assessment (Winchester, England)",
+        "year": "2014",
+        "pubTypes": [
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: It is unclear whether or not the current evidence base allows definite conclusions to be made regarding the optimal maternal circulating concentration of 25-hydroxyvitamin D [25(OH)D] during pregnancy, and how this might best be achieved. OBJECTIVES: To answer the following questions: (1",
+        "abstractChars": 4151,
+        "abstractSha256": "ff40aec3dd8c659a0d23d6cff34c7c54b008e854b9263b0211ec9c45d2f46005"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "24414552",
+        "doi": "10.1002/14651858.CD007470.pub3",
+        "title": "Vitamin D supplementation for prevention of mortality in adults.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2014",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Available evidence on the effects of vitamin D on mortality has been inconclusive. In a recent systematic review, we found evidence that vitamin D3 may decrease mortality in mostly elderly women. The present systematic review updates and reassesses the benefits and harms of vitamin D sup",
+        "abstractChars": 6532,
+        "abstractSha256": "e91dd8495dc061f46c1ac5a9535ddd00ab688bc90a2560ec1cd605513a0b205c"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.4016/48110.01",
+        "title": "Comparison of vitamin D2 and vitamin D3 supplementation in raising serum 25-hydroxyvitamin D status: a systematic review and meta-analysis",
+        "journal": "SciVee",
+        "year": "2012",
+        "pubTypes": [
+          "dataset"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/0003-2697(83)90157-4",
+        "title": "Individual quantitation of vitamin D2, vitamin D3, 25-hydroxyvitamin D2, and 25-hydroxyvitamin D3 in human milk",
+        "journal": "Analytical Biochemistry",
+        "year": "1983",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.32388/1zdnnd",
+        "title": "Vitamin D2 and Vitamin D3 and 25-Hydroxyvitamin D Measurement",
+        "journal": "Definitions",
+        "year": "2020",
+        "pubTypes": [
+          "reference-entry"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-fish-oil-cv",
+    "libraryClaim": "Fish Oil (Omega-3) — Cardiovascular support (Grade B): May lower triglycerides; benefits dose-dependent on EPA/DHA content.",
+    "illustrativeDetails": "EPA/DHA (1-4 g/day) produces a dose-dependent reduction in triglycerides in adults with elevated triglycerides (meta-analysis)",
+    "queries": {
+      "pubmed": "omega-3 fatty acids triglycerides dose-response meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "omega-3 fatty acids EPA DHA triglyceride lowering dose-response meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-fish-oil-cv/crossref.json",
+        "committed": true,
+        "sha256": "2528f35c58dc5b258311e878640cc804c28f17a476bdf415bf0489d171b6044e"
+      },
+      {
+        "path": "paper_p-fish-oil-cv/esearch.json",
+        "committed": true,
+        "sha256": "f58d99354b99be02d2ae503a463eb6ce117adb72ab464f8e7792ef625458b2f9"
+      },
+      {
+        "path": "local/paper_p-fish-oil-cv/efetch.xml",
+        "committed": false,
+        "sha256": "0ea2a574a8a46ff9527e14acb002c68580218a1352928c861674ae25f8a60454"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37264945",
+        "doi": "10.1161/JAHA.123.029512",
+        "title": "Association Between Omega-3 Fatty Acid Intake and Dyslipidemia: A Continuous Dose-Response Meta-Analysis of Randomized Controlled Trials.",
+        "journal": "Journal of the American Heart Association",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "Background Previous results provide supportive but not conclusive evidence for the use of omega-3 fatty acids to reduce blood lipids and prevent events of atherosclerotic cardiovascular disease, but the strength and shape of dose-response relationships remain elusive. Methods and Results This study ",
+        "abstractChars": 1479,
+        "abstractSha256": "aaea6ea3bcbbac37f71f25c45e22b7bae3bf50d4a279d82a69eed2ecba4d9f98"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "32114706",
+        "doi": "10.1002/14651858.CD003177.pub5",
+        "title": "Omega-3 fatty acids for the primary and secondary prevention of cardiovascular disease.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2020",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Omega-3 polyunsaturated fatty acids from oily fish (long-chain omega-3 (LCn3)), including eicosapentaenoic acid (EPA) and docosahexaenoic acid (DHA)), as well as from plants (alpha-linolenic acid (ALA)) may benefit cardiovascular health. Guidelines recommend increasing omega-3-rich foods",
+        "abstractChars": 5003,
+        "abstractSha256": "6f3b9ff12d97ef56352b075d78766aa2688331f4ab2192713781604b474862d7"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30019766",
+        "doi": "10.1002/14651858.CD003177.pub3",
+        "title": "Omega-3 fatty acids for the primary and secondary prevention of cardiovascular disease.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Researchers have suggested that omega-3 polyunsaturated fatty acids from oily fish (long-chain omega-3 (LCn3), including eicosapentaenoic acid (EPA) and docosahexaenoic acid (DHA)), as well as from plants (alpha-linolenic acid (ALA)) benefit cardiovascular health. Guidelines recommend in",
+        "abstractChars": 4954,
+        "abstractSha256": "7f47222d30db1cd5bc43fb2befd41771d2207050207a3c78bc766d3155e8ef82"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.64239/pi-vl0904",
+        "title": "Omega-3 Fatty Acids: DHA and EPA",
+        "journal": null,
+        "year": "2018",
+        "pubTypes": [
+          "report"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1201/9781439813003-c4",
+        "title": "Convergent Evolution of DHA/ EPA Biosynthetic Pathways",
+        "journal": "Omega-3 Fatty Acids and the DHA Principle",
+        "year": "2009",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1201/9781439813003-c7",
+        "title": "DHA/ EPA Chains as Powerful Membrane Antifreeze",
+        "journal": "Omega-3 Fatty Acids and the DHA Principle",
+        "year": "2009",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-fish-oil-mood",
+    "libraryClaim": "Fish Oil (Omega-3) — Mood support (Grade C): Some evidence for depressive symptoms with higher-EPA formulations.",
+    "illustrativeDetails": "High-EPA omega-3 (1-2 g/day EPA) modestly improves depressive symptoms vs placebo",
+    "queries": {
+      "pubmed": "EPA omega-3 depression meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "EPA omega-3 fatty acids depressive symptoms meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-fish-oil-mood/crossref.json",
+        "committed": true,
+        "sha256": "6aeb8bde3111fae605434fa4a9fb476a9a129869be4cf8c25042b92e4b964b90"
+      },
+      {
+        "path": "paper_p-fish-oil-mood/esearch.json",
+        "committed": true,
+        "sha256": "043d2ee6741804d332da46a5c0a1572290ec400941d047cb25a30131d1994de2"
+      },
+      {
+        "path": "local/paper_p-fish-oil-mood/efetch.xml",
+        "committed": false,
+        "sha256": "8ec16f8b86298949154b001929016225812c2990a5832c3b80d0a23d4efc4595"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "31383846",
+        "doi": "10.1038/s41398-019-0515-5",
+        "title": "Efficacy of omega-3 PUFAs in depression: A meta-analysis.",
+        "journal": "Translational psychiatry",
+        "year": "2019",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Review"
+        ],
+        "abstractExcerpt": "We conducted this meta-analysis of double-blind randomized placebo-controlled trials to estimate the efficacy of omega-3 polyunsaturated fatty acids (PUFAs), especially docosahexaenoic acid (DHA) and eicosapentaenoic acid (EPA), in the improvement of depression. We applied a systematic bibliographic",
+        "abstractChars": 1608,
+        "abstractSha256": "1c209f6b38e09b2efce04dad96a4c014de6c4bf2c848ae1dfe05a80b1e489f9d"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37028202",
+        "doi": "10.1016/j.plefa.2023.102572",
+        "title": "Effects of long-chain omega-3 polyunsaturated fatty acids on reducing anxiety and/or depression in adults; A systematic review and meta-analysis of randomised controlled trials.",
+        "journal": "Prostaglandins, leukotrienes, and essential fatty acids",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "The omega-3 polyunsaturated fatty acids (PUFAs) eicosapentaenoic- (EPA), docosahexaenoic- (DHA) and docosapentaenoic acid (DPAn-3) are promising therapeutic options in reducing the severity of anxious and depressive symptoms. However, meta-analyses of randomised controlled trials (RCTs) yield mixed ",
+        "abstractChars": 1853,
+        "abstractSha256": "ec3577db3d40b8d20ad39790df5a3364d4478c20a62a50217bd478fb967e028a"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39564892",
+        "doi": "10.1002/14651858.CD014803.pub2",
+        "title": "Omega-3 fatty acid supplementation for depression in children and adolescents.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "BACKGROUND: Mental health disorders including major depressive disorder (MDD) are well recognized as major contributors to the global burden of disease among adolescents. The prevalence of adolescent depression is estimated to have increased by at least 25% during the COVID-19 pandemic, compounding ",
+        "abstractChars": 5581,
+        "abstractSha256": "7c69287e1e89025b7f15b3e9d28166f81d23f9b34e211f9573253f204786c526"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.64239/pi-vl0904",
+        "title": "Omega-3 Fatty Acids: DHA and EPA",
+        "journal": null,
+        "year": "2018",
+        "pubTypes": [
+          "report"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/b978-0-443-43810-3.00017-8",
+        "title": "DHA, EPA, and AA in brain health: brain development, cognition, aging, and depressive disorders through nutritional interventions",
+        "journal": "Omega-3 and Omega-6 Polyunsaturated Fatty Acids in Food Systems",
+        "year": "2026",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.64239/pi-qt4405",
+        "title": "Omega-3 Polyunsaturated Fatty Acids Supplementation Alleviate Anxiety Rather Than Depressive Symptoms Among First-Diagnosed, Drug-Naïve Major Depressive Disorder Patients: A Randomized Clinical Trial",
+        "journal": null,
+        "year": "2022",
+        "pubTypes": [
+          "report"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-ltheanine-focus",
+    "libraryClaim": "L-Theanine — Calm focus (with caffeine) (Grade B): Combined with caffeine, improves attention and reduces jitteriness in several trials.",
+    "illustrativeDetails": "L-theanine (100 mg) with caffeine (50 mg) improves attention-switching and reduces distraction in healthy adults vs placebo",
+    "queries": {
+      "pubmed": "L-theanine caffeine attention randomized placebo",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "L-theanine and caffeine combination attention task switching"
+    },
+    "files": [
+      {
+        "path": "paper_p-ltheanine-focus/crossref.json",
+        "committed": true,
+        "sha256": "69bc6df5e918536c2c90a93b3c548b9e56959d26c262314b60c9795c15fce3b1"
+      },
+      {
+        "path": "paper_p-ltheanine-focus/esearch.json",
+        "committed": true,
+        "sha256": "b17656c6e4603c295ff7e5d2825dbe58af87253e99f52fd5bfec4d76741b2691"
+      },
+      {
+        "path": "local/paper_p-ltheanine-focus/efetch.xml",
+        "committed": false,
+        "sha256": "978803662b05afeca6d43da58e66ee51b8a6c2d661b9c25a1f5fe6c89413f261"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "40314930",
+        "doi": "10.1093/nutrit/nuaf054",
+        "title": "Effects of Tea (Camellia sinensis) or its Bioactive Compounds l-Theanine or l-Theanine plus Caffeine on Cognition, Sleep, and Mood in Healthy Participants: A Systematic Review and Meta-Analysis of Randomized Controlled Trials.",
+        "journal": "Nutrition reviews",
+        "year": "2025",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "CONTEXT: The bioactive compounds found in tea from Camellia sinensis, namely theanine, caffeine, and polyphenols, can potentially improve short-term and long-term health outcomes. OBJECTIVE: The aim of this study was to assess the effects of tea, theanine alone, or theanine plus caffeine on cognitio",
+        "abstractChars": 2052,
+        "abstractSha256": "9715a2ad8ed7badd08dd5deb6f8ccc1b5167031abddbdd82ef9fe9d1057c4feb"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "18681988",
+        "doi": "10.1179/147683008X301513",
+        "title": "The combined effects of L-theanine and caffeine on cognitive performance and mood.",
+        "journal": "Nutritional neuroscience",
+        "year": "2008",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "The aim of this study was to compare 50 mg caffeine, with and without 100 mg L-theanine, on cognition and mood in healthy volunteers. The effects of these treatments on word recognition, rapid visual information processing, critical flicker fusion threshold, attention switching and mood were compare",
+        "abstractChars": 960,
+        "abstractSha256": "a9c4138a715827ddfd9d54e8bae2603eef6a55c61886a9a8c3f7375cb44e7649"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "21040626",
+        "doi": "10.1179/147683010X12611460764840",
+        "title": "The combination of L-theanine and caffeine improves cognitive performance and increases subjective alertness.",
+        "journal": "Nutritional neuroscience",
+        "year": "2010",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "The non-proteinic amino acid L-theanine and caffeine, a methylxanthine derivative, are naturally occurring ingredients in tea. The present study investigated the effect of a combination of 97 mg L-theanine and 40 mg caffeine as compared to placebo treatment on cognitive performance, alertness, blood",
+        "abstractChars": 1035,
+        "abstractSha256": "54ceb1009b3945dddd1ea1c788d422e7fd11e946efb3b557c7946e9518910248"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1080/1028415x.2016.1144845",
+        "title": "Acute effects of theanine, caffeine and theanine–caffeine combination on attention",
+        "journal": "Nutritional Neuroscience",
+        "year": "2016",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.appet.2010.01.003",
+        "title": "l-Theanine and caffeine improve task switching but not intersensory attention or subjective alertness",
+        "journal": "Appetite",
+        "year": "2010",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1093/jn/138.8.1572s",
+        "title": "L-Theanine and Caffeine in Combination Affect Human Cognition as Evidenced by Oscillatory alpha-Band Activity and Attention Task Performance",
+        "journal": "The Journal of Nutrition",
+        "year": "2008",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-ltheanine-stress",
+    "libraryClaim": "L-Theanine — Stress & relaxation (Grade B): May reduce acute stress and support relaxation without sedation.",
+    "illustrativeDetails": "L-theanine (200 mg) reduces heart rate and stress markers under acute task stress in healthy adults vs placebo",
+    "queries": {
+      "pubmed": "L-theanine acute stress heart rate randomized",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "L-theanine reduces psychological and physiological stress responses"
+    },
+    "files": [
+      {
+        "path": "paper_p-ltheanine-stress/crossref.json",
+        "committed": true,
+        "sha256": "a67cb84ba7295e78c1ba351db98cecc9121835a28b154ed362e7a0162271a58f"
+      },
+      {
+        "path": "paper_p-ltheanine-stress/esearch.json",
+        "committed": true,
+        "sha256": "8c8e76c656c0dc21a529e7e31386f1bda38d0aa5248c8ab77c8e2e0a48603eb8"
+      },
+      {
+        "path": "local/paper_p-ltheanine-stress/efetch.xml",
+        "committed": false,
+        "sha256": "4fbefa17cc33d7c26973b5260d74575e8996610acf152da659959231c2370ffe"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "16930802",
+        "doi": "10.1016/j.biopsycho.2006.06.006",
+        "title": "L-Theanine reduces psychological and physiological stress responses.",
+        "journal": "Biological psychology",
+        "year": "2007",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "L-Theanine is an amino acid contained in green tea leaves which is known to block the binding of L-glutamic acid to glutamate receptors in the brain. Because the characteristics of L-Theanine suggest that it may influence psychological and physiological states under stress, the present study examine",
+        "abstractChars": 1257,
+        "abstractSha256": "31dbb84c1297b65782bcb68a3408ca09cfeaf9e43ce03503303e1596bd2fe834"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.biopsycho.2006.06.006",
+        "title": "l-Theanine reduces psychological and physiological stress responses",
+        "journal": "Biological Psychology",
+        "year": "2007",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1007/978-94-011-7460-2_4",
+        "title": "Physiological and Psychological Responses to Stress",
+        "journal": "Stress",
+        "year": "1983",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1007/978-94-010-9798-7_4",
+        "title": "Physiological and Psychological Responses to Stress",
+        "journal": "Stress",
+        "year": "1982",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-glycine-sleep",
+    "libraryClaim": "Glycine — Sleep quality (Grade B): Pre-bed glycine may improve subjective sleep quality and next-day alertness.",
+    "illustrativeDetails": "Glycine (3 g) before bedtime improves subjective sleep quality and next-day alertness in adults with sleep complaints",
+    "queries": {
+      "pubmed": "glycine ingestion sleep quality",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "glycine ingestion before bedtime subjective sleep quality"
+    },
+    "files": [
+      {
+        "path": "paper_p-glycine-sleep/crossref.json",
+        "committed": true,
+        "sha256": "e380a44c75220908e8365083c8f7b365dd469538460d9d486b96ce0448bdf2e4"
+      },
+      {
+        "path": "paper_p-glycine-sleep/esearch.json",
+        "committed": true,
+        "sha256": "efb343e66bf3626d0ffc6890d4cca4fd1e04b47a112098b0472572a7beadf843"
+      },
+      {
+        "path": "local/paper_p-glycine-sleep/efetch.xml",
+        "committed": false,
+        "sha256": "4ea8a71b4afc6db88a3ed1c5bb6ff79d6690d83fa470b97eff6155f8f28e269d"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "42730704",
+        "doi": "10.1080/15502783.2026.2711032",
+        "title": "Effects of six weeks of guanidinoacetic acid supplementation with and without creatine monohydrate on cognitive function and markers of health in healthy adults.",
+        "journal": "Journal of the International Society of Sports Nutrition",
+        "year": "2026",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "BACKGROUND: Guanidinoacetic acid (GAA) supplementation has been reported to increase brain creatine content more effectively than creatine monohydrate (CrM). However, the effects on cognitive function are unclear. PURPOSE: The purpose of this proof-of-concept exploratory clinical trial was to determ",
+        "abstractChars": 3342,
+        "abstractSha256": "0d69c7592e06a5683164e4d42ce33539cdad6c533cefef4c305518de83054343"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/j.1479-8425.2006.00193.x",
+        "title": "Subjective effects of glycine ingestion before bedtime on sleep quality",
+        "journal": "Sleep and Biological Rhythms",
+        "year": "2006",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/j.1479-8425.2007.00262.x",
+        "title": "Glycine ingestion improves subjective sleep quality in human volunteers, correlating with polysomnographic changes",
+        "journal": "Sleep and Biological Rhythms",
+        "year": "2007",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1186/s41606-025-00169-0",
+        "title": "Impact of hydration habits before bedtime on sleep quality",
+        "journal": "Sleep Science and Practice",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-ashwagandha-stress",
+    "libraryClaim": "Ashwagandha — Stress & cortisol (Grade B): Multiple trials show reduced perceived stress and cortisol over 6-8 weeks. | Ashwagandha — Sleep quality (Grade C): Some evidence for improved sleep, often secondary to stress reduction.",
+    "illustrativeDetails": "Ashwagandha root extract (300 mg twice daily) reduces perceived stress and serum cortisol in chronically stressed adults vs placebo",
+    "queries": {
+      "pubmed": "ashwagandha root extract stress cortisol randomized placebo",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "ashwagandha root extract stress anxiety cortisol double-blind placebo-controlled"
+    },
+    "files": [
+      {
+        "path": "paper_p-ashwagandha-stress/crossref.json",
+        "committed": true,
+        "sha256": "37cfc677e10bd2789fc39e714f8baa1a8a91c0391c70c1c6c086a027aa569326"
+      },
+      {
+        "path": "paper_p-ashwagandha-stress/esearch.json",
+        "committed": true,
+        "sha256": "b5f7798cf9242cba7f6f07f741a94798da1f4c7cd4fafa4937a75f0c9aba3849"
+      },
+      {
+        "path": "local/paper_p-ashwagandha-stress/efetch.xml",
+        "committed": false,
+        "sha256": "1ed4b14a87aed591a54ea95f86e45a75920f64b77dcbcb5daa3806a6e853676c"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37832082",
+        "doi": "10.1097/MD.0000000000035521",
+        "title": "A standardized Ashwagandha root extract alleviates stress, anxiety, and improves quality of life in healthy adults by modulating stress hormones: Results from a randomized, double-blind, placebo-controlled study.",
+        "journal": "Medicine",
+        "year": "2023",
+        "pubTypes": [
+          "Randomized Controlled Trial",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "BACKGROUND: The coronavirus disease-2019 (COVID-19) pandemic has resulted in a surge in stress, anxiety, and depression worldwide. Ashwagandha, an ayurvedic adaptogen has been traditionally used to manage stress, anxiety, and general well-being. OBJECTIVE: We assessed the effect of Ashwagandha root ",
+        "abstractChars": 2210,
+        "abstractSha256": "3ff2b6ae66424abe0c51782ddc666b810284a12fc5fe8c3f602167e904755a99"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "27055824",
+        "doi": "10.1177/2156587216641830",
+        "title": "Body Weight Management in Adults Under Chronic Stress Through Treatment With Ashwagandha Root Extract: A Double-Blind, Randomized, Placebo-Controlled Trial.",
+        "journal": "Journal of evidence-based complementary & alternative medicine",
+        "year": "2017",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Chronic stress has been associated with a number of illnesses, including obesity. Ashwagandha is a well-known adaptogen and known for reducing stress and anxiety in humans. The objective of this study was to evaluate the safety and efficacy of a standardized root extract of Ashwagandha through a dou",
+        "abstractChars": 1044,
+        "abstractSha256": "e0f00c2959fa7847d19271dc56f5af02c13cbbb505b2749637ae62b3a48d1823"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "41815853",
+        "doi": "10.25122/jml-2025-0172",
+        "title": "A proprietary herbal extract of ashwagandha root for stress and anxiety in healthy adults: a randomized, double-blind, three-arm, placebo-controlled efficacy and safety study.",
+        "journal": "Journal of medicine and life",
+        "year": "2026",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Stress and anxiety are interconnected, sharing both behavioural and neural foundations. Ashwagandha (Withania somnifera) helps reduce stress and anxiety. This study aimed to evaluate the efficacy and safety of a proprietary herbal extract of ashwagandha root (APB) in adult men and women with moderat",
+        "abstractChars": 1618,
+        "abstractSha256": "a2bc2d539583a2348d46cf7bce81ebdb59cf31ad54f05c1c79f960a49cd1ca66"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1097/md.0000000000035521",
+        "title": "A standardized Ashwagandha root extract alleviates stress, anxiety, and improves quality of life in healthy adults by modulating stress hormones: Results from a randomized, double-blind, placebo-controlled study",
+        "journal": "Medicine",
+        "year": "2023",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.7759/cureus.5797",
+        "title": "Efficacy and Safety of Ashwagandha (Withania somnifera) Root Extract in Insomnia and Anxiety: A Double-blind, Randomized, Placebo-controlled Study",
+        "journal": "Cureus",
+        "year": "2019",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.21203/rs.3.rs-6409321/v1",
+        "title": "Prospective, Randomized, Double-blind, Placebo Controlled Study on Safety and Efficacy of Ashwagandha Root Extract (Withania Somnifera) on Menopause Symptoms",
+        "journal": null,
+        "year": "2025",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-berberine-metabolic",
+    "libraryClaim": "Berberine — Blood sugar control (Grade B): May lower fasting glucose and HbA1c; effect size comparable to some first-line agents in small trials.",
+    "illustrativeDetails": "Berberine (0.9-1.5 g/day) reduces fasting glucose and HbA1c in type 2 diabetes vs placebo or oral hypoglycemics (meta-analysis)",
+    "queries": {
+      "pubmed": "berberine type 2 diabetes meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "berberine type 2 diabetes glycemic control meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-berberine-metabolic/crossref.json",
+        "committed": true,
+        "sha256": "0016ac9250c9019e7a2769037aa54f09b279376998f0754cbe916ad44b4b9254"
+      },
+      {
+        "path": "paper_p-berberine-metabolic/esearch.json",
+        "committed": true,
+        "sha256": "263bf7a3c5883530816944a5cfc1f5f1d8bbc4fa9fb6b3b1782c40ec73e65825"
+      },
+      {
+        "path": "local/paper_p-berberine-metabolic/efetch.xml",
+        "committed": false,
+        "sha256": "f9056114a5f76978a38e7dac0658af33525ecece3b8d709b84d29589ea5b9017"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36467075",
+        "doi": "10.3389/fphar.2022.1015045",
+        "title": "Glucose-lowering effect of berberine on type 2 diabetes: A systematic review and meta-analysis.",
+        "journal": "Frontiers in pharmacology",
+        "year": "2022",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "Background: Insulin secretory agents are commonly used to treat type 2 diabetes. However, traditional insulin secretory agents such as sulfonylureas and glinides have side effects of hypoglycemia. In recent years, researchers have discovered that berberine can inhibit the voltage-gated k+ channels o",
+        "abstractChars": 2693,
+        "abstractSha256": "d306e9cd0ba6fbec76d8a2b8ad5c352d4b381bf4cae7bce3350fe8d4a1704f59"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34956436",
+        "doi": "10.1155/2021/2074610",
+        "title": "The Effect of Berberine on Metabolic Profiles in Type 2 Diabetic Patients: A Systematic Review and Meta-Analysis of Randomized Controlled Trials.",
+        "journal": "Oxidative medicine and cellular longevity",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "OBJECTIVE: Rhizoma Coptidis is an herb that has been frequently used in many traditional formulas for the treatment of diabetic mellitus (DM) over thousands of years. Berberine, the main active component of Rhizoma Coptidis, has been demonstrated to have the potential effect of hypoglycemia. To dete",
+        "abstractChars": 2783,
+        "abstractSha256": "93b1ad562ebac811ee9cab67f0ed120eb4c21ce42324dbe06edb6d11f0d23a0f"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30393248",
+        "doi": "10.1507/endocrj.EJ18-0109",
+        "title": "Effects of berberine on blood glucose in patients with type 2 diabetes mellitus: a systematic literature review and a meta-analysis.",
+        "journal": "Endocrine journal",
+        "year": "2019",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "We conducted a systematic review and meta-analysis to evaluate the effect of Berberine on glucose in patients with type 2 diabetes mellitus and identify potential factors may modifying the hypoglycemic effect. We searched PubMed, Embase, the Cochrane Library, China National Knowledge Infrastructure,",
+        "abstractChars": 1378,
+        "abstractSha256": "99885bf3445d331e2fadd613ecccb125ad29f4cb85d2643d7c06d9d55f227e12"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/jan.14255/v1/review1",
+        "title": "Review for \"A Systematic Review and Meta‐analysis: Vinegar Consumption on Glycemic Control in Adults with Type 2 Diabetes Mellitus\"",
+        "journal": null,
+        "year": "2019",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.15760/honors.773",
+        "title": "Interventions in Type 1 Diabetes: A Systematic Review and Meta-Analysis Examining Factors that Lead to Improved Glycemic Control",
+        "journal": null,
+        "year": null,
+        "pubTypes": [
+          "dissertation"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/jan.14255/v1/review3",
+        "title": "Review for \"A Systematic Review and Meta‐analysis: Vinegar Consumption on Glycemic Control in Adults with Type 2 Diabetes Mellitus\"",
+        "journal": null,
+        "year": "2019",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-zinc-immune",
+    "libraryClaim": "Zinc — Immune / cold duration (Grade B): Lozenges started early may modestly reduce common-cold duration.",
+    "illustrativeDetails": "Zinc acetate lozenges (80-100 mg/day) started early shorten common cold duration vs placebo",
+    "queries": {
+      "pubmed": "zinc acetate lozenges common cold duration",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "zinc acetate lozenges common cold duration meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-zinc-immune/crossref.json",
+        "committed": true,
+        "sha256": "f9b84843efa1ff64a7c9696cc93743d0bbc29c136de592424cdf2ff7c4875db6"
+      },
+      {
+        "path": "paper_p-zinc-immune/esearch.json",
+        "committed": true,
+        "sha256": "6a457b907c33459ad52dd48e8ad4b4ae72806b93157a4ec054f03ecde7322d55"
+      },
+      {
+        "path": "local/paper_p-zinc-immune/efetch.xml",
+        "committed": false,
+        "sha256": "909750646cecb92da02466484a4569ec1f6356b21ce0fec9dbf46b257cb6ecd2"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "38719213",
+        "doi": "10.1002/14651858.CD014914.pub2",
+        "title": "Zinc for prevention and treatment of the common cold.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: The common cold is an acute, self-limiting viral respiratory illness. Symptoms include nasal congestion and mucus discharge, sneezing, sore throat, cough, and general malaise. Given the frequency of colds, they are a public health burden and a significant cause of lost work productivity ",
+        "abstractChars": 6263,
+        "abstractSha256": "857631b3f2b8961c0a1437b2b11c02f8e490e558fd0ba87981afa76120ba3008"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "25924708",
+        "doi": "10.1002/14651858.CD001364.pub5",
+        "title": "WITHDRAWN: Zinc for the common cold.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2015",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "September 2016 updated withdrawal notice This Cochrane Review was withdrawn in April 2015, and this withdrawal notice was updated in September 2016. The review was withdrawn as result of comments submitted via the Cochrane Library by Harri Hemilä in February 2015. Hemilä identified multiple errors i",
+        "abstractChars": 2648,
+        "abstractSha256": "1edd0c4e8611833aaadc14b810507eb14836a96b77a8b3b326f5d3403b9062e7"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "27378206",
+        "doi": "10.1111/bcp.13057",
+        "title": "Zinc acetate lozenges for treating the common cold: an individual patient data meta-analysis.",
+        "journal": "British journal of clinical pharmacology",
+        "year": "2016",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "AIMS: The aim of this study was to determine whether the allergy status and other characteristics of common cold patients modify the effects of zinc acetate lozenges. METHODS: We had available individual patient data for three randomized placebo-controlled trials in which zinc acetate lozenges were ",
+        "abstractChars": 1554,
+        "abstractSha256": "aff6948c1c9fa10548f04e970ec23fca1848f140287a76150e6ea21d82ac80ec"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1177/2054270417694291",
+        "title": "Zinc lozenges and the common cold: a meta-analysis comparing zinc acetate and zinc gluconate, and the role of zinc dosage",
+        "journal": "JRSM Open",
+        "year": "2017",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1136/ebm.6.2.46",
+        "title": "Zinc acetate lozenges reduced the duration and severity of symptoms of the common cold",
+        "journal": "Evidence-Based Medicine",
+        "year": "2001",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1186/s12875-015-0237-6",
+        "title": "The effectiveness of high dose zinc acetate lozenges on various common cold symptoms: a meta-analysis",
+        "journal": "BMC Family Practice",
+        "year": "2015",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-zinc-deficiency",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "Zinc supplementation (8-25 mg/day) restores zinc status markers in populations at risk of deficiency",
+    "queries": {
+      "pubmed": "zinc supplementation biomarkers of zinc status systematic review",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "zinc supplementation zinc status biomarkers systematic review"
+    },
+    "files": [
+      {
+        "path": "paper_p-zinc-deficiency/crossref.json",
+        "committed": true,
+        "sha256": "432f5ed8e7378a86d3318abffbd1f0aca900bdccf7efc6b10fb6973263bee931"
+      },
+      {
+        "path": "paper_p-zinc-deficiency/esearch.json",
+        "committed": true,
+        "sha256": "0d084135f50953c47c07322f579db940ca21e21e0e27251f2154841c9d69c796"
+      },
+      {
+        "path": "local/paper_p-zinc-deficiency/efetch.xml",
+        "committed": false,
+        "sha256": "7ac8f461c96adc63ebcf6d783bb9194f7788d20f2f7921b0b4b80f77d7294ce7"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35010904",
+        "doi": "10.3390/nu14010029",
+        "title": "Nutrient Intake and Status in Adults Consuming Plant-Based Diets Compared to Meat-Eaters: A Systematic Review.",
+        "journal": "Nutrients",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Health authorities increasingly recommend a more plant-based diet, rich in fruits, vegetables, pulses, whole grains and nuts, low in red meat and moderate in dairy, eggs, poultry and fish which will be beneficial for both health and the environment. A systematic review of observational and intervent",
+        "abstractChars": 1977,
+        "abstractSha256": "a52dccf60283962fafc87b7fc052aef50cc61a1bcd492ff3250438d6bebaa128"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39683462",
+        "doi": "10.3390/nu16234068",
+        "title": "The Impact of Minerals on Female Fertility: A Systematic Review.",
+        "journal": "Nutrients",
+        "year": "2024",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "UNLABELLED: Female fertility and reproductive system disorders are influenced by a complex interplay of biological, physiological, and environmental factors. Minerals have emerged as crucial yet often overlooked elements that impact fertility and the prevalence of reproductive system disorders. BACK",
+        "abstractChars": 2301,
+        "abstractSha256": "5974367d60c127d18312e3e8198c499f6e7615a13ac03759c331497f8e0c8079"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "41382333",
+        "doi": "10.1080/10408398.2025.2572983",
+        "title": "Lacto-ovo-vegetarian and vegan diets in children and adolescents: a systematic review and meta-analysis of nutritional and health outcomes.",
+        "journal": "Critical reviews in food science and nutrition",
+        "year": "2026",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "The health implications of lacto-ovo-vegetarian and vegan diets in childhood remain debated. This meta-analysis compares lacto-ovo-vegetarian and vegan diets with omnivorous diets across a wide spectrum of nutrients and health outcomes among children <18 years worldwide without chronic disease. Sear",
+        "abstractChars": 1446,
+        "abstractSha256": "82475b0bf60432ca6269f4d68ff1aa5ad69a1dac6050e30b6de02854f87e3361"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.20473/mgi.v14i2.115-122",
+        "title": "STATUS ZINC DAN PERAN SUPLEMENTASI ZINC TERHADAP SISTEM IMUN PADA PASIEN HIV/AIDS: A SYSTEMATIC REVIEW <br><i>[Zinc Status and The Role of Zinc Supplementation on Immune System in HIV/AIDS Patients: A Systematic Review]</i></br>",
+        "journal": "Media Gizi Indonesia",
+        "year": "2019",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.37766/inplasy2026.2.0017",
+        "title": "Zinc Supplementation and Systemic Inflammation in Aging: A Systematic Review and Meta-Analysis of Effects on Immune Biomarkers in Older Adults",
+        "journal": null,
+        "year": "2026",
+        "pubTypes": [
+          "report"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1002/vms3.896/v2/review2",
+        "title": "Review for \"Zinc supplementation improves antioxidant status, and organic zinc is more efficient than inorganic zinc in improving the bone strength of aged laying hens\"",
+        "journal": null,
+        "year": "2022",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-b12-deficiency",
+    "libraryClaim": "Vitamin B12 — Correcting deficiency (Grade A): Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    "illustrativeDetails": "Oral B12 (250-1000 mcg/day) corrects low B12 status in vegetarians and vegans",
+    "queries": {
+      "pubmed": "vitamin B12 status vegetarians vegans supplementation",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "vitamin B12 deficiency vegetarians vegans oral supplementation"
+    },
+    "files": [
+      {
+        "path": "paper_p-b12-deficiency/crossref.json",
+        "committed": true,
+        "sha256": "687f48d2152d420d4245d0c4ae478e176afa5f9e128117063cb0c08255e372f4"
+      },
+      {
+        "path": "paper_p-b12-deficiency/esearch.json",
+        "committed": true,
+        "sha256": "aeaa6dd8aa86bc6c59f17d668f30970eb683d1b033ba90d7953b561d16325aa0"
+      },
+      {
+        "path": "local/paper_p-b12-deficiency/efetch.xml",
+        "committed": false,
+        "sha256": "1ebb4276d27cfd018c6a91e6f22c28929ba2a1021364bd2a20ff91b179a4889a"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35010904",
+        "doi": "10.3390/nu14010029",
+        "title": "Nutrient Intake and Status in Adults Consuming Plant-Based Diets Compared to Meat-Eaters: A Systematic Review.",
+        "journal": "Nutrients",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Health authorities increasingly recommend a more plant-based diet, rich in fruits, vegetables, pulses, whole grains and nuts, low in red meat and moderate in dairy, eggs, poultry and fish which will be beneficial for both health and the environment. A systematic review of observational and intervent",
+        "abstractChars": 1977,
+        "abstractSha256": "a52dccf60283962fafc87b7fc052aef50cc61a1bcd492ff3250438d6bebaa128"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39373282",
+        "doi": "10.1111/nbu.12712",
+        "title": "A systematic review and meta-analysis of functional vitamin B12 status among adult vegans.",
+        "journal": "Nutrition bulletin",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "The dietary intake of vitamin B12 among unsupplemented vegans is notably lower compared to both vegetarians and omnivores. Prolonged low intakes of vitamin B12, such as seen in those adhering to a vegan diet, lead to physiological deficiency of vitamin B12 and an elevated risk of B12-related morbidi",
+        "abstractChars": 2317,
+        "abstractSha256": "8ac990c6177fee3e1d2acb468d45f578f6eb189115c60d99216f4a35ef8bae84"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37892416",
+        "doi": "10.3390/nu15204341",
+        "title": "Nutrient Intake and Status in Children and Adolescents Consuming Plant-Based Diets Compared to Meat-Eaters: A Systematic Review.",
+        "journal": "Nutrients",
+        "year": "2023",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "Health authorities increasingly recommend sustainable and healthy diets rich in plant foods and with moderate amounts of animal foods. However, there are concerns about whether such diets can meet all nutrient requirements, especially in children and adolescents, who have relatively high nutrient ne",
+        "abstractChars": 1800,
+        "abstractSha256": "c304b0bdbf34e6b07180994339be3f85e46c798e2aca7ce921054fb6834067e8"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.26226/m.6671b57e2dce8e64b39c34be",
+        "title": "OC179 - What is the prevalence of vitamin B12 deficiency among healthy vegans and vegetarians of European ancestry residing in Western Europe or the USA?",
+        "journal": null,
+        "year": "2024",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1371/journal.pone.0326220",
+        "title": "Correction: Vitamin B12 deficiency and neuropsychiatric symptoms in Lebanon: A cross-sectional study of vegans, vegetarians, and omnivores",
+        "journal": "PLOS One",
+        "year": "2025",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/j.1753-4887.1956.tb01488.x",
+        "title": "VITAMIN B12 DEFICIENCY IN VEGETARIANS",
+        "journal": "Nutrition Reviews",
+        "year": "2009",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-caffeine-focus",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "Caffeine (100-200 mg) consistently improves alertness, vigilance and reaction time in healthy adults (review)",
+    "queries": {
+      "pubmed": "caffeine cognitive performance vigilance alertness review",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "caffeine effects on cognitive performance alertness vigilance review"
+    },
+    "files": [
+      {
+        "path": "paper_p-caffeine-focus/crossref.json",
+        "committed": true,
+        "sha256": "374736795038231cb432151916d0ed2cf1f591552fb2199f85fa3e80dc4700e6"
+      },
+      {
+        "path": "paper_p-caffeine-focus/esearch.json",
+        "committed": true,
+        "sha256": "2e7e35c0be7885956b8bb0a9f10d2e2daccf6825d4c0a5871f3ebe5e26ac5b93"
+      },
+      {
+        "path": "local/paper_p-caffeine-focus/efetch.xml",
+        "committed": false,
+        "sha256": "cec3f5286866ff6338406ebed301e1ba7938bce0c92b6a2eee2bf459f16b660c"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "20464765",
+        "doi": "10.1002/14651858.CD008508",
+        "title": "Caffeine for the prevention of injuries and errors in shift workers.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2010",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Sleepiness leads to a deterioration in performance and attention, and is associated with an increased risk of injury. Jet lag and shift work disorder are circadian rhythm sleep disorders which result in sleepiness and can elevate injury risk. They create a need for individuals to operate",
+        "abstractChars": 3497,
+        "abstractSha256": "fdc4fed472d18b03daf6e8746d97aae30efb393473f5e2aa66c1e0c0c62a98af"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1093/sleep/10.4.306",
+        "title": "Ethanol and Caffeine Effects on Daytime Sleepiness/Alertness",
+        "journal": "Sleep",
+        "year": "1987",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/j.1365-2869.2006.00547.x",
+        "title": "The effects of chewing versus caffeine on alertness, cognitive performance and cardiac autonomic activity during sleep deprivation",
+        "journal": "Journal of Sleep Research",
+        "year": "2006",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1371/journal.pone.0076707",
+        "title": "A Comparison of Blue Light and Caffeine Effects on Cognitive Function and Alertness in Humans",
+        "journal": "PLoS ONE",
+        "year": "2013",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-caffeine-training",
+    "libraryClaim": "Caffeine — Exercise performance (Grade A): Improves endurance and reduces perceived exertion across many trials.",
+    "illustrativeDetails": "Caffeine (3-6 mg/kg) improves endurance, power and reduces perceived exertion in athletes and active adults (meta-analysis)",
+    "queries": {
+      "pubmed": "caffeine exercise performance meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "caffeine ergogenic exercise performance meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-caffeine-training/crossref.json",
+        "committed": true,
+        "sha256": "7457c53514cb1566dee8e449b0bc46f0c98c2d446377b98e89f4f1e7d37c1175"
+      },
+      {
+        "path": "paper_p-caffeine-training/esearch.json",
+        "committed": true,
+        "sha256": "888958e01273a75f4a49694e74fed5bcef23701b0f740d01c4371925125e60c2"
+      },
+      {
+        "path": "local/paper_p-caffeine-training/efetch.xml",
+        "committed": false,
+        "sha256": "cb6791ea99c740914f8619c2ae11e839dddd06b81abc48ca8d99bd5c1f975417"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36870101",
+        "doi": "10.1016/j.smrv.2023.101764",
+        "title": "The effect of caffeine on subsequent sleep: A systematic review and meta-analysis.",
+        "journal": "Sleep medicine reviews",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "The consumption of caffeine in response to insufficient sleep may impair the onset and maintenance of subsequent sleep. This systematic review and meta-analysis investigated the effect of caffeine on the characteristics of night-time sleep, with the intent to identify the time after which caffeine s",
+        "abstractChars": 1194,
+        "abstractSha256": "fb7f324a4ef0f1fe020715183cf51b699048b8d459c24c9aac6a405194368049"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36615805",
+        "doi": "10.3390/nu15010148",
+        "title": "Effects of Caffeine Intake on Endurance Running Performance and Time to Exhaustion: A Systematic Review and Meta-Analysis.",
+        "journal": "Nutrients",
+        "year": "2022",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "Caffeine (1,3,7-trimethylxanthine) is one of the most widely consumed performance-enhancing substances in sport due to its well-established ergogenic effects. The use of caffeine is more common in aerobic-based sports due to the ample evidence endorsing the benefits of caffeine supplementation on en",
+        "abstractChars": 3049,
+        "abstractSha256": "e82bf17ee15c7e7b3a586feef6724c8b205ff991f3168df9d3fe337a871a148a"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33800853",
+        "doi": "10.3390/nu13030868",
+        "title": "Caffeine and Cognitive Functions in Sports: A Systematic Review and Meta-Analysis.",
+        "journal": "Nutrients",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Cognitive functions are essential in any form of exercise. Recently, interest has mounted in addressing the relationship between caffeine intake and cognitive performance during sports practice. This review examines this relationship through a structured search of the databases Medline/PubMed and We",
+        "abstractChars": 1451,
+        "abstractSha256": "e92722cc17ea7cb50920447b9d4b68297e1a5fc7fb57a5ad45ef38252c5af5df"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.nut.2022.111604",
+        "title": "Exploring the minimum ergogenic dose of caffeine on resistance exercise performance: A meta-analytic approach",
+        "journal": "Nutrition",
+        "year": "2022",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.31390/gradschool_disstheses.5863",
+        "title": "Does Caffeine Have an Ergogenic Benefit on Low-Intensity Exercise Performance in a Warm Environment?",
+        "journal": null,
+        "year": null,
+        "pubTypes": [
+          "dissertation"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.51224/srxiv.696",
+        "title": "An Updated Meta-analysis on The Ergogenic Effects of Acute Carbohydrate Feeding on Resistance Exercise Performance",
+        "journal": null,
+        "year": "2026",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-protein-mps",
+    "libraryClaim": "Protein Powder (Whey) — Muscle protein synthesis (Grade A): Supplemental protein supports muscle mass and strength gains when total intake is adequate. | Protein Powder (Whey) — Recovery & satiety (Grade B): Supports post-exercise recovery and appetite control.",
+    "illustrativeDetails": "Protein supplementation with resistance training gives greater gains in strength and lean mass in resistance-trained adults",
+    "queries": {
+      "pubmed": "protein supplementation resistance training muscle mass strength meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "protein supplementation resistance training gains muscle mass strength meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-protein-mps/crossref.json",
+        "committed": true,
+        "sha256": "4a98392d69edb6afc9d77984c85ea8ce50bd32690e4081f737dbd722dbd49750"
+      },
+      {
+        "path": "paper_p-protein-mps/esearch.json",
+        "committed": true,
+        "sha256": "98e1b2c2169fbad1c162a2f57cef7b6c5d8d3d31b82b5660fae0f6b4f44b4e21"
+      },
+      {
+        "path": "local/paper_p-protein-mps/efetch.xml",
+        "committed": false,
+        "sha256": "6d7facca0aefebce0b4f84265abd70b31b5ec0ecbeab36c24947e76131d2e129"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "28698222",
+        "doi": "10.1136/bjsports-2017-097608",
+        "title": "A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults.",
+        "journal": "British journal of sports medicine",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "OBJECTIVE: We performed a systematic review, meta-analysis and meta-regression to determine if dietary protein supplementation augments resistance exercise training (RET)-induced gains in muscle mass and strength. DATA SOURCES: A systematic search of Medline, Embase, CINAHL and SportDiscus. ELIGIBIL",
+        "abstractChars": 1769,
+        "abstractSha256": "a3170da68e11311bda15b79f54bd00fd111e1f3ef77312b94f24f4906dcaa9e3"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "38350303",
+        "doi": "10.1016/j.jnha.2024.100184",
+        "title": "Improving sarcopenia in older adults: a systematic review and meta-analysis of randomized controlled trials of whey protein supplementation with or without resistance training.",
+        "journal": "The journal of nutrition, health & aging",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "OBJECTIVES: The aim of the study was to comprehensively analyze the effects of whey protein (WP)-enriched supplement intake with or without resistance training (RT) in older patients, either from the community or hospital, who were diagnosed with sarcopenia according to the EWGSOP or AWGS criteria. ",
+        "abstractChars": 1831,
+        "abstractSha256": "393601c86c037ecdfed1edb76d80186c338089c061e7d34da9d5268804bcd60c"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37571361",
+        "doi": "10.3390/nu15153424",
+        "title": "Effectiveness of Whey Protein Supplementation during Resistance Exercise Training on Skeletal Muscle Mass and Strength in Older People with Sarcopenia: A Systematic Review and Meta-Analysis.",
+        "journal": "Nutrients",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "OBJECTIVE: To determine the effectiveness of whey protein (WP) supplementation during resistance exercise training (RET) vs. RET with or without placebo supplementation on skeletal muscle mass, strength, and physical performance in older people with Sarcopenia. METHODS: Electronic searches in the Pu",
+        "abstractChars": 2180,
+        "abstractSha256": "05cf6fa09edb3d2fe790845d555d0d2086b785d93097c0b586a704c2cf1e36be"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1136/bjsports-2017-097608corr1",
+        "title": "Correction: A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults",
+        "journal": "British Journal of Sports Medicine",
+        "year": "2020",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1136/bjsports-2018-099889corr1",
+        "title": "Correction:Do multi-ingredient protein supplements augment resistance training-induced gains in skeletal muscle mass and strength? A systematic review and meta-analysis of 35 trails",
+        "journal": "British Journal of Sports Medicine",
+        "year": "2021",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fnut.2026.1919884",
+        "title": "Effects of resistance training combined with creatine supplementation on muscle strength, physical function, and muscle mass in older adults: a systematic review and three-level meta-analysis",
+        "journal": "Frontiers in Nutrition",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-taurine-training",
+    "libraryClaim": "Taurine — Exercise performance (Grade C): Small possible endurance benefits; evidence mixed.",
+    "illustrativeDetails": "Taurine (1-3 g) gives small endurance improvements in trained adults in some protocols vs placebo",
+    "queries": {
+      "pubmed": "taurine supplementation endurance performance",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "taurine supplementation endurance performance meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-taurine-training/crossref.json",
+        "committed": true,
+        "sha256": "7af93fa360f675b6cafa16215ad09913d0ecadfc42f6a3ccb7b63c9180a3c49d"
+      },
+      {
+        "path": "paper_p-taurine-training/esearch.json",
+        "committed": true,
+        "sha256": "59d75ef260b502e9f94e1730b5b83081ce9f4c7a7434c9d80655017582a77b54"
+      },
+      {
+        "path": "local/paper_p-taurine-training/efetch.xml",
+        "committed": false,
+        "sha256": "d766eaf9927bc3fbac71c8acac671b444474eeca49b628a840dbbdb0f70cf680"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "41032459",
+        "doi": "10.1080/15502783.2025.2566371",
+        "title": "Caffeine and taurine: a systematic review and network meta-analysis of their individual and combined effects on physical capacity, cognitive function, and physiological markers.",
+        "journal": "Journal of the International Society of Sports Nutrition",
+        "year": "2025",
+        "pubTypes": [
+          "Journal Article",
+          "Network Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Caffeine (CAF) and taurine (TAU) have each demonstrated ergogenic effects across physical and cognitive domains. Often co-formulated in commercial energy drinks, they are widely regarded as the two principal bioactive compounds. However, findings regarding their combined efficacy remain ",
+        "abstractChars": 2224,
+        "abstractSha256": "a5ce82b9f1b599e6b12e7e22bc64ca0783e02a0fe9a23ee07805583423c0de1c"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30776254",
+        "doi": "10.1080/17461391.2019.1578417",
+        "title": "Acute taurine supplementation enhances thermoregulation and endurance cycling performance in the heat.",
+        "journal": "European journal of sport science",
+        "year": "2019",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "This study investigated the effects of oral taurine supplementation on cycling time to exhaustion at a fixed-intensity and thermoregulation in the heat. In a double-blind, randomised crossover design, 11 healthy males participated in a time to exhaustion test in the heat (35°C, 40% RH), cycling at t",
+        "abstractChars": 1537,
+        "abstractSha256": "f36cb2d8bb9186761791b3bbc5ae6608ced4ea6ebf02275ae015978827291ad7"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "29546641",
+        "doi": "10.1007/s40279-018-0896-2",
+        "title": "The Effects of an Oral Taurine Dose and Supplementation Period on Endurance Exercise Performance in Humans: A Meta-Analysis.",
+        "journal": "Sports medicine (Auckland, N.Z.)",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Taurine is central to many physiological processes, some of which are augmented by exogenous supply and have the potential to facilitate endurance performance; however, its independent effects on performance have not been systematically analysed. OBJECTIVE: To evaluate the effects of iso",
+        "abstractChars": 1542,
+        "abstractSha256": "d82ffbd8a27c6bf19cc4908c5430e9f23a6de8a9c9157a4b99cb55b9b743baf3"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1007/s40279-018-0896-2",
+        "title": "The Effects of an Oral Taurine Dose and Supplementation Period on Endurance Exercise Performance in Humans: A Meta-Analysis",
+        "journal": "Sports Medicine",
+        "year": "2018",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1123/ijsnem.2021-0309",
+        "title": "Acute Ketone Salts–Caffeine–Taurine–Leucine Supplementation but not Ketone Salts–Taurine–Leucine, Improves Endurance Cycling Performance",
+        "journal": "International Journal of Sport Nutrition and Exercise Metabolism",
+        "year": "2022",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.2165/11590520-000000000-00000",
+        "title": "Effects of Acute Carbohydrate Supplementation on Endurance Performance",
+        "journal": "Sports Medicine",
+        "year": "2011",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-nac-antioxidant",
+    "libraryClaim": "N-Acetylcysteine (NAC) — Antioxidant / glutathione (Grade C): Raises glutathione; broad clinical benefits remain context-dependent.",
+    "illustrativeDetails": "N-acetylcysteine (600-1800 mg/day) increases glutathione availability in adults vs placebo",
+    "queries": {
+      "pubmed": "N-acetylcysteine glutathione supplementation randomized",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "N-acetylcysteine oral supplementation glutathione levels"
+    },
+    "files": [
+      {
+        "path": "paper_p-nac-antioxidant/crossref.json",
+        "committed": true,
+        "sha256": "5f33a34a4879d125b8aa6103885367fd5385359f0d58207ca2e43109d8f72c8a"
+      },
+      {
+        "path": "paper_p-nac-antioxidant/esearch.json",
+        "committed": true,
+        "sha256": "271ff3fd8b8bbc91968e688475a7377518bf1ab67b363d636962f949f26ed693"
+      },
+      {
+        "path": "local/paper_p-nac-antioxidant/efetch.xml",
+        "committed": false,
+        "sha256": "4984016739efaa345d91a666538fa2f6e7c73995b8e09d396e56746384b95445"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35975308",
+        "doi": "10.1093/gerona/glac135",
+        "title": "Supplementing Glycine and N-Acetylcysteine (GlyNAC) in Older Adults Improves Glutathione Deficiency, Oxidative Stress, Mitochondrial Dysfunction, Inflammation, Physical Function, and Aging Hallmarks: A Randomized Clinical Trial.",
+        "journal": "The journals of gerontology. Series A, Biological sciences and medical sciences",
+        "year": "2023",
+        "pubTypes": [
+          "Randomized Controlled Trial",
+          "Journal Article",
+          "Research Support, N.I.H., Extramural",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: Elevated oxidative stress (OxS), mitochondrial dysfunction, and hallmarks of aging are identified as key contributors to aging, but improving/reversing these defects in older adults (OA) is challenging. In prior studies, we identified that deficiency of the intracellular antioxidant glut",
+        "abstractChars": 1961,
+        "abstractSha256": "7a3f3d545fc1e0e413916b754c3d866aab6c6779b78071031477e25751946c72"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "32900213",
+        "doi": "10.1177/0004867420952540",
+        "title": "Effectiveness of N-acetylcysteine in autism spectrum disorders: A meta-analysis of randomized controlled trials.",
+        "journal": "The Australian and New Zealand journal of psychiatry",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "OBJECTIVE: Currently, pharmaceutical treatment options for autism spectrum disorder are limited. Brain glutaminergic dysregulation is observed in autism spectrum disorder. N-acetylcysteine, which can be converted to glutathione and subsequently release glutamate into the extracellular space, and thu",
+        "abstractChars": 2266,
+        "abstractSha256": "3ff02e7c7aeb80f31ab996bd143fb7c18bf2a80d1e027e717e8d894ff8e187f6"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "31826654",
+        "doi": "10.1177/0004867419893439",
+        "title": "Meta-analysis of randomised controlled trials with N-acetylcysteine in the treatment of schizophrenia.",
+        "journal": "The Australian and New Zealand journal of psychiatry",
+        "year": "2020",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "OBJECTIVE: There is accumulating evidence that adjunctive treatment with N-acetylcysteine may be effective for schizophrenia. This study aimed to conduct a comprehensive meta-analysis examining the efficacy of randomised control trials investigating N-acetylcysteine as an adjunct treatment for schiz",
+        "abstractChars": 1483,
+        "abstractSha256": "ccdf008f1e35762fd493a29908ad7f166cf65ed45d0ab05d766659064ec10dc0"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1183/09031936.94.07030431",
+        "title": "The effect of oral N-acetylcysteine on lung glutathione levels in idiopathic pulmonary fibrosis",
+        "journal": "European Respiratory Journal",
+        "year": "1994",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1096/fasebj.27.1_supplement.862.32",
+        "title": "Enhanced Glutathione Levels in Blood and Buccal Cells by Oral Glutathione Supplementation",
+        "journal": "The FASEB Journal",
+        "year": "2013",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1515/cclm.2002.086",
+        "title": "Effects of Oral N-Acetylcysteine on Plasma Homocysteine and Whole Blood Glutathione Levels in Healthy, Non-pregnant Women",
+        "journal": "Clinical Chemistry and Laboratory Medicine",
+        "year": "2002",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "effect:magnesium-metabolic",
+    "libraryClaim": "Magnesium — Glucose metabolism (Grade C): Possible small improvements in insulin sensitivity in deficient individuals.",
+    "illustrativeDetails": "Magnesium (250-400 mg) may give small improvements in insulin sensitivity in insulin-resistant adults with low magnesium",
+    "queries": {
+      "pubmed": "magnesium supplementation insulin sensitivity meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "magnesium supplementation insulin sensitivity glucose meta-analysis"
+    },
+    "files": [
+      {
+        "path": "effect_magnesium-metabolic/crossref.json",
+        "committed": true,
+        "sha256": "41a3c702909ed76138bf7157a7ba39964af6e6bbe3020176d8b7650a9a3aeeae"
+      },
+      {
+        "path": "effect_magnesium-metabolic/esearch.json",
+        "committed": true,
+        "sha256": "19c4d2ddbc2ffe8d34b39ceab240a400a98e3495cf20eaf6f6a3372990be149b"
+      },
+      {
+        "path": "local/effect_magnesium-metabolic/efetch.xml",
+        "committed": false,
+        "sha256": "36c6728fb29c87be44930b78569efd1cc521665fd412ab98ca115d2a56769ec4"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34836329",
+        "doi": "10.3390/nu13114074",
+        "title": "Oral Magnesium Supplementation for Treating Glucose Metabolism Parameters in People with or at Risk of Diabetes: A Systematic Review and Meta-Analysis of Double-Blind Randomized Controlled Trials.",
+        "journal": "Nutrients",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "There is a large and growing body of literature focusing on the use of oral magnesium (Mg) supplementation for improving glucose metabolism in people with or at risk of diabetes. We therefore aimed to investigate the effect of oral Mg supplementation on glucose and insulin-sensitivity parameters in ",
+        "abstractChars": 1302,
+        "abstractSha256": "b4dba181f93929cc8836d39d873a7bdf1b54c7e26656ca582895f9fb3a682a18"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "32654500",
+        "doi": "10.1080/10408398.2020.1790498",
+        "title": "The effects of magnesium supplementation on obesity measures in adults: a systematic review and dose-response meta-analysis of randomized controlled trials.",
+        "journal": "Critical reviews in food science and nutrition",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Previous studies reported inconsistent findings regarding the effects of magnesium supplementation on obesity measures. This study was done to quantify the effect of magnesium supplementation on body weight, Body Mass Index (BMI), Waist Circumference (WC), Body Fat (BF) percentage and Waist to Hip R",
+        "abstractChars": 1562,
+        "abstractSha256": "9bf51e799f334ee0f5a46c8bddca8f12101a463402cf8efed934a7271a6dccae"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "27329332",
+        "doi": "10.1016/j.phrs.2016.06.019",
+        "title": "A systematic review and meta-analysis of randomized controlled trials on the effects of magnesium supplementation on insulin sensitivity and glucose control.",
+        "journal": "Pharmacological research",
+        "year": "2016",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "A systematic review and meta-analysis was conducted to evaluate the effect of oral magnesium supplementation on insulin sensitivity and glucose control in both diabetic and non-diabetic individuals. PubMed-Medline, SCOPUS, Web of Science and Google Scholar databases were searched (from inception to ",
+        "abstractChars": 1642,
+        "abstractSha256": "4592285e6bcaec44207709987ee971d42258b46a2a862e6a528f45eb7ff6ec91"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.phrs.2016.06.019",
+        "title": "A systematic review and meta-analysis of randomized controlled trials on the effects of magnesium supplementation on insulin sensitivity and glucose control",
+        "journal": "Pharmacological Research",
+        "year": "2016",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.2165/00128413-200313850-00051",
+        "title": "Magnesium supplementation improves insulin sensitivity",
+        "journal": "Inpharma Weekly",
+        "year": "2003",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1186/s12937-017-0290-1",
+        "title": "Lack of efficacy of pomegranate supplementation for glucose management, insulin levels and sensitivity: evidence from a systematic review and meta-analysis",
+        "journal": "Nutrition Journal",
+        "year": "2017",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "effect:creatine-recovery",
+    "libraryClaim": "Creatine Monohydrate — Recovery (Grade C): May reduce muscle damage markers and support recovery between sessions.",
+    "illustrativeDetails": "Creatine (3-5 g) may reduce muscle damage markers and support recovery between sessions in resistance-trained adults",
+    "queries": {
+      "pubmed": "creatine supplementation muscle damage recovery",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "creatine supplementation muscle damage markers recovery"
+    },
+    "files": [
+      {
+        "path": "effect_creatine-recovery/crossref.json",
+        "committed": true,
+        "sha256": "37c6d9f2d98af2ec38cdf595382e5a0323faa0da4831cf9380980c8fedde6ae7"
+      },
+      {
+        "path": "effect_creatine-recovery/esearch.json",
+        "committed": true,
+        "sha256": "889c64d49ebe1777faf643a8b2cf21883d853187ffcfa301c6cc685e671ae5c6"
+      },
+      {
+        "path": "local/effect_creatine-recovery/efetch.xml",
+        "committed": false,
+        "sha256": "026a835fb341e8542e800d5014517f37e20668d5eeca02facc92c17cf140db8a"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "38999792",
+        "doi": "10.3390/nu16132044",
+        "title": "Omega-3 Fatty Acid Supplementation on Post-Exercise Inflammation, Muscle Damage, Oxidative Response, and Sports Performance in Physically Healthy Adults-A Systematic Review of Randomized Controlled Trials.",
+        "journal": "Nutrients",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Omega-3 is a family of n-3 polyunsaturated fatty acids (PUFAs), which have been used to treat a wide variety of chronic diseases, due mainly to their antioxidant and anti-inflammatory properties, among others. In this context, omega-3 could be post-exercise recovery agent and sports supplement that ",
+        "abstractChars": 2327,
+        "abstractSha256": "69156a138afc4cb1969dd87d65d7a82074a9401add5cacf6b2d63068fdfe9800"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34472118",
+        "doi": "10.1111/jfbc.13916",
+        "title": "Creatine supplementation effect on recovery following exercise-induced muscle damage: A systematic review and meta-analysis of randomized controlled trials.",
+        "journal": "Journal of food biochemistry",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Exercise-induced muscle damage (EIMD) causes increased soreness, impaired function of muscles, and reductions in muscle force. Accumulating evidence suggests the beneficial effects of creatine on EIMD. Nevertheless, outcomes differ substantially across various articles. The main aim of this meta-ana",
+        "abstractChars": 2092,
+        "abstractSha256": "b2febda590b5bc9f1591db866d4ce47d0221b636824fd6b3f1441b63c87fdbb1"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "40507040",
+        "doi": "10.3390/nu17111772",
+        "title": "The Effects of Creatine Monohydrate Supplementation on Recovery from Eccentric Exercise-Induced Muscle Damage: A Double-Blind, Randomized, Placebo-Controlled Trial Considering Sex and Age Differences.",
+        "journal": "Nutrients",
+        "year": "2025",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Background/Objectives: In this study, we aimed to examine the effect of creatine monohydrate (CrM) supplementation on recovery from eccentric exercise-induced muscle damage (EIMD) in diverse populations, including different sexes and age groups. EIMD decreases maximal voluntary contraction (MVC), re",
+        "abstractChars": 1694,
+        "abstractSha256": "5fedf6cb411ed40e59daf3700830705e5f2f3fd66347122cbb3a93b8e11d1773"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.22541/au.160027945.55872758",
+        "title": "Creatine Supplementation Effect on Recovery Following Exercise-Induced Muscle Damage: A Systematic Review and Meta‐analysis of Randomized Controlled Trials",
+        "journal": null,
+        "year": "2020",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/jfbc.13916",
+        "title": "Creatine supplementation effect on recovery following exercise‐induced muscle damage: A systematic review and meta‐analysis of randomized controlled trials",
+        "journal": "Journal of Food Biochemistry",
+        "year": "2021",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.21926/rpn.2204021",
+        "title": "The Effects of Creatine Supplementation on Markers of Muscle Damage and Inflammation Following Exercise in Older Adults: A Brief Narrative Review",
+        "journal": "Recent Progress in Nutrition",
+        "year": "2022",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "effect:fish-oil-longevity",
+    "libraryClaim": "Fish Oil (Omega-3) — Healthy aging (Grade C): Associated with favorable markers; causal longevity benefit unproven.",
+    "illustrativeDetails": "Omega-3 (1000-2000 mg) associated with favorable aging markers; causal longevity benefit unproven",
+    "queries": {
+      "pubmed": "omega-3 fatty acids all-cause mortality meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "omega-3 fatty acid supplementation all-cause mortality"
+    },
+    "files": [
+      {
+        "path": "effect_fish-oil-longevity/crossref.json",
+        "committed": true,
+        "sha256": "18b764f669feef0dbd650c336ef116ed15011852670b9cb60de363a29d3a6569"
+      },
+      {
+        "path": "effect_fish-oil-longevity/esearch.json",
+        "committed": true,
+        "sha256": "cf0e8f7a7ee9daa46506b90b5834368c85af325bca448100358d1c14a9d4efcb"
+      },
+      {
+        "path": "local/effect_fish-oil-longevity/efetch.xml",
+        "committed": false,
+        "sha256": "3f7eb7a7b6a2a45286c5ee8a7019bd1b5b1ce78b96c585a4400be8d2de7a5442"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "32114706",
+        "doi": "10.1002/14651858.CD003177.pub5",
+        "title": "Omega-3 fatty acids for the primary and secondary prevention of cardiovascular disease.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2020",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Omega-3 polyunsaturated fatty acids from oily fish (long-chain omega-3 (LCn3)), including eicosapentaenoic acid (EPA) and docosahexaenoic acid (DHA)), as well as from plants (alpha-linolenic acid (ALA)) may benefit cardiovascular health. Guidelines recommend increasing omega-3-rich foods",
+        "abstractChars": 5003,
+        "abstractSha256": "6f3b9ff12d97ef56352b075d78766aa2688331f4ab2192713781604b474862d7"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30019766",
+        "doi": "10.1002/14651858.CD003177.pub3",
+        "title": "Omega-3 fatty acids for the primary and secondary prevention of cardiovascular disease.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Researchers have suggested that omega-3 polyunsaturated fatty acids from oily fish (long-chain omega-3 (LCn3), including eicosapentaenoic acid (EPA) and docosahexaenoic acid (DHA)), as well as from plants (alpha-linolenic acid (ALA)) benefit cardiovascular health. Guidelines recommend in",
+        "abstractChars": 4954,
+        "abstractSha256": "7f47222d30db1cd5bc43fb2befd41771d2207050207a3c78bc766d3155e8ef82"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36103100",
+        "doi": "10.1007/s10557-022-07379-z",
+        "title": "Efficacy and Safety of Omega-3 Fatty Acids in the Prevention of Cardiovascular Disease: A Systematic Review and Meta-analysis.",
+        "journal": "Cardiovascular drugs and therapy",
+        "year": "2024",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: It is widely accepted that omega-3 fatty acids are beneficial in the prevention of cardiovascular disease, but many large randomized controlled trial studies and meta-analyses have come to different conclusions. The evidence for omega-3 fatty acids supplementation to prevent cardiovascul",
+        "abstractChars": 3314,
+        "abstractSha256": "8ce776b77dcf47b05ff8fd619020ad816ad8f478d6590dba8e28223dd3b84296"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/j.1525-139x.2010.00748.x",
+        "title": "Omega-3 Fatty Acid Supplementation in Advanced Kidney Disease",
+        "journal": "Seminars in Dialysis",
+        "year": "2010",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1038/s41598-024-78486-0",
+        "title": "Association between dietary omega-3 fatty acid intake and all-cause mortality in patients with osteoarthritis: a population-based prospective cohort study",
+        "journal": "Scientific Reports",
+        "year": "2024",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1093/cdn/nzab041_047",
+        "title": "Circulating Plasma Omega-7 Monounsaturated Fatty Acids (Cis-Vaccenic Acid and Palmitoleic Acid) Are Related to All-Cause Mortality: The Lifelines Fatty Acids Cohort Study",
+        "journal": "Current Developments in Nutrition",
+        "year": "2021",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:magnesium-sleep/populationRelevance",
+    "libraryClaim": "Magnesium — Sleep quality (Grade B): May improve subjective sleep quality, particularly in older adults or those with low intake. [dimension populationRelevance, score 2: Largest in adults with suboptimal magnesium.]",
+    "illustrativeDetails": "Magnesium sleep benefit is largest in adults with suboptimal magnesium status",
+    "queries": {
+      "pubmed": "magnesium supplementation sleep systematic review",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "magnesium supplementation sleep quality systematic review"
+    },
+    "files": [
+      {
+        "path": "dimension_magnesium-sleep_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "9fb04ad9ebd6a6d93a3d48127219b09f55442c0d5487d8116cd68eb145125f76"
+      },
+      {
+        "path": "dimension_magnesium-sleep_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "8d345f812e0f8016ef0b4af9c37537334e3ce997e11ad715ba64baf88479d24c"
+      },
+      {
+        "path": "local/dimension_magnesium-sleep_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "8e08ed3a9f3a102e571712f6db308fe5e6fee9ca89b98bc68d0a5d9ee32b2262"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35184264",
+        "doi": "10.1007/s12011-022-03162-1",
+        "title": "The Role of Magnesium in Sleep Health: a Systematic Review of Available Literature.",
+        "journal": "Biological trace element research",
+        "year": "2023",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "To date, no study has critically reviewed the current literature on the association between magnesium (Mg) and sleep health. Therefore, we carried out a systematic review to assess the association between Mg and sleep patterns in adults' population through observational and interventional studies. W",
+        "abstractChars": 1876,
+        "abstractSha256": "697a12ddbf35aa8b439b2db3e7b54dcb9fad8ba623c92f5e16e172a76ec5b4e9"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33865376",
+        "doi": "10.1186/s12906-021-03297-z",
+        "title": "Oral magnesium supplementation for insomnia in older adults: a Systematic Review & Meta-Analysis.",
+        "journal": "BMC complementary medicine and therapies",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Magnesium supplementation is often purported to improve sleep; however, as both an over-the-counter sleep aid and a complementary and alternative medicine, there is limited evidence to support this assertion. The aim was to assess the effectiveness and safety of magnesium supplementation",
+        "abstractChars": 1881,
+        "abstractSha256": "fd80b9e31a0dfbd29d9f7caed0f9b0659029d0bcada4a611760dd1dcf38910c0"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33441476",
+        "doi": "10.1136/postgradmedj-2020-139319",
+        "title": "Efficacy of dietary supplements on improving sleep quality: a systematic review and meta-analysis.",
+        "journal": "Postgraduate medical journal",
+        "year": "2022",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "PURPOSE: Different dietary supplements aimed at improving sleep quality are available on the market, but there has not been a comprehensive review to evaluate the efficacy of these dietary supplements on subjective sleep quality. We aimed to summarise up-to-date research evidence and to identify the",
+        "abstractChars": 1801,
+        "abstractSha256": "88e760f7790bd4170e7dced9db025c5833854bc9e2013db57d880a2b8cbc6e60"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/jsr.67_12912",
+        "title": "Magnesium supplementation for restless legs syndrome and periodic limb movement disorder: A systematic review",
+        "journal": "Journal of Sleep Research",
+        "year": "2019",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.21203/rs.3.rs-3958974/v1",
+        "title": "Effectiveness of Magnesium Supplementation on Sleep Quality and Related Health Outcomes for Adults with Poor Sleep Quality: A Randomized Double-Blind Placebo-Controlled Crossover Trial",
+        "journal": null,
+        "year": "2024",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1684/mrh.2022.0503",
+        "title": "Effect of short-term magnesium supplementation on anxiety, depression and sleep quality in patients after open-heart surgery",
+        "journal": "Magnesium Research",
+        "year": "2022",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:creatine-strength/populationRelevance",
+    "libraryClaim": "Creatine Monohydrate — Strength & power output (Grade A): Robust evidence for improved strength, power, and lean mass when combined with resistance training. [dimension populationRelevance, score 2: Strongest in training adults; less relevant to the sedentary.]",
+    "illustrativeDetails": "Creatine strength benefit is strongest in training adults and less relevant to the sedentary",
+    "queries": {
+      "pubmed": "creatine supplementation resistance training older adults meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "creatine supplementation during resistance training in older adults meta-analysis"
+    },
+    "files": [
+      {
+        "path": "dimension_creatine-strength_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "eaf50be7794168b91b27256396b3283f99a4e1f346ca9607d4e0bc5085a3a8b3"
+      },
+      {
+        "path": "dimension_creatine-strength_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "87a8422784af26802d5202cae06845b1304ed22cbde5f0d04b143efb9b5e9c29"
+      },
+      {
+        "path": "local/dimension_creatine-strength_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "c0a65b59416acb15721695ba144cafb7e5e8a468960f2bd3f4b8ba59fa2d46b8"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37432300",
+        "doi": "10.3390/nu15092116",
+        "title": "The Effects of Creatine Supplementation Combined with Resistance Training on Regional Measures of Muscle Hypertrophy: A Systematic Review with Meta-Analysis.",
+        "journal": "Nutrients",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "The purpose of this paper was to carry out a systematic review with a meta-analysis of randomized controlled trials that examined the combined effects of resistance training (RT) and creatine supplementation on regional changes in muscle mass, with direct imaging measures of hypertrophy. Moreover, w",
+        "abstractChars": 1551,
+        "abstractSha256": "600509149f01b8b047e54b9a50b92707b366cb39fdcbc87370085dfa185b79b0"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39519498",
+        "doi": "10.3390/nu16213665",
+        "title": "Effects of Creatine Supplementation and Resistance Training on Muscle Strength Gains in Adults <50 Years of Age: A Systematic Review and Meta-Analysis.",
+        "journal": "Nutrients",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Numerous meta-analyses have assessed the efficacy of creatine supplementation in increasing muscle strength. However, most have not considered the effect of the participants' age, training duration, or other confounding variables on strength outcomes. Therefore, the purpose of this study",
+        "abstractChars": 1786,
+        "abstractSha256": "185a0c1944fc5acc0bfb7e4efd8872804c7bdbe202ea92d059667719674b92aa"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34836013",
+        "doi": "10.3390/nu13113757",
+        "title": "Efficacy of Creatine Supplementation Combined with Resistance Training on Muscle Strength and Muscle Mass in Older Females: A Systematic Review and Meta-Analysis.",
+        "journal": "Nutrients",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Sarcopenia refers to the age-related loss of muscle strength and muscle mass, which is associated with a reduced quality of life, particularly in older females. Resistance training (RT) is well established to be an effective intervention to counter indices of sarcopenia. Accumulating research indica",
+        "abstractChars": 1482,
+        "abstractSha256": "f5f96d85618f0e520952e086c83fc502d3cabe696e61d85dfd0b2f8d636618fe"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1249/mss.0000000000000220",
+        "title": "Creatine Supplementation during Resistance Training in Older Adults—A Meta-analysis",
+        "journal": "Medicine & Science in Sports & Exercise",
+        "year": "2014",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.2147/oajsm.s123529",
+        "title": "Effect of creatine supplementation during resistance training on lean tissue mass and muscular strength in older adults: a meta-analysis",
+        "journal": "Open Access Journal of Sports Medicine",
+        "year": "2017",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fnut.2018.00027",
+        "title": "Creatine Supplementation During Resistance Training Does Not Lead to Greater Bone Mineral Density in Older Humans: A Brief Meta-Analysis",
+        "journal": "Frontiers in Nutrition",
+        "year": "2018",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:creatine-cognition/consistency",
+    "libraryClaim": "Creatine Monohydrate — Cognitive performance (Grade C): Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians. [dimension consistency, score 1: Benefit appears mainly under stressors (sleep loss, vegetarian).]",
+    "illustrativeDetails": "Creatine cognitive benefit appears mainly under stressors (sleep loss, vegetarian diet)",
+    "queries": {
+      "pubmed": "creatine supplementation cognitive function systematic review",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "creatine supplementation cognitive function systematic review meta-analysis"
+    },
+    "files": [
+      {
+        "path": "dimension_creatine-cognition_consistency/crossref.json",
+        "committed": true,
+        "sha256": "c1df756f2e5d22aab9660017c2a16ab93b435cecc2c920fc50721c77ca8a7a70"
+      },
+      {
+        "path": "dimension_creatine-cognition_consistency/esearch.json",
+        "committed": true,
+        "sha256": "99716488457befe354cc542fb1bc46a37ee456d87c5103eebcfee8ddbad8f685"
+      },
+      {
+        "path": "local/dimension_creatine-cognition_consistency/efetch.xml",
+        "committed": false,
+        "sha256": "8ea9bc874900443d62572214f07f26e827aef1781d2d196242fa85f861f0d9ee"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39070254",
+        "doi": "10.3389/fnut.2024.1424972",
+        "title": "The effects of creatine supplementation on cognitive function in adults: a systematic review and meta-analysis.",
+        "journal": "Frontiers in nutrition",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: This study aimed to evaluate the effects of creatine monohydrate supplementation on cognitive function in adults and explore its potential role in preventing and delaying cognitive impairment-related diseases. METHODS: Following the PRISMA 2020 guidelines, a systematic review with meta-a",
+        "abstractChars": 2856,
+        "abstractSha256": "6cec83a703d57a93d29e95da2706679f9d2b8793c3703f1dbcc8d8c91fa67375"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35984306",
+        "doi": "10.1093/nutrit/nuac064",
+        "title": "Effects of creatine supplementation on memory in healthy individuals: a systematic review and meta-analysis of randomized controlled trials.",
+        "journal": "Nutrition reviews",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "CONTEXT: From an energy perspective, the brain is very metabolically demanding. It is well documented that creatine plays a key role in brain bioenergetics. There is some evidence that creatine supplementation can augment brain creatine stores, which could increase memory. OBJECTIVE: A systematic re",
+        "abstractChars": 1700,
+        "abstractSha256": "ee859e5b748eaf040709ffaeed0466997398254002a289ec5248c19937c6a419"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "29704637",
+        "doi": "10.1016/j.exger.2018.04.013",
+        "title": "Effects of creatine supplementation on cognitive function of healthy individuals: A systematic review of randomized controlled trials.",
+        "journal": "Experimental gerontology",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND AND AIMS: Creatine is a supplement used by sportsmen to increase athletic performance by improving energy supply to muscle tissues. It is also an essential brain compound and some hypothesize that it aids cognition by improving energy supply and neuroprotection. The aim of this systematic",
+        "abstractChars": 1665,
+        "abstractSha256": "3f9e8a976c3e565063c73728f5f48f8f321496fd54ff7fd2aefa8e39fc7ff93d"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fnut.2026.1716285",
+        "title": "Commentary: The effects of creatine supplementation on cognitive function in adults: a systematic review and meta-analysis",
+        "journal": "Frontiers in Nutrition",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fnut.2024.1424972",
+        "title": "The effects of creatine supplementation on cognitive function in adults: a systematic review and meta-analysis",
+        "journal": "Frontiers in Nutrition",
+        "year": "2024",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fnut.2025.1570800",
+        "title": "Corrigendum: The effects of creatine supplementation on cognitive function in adults: a systematic review and meta-analysis",
+        "journal": "Frontiers in Nutrition",
+        "year": "2025",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:creatine-cognition/populationRelevance",
+    "libraryClaim": "Creatine Monohydrate — Cognitive performance (Grade C): Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians. [dimension populationRelevance, score 2: Most relevant to sleep-deprived adults and vegetarians.]",
+    "illustrativeDetails": "Creatine cognitive benefit is most relevant to sleep-deprived adults and vegetarians",
+    "queries": {
+      "pubmed": "creatine supplementation vegetarians cognitive",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "creatine supplementation vegetarians brain function"
+    },
+    "files": [
+      {
+        "path": "dimension_creatine-cognition_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "d10d1c538ada09d9402d1276543cb0f01b47a90426854524b15ee5fc193a9a81"
+      },
+      {
+        "path": "dimension_creatine-cognition_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "15c9ecc84bdb8a3f833ae1b87dbafb3df0b13764f04d6d332a67020178bcf0f1"
+      },
+      {
+        "path": "local/dimension_creatine-cognition_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "774e3d1e3754eed738c7ae3a5895e8e36bc147b396203c6754d78a1578de9e41"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "29704637",
+        "doi": "10.1016/j.exger.2018.04.013",
+        "title": "Effects of creatine supplementation on cognitive function of healthy individuals: A systematic review of randomized controlled trials.",
+        "journal": "Experimental gerontology",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND AND AIMS: Creatine is a supplement used by sportsmen to increase athletic performance by improving energy supply to muscle tissues. It is also an essential brain compound and some hypothesize that it aids cognition by improving energy supply and neuroprotection. The aim of this systematic",
+        "abstractChars": 1665,
+        "abstractSha256": "3f9e8a976c3e565063c73728f5f48f8f321496fd54ff7fd2aefa8e39fc7ff93d"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37968687",
+        "doi": "10.1186/s12916-023-03146-5",
+        "title": "The effects of creatine supplementation on cognitive performance-a randomised controlled study.",
+        "journal": "BMC medicine",
+        "year": "2023",
+        "pubTypes": [
+          "Randomized Controlled Trial",
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: Creatine is an organic compound that facilitates the recycling of energy-providing adenosine triphosphate (ATP) in muscle and brain tissue. It is a safe, well-studied supplement for strength training. Previous studies have shown that supplementation increases brain creatine levels, which",
+        "abstractChars": 1949,
+        "abstractSha256": "4c8cf6e35094a24542fc4f6f61ffc3019a6163b175f437ba6eb8a69386d05a0d"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "21118604",
+        "doi": "10.1017/S0007114510004733",
+        "title": "The influence of creatine supplementation on the cognitive functioning of vegetarians and omnivores.",
+        "journal": "The British journal of nutrition",
+        "year": "2011",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Creatine when combined with P forms phosphocreatine that acts as a reserve of high-energy phosphate. Creatine is found mostly in meat, fish and other animal products, and the levels of muscle creatine are known to be lower in vegetarians. Creatine supplementation influences brain functioning as indi",
+        "abstractChars": 1103,
+        "abstractSha256": "b131239cbfea854d1462c1768b8c6f30ae521f5f49e4ec98b733287710deee84"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.20900/jpbs.20250006",
+        "title": "Creatine Supplementation: More Is Likely Better for Brain Bioenergetics, Health and Function",
+        "journal": "Journal of Psychiatry and Brain Science",
+        "year": "2025",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1123/ijsnem.14.5.517",
+        "title": "Skeletal Muscle Total Creatine Content and Creatine Transporter Gene Expression in Vegetarians Prior to and Following Creatine Supplementation",
+        "journal": "International Journal of Sport Nutrition and Exercise Metabolism",
+        "year": "2004",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1096/fasebj.21.6.lb60-b",
+        "title": "Creatine supplementation and exercise performance in vegetarians and omnivores",
+        "journal": "The FASEB Journal",
+        "year": "2007",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:vitamin-d-deficiency/populationRelevance",
+    "libraryClaim": "Vitamin D3 — Correcting deficiency (Grade A): Effectively raises serum 25(OH)D in deficient individuals. [dimension populationRelevance, score 3: Directly applicable to deficient adults.]",
+    "illustrativeDetails": "Vitamin D supplementation to correct deficiency applies directly to deficient adults",
+    "queries": {
+      "pubmed": "vitamin D supplementation deficient adults serum 25-hydroxyvitamin D response",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "vitamin D supplementation dose response 25-hydroxyvitamin D deficient adults"
+    },
+    "files": [
+      {
+        "path": "dimension_vitamin-d-deficiency_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "e1a9a88bdefa355422be47cb154a809b03dbc30f39f2444631d8e872e3d41469"
+      },
+      {
+        "path": "dimension_vitamin-d-deficiency_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "cacbbbc5efe171cfcf1917ee566590a96064c14570a905675679e807a88d0676"
+      },
+      {
+        "path": "local/dimension_vitamin-d-deficiency_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "a9af899cb87c1cf1dac49e3501060a8c561b15dbdc6afaf53d897e9ba653b2e7"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "22552031",
+        "doi": "10.3945/ajcn.111.031070",
+        "title": "Comparison of vitamin D2 and vitamin D3 supplementation in raising serum 25-hydroxyvitamin D status: a systematic review and meta-analysis.",
+        "journal": "The American journal of clinical nutrition",
+        "year": "2012",
+        "pubTypes": [
+          "Comparative Study",
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Currently, there is a lack of clarity in the literature as to whether there is a definitive difference between the effects of vitamins D2 and D3 in the raising of serum 25-hydroxyvitamin D [25(OH)D]. OBJECTIVE: The objective of this article was to report a systematic review and meta-anal",
+        "abstractChars": 1728,
+        "abstractSha256": "9c98413431351262777f1bc024d9db8c8230f7beb801d40b8109afa51c0a16cf"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37865222",
+        "doi": "10.1016/j.advnut.2023.09.016",
+        "title": "Comparison of the Effect of Daily Vitamin D2 and Vitamin D3 Supplementation on Serum 25-Hydroxyvitamin D Concentration (Total 25(OH)D, 25(OH)D2, and 25(OH)D3) and Importance of Body Mass Index: A Systematic Review and Meta-Analysis.",
+        "journal": "Advances in nutrition (Bethesda, Md.)",
+        "year": "2024",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "BACKGROUND: Two previous meta-analyses showed smaller differences between vitamin D3 and vitamin D2 in raising serum 25-hydroxyvitamin D [25(OH)D] and a consistently high heterogeneity when only including daily dosing studies. OBJECTIVE: This study aimed to compare more frequently dosed vitamin D2 a",
+        "abstractChars": 2344,
+        "abstractSha256": "31a5ebb79a6679faf23e313ba39d56a8db1e52d14295c786e6a5b1d674eaf1ac"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30089075",
+        "doi": "10.1056/NEJMoa1800927",
+        "title": "Vitamin D Supplementation in Pregnancy and Lactation and Infant Growth.",
+        "journal": "The New England journal of medicine",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: It is unclear whether maternal vitamin D supplementation during pregnancy and lactation improves fetal and infant growth in regions where vitamin D deficiency is common. METHODS: We conducted a randomized, double-blind, placebo-controlled trial in Bangladesh to assess the effects of week",
+        "abstractChars": 2245,
+        "abstractSha256": "01d2869acafc2d377cafa2dc9a2993c2dec704bf96935ad6697c0b0a757d412f"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.26226/morressier.60b65c8a85c68bde00a3571a",
+        "title": "Preliminary cost-effectiveness of vitamin D3 supplementation in older adults with vitamin D deficiency (defined by serum 25-hydroxyvitamin D) in Ireland",
+        "journal": null,
+        "year": "2021",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1002/brb3.71095/v2/response1",
+        "title": "Author response for \"Serum 25-Hydroxyvitamin D3 Status in Adolescents with Anxiety Disorders: A Case-Control and Vitamin D Supplementation Substudy\"",
+        "journal": null,
+        "year": "2025",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3390/nu7075111",
+        "title": "Factors Affecting 25-Hydroxyvitamin D Concentration in Response to Vitamin D Supplementation",
+        "journal": "Nutrients",
+        "year": "2015",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:fish-oil-cardiovascular/populationRelevance",
+    "libraryClaim": "Fish Oil (Omega-3) — Cardiovascular support (Grade B): May lower triglycerides; benefits dose-dependent on EPA/DHA content. [dimension populationRelevance, score 2: Largest in adults with elevated triglycerides.]",
+    "illustrativeDetails": "Omega-3 triglyceride-lowering effect is largest in adults with elevated triglycerides",
+    "queries": {
+      "pubmed": "omega-3 hypertriglyceridemia triglyceride lowering",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "omega-3 fatty acids hypertriglyceridemia triglyceride lowering"
+    },
+    "files": [
+      {
+        "path": "dimension_fish-oil-cardiovascular_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "9047bcb620a85fbf326b5c3af6e10aa60039f8f0100e5468830d23090377c45f"
+      },
+      {
+        "path": "dimension_fish-oil-cardiovascular_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "294c64f6b30e2c2d21659d7a10197c50a673ce0d5eddb09579f6e080f0728574"
+      },
+      {
+        "path": "local/dimension_fish-oil-cardiovascular_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "5cbb4df645ae3d699ac5a9190461ae086c2c9bc948f5bf8926c6d0831ab726d7"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30415628",
+        "doi": "10.1056/NEJMoa1812792",
+        "title": "Cardiovascular Risk Reduction with Icosapent Ethyl for Hypertriglyceridemia.",
+        "journal": "The New England journal of medicine",
+        "year": "2019",
+        "pubTypes": [
+          "Clinical Trial, Phase III",
+          "Journal Article",
+          "Multicenter Study",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: Patients with elevated triglyceride levels are at increased risk for ischemic events. Icosapent ethyl, a highly purified eicosapentaenoic acid ethyl ester, lowers triglyceride levels, but data are needed to determine its effects on ischemic events. METHODS: We performed a multicenter, ra",
+        "abstractChars": 2546,
+        "abstractSha256": "058ff2b8a4d4b4af0f3c84b8d2dd670621f7a5c6c4254d3b13da5ee66c4e65dd"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39163858",
+        "doi": "10.1016/j.medj.2024.07.024",
+        "title": "Impact of omega-3 fatty acids on hypertriglyceridemia, lipidomics, and gut microbiome in patients with type 2 diabetes.",
+        "journal": "Med (New York, N.Y.)",
+        "year": "2025",
+        "pubTypes": [
+          "Clinical Trial, Phase IV",
+          "Journal Article",
+          "Multicenter Study",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: Fish oil (FO), a mixture of omega-3 fatty acids mainly comprising docosahexaenoic acid (DHA) and eicosapentaenoic acid (EPA), has been recommended for patients with type 2 diabetes (T2D) and hypertriglyceridemia. However, its effects on lipidomic profiles and gut microbiota and the facto",
+        "abstractChars": 1795,
+        "abstractSha256": "50ece6e5ef186cf99c33246f478cbb071700422442a89bf2f5e43777839cc9f6"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "38777770",
+        "doi": "10.5551/jat.64896",
+        "title": "Comparison of Efficacy between Pemafibrate and Omega-3-Acid Ethyl Ester in the Liver: the PORTRAIT Study.",
+        "journal": "Journal of atherosclerosis and thrombosis",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Comparative Study"
+        ],
+        "abstractExcerpt": "AIM: No pharmacotherapeutic treatment has been established for metabolic dysfunction-associated steatotic liver disease (MASLD) and metabolic dysfunction-associated steatohepatitis (MASH). This trial compared the effects of pemafibrate and omega-3-acid ethyl ester on hepatic function in patients wit",
+        "abstractChars": 1827,
+        "abstractSha256": "6641e8c4a4e96b92d29f99b29d28ddcf07fb3f98224cf771ca7fd0ad75f631bc"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.4103/sjim.sjim_42_25",
+        "title": "Omega-3 fatty acids in clinical practice: Beyond triglyceride-lowering role",
+        "journal": "Saudi Journal of Internal Medicine",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1172/jci147558",
+        "title": "Triglyceride lowering by omega-3 fatty acids: a mechanism mediated by N-acyl taurines",
+        "journal": "Journal of Clinical Investigation",
+        "year": "2021",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.18535/jmscr/v5i3.34",
+        "title": "A Study on Effect of Omega 3 Fatty Acids in Hypertriglyceridemia",
+        "journal": "Journal of Medical Science And clinical Research",
+        "year": "2017",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:melatonin-sleep/populationRelevance",
+    "libraryClaim": "Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient. [dimension populationRelevance, score 3: Directly relevant to delayed onset and jet lag.]",
+    "illustrativeDetails": "Melatonin is directly relevant to delayed sleep onset and jet lag",
+    "queries": {
+      "pubmed": "melatonin jet lag",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "melatonin for the prevention and treatment of jet lag"
+    },
+    "files": [
+      {
+        "path": "dimension_melatonin-sleep_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "b767f81534493fb0b45f829efec657e54c51a56c5578ec903a4b600c1ed86c3a"
+      },
+      {
+        "path": "dimension_melatonin-sleep_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "f49b7606d5d1500e2eb33bd0b217d581aec9ef0273796ddb4fb6e504748aba59"
+      },
+      {
+        "path": "local/dimension_melatonin-sleep_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "9f5fccc08b61741a142de5895a1141e7b5d19f57d2971414117738a80cc6acaa"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "24780537",
+        "doi": null,
+        "title": "Jet lag.",
+        "journal": "BMJ clinical evidence",
+        "year": "2014",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "INTRODUCTION: Jet lag is a syndrome caused by disruption of the 'body clock', and affects most air travellers crossing five or more time zones; it is worse on eastward than on westward flights. METHODS AND OUTCOMES: We conducted a systematic review and aimed to answer the following clinical question",
+        "abstractChars": 1118,
+        "abstractSha256": "09ffb12f7358f03c3c6b739c37e74741e16c551be2b0217ffa8600d6d439bcfb"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34030534",
+        "doi": "10.1080/07420528.2021.1930029",
+        "title": "Evening wear of blue-blocking glasses for sleep and mood disorders: a systematic review.",
+        "journal": "Chronobiology international",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Blue-blocking glasses, also known as amber glasses, are plastic glasses that primarily block blue light. Blue-blocking glasses have been studied as a sleep intervention for insomnia, delayed sleep-phase disorder, shift work, jet lag, and nonpathologic sleep improvement. Blue-blocking glasses have al",
+        "abstractChars": 2124,
+        "abstractSha256": "def5df1cf2f3712bd2c90718f88d3c10b5fbaa8e1b35479f443e2ae6a53ec788"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "19445780",
+        "doi": null,
+        "title": "Jet lag.",
+        "journal": "BMJ clinical evidence",
+        "year": "2008",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "INTRODUCTION: Jet lag affects most air travellers crossing five or more time zones; it tends to be worse on eastward than on westward flights. METHODS AND OUTCOMES: We conducted a systematic review and aimed to answer the following clinical question: What are the effects of interventions to prevent ",
+        "abstractChars": 1106,
+        "abstractSha256": "44af0f6d8f4bcb644d3653f2d74ab75c064d407c0814b0dcf77fb1fd09d0fe2d"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1002/14651858.cd001520",
+        "title": "Melatonin for the prevention and treatment of jet lag",
+        "journal": "Cochrane Database of Systematic Reviews",
+        "year": "2002",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1201/b11101-30",
+        "title": "Melatonin and Treatment of Disorders Related to Jet Lag and Shift Work",
+        "journal": "Melatonin in the Promotion of Health",
+        "year": "2011",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/b978-0-12-378610-4.00285-0",
+        "title": "Light and Melatonin Treatment for Jet Lag Disorder",
+        "journal": "Encyclopedia of Sleep",
+        "year": "2013",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:ashwagandha-stress/populationRelevance",
+    "libraryClaim": "Ashwagandha — Stress & cortisol (Grade B): Multiple trials show reduced perceived stress and cortisol over 6-8 weeks. [dimension populationRelevance, score 2: Studied in chronically stressed adults.]",
+    "illustrativeDetails": "Ashwagandha stress effects are studied in chronically stressed adults",
+    "queries": {
+      "pubmed": "ashwagandha stress systematic review meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "ashwagandha stress anxiety systematic review meta-analysis"
+    },
+    "files": [
+      {
+        "path": "dimension_ashwagandha-stress_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "3180daf31fdf6b842b830ee721dd57e7a15a01ff7385e66821110445277c0400"
+      },
+      {
+        "path": "dimension_ashwagandha-stress_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "945cd55d5560ebc2df0b74578013c514d87e66668f7d561511f511c6f55c5194"
+      },
+      {
+        "path": "local/dimension_ashwagandha-stress_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "eea0af9351b02894582431be32fa782327059448aaff8308e16f0eecd0ca4854"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36017529",
+        "doi": "10.1002/ptr.7598",
+        "title": "Does Ashwagandha supplementation have a beneficial effect on the management of anxiety and stress? A systematic review and meta-analysis of randomized controlled trials.",
+        "journal": "Phytotherapy research : PTR",
+        "year": "2022",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "Clinical trial studies revealed conflicting results on the effect of Ashwagandha extract on anxiety and stress. Therefore, we aimed to evaluate the effect of Ashwagandha supplementation on anxiety as well as stress. A systematic search was performed in PubMed/Medline, Scopus, and Google Scholar from",
+        "abstractChars": 1553,
+        "abstractSha256": "07d07bc6e71b7e54f35ebe9c0bb7f89c6e7ef4ef5eec4c9827048887038a2422"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39348746",
+        "doi": "10.1016/j.explore.2024.103062",
+        "title": "Effects of Ashwagandha (Withania Somnifera) on stress and anxiety: A systematic review and meta-analysis.",
+        "journal": "Explore (New York, N.Y.)",
+        "year": "2024",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "BACKGROUND: Ashwagandha (Withania somnifera) is an adaptogenic herb used to prevent and treat psychosomatic disorders. This systematic review and meta-analysis evaluated the effects and safety of Ashwagandha on psychosomatic functions related to stress and anxiety among patients. METHODS: A comprehe",
+        "abstractChars": 1534,
+        "abstractSha256": "ab2409dee6a85b4bd69de23807f2c0e7975c0158173406f8659919fc17435cc5"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39083548",
+        "doi": "10.1002/hup.2911",
+        "title": "Safety and efficacy of Withania somnifera for anxiety and insomnia: Systematic review and meta-analysis.",
+        "journal": "Human psychopharmacology",
+        "year": "2024",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "OBJECTIVE: Despite the historical neurological use of Withania somnifera, limited evidence supports its efficacy for conditions like anxiety and insomnia. Given its known anti-stress properties, this review evaluated its safety and efficacy for anxiety and insomnia. METHODS: We searched Medline, Coc",
+        "abstractChars": 1420,
+        "abstractSha256": "fbb0bdd611faa389048453d3a4cd4677fa918de82180e6b5ce1cf4ede7e08010"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.explore.2024.103062",
+        "title": "Effects of Ashwagandha (Withania Somnifera) on stress and anxiety: A systematic review and meta-analysis",
+        "journal": "EXPLORE",
+        "year": "2024",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1192/bjo.2025.10136",
+        "title": "Effects of Ashwagandha Supplements on Cortisol, Stress, and Anxiety Levels in Adults: A Systematic Review and Meta-Analysis",
+        "journal": "BJPsych Open",
+        "year": "2025",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.56726/irjmets68227",
+        "title": "The Role of Ashwagandha in Stress and Anxiety Management: A Systematic Review",
+        "journal": "International Research Journal of Modernization in Engineering Technology and Science",
+        "year": "2025",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:caffeine-focus/populationRelevance",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance. [dimension populationRelevance, score 2: Broad in healthy adults; tolerance varies.]",
+    "illustrativeDetails": "Caffeine alertness benefit is broad in healthy adults; tolerance varies",
+    "queries": {
+      "pubmed": "caffeine tolerance habitual consumption alertness",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "caffeine withdrawal reversal habitual consumers alertness"
+    },
+    "files": [
+      {
+        "path": "dimension_caffeine-focus_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "edfb6ee5017f201d330f0773cef48bacfb1a79405a4a115b12f5896f57e3d368"
+      },
+      {
+        "path": "dimension_caffeine-focus_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "8057906ab33bf7493172daa45c62cadbba73eaf8c4f262e05673b90a48a17c88"
+      },
+      {
+        "path": "local/dimension_caffeine-focus_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "e627b8bdb4ff6c1b7e3e61314234e2f9c377dec14591049b9df3ecbfafc930fd"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "23108937",
+        "doi": "10.1007/s00213-012-2889-4",
+        "title": "Faster but not smarter: effects of caffeine and caffeine withdrawal on alertness and performance.",
+        "journal": "Psychopharmacology",
+        "year": "2013",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "RATIONALE: Despite 100 years of psychopharmacological research, the extent to which caffeine consumption benefits human functioning remains unclear. OBJECTIVES: To measure the effects of overnight caffeine abstinence and caffeine administration as a function of level of habitual caffeine consumption",
+        "abstractChars": 1761,
+        "abstractSha256": "6e8353b2fa151f8f0b68aa416c9ae5fbfcf33a835c4e88483ebb3ab6b9383904"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "16541243",
+        "doi": "10.1007/s00213-006-0341-3",
+        "title": "Subjective, behavioral, and physiological effects of acute caffeine in light, nondependent caffeine users.",
+        "journal": "Psychopharmacology",
+        "year": "2006",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, N.I.H., Extramural"
+        ],
+        "abstractExcerpt": "RATIONALE: Caffeine produces mild psychostimulant effects that are thought to underlie its widespread use. However, the direct effects of caffeine are difficult to evaluate in regular users of caffeine because of tolerance and withdrawal. Indeed, some researchers hypothesize that the psychostimulant",
+        "abstractChars": 1779,
+        "abstractSha256": "ac62ef0c14d52887f0299720c871b9a4231f9970b9fa502f01c2a19b195f394a"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "16423144",
+        "doi": "10.1111/j.1469-7610.2005.01457.x",
+        "title": "Psychostimulant and other effects of caffeine in 9- to 11-year-old children.",
+        "journal": "Journal of child psychology and psychiatry, and allied disciplines",
+        "year": "2006",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: Recent research on adults suggests that \"beneficial\" psychostimulant effects of caffeine are found only in the context of caffeine deprivation; that is, caffeine improves psychomotor and cognitive performance in habitual caffeine consumers following caffeine withdrawal. Furthermore, no n",
+        "abstractChars": 2296,
+        "abstractSha256": "57277e09bf002b5df761138ce02e5dce5f29f18dababe09ebc0c553331851de4"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1089/jcr.2014.0009",
+        "title": "Caffeine and Alertness: In Defense of Withdrawal Reversal",
+        "journal": "Journal of Caffeine Research",
+        "year": "2014",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1007/s00213-004-2104-3",
+        "title": "Cognitive and mood improvements of caffeine in habitual consumers and habitual non-consumers of caffeine",
+        "journal": "Psychopharmacology",
+        "year": "2005",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fnhum.2013.00694",
+        "title": "Caffeine Promotes Global Spatial Processing in Habitual and Non-Habitual Caffeine Consumers",
+        "journal": "Frontiers in Human Neuroscience",
+        "year": "2013",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  }
+]
