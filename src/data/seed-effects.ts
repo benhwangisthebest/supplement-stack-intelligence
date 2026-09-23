@@ -802,14 +802,43 @@ export const SEED_EFFECTS: Effect[] = [
     },
     mechanismTags: ["AMPK", "insulin-sensitivity"],
     paperIds: ["p-berberine-metabolic"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 3,
+          rationale: "46 randomised trials in type 2 diabetes found lower HbA1c and fasting glucose with berberine, alone or added to standard therapy.",
+          paperIds: ["p-berberine-metabolic"],
+        },
+        studyQuality: {
+          score: 2,
+          rationale: "Randomised trials; the abstract reports no risk-of-bias rating, and comparisons mix berberine alone with berberine added to standard therapy.",
+          paperIds: ["p-berberine-metabolic"],
+        },
+        consistency: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Mean differences: HbA1c −0.73, fasting glucose −0.86, 2-hour glucose −1.26.",
+          paperIds: ["p-berberine-metabolic"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "People with type 2 diabetes, often alongside standard diabetic therapy.",
+          paperIds: ["p-berberine-metabolic"],
+        },
+      },
+    },
   },
   {
     id: "zinc-immune",
     supplementId: "zinc",
     name: "Immune / cold duration",
     outcomeCategory: "foundational",
-    grade: "B",
-    confidence: "moderate",
+    grade: "C",
+    confidence: "low",
     summary: "Lozenges started early may modestly reduce common-cold duration.",
     relevantPopulation: "adults at cold onset",
     studiedDose: {
@@ -819,6 +848,35 @@ export const SEED_EFFECTS: Effect[] = [
     },
     mechanismTags: ["immune-cell-function"],
     paperIds: ["p-zinc-immune"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 1,
+          rationale: "Zinc used as treatment may shorten colds (low-certainty evidence); it shows little or no effect on preventing them.",
+          paperIds: ["p-zinc-immune"],
+        },
+        studyQuality: {
+          score: 1,
+          rationale: "Most trials were at unclear or high risk of bias in at least one domain; the duration evidence is low certainty.",
+          paperIds: ["p-zinc-immune"],
+        },
+        consistency: {
+          score: 1,
+          rationale: "Very high heterogeneity for cold duration in treatment trials (I² 97%).",
+          paperIds: ["p-zinc-immune"],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Colds 2.37 days shorter on average (95% CI 0.53 to 4.21), low certainty.",
+          paperIds: ["p-zinc-immune"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "Adults and children; about half the trials used lozenges.",
+          paperIds: ["p-zinc-immune"],
+        },
+      },
+    },
   },
   {
     id: "zinc-deficiency",
@@ -1020,13 +1078,42 @@ export const SEED_EFFECTS: Effect[] = [
     },
     mechanismTags: ["osmoregulation", "ergogenic"],
     paperIds: ["p-taurine-training"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 2,
+          rationale: "Meta-analysis of 10 studies found improved endurance performance with oral taurine.",
+          paperIds: ["p-taurine-training"],
+        },
+        studyQuality: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        consistency: {
+          score: 2,
+          rationale: "Similar benefit in time-to-exhaustion trials, with single or repeated doses, and across doses of 1–6 g.",
+          paperIds: ["p-taurine-training"],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Hedges' g 0.40 overall; 0.43 in time-to-exhaustion trials.",
+          paperIds: ["p-taurine-training"],
+        },
+        populationRelevance: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+      },
+    },
   },
   {
     id: "nac-antioxidant",
     supplementId: "nac",
     name: "Antioxidant / glutathione",
     outcomeCategory: "longevity",
-    grade: "C",
+    grade: "D",
     confidence: "low",
     summary: "Raises glutathione; broad clinical benefits remain context-dependent.",
     relevantPopulation: "adults under oxidative stress",
@@ -1037,6 +1124,35 @@ export const SEED_EFFECTS: Effect[] = [
     },
     mechanismTags: ["glutathione", "antioxidant"],
     paperIds: [],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        studyQuality: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        consistency: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        effectSize: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        populationRelevance: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+      },
+    },
   },
   {
     id: "protein-powder-training",
@@ -1089,8 +1205,8 @@ export const SEED_EFFECTS: Effect[] = [
     supplementId: "protein-powder",
     name: "Recovery & satiety",
     outcomeCategory: "recovery",
-    grade: "B",
-    confidence: "moderate",
+    grade: "D",
+    confidence: "low",
     summary: "Supports post-exercise recovery and appetite control.",
     relevantPopulation: "active adults",
     studiedDose: {
@@ -1100,5 +1216,34 @@ export const SEED_EFFECTS: Effect[] = [
     },
     mechanismTags: ["leucine", "satiety"],
     paperIds: [],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        studyQuality: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        consistency: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        effectSize: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+        populationRelevance: {
+          score: 0,
+          rationale: "Not addressed by a verified paper in the corpus.",
+          paperIds: [],
+        },
+      },
+    },
   },
 ];

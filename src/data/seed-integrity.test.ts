@@ -188,13 +188,9 @@ const ALLOWLIST_ORIGIN: ReadonlySet<string> = new Set([
   "protein-powder-training",
   "protein-powder-recovery",
 ]);
-const UNPROFILED_GRADE_ALLOWLIST: readonly string[] = [
-  "berberine-metabolic",
-  "zinc-immune",
-  "taurine-training",
-  "nac-antioxidant",
-  "protein-powder-recovery",
-];
+// [2026-09-23] EMPTY since U4 B4: all 27 effects carry a profile ([P3-X1]). Kept, not
+// deleted, so G4d/G4f still bind it: an entry can only come back from ALLOWLIST_ORIGIN.
+const UNPROFILED_GRADE_ALLOWLIST: readonly string[] = [];
 
 describe("G4 — an effect's grade is derived from its evidenceProfile", () => {
   type AuthoredEffect = { id: string; grade: string; evidenceProfile?: EvidenceProfile };

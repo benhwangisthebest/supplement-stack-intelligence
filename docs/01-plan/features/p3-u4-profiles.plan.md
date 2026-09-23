@@ -81,7 +81,8 @@ phrase planted in one rationale, then the file restored.
 | resolve bodies | `feat(capture): …` | `b5d1b62` | `35926528714` success | S2 saves every response body; red 2/2 → green |
 | B1 | `feat(content): U4 B1 — …` | `5b55d5b` | `35927219723` success | 4 Grade A profiles, the S4 files and B12's two new papers. Appendices [B1](p3-u4-profiles.b1.md) and [S4](p3-u4-profiles.s4.md) |
 | B2 | `feat(content): U4 B2 — …` | `c403f37` | `35927722448` success | 5 profiles: magnesium-stress C → D, fish-oil-mood C → B, three unchanged at C. Appendix [B2](p3-u4-profiles.b2.md) |
-| B3 + R14 | `feat(content): U4 B3 — …` and `feat(content): U4 — confidence follows the grade (R14)` | (this landing) | — | l-theanine-stress B → D, glycine-sleep B → D, ashwagandha-sleep C → B; confidence mapped for 4 effects; G5 exact. Appendix [B3](p3-u4-profiles.b3.md) |
+| B3 + R14 | `feat(content): U4 B3 — …` and `feat(content): U4 — confidence follows the grade (R14)` | `7dd4cf1`, `fbe7c09`, `bfa7602` | `35928707862` **failure** (E2E, see below) → `35929657659` success | l-theanine-stress B → D, glycine-sleep B → D, ashwagandha-sleep C → B; confidence mapped for 4 effects; G5 exact. Appendix [B3](p3-u4-profiles.b3.md) |
+| B4 | `feat(content): U4 B4 — …` | (this landing) | — | zinc-immune B → C, nac-antioxidant C → D, protein-powder-recovery B → D; **allowlist empty, 27/27 profiled**. Appendix [B4](p3-u4-profiles.b4.md) |
 
 **Live calls under U4 (R7, R11):** S4 search **12**, plus S2 resolve **8** (`s2d`, `s2e` and `s2f` refused B-2; `s2g` wrote both). All 20 returned 200, $0. The dated record is `docs/05-qa/2026-09-23-p3-u6-verification-record.md`.
 
@@ -95,8 +96,12 @@ phrase planted in one rationale, then the file restored.
 | l-theanine-stress | B → D | moderate → **low** (R14) |
 | glycine-sleep | B → D | moderate → **low** (R14) |
 | ashwagandha-sleep | C → B | low → **moderate** (R14) |
+| zinc-immune | B → C | moderate → **low** (B4, R14) |
+| protein-powder-recovery | B → D | moderate → **low** (B4, R14) |
 
 **Red proofs for G5 under R14:** (i) the tightened guard failed on exactly the four R14 rows before their confidence was set. (ii) Once green, a planted `creatine-strength` A/`moderate` failed it. The file was restored from backup (shasum equal), after which 17/17 passed.
+
+**B3's first CI run failed.** `evidence-grading-actions.spec.ts:22` used l-theanine as its *unprofiled* example, and B3 profiled it. The per-landing gate had run only the disclosure spec. **Owner fix (a), `bfa7602`:** the spec now asserts l-theanine's breakdown appears. The no-profile fallback is guarded by `SupplementDetail.test.tsx` with made-up effects: rendering the breakdown unconditionally made it fail; restored, shasum equal. FU-63 retires both when `evidenceProfile` becomes required. **Standing rule since then:** the full non-live E2E suite runs before every landing.
 
 ## 4. Appendices
 
@@ -104,6 +109,7 @@ phrase planted in one rationale, then the file restored.
 - [S4 — candidate table, owner decisions, B12 re-draft](p3-u4-profiles.s4.md)
 - [B2 — five profiles](p3-u4-profiles.b2.md)
 - [B3 — five profiles](p3-u4-profiles.b3.md)
+- [B4 — the last five; allowlist empty](p3-u4-profiles.b4.md)
 
 ## 5. Findings (raised by U4; open unless marked)
 

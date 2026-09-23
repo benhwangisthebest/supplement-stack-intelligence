@@ -45,6 +45,12 @@ const PINS: { batch: string; effect: string; supplementId: string; goal: Outcome
   { batch: "B3", effect: "glycine-sleep", supplementId: "glycine", goal: "sleep", grade: "D", tier: "experimental" },
   // B3: ashwagandha-sleep C → B (5 RCTs; I² 62%; effect small but significant)
   { batch: "B3", effect: "ashwagandha-sleep", supplementId: "ashwagandha", goal: "sleep", grade: "B", tier: "targeted" },
+  // B4: zinc-immune B → C (low-certainty treatment benefit, I² 97%; prevention null)
+  { batch: "B4", effect: "zinc-immune", supplementId: "zinc", goal: "foundational", grade: "C", tier: "advanced" },
+  // B4: nac-antioxidant C → D (R5: cites no paper; no verified evidence in this library)
+  { batch: "B4", effect: "nac-antioxidant", supplementId: "nac", goal: "longevity", grade: "D", tier: "experimental" },
+  // B4: protein-powder-recovery B → D (R5: cites no paper; no verified evidence in this library)
+  { batch: "B4", effect: "protein-powder-recovery", supplementId: "protein-powder", goal: "recovery", grade: "D", tier: "experimental" },
 ];
 
 describe("U4 grade changes: the protocol tier each changed effect now produces (R10)", () => {
