@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { SEED_EFFECTS } from "@/data/seed-effects";
-import { SEED_PAPERS } from "@/data/seed-papers";
 import { containsBannedLanguage } from "@/lib/safety";
 import { EVIDENCE_DIMENSIONS } from "@/types/evidence-grading";
 import type { EvidenceProfile } from "@/types/evidence-grading";
@@ -105,7 +104,6 @@ describe("validateProfile", () => {
 });
 
 describe("seed integrity (Plan SC-5/6)", () => {
-  const paperIds = new Set(SEED_PAPERS.map((p) => p.id));
   const profiled = SEED_EFFECTS.filter((e) => e.evidenceProfile);
 
   it("seeds at least 6 profiled effects across ≥4 supplements spanning A/B/C", () => {
@@ -127,15 +125,9 @@ describe("seed integrity (Plan SC-5/6)", () => {
     }
   });
 
-  it("every cited paperId references a real seed paper", () => {
-    for (const e of profiled) {
-      for (const dim of EVIDENCE_DIMENSIONS) {
-        for (const pid of e.evidenceProfile!.dimensions[dim].paperIds) {
-          expect(paperIds.has(pid), `${e.id}/${dim}:${pid}`).toBe(true);
-        }
-      }
-    }
-  });
+  // [2026-09-23, Phase 3 U2, P-06] "every cited paperId references a real seed
+  // paper" moved to G3 in src/data/seed-integrity.test.ts, which reads the
+  // authored JSON and walks every paperIds site, not only profiled dimensions.
 
   it("dimension rationales are non-diagnostic", () => {
     for (const e of profiled) {

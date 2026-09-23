@@ -91,3 +91,38 @@ describe("G2 — fabricated provenance is unauthorable", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+// G3 — every `paperIds` entry in the authored corpus resolves (Phase 3 U2, P-06).
+// Reads content/seed/*.json, the source of truth, not the generated modules:
+// CONTENT_FIDELITY makes those byte-equal, so this also covers src/data/.
+// It walks every `paperIds` array at any depth (effect level, evidence-profile
+// dimension level, side-effect profiles), so a new citing site is covered the
+// day it is written. This checks POINTERS, not provenance (see the header):
+// it is G1/G2's complement, not a substitute.
+describe("G3 — every paperIds entry in content/seed/ resolves to a seed paper", () => {
+  const SEED_JSON = path.join(REPO_ROOT, "content/seed");
+  const read = (f: string): unknown => JSON.parse(readFileSync(path.join(SEED_JSON, f), "utf8"));
+  const paperIds = new Set((read("seed-papers.json") as { id: string }[]).map((p) => p.id));
+
+  const refs: { where: string; id: unknown }[] = [];
+  function collect(node: unknown, where: string): void {
+    if (Array.isArray(node)) return node.forEach((n, i) => collect(n, `${where}[${i}]`));
+    if (node === null || typeof node !== "object") return;
+    for (const [k, v] of Object.entries(node)) {
+      if (k === "paperIds" && Array.isArray(v)) v.forEach((id, i) => refs.push({ where: `${where}.${k}[${i}]`, id }));
+      else collect(v, `${where}.${k}`);
+    }
+  }
+  for (const f of readdirSync(SEED_JSON).filter((n) => n.endsWith(".json"))) collect(read(f), f);
+
+  it("finds references at both effect and evidence-profile level (anti-vacuity)", () => {
+    expect(paperIds.size).toBeGreaterThan(0);
+    expect(refs.some((r) => r.where.includes(".evidenceProfile."))).toBe(true);
+    expect(refs.some((r) => /^seed-effects\.json\[\d+\]\.paperIds\[/.test(r.where))).toBe(true);
+  });
+
+  it("no dangling paperId", () => {
+    const dangling = refs.filter((r) => typeof r.id !== "string" || !paperIds.has(r.id));
+    expect(dangling.map((r) => `${r.where} = ${JSON.stringify(r.id)}`)).toEqual([]);
+  });
+});
