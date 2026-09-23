@@ -149,8 +149,10 @@ bound site and is left as dated.
 
 ## 7. Report
 
-Landing (a) landed as `f06be39`. Landing (b) is green and awaiting commit. D-a1 and the AC-2 amendment are
-ruled. N-82 is open for U8. FU-49 and the content-fidelity red proofs are owed by U2.
+**U1 DONE — 2026-09-23.** (a) `f06be39`, CI `35825650940` success · (b) `93e8e30`, CI `35826971740` success.
+Both were fast-forwarded to `main` and their branches deleted on both sides. **Proved:** canonical layout.
+**Not proved:** content fidelity, which is owed by U2 (register §4 U2). Findings: FU-49 (open, U2), N-82 (open, U8),
+D-a1 (ruled), AC-2 (ruled). Closeout record: register §4 U1, *STATUS: DONE*.
 
 ---
 
