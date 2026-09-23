@@ -620,7 +620,46 @@
     ],
     "paperIds": [
       "p-fish-oil-longevity"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 1,
+          "rationale": "86 randomised trials (162,796 participants) found little or no effect on all-cause mortality (high certainty) and slight reductions in coronary events (low certainty).",
+          "paperIds": [
+            "p-fish-oil-longevity"
+          ]
+        },
+        "studyQuality": {
+          "score": 2,
+          "rationale": "Randomised trials of at least 12 months; 28 of 86 at low summary risk of bias.",
+          "paperIds": [
+            "p-fish-oil-longevity"
+          ]
+        },
+        "consistency": {
+          "score": 1,
+          "rationale": "No mortality benefit across trials, whatever the duration or dose; the coronary reductions are low certainty.",
+          "paperIds": [
+            "p-fish-oil-longevity"
+          ]
+        },
+        "effectSize": {
+          "score": 1,
+          "rationale": "All-cause mortality risk ratio 0.97; coronary heart disease events 0.91 (number needed to treat 167).",
+          "paperIds": [
+            "p-fish-oil-longevity"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Adults at varying cardiovascular risk, mainly in high-income countries.",
+          "paperIds": [
+            "p-fish-oil-longevity"
+          ]
+        }
+      }
+    }
   },
   {
     "id": "l-theanine-focus",
@@ -642,14 +681,53 @@
     ],
     "paperIds": [
       "p-ltheanine-focus"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Meta-analysis of randomised trials in healthy people: theanine plus caffeine improved some attention measures against placebo.",
+          "paperIds": [
+            "p-ltheanine-focus"
+          ]
+        },
+        "studyQuality": {
+          "score": 2,
+          "rationale": "Randomised controlled trials; the abstract reports no risk-of-bias rating.",
+          "paperIds": [
+            "p-ltheanine-focus"
+          ]
+        },
+        "consistency": {
+          "score": 1,
+          "rationale": "Confidence intervals often cross no effect; the authors note uncertainty in direction and magnitude.",
+          "paperIds": [
+            "p-ltheanine-focus"
+          ]
+        },
+        "effectSize": {
+          "score": 1,
+          "rationale": "Small to moderate: SMD 0.20 for vigilance accuracy and 0.33 for attention switching.",
+          "paperIds": [
+            "p-ltheanine-focus"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Healthy participants; the authors call for studies in free-living settings.",
+          "paperIds": [
+            "p-ltheanine-focus"
+          ]
+        }
+      }
+    }
   },
   {
     "id": "l-theanine-stress",
     "supplementId": "l-theanine",
     "name": "Stress & relaxation",
     "outcomeCategory": "stress",
-    "grade": "B",
+    "grade": "D",
     "confidence": "moderate",
     "summary": "May reduce acute stress and support relaxation without sedation.",
     "relevantPopulation": "adults under acute stress",
@@ -664,14 +742,49 @@
     ],
     "paperIds": [
       "p-ltheanine-stress"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 1,
+          "rationale": "One small crossover trial (12 participants) using a laboratory stressor.",
+          "paperIds": [
+            "p-ltheanine-stress"
+          ]
+        },
+        "studyQuality": {
+          "score": 1,
+          "rationale": "Double-blind, placebo-controlled and counterbalanced, but only 12 participants.",
+          "paperIds": [
+            "p-ltheanine-stress"
+          ]
+        },
+        "consistency": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "effectSize": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Participants under an acute laboratory stressor (mental arithmetic).",
+          "paperIds": [
+            "p-ltheanine-stress"
+          ]
+        }
+      }
+    }
   },
   {
     "id": "glycine-sleep",
     "supplementId": "glycine",
     "name": "Sleep quality",
     "outcomeCategory": "sleep",
-    "grade": "B",
+    "grade": "D",
     "confidence": "moderate",
     "summary": "Pre-bed glycine may improve subjective sleep quality and next-day alertness.",
     "relevantPopulation": "adults with mild sleep complaints",
@@ -686,7 +799,36 @@
     ],
     "paperIds": [
       "p-glycine-sleep"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "studyQuality": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "consistency": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "effectSize": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "populationRelevance": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        }
+      }
+    }
   },
   {
     "id": "melatonin-sleep",
@@ -814,7 +956,7 @@
     "supplementId": "ashwagandha",
     "name": "Sleep quality",
     "outcomeCategory": "sleep",
-    "grade": "C",
+    "grade": "B",
     "confidence": "low",
     "summary": "Some evidence for improved sleep, often secondary to stress reduction.",
     "relevantPopulation": "stressed adults with sleep complaints",
@@ -828,7 +970,46 @@
     ],
     "paperIds": [
       "p-ashwagandha-sleep"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Five placebo-controlled randomised trials (400 adults) found an effect on overall sleep.",
+          "paperIds": [
+            "p-ashwagandha-sleep"
+          ]
+        },
+        "studyQuality": {
+          "score": 2,
+          "rationale": "Randomised placebo-controlled trials; the abstract reports no risk-of-bias rating.",
+          "paperIds": [
+            "p-ashwagandha-sleep"
+          ]
+        },
+        "consistency": {
+          "score": 1,
+          "rationale": "Substantial heterogeneity (I² 62%); effects larger in insomnia, at ≥600 mg/day and over ≥8 weeks.",
+          "paperIds": [
+            "p-ashwagandha-sleep"
+          ]
+        },
+        "effectSize": {
+          "score": 1,
+          "rationale": "Described by the authors as small but significant (SMD −0.59).",
+          "paperIds": [
+            "p-ashwagandha-sleep"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Adults 18 and over; the effect was larger in adults diagnosed with insomnia.",
+          "paperIds": [
+            "p-ashwagandha-sleep"
+          ]
+        }
+      }
+    }
   },
   {
     "id": "berberine-metabolic",

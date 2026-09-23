@@ -39,6 +39,12 @@ const PINS: { batch: string; effect: string; supplementId: string; goal: Outcome
   { batch: "B2", effect: "magnesium-stress", supplementId: "magnesium", goal: "stress", grade: "D", tier: "experimental" },
   // B2: fish-oil-mood C → B (26 RCTs; benefit only in EPA-rich subgroups, consistency weak)
   { batch: "B2", effect: "fish-oil-mood", supplementId: "fish-oil", goal: "mood", grade: "B", tier: "targeted" },
+  // B3: l-theanine-stress B → D (one 12-person laboratory crossover trial)
+  { batch: "B3", effect: "l-theanine-stress", supplementId: "l-theanine", goal: "stress", grade: "D", tier: "experimental" },
+  // B3: glycine-sleep B → D (R6: its only paper is title-only; no verified evidence in this library)
+  { batch: "B3", effect: "glycine-sleep", supplementId: "glycine", goal: "sleep", grade: "D", tier: "experimental" },
+  // B3: ashwagandha-sleep C → B (5 RCTs; I² 62%; effect small but significant)
+  { batch: "B3", effect: "ashwagandha-sleep", supplementId: "ashwagandha", goal: "sleep", grade: "B", tier: "targeted" },
 ];
 
 describe("U4 grade changes: the protocol tier each changed effect now produces (R10)", () => {

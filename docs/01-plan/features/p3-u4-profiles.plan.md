@@ -80,7 +80,8 @@ phrase planted in one rationale, then the file restored.
 | (withdrawn) | `fix(provenance): …` | `26c396f`, **never merged** | `35916425609` success | tag-stripping fix built on a wrong diagnosis; branch deleted on owner ruling (§5 F-2) |
 | resolve bodies | `feat(capture): …` | `b5d1b62` | `35926528714` success | S2 saves every response body; red 2/2 → green |
 | B1 | `feat(content): U4 B1 — …` | `5b55d5b` | `35927219723` success | 4 Grade A profiles, the S4 files and B12's two new papers. Appendices [B1](p3-u4-profiles.b1.md) and [S4](p3-u4-profiles.s4.md) |
-| B2 | `feat(content): U4 B2 — …` | (this landing) | — | 5 profiles: magnesium-stress C → D, fish-oil-mood C → B, three unchanged at C. Appendix [B2](p3-u4-profiles.b2.md) |
+| B2 | `feat(content): U4 B2 — …` | `c403f37` | `35927722448` success | 5 profiles: magnesium-stress C → D, fish-oil-mood C → B, three unchanged at C. Appendix [B2](p3-u4-profiles.b2.md) |
+| B3 + R14 | `feat(content): U4 B3 — …` and `feat(content): U4 — confidence follows the grade (R14)` | (this landing) | — | l-theanine-stress B → D, glycine-sleep B → D, ashwagandha-sleep C → B; confidence mapped for 4 effects; G5 exact. Appendix [B3](p3-u4-profiles.b3.md) |
 
 **Live calls under U4 (R7, R11):** S4 search **12**, plus S2 resolve **8** (`s2d`, `s2e` and `s2f` refused B-2; `s2g` wrote both). All 20 returned 200, $0. The dated record is `docs/05-qa/2026-09-23-p3-u6-verification-record.md`.
 
@@ -89,6 +90,7 @@ phrase planted in one rationale, then the file restored.
 - [B1 — the four Grade A effects](p3-u4-profiles.b1.md)
 - [S4 — candidate table, owner decisions, B12 re-draft](p3-u4-profiles.s4.md)
 - [B2 — five profiles](p3-u4-profiles.b2.md)
+- [B3 — five profiles](p3-u4-profiles.b3.md)
 
 ## 5. Findings (raised by U4; open unless marked)
 

@@ -189,11 +189,6 @@ const ALLOWLIST_ORIGIN: ReadonlySet<string> = new Set([
   "protein-powder-recovery",
 ]);
 const UNPROFILED_GRADE_ALLOWLIST: readonly string[] = [
-  "fish-oil-longevity",
-  "l-theanine-focus",
-  "l-theanine-stress",
-  "glycine-sleep",
-  "ashwagandha-sleep",
   "berberine-metabolic",
   "zinc-immune",
   "taurine-training",
