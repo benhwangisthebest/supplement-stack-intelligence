@@ -121,17 +121,36 @@ N-82. The worktree was removed.
 | `content/proofs/*.mjs` (3) | exit 0 each — values `failures=0`, tokens `failures=0`, dose comments `MATCHES` |
 | `LC_ALL=C grep -rlP '\x00' content/ docs/01-plan/` | no output |
 
-## 6. Landing (b) — plan (not started)
+## 6. Landing (b) — the guard
 
-Register §4 U1 as briefed: generate `content/*.json` from the (a) modules, emit TS from the JSON with
-`content/emit.mjs`, and add the byte-identity spec with red proofs for a trailing comma and a key order.
-The spec path, and whether it is an architecture spec (AC-6, `SPEC_COUNT` 27→28), are settled in (b)'s
-design. The preambles need a home in the JSON source. That is decided in (b)'s design, not here.
+**`src/architecture/canonical-layout.test.ts` (`CANONICAL_LAYOUT`).** Per module: import the `SEED_*` value,
+run `JSON.parse(JSON.stringify(v))`, pass it to `content/emit.mjs` with the file's own preamble, and compare
+**bytes**, `emitted.equals(committed)` (AC-3). The module set comes from `git ls-files`, is non-empty and is
+pinned at 9. The describe title prints the count. No JSON corpus is committed.
+
+> **This guard proves each SEED_ file is in the emitter's canonical layout for its own value. It does not
+> prove content fidelity; that begins at U2.** *(Owner ruling, 2026-09-23. U2 now owes red proofs for a
+> hand-edited value and a hand key-reorder in the generated TS: register §4 U2.)*
+
+**Red proofs.** Backups are file copies and restores are checked by `shasum` (§5 rule 11).
+
+| Run | Edit | Result |
+|---|---|---|
+| red 1 | `seed-papers.ts:24`, trailing comma dropped | **×** `first difference at byte 1360 (line 24, col 135)` — 1 failed / 9 passed, exit 1 |
+| *withdrawn* | `seed-papers.ts:16-17`, `id` ↔ `title` swapped | **stayed green**, 10/10, exit 0, while `prove-values` showed `keyOrder=false`. This led to the AC-2 amendment (Appendix B) |
+| red 2 | `seed-effects.ts:15-19`, `studiedDose` collapsed to one line (rule L4); values deep-equal | **×** `first difference at byte 601 (line 15, col 19)` — 1 failed / 9 passed, exit 1 |
+| restore | both files copied back (`eaedf917…`, `4381abf3…`); `git diff --stat HEAD -- src/data/` empty | **10 passed (10)**, exit 0 |
+
+**`SPEC_COUNT` 27 → 28.** It went red once the spec was staged (`expected 28 to be 27`). Updated at all 4 bound
+sites (`docs/project-status.md` ×2, `README.md`, `docs/02-design/architecture-boundaries.md`) and at the guard's
+own pin (`spec-count.test.ts:97`). The register's U9 note now re-derives the count instead of assuming 27 → 28.
+`CLAUDE.md`'s baseline line (*"27 executable architecture specs"*) is a dated 2026-09-22 snapshot. It is not a
+bound site and is left as dated.
 
 ## 7. Report
 
-Landing (a) is green and awaiting commit. D-a1 is ruled. N-82 is corrected in the register and open
-for U8. FU-49 is open with owner U2.
+Landing (a) landed as `f06be39`. Landing (b) is green and awaiting commit. D-a1 and the AC-2 amendment are
+ruled. N-82 is open for U8. FU-49 and the content-fidelity red proofs are owed by U2.
 
 ---
 
@@ -159,3 +178,4 @@ between it and the next comment were matched to `SEED_SUPPLEMENTS`. Result: 14 H
 | The ruling's *"0 other tokens changed"* | **Holds for 8899 of 8902 tokens.** The 3 numeric spellings are D-a1 |
 | Register §2 records `/library` as `○` (static) at `52e00d9` | **WITHDRAWN — it is `ƒ`** at `b5aaab8`, with and without `.env.local`. Nothing outside `docs/` changed since `52e00d9`. Corrected in §2 as **N-82** |
 | The first ruling's allowed classes (whitespace, comments, trailing commas) | **Widened by D-a1** to include same-value numeric spellings |
+| AC-2: *"perturb … one key order; the guard fails"* | **WITHDRAWN by owner ruling.** A reorder deep-equals the original, and a round trip that reads its value from the file cannot see it. Replaced by a forbidden-layout red; content fidelity moved to U2 |
