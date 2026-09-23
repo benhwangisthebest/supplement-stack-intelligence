@@ -9,6 +9,9 @@ export default defineConfig({
     },
   },
   test: {
+    // Phase 3 U0: this file is the `node` project of `vitest.workspace.ts`;
+    // `.test.tsx` files run in that workspace's `jsdom` project instead.
+    name: "node",
     environment: "node",
     // ---------------------------------------------------------------------
     // Phase 2 U33 — a `vi.stubEnv` may not outlive the test that set it.

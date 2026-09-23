@@ -567,20 +567,44 @@ describe("architecture boundaries — harness sanity", () => {
     ).toEqual([]);
   });
 
-  // ---- C-12: walk() and vitest disagree about .tsx ------------------------
-  // This file treats `*.test.tsx` as a test (so the boundary rules skip it),
-  // but `vitest.config.ts` collects `src/**/*.test.ts` only. A `.test.tsx` file
-  // therefore falls in the gap: not scanned as product code, and never
-  // EXECUTED — it would sit in the repository looking like coverage while
-  // asserting nothing. Detector only, per plan §5: component testing itself is
-  // excluded work, so this reports the gap rather than adopting jsdom (U13).
-  it("collects every tracked test file it excludes from scanning", () => {
-    const includes: string[] = JSON.parse(
-      (/include:\s*(\[[^\]]*\])/.exec(
-        fs.readFileSync(path.join(REPO_ROOT, "vitest.config.ts"), "utf8"),
-      )?.[1] ?? "[]").replace(/'/g, '"'),
-    );
-    expect(includes.length, "could not read `include` from vitest.config.ts").toBeGreaterThan(0);
+  // ---- Phase 3 U0: TEST_COLLECTION (replaces C-12's HARNESS_GAP) ---------
+  // HARNESS_GAP was a detector: `vitest.config.ts` collected `src/**/*.test.ts`
+  // only, so it failed on any tracked `.test.tsx` rather than let one sit in
+  // the repository asserting nothing. U0 added the harness — the `jsdom`
+  // project in `vitest.workspace.ts` — so the rule is now the positive one:
+  // every tracked test file is collected, by the project for its extension,
+  // and by that project only.
+  //
+  // What changed besides the name, each a hole in the old detector:
+  //   1. It reads the projects vitest RUNS (the workspace, imported), not the
+  //      first `include:` regex-matched out of one config file's text.
+  //   2. It scans the whole repository, not only src/. A `.test.tsx` outside
+  //      src/ matched no include and was checked by nothing.
+  //   3. It fails a file collected by BOTH projects, and refuses a workspace
+  //      entry that `extends` a config. `extends` concatenates `include`
+  //      arrays at load time, so a jsdom project declaring only `*.test.tsx`
+  //      silently re-ran every node test under jsdom — observed while building
+  //      U0. This guard reads DECLARED includes and cannot see that merge, so
+  //      it forbids the construct rather than trust a list it cannot read.
+  //   4. It covers the `*.spec.ts(x)` files under src/ that `isTestPath`
+  //      skips as tests. `tests/e2e/*.spec.ts` are Playwright's, not vitest's.
+  it("TEST_COLLECTION: every tracked test file is collected by exactly its own project", async () => {
+    const { default: workspace } = await import("../../vitest.workspace");
+    const { default: base } = await import("../../vitest.config");
+    const projects = workspace.map((entry) => {
+      if (entry === "./vitest.config.ts") return base.test ?? {};
+      if (typeof entry === "object" && "extends" in entry) {
+        throw new Error("TEST_COLLECTION: a workspace entry uses `extends`, whose include merge this guard cannot see");
+      }
+      if (typeof entry === "object" && "test" in entry) return entry.test ?? {};
+      throw new Error(`TEST_COLLECTION: unrecognised workspace entry ${JSON.stringify(entry)}`);
+    });
+    const byName = new Map(projects.map((t) => [t.name, t]));
+    // Anti-vacuity: the two projects this rule is about must exist, with the
+    // environments that make a `.tsx` test mean anything.
+    expect([...byName.keys()].sort(), "TEST_COLLECTION: expected exactly the node and jsdom projects").toEqual(["jsdom", "node"]);
+    expect(byName.get("node")?.environment).toBe("node");
+    expect(byName.get("jsdom")?.environment).toBe("jsdom");
 
     // Minimal glob→regex for the forms this config uses: `**/` spans
     // directories, `*` does not, `.` is literal.
@@ -594,20 +618,38 @@ describe("architecture boundaries — harness sanity", () => {
     // no sentinel, so there is no character left to get wrong.
     const escape = (s: string) =>
       s.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*");
-    const matchers = includes.map(
-      (g) => new RegExp("^" + g.split("**/").map(escape).join("(?:.*/)?") + "$"),
-    );
+    const matchers = (name: string) => {
+      const include = byName.get(name)?.include ?? [];
+      expect(include.length, `TEST_COLLECTION: project ${name} declares no include`).toBeGreaterThan(0);
+      return include.map((g) => new RegExp("^" + g.split("**/").map(escape).join("(?:.*/)?") + "$"));
+    };
+    const collects = { node: matchers("node"), jsdom: matchers("jsdom") };
 
-    const uncollected = TRACKED_SRC_PATHS.filter(
-      (p) => /\.test\.tsx?$/.test(p) && !matchers.some((m) => m.test(p)),
-    ).sort();
+    const tracked = execFileSync("git", ["-C", REPO_ROOT, "ls-files", "-z", "--cached"], {
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+    })
+      .split("\0")
+      .filter((p) => /\.test\.tsx?$/.test(p) || (p.startsWith("src/") && isTestPath(p)));
+    expect(tracked.length, "TEST_COLLECTION: found no tracked test files").toBeGreaterThan(0);
+
+    const wrong = tracked
+      .flatMap((p) => {
+        const own = p.endsWith(".tsx") ? "jsdom" : "node";
+        const other = own === "node" ? "jsdom" : "node";
+        const problems: string[] = [];
+        if (!collects[own].some((m) => m.test(p))) problems.push(`${p} — not collected by ${own}`);
+        if (collects[other].some((m) => m.test(p))) problems.push(`${p} — also collected by ${other}`);
+        return problems;
+      })
+      .sort();
 
     expect(
-      uncollected,
-      "HARNESS_GAP: these files are tracked but not matched by vitest include;\n" +
-        "they would never run. This file skips them as tests while vitest skips them\n" +
-        "as uncollected, so they are governed by nothing and assert nothing:\n  " +
-        uncollected.join("\n  "),
+      wrong,
+      "TEST_COLLECTION: every tracked test file must run exactly once, in the project for\n" +
+        "its extension (`.ts` → node, `.tsx` → jsdom). A file no project collects asserts\n" +
+        "nothing while looking like coverage; a file two projects collect runs twice:\n  " +
+        wrong.join("\n  "),
     ).toEqual([]);
   });
 
