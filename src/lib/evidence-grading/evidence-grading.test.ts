@@ -9,6 +9,7 @@ import {
   gradeBreakdown,
   validateProfile,
   DIMENSION_WEIGHTS,
+  GRADE_THRESHOLDS,
 } from "./index";
 
 function profile(
@@ -63,6 +64,33 @@ describe("deriveGrade thresholds", () => {
     expect(deriveGrade(profile(2, 2, 2, 1, 2))).toBe("B"); // .617
     expect(deriveGrade(profile(2, 1, 1, 1, 2))).toBe("C"); // .367
     expect(deriveGrade(profile(0, 0, 1, 0, 0))).toBe("D"); // .067
+  });
+});
+
+// Phase 3 U4, finding F-1 (owner ruling 2026-09-23): the composite must not depend
+// on floating-point summation order. Scores (2,1,1,2,3) are exactly .55 — the B
+// floor — but summed naively they came to 0.5499999999999999 and derived C, while
+// (2,2,2,1,0), also exactly .55, derived B. Red proof: both tests below failed
+// before the fix (docs/01-plan/features/p3-u4-profiles.plan.md §5).
+describe("deriveGrade is exact at the thresholds (F-1)", () => {
+  it("a profile whose true composite is exactly .55 derives B in the order that failed", () => {
+    expect(compositeScore(profile(2, 1, 1, 2, 3))).toBe(0.55);
+    expect(deriveGrade(profile(2, 1, 1, 2, 3))).toBe("B");
+  });
+
+  it("every one of the 4^5 score profiles derives the letter exact integer arithmetic gives", () => {
+    // Weights are hundredths, so 300 × composite = Σ (100·w) × score is an integer.
+    const w = EVIDENCE_DIMENSIONS.map((d) => Math.round(DIMENSION_WEIGHTS[d] * 100));
+    const floors = GRADE_THRESHOLDS.map((t) => ({ n: Math.round(t.min * 300), grade: t.grade }));
+    const wrong: string[] = [];
+    for (let i = 0; i < 4 ** 5; i++) {
+      const s = [0, 1, 2, 3, 4].map((k) => (i >> (2 * k)) & 3);
+      const n = s.reduce((a, x, k) => a + w[k] * x, 0);
+      const exact = floors.find((f) => n >= f.n)!.grade;
+      const derived = deriveGrade(profile(s[0], s[1], s[2], s[3], s[4]));
+      if (derived !== exact) wrong.push(`${s.join("")}: ${derived} ≠ ${exact}`);
+    }
+    expect(wrong).toEqual([]);
   });
 });
 

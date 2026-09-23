@@ -23,6 +23,16 @@ export {
 } from "./weights";
 
 /**
+ * Precision the composite is rounded to (Phase 3 U4, finding F-1). Summed in
+ * floating point, a composite that is exactly a threshold can come out a hair below
+ * it, depending on the order of the terms: scores (2,1,1,2,3) are exactly .55 but
+ * summed to 0.5499999999999999 and derived C. Rounding to 1e-9, far finer than the
+ * rubric's smallest step (1/300), makes every reachable composite the double nearest
+ * its exact value, so the grade cannot depend on summation order.
+ */
+const COMPOSITE_PRECISION = 1e9;
+
+/**
  * Weighted composite score ∈ [0,1]:  Σ_d  weight[d] × (score[d] / MAX_RATING).
  * Deterministic; identical profile → identical score.
  */
@@ -32,7 +42,7 @@ export function compositeScore(profile: EvidenceProfile): number {
     const { score } = profile.dimensions[dimension];
     sum += DIMENSION_WEIGHTS[dimension] * (score / MAX_RATING);
   }
-  return sum;
+  return Math.round(sum * COMPOSITE_PRECISION) / COMPOSITE_PRECISION;
 }
 
 /** Map the composite to an A/B/C/D grade via fixed descending thresholds. */
