@@ -39,7 +39,7 @@ page returned HTTP 403); the **live E2E half stays BLOCKED(env)** by ruling 3; a
 FU-44 all wait on the same thing — a logging sink that does not exist.** Observability is classified **B**
 by ruling and was **measured X** on the sink alone; both readings are recorded in `project-status.md` §2.8.
 ~~Planning (2026-08-06): a DRAFT plan exists; it is not approved and authorises nothing.~~
-~~No Phase 2 unit has been executed.~~ **Phases 3–4 — not started.**
+~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ **[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.** See the Phase 3 section for the full status. **Phase 4 — not started.**
 
 **Two Phase 2 items were already delivered out of order** and the plan marks them so rather than
 scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` +
@@ -491,6 +491,8 @@ the dev seed script.
 
 ## Phase 3 — Evidence grounding (the trust layer)
 
+**Status.** **STARTED — 2026-09-22.** Its plan, `docs/01-plan/phase-3-evidence-grounding.plan.md`, is **APPROVED** (rank 5 under `CLAUDE.md` §6) at landing (d), after an independent review (`docs/reviews/phase-3-plan-review.md`, verdict REVISE, P-01…P-17) and a revision answering it. **All seven owner decisions D-1…D-7 are ruled**, and the plan carries **ten units U0–U9**, of which **one (U6) is live**. **No unit has been executed.** Approval authorises the units in the plan's §4 and nothing beyond them.
+
 **Objective.** Make the Library's central claim true. Today 19 of 27 effect grades are hand-typed letters
 with no derivation — **four** of them Grade A (there are eight Grade A in all; the other four already
 carry an `evidenceProfile`), some with zero linked papers — in a product that declares the
@@ -506,6 +508,8 @@ Library its trust layer.
 > criterion. **Two ways out, and the choice is the owner's:** Phase 3 opens by building the harness, or the
 > UI criterion is re-sequenced to Phase 4. **Naming the conflict is what the Check owed; deciding it is
 > not.** Recorded in plan §10.7 as a residue and in report §11.
+>
+> **[2026-09-22, RESOLVED by owner ruling D-1(a) — landing (d) of the Phase 3 plan.]** The choice this note left open is made: **Phase 3 opens by building the harness.** It is unit **U0** of `docs/01-plan/phase-3-evidence-grounding.plan.md` (status **APPROVED**, 2026-09-22), which adds a jsdom environment and a second `vitest` project and retires `HARNESS_GAP`. **This criterion therefore needs no rewording** — (a) is the one option under which *test-verified* is satisfiable exactly as written above, and the other option (re-sequencing to Phase 4) was not taken. **U-DEFER-4 is RE-SCOPED, not closed:** its owner-condition named *"the phase that introduces component testing"*, and this ruling makes Phase 3 that phase — so the condition is **met rather than waived**, and the dated exception standing since Phase 1 ends at U0. **The conflict this note named is discharged; the note stays for the rationale (§7).**
 
 **Why Phase 3 and not Phase 1.** It is the product's most important gap but also its most expensive, and
 it must not precede verification and operations: grounding generates large content diffs, and without CI,

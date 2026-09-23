@@ -200,3 +200,40 @@ answering a review is not an approval, and **nothing is authorised**. **No D-n w
 reshaped one decision (D-4 → D-4 + D-7) and annotated another (D-3's admissibility), which the brief
 permits and which presupposes neither answer. Next: the owner rules **D-1…D-7**, then the plan's status
 line moves and `docs/roadmap.md`'s Phase 3 status follows it.
+
+---
+
+## Landing (d) — owner rulings D-1…D-7, plan approved · 2026-09-22
+
+| | |
+|---|---|
+| **Anchor** | Landing (c) was **uncommitted** at session open — HEAD was `52e00d9`, which is **(b)**. On the owner's ruling (c) was committed first and (d) ran against it, as (a) was before (b). |
+| **Artifact** | `docs/01-plan/phase-3-evidence-grounding.plan.md` — **328 → 353 lines**, status **DRAFT → APPROVED** |
+| **Also touched** | `docs/roadmap.md` **Phase 3 section only** (+4 lines): a `**Status.** STARTED` line and a dated resolution on the P2-6 note |
+| **Rulings** | **7 of 7**, recorded beside their options; **no option deleted** (§7) |
+| **Units** | **8 → 10.** U0 (D-1a) and U9 (D-7) are new; **no existing unit changed type** |
+| **Criteria** | **8 → 9.** `[P3-X9]` added (D-7); `[P3-X2]` becomes falsifiable; `[P3-X4]` unblocked |
+
+### Ruling × consequence
+
+| Ruling | Consequence applied | Plan line |
+|---|---|---|
+| **D-1 (a)** build the harness | New unit **U0**; **U-DEFER-4 RE-SCOPED, not closed**; `[P3-X4]` unblocked and U7 now requires U0; **roadmap criterion needs no rewording** — (a) is the only option under which *test-verified* stands as written | plan `:192` (ruling), `:123` (U0), `:173` (`[P3-X4]`); roadmap `:512` |
+| **D-2** JSON, root `content/` | U2's format fixed; **FU-48 stops being conditional and becomes certain work**; lint set unaffected (`verify-lint.mjs:66` lists only `*.ts *.tsx *.mjs`); `[P3-X5]` eased, its id-manifest caveat intact. **One question D-2 does not settle** — whether generated TS is committed or gitignored — is handed to U2 with the `LAYER_FLOORS` constraint named, not answered here | plan `:201` (ruling), `:130` (U2), `:94` (FU-48), `:174` (`[P3-X5]`) |
+| **D-3** (c)+(b)'s fields | U5's shape fixed: fixture-verified `doi`/`pmid`, entry carries `verifiedOn`/`verifiedBy`. **N-80 and N-81 fix shapes now fixed.** **No rank-1 exception required or recorded** — (a) was the only option needing one and was not ruled. Makes U6's network spend **one-time** | plan `:208` (ruling), `:148` (U5), `:86` (N-80), `:90` (N-81), `:171` (`[P3-X2]`) |
+| **D-4** out | FU-29 gets a **dated deferral**; Phase 3 takes on **no** deployed migration except `[P3-X6]`'s conditional path in U6 | plan `:221` (ruling), `:244` (§7 row), `:279` (§8 spend) |
+| **D-5** % headroom | U8's budget form fixed against §2's route table; **the percentage itself is left to U8**, stated so it is not mistaken for ruled | plan `:225` (ruling), `:157` (U8) |
+| **D-6** close the gaps | U6 widens to 20 papers + citations for 3 effects and 9 dimensions; **U4/U6 ordering SETTLED — U6 precedes U4**; new ids are manifest `add`s, tombstone path still reachable | plan `:229` (ruling), `:151` (U6), `:143` (U4 ordering) |
+| **D-7** in, with a guard | New unit **U9** and criterion **`[P3-X9]`**; guard red against all 8 **before** the refactor; U9 also carries `SPEC_COUNT` **27 → 28** at its four documented sites. **Not a roadmap item** — stated plainly | plan `:233` (ruling), `:160` (U9), `:178` (`[P3-X9]`) |
+
+### What this landing refused to do
+
+**It did not invent the rulings.** The brief arrived with all seven as unfilled placeholders (`<a | b | c>`) and the date as `2026-09-<dd>`; the session **stopped and asked** rather than choosing, because every unit and criterion is rewritten by the answer and **D-3 is rank-1 adjacent** — its option (a) would have required a recorded `CLAUDE.md` §2.2 rule-8 exception. It also **did not write U9's guard or U0's harness**: applying a ruling is planning; the code is unit work, and landing (d) is forbidden it.
+
+**One defect it caused and caught.** A `perl` replacement containing `$/` interpolated Perl's record separator — **a NUL byte** — into the plan, which silently turned the file binary and made `grep` report no matches at all. It was found by re-running an assertion that had passed minutes earlier and now returned nothing, then repaired and re-verified. **Recorded rather than quietly fixed:** a verification command that returns *nothing* is not the same as one that returns *zero*, and this is the second time in this cycle that the instrument, not the tree, was the thing at fault (§5 rule 11's class).
+
+**One companion edit was made only after it was approved.** `docs/roadmap.md:42` read **"Phases 3–4 — not started."** That line sits in the global status block, **outside the "Phase 3 section only" scope this landing was given**, so the landing did **not** touch it on its own initiative — it stopped, named the contradiction it would otherwise leave on `main`, and proposed the one-line fix. **The owner approved it**, and it is in this commit: the old text is struck (§7) and replaced with a dated Phase 3 STARTED line pointing at the Phase 3 section. **This is `CLAUDE.md` §9.7 discharged** — the rule that says roadmap phase status moves when a phase starts. **The scope restriction was respected and the contradiction was still not shipped**, which is the only outcome where both hold.
+
+## Status
+
+**Landing (d) — RULINGS RECORDED, PLAN APPROVED.** The plan is **rank 5** and authorises **U0…U9** and nothing else. **No unit has been executed**, no guard written, no code touched. bkit `phase3-plan` closes at **report**: the cycle that authored, reviewed, revised and approved the Phase 3 plan is complete, and each unit registers its own cycle from here.
