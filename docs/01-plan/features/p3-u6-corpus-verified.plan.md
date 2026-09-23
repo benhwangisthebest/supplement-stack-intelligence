@@ -103,17 +103,7 @@ equals an independent `shasum -a 256`. The dry run of all 32 claims under the fe
 beside the chip in the `Sources` list; an effect-grade chip alone → notice present; an interaction chip alone →
 no notice; no citations → nothing rendered.
 
-**Red proof (AC-1).** Backed up by file copy, then the mount line deleted from `ProvenanceChips.tsx`:
-
-```
-   × … > discloses the dataset when a paper chip is shown, alongside the chip
-   × … > discloses the dataset when only an effect-grade chip is shown
-     → expected null not to be null
-      Tests  2 failed | 3 passed (5)
-```
-
-Restored from the backup. The restored file's `shasum` equals the backup's
-(`fc4eeec5150152db03c6b940cd9838da2f930363`), and `npx vitest run --project jsdom` → **5 passed (5)**.
+**Red proof (AC-1).** Backed up by file copy, then the mount line deleted from `ProvenanceChips.tsx`: `× … paper chip`, `× … effect-grade chip` (*expected null not to be null*), **2 failed | 3 passed (5)**. Restored from the copy (shasum `fc4eeec5…` equal), and the result is **5 passed (5)**.
 
 ## 5. Do / Check — (a)
 
@@ -127,17 +117,7 @@ The second approval, whose `approvedBy` was `"nobody"`, was `REFUSED … no writ
 `resolve`, `applyResolved`, the title-mismatch refusal, the call cap, the host allowlist and the rate limiter all behaved as
 specified. All assertions passed.
 
-**Red proof, U5's guard against a planted unverifiable DOI.** The seed file was backed up by copy, and
-`p-creatine-strength.doi = "10.0000/u6-planted-unverifiable"` was planted:
-
-```
-   × P2/P3 — doi > P3 doi: every well-formed paper doi has a fixture entry
-+   "p-creatine-strength.doi \"10.0000/u6-planted-unverifiable\": no fixture entry for doi:10.0000/u6-planted-unverifiable",
-      Tests  1 failed | 7 passed (8)
-```
-
-Restored from the copy. The `shasum` values match (`f57967e9…`), `git diff content/seed` is empty, and the
-file → **8 passed (8)**.
+**Red proof, U5's guard against a planted unverifiable DOI:** `p-creatine-strength.doi = "10.0000/u6-planted-unverifiable"` → `× P3 doi` (*no fixture entry for doi:10.0000/u6-planted-unverifiable*), **1 failed | 7 passed (8)**. Restored from the copy (shasum `f57967e9…` equal, seed diff empty), and the result is **8 passed (8)**.
 
 ## 6. Do / Check — (b), live search (S1). STOPPED for owner decisions
 
@@ -198,3 +178,14 @@ verified"*, true on every page. Which card is verified is not yet visible (see c
 382/382 · vitest **1492/1492 across 118 files** · build 0 · `verify:rendering` OK · E2E `evidence-disclosure` 18/18 ·
 `content:generate --check` 0 stale. **AC-5:** 0 grade/confidence/score diffs over 27 effects vs `4ee80b6`. **AC-4 not
 yet met**: 3 cited papers carry no identifier.
+
+## 8. Do / Check — (c2), the card shows which summary is verified (owner scope addition, 2026-09-23)
+
+`PaperSummaryCard` renders *Verified source:* followed by `PMID n` (→ `https://pubmed.ncbi.nlm.nih.gov/n/`) and/or `DOI x`
+(→ `https://doi.org/x`), each `target=_blank rel="noopener noreferrer"`, **only** when the paper carries an identifier. The
+build already verifies that identifier against the fixture, so the link is not seed-fabricated (SC-3's intent holds).
+**Notice (both variants):** a summary with a PubMed or DOI link is verified, and one without a link is illustrative
+sample data, *not real studies* (the phrase the G3 E2E spec asserts). **Test** `PaperSummaryCard.test.tsx` (jsdom): PMID
+link, DOI link, a real seed paper (`p-creatine-strength`) linking its PMID, and no link or label without an identifier.
+**Red proof:** the identifier block removed → **3 failed | 6 passed (9)**. Restored from the copy (shasum `e2ac5188…`
+equal), and the result is **9 passed (9)**.

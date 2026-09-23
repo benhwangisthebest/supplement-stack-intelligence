@@ -29,7 +29,7 @@ describe("ProvenanceChips — illustrative-dataset notice (N-84)", () => {
     render(<ProvenanceChips citations={[paper]} />);
     const sources = screen.getByRole("list", { name: "Sources" });
     expect(within(sources).getByText(paper.label)).toBeTruthy();
-    expect(notice()?.textContent).toMatch(/matched to published papers.*illustrative sample data, not real studies/);
+    expect(notice()?.textContent).toMatch(/verified when its Library card links a PubMed or DOI record.*not real studies/);
   });
 
   it("discloses the dataset when only an effect-grade chip is shown", () => {

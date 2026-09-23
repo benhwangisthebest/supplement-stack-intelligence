@@ -9,10 +9,45 @@ import type { Paper } from "@/types";
 // long, what was seen, and what the limits are.
 //
 // Plan SC: SC-3 (no seed-derived external link), SC-6 (educational content preserved)
+//
+// Phase 3 U6 (c2), owner scope addition 2026-09-23: the ONE external link a card may
+// carry is built from a `pmid`/`doi` that the build has verified against
+// content/verification/provenance-fixture.json (src/data/provenance-record.test.ts),
+// so SC-3's intent — no fabricated link — holds. A card without an identifier is an
+// illustrative summary and renders no link; IllustrativeDatasetNotice says so.
+const PUBMED = "https://pubmed.ncbi.nlm.nih.gov/";
+const DOI_ORG = "https://doi.org/";
+const LINK = "font-medium text-body underline underline-offset-2 hover:text-ink";
 export function PaperSummaryCard({ paper }: { paper: Paper }) {
   return (
     <article className="rounded-lg border border-hairline p-4">
       <h4 className="text-sm font-medium text-ink">{paper.title}</h4>
+      {(paper.pmid || paper.doi) && (
+        <p className="mt-1 text-xs text-muted" data-testid="paper-identifiers">
+          <span className="font-medium text-body">Verified source:</span>{" "}
+          {paper.pmid && (
+            <a
+              href={`${PUBMED}${paper.pmid}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={LINK}
+            >
+              PMID {paper.pmid}
+            </a>
+          )}
+          {paper.pmid && paper.doi && " · "}
+          {paper.doi && (
+            <a
+              href={`${DOI_ORG}${encodeURI(paper.doi)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={LINK}
+            >
+              DOI {paper.doi}
+            </a>
+          )}
+        </p>
+      )}
       <p className="mt-1 text-xs text-muted">{paper.population}</p>
 
       <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
