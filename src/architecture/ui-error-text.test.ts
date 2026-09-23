@@ -17,8 +17,12 @@ import { describe, expect, it } from "vitest";
 // ---------------------------------------------------------------------------
 // WHY SOURCE-LEVEL AND NOT A COMPONENT TEST
 // ---------------------------------------------------------------------------
-// `boundaries.test.ts`'s `HARNESS_GAP` hard-fails on any tracked `*.test.tsx`,
-// and `vitest.config.ts` collects `src/**/*.test.ts` only. Adding jsdom/RTL is
+// [2026-09-23, Phase 3 U0 — FU-51] The two lines struck below are no longer
+// true: U0 retired `HARNESS_GAP` for `TEST_COLLECTION` and added a `jsdom`
+// project that runs `src/**/*.test.tsx` (`vitest.workspace.ts`). The
+// rationale stands as history, because it was true when this unit was written.
+// ~~`boundaries.test.ts`'s `HARNESS_GAP` hard-fails on any tracked `*.test.tsx`,~~
+// ~~and `vitest.config.ts` collects `src/**/*.test.ts` only.~~ Adding jsdom/RTL is
 // its own decision with its own cost, explicitly out of scope for Phase 2. So
 // the property is read off the source text — the same constraint and the same
 // answer as U24's `nav-pillars.test.ts`.

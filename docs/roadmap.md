@@ -190,8 +190,12 @@ zero `.DS_Store` tracked.)*
       > harness**, which Phase 1 explicitly excluded and the Phase 2 plan excludes again (§3). Adding one
       > to satisfy an ordering rule would import a testing decision on the wrong grounds and at the wrong
       > time. The risk the criterion controls is *silent* omission, and that risk is already controlled:
-      > **C-12 is closed** — Phase 1 U13's `HARNESS_GAP` makes a tracked-but-uncollected `.tsx` test fail
+      > **C-12 is closed** — Phase 1 U13's `HARNESS_GAP` ~~makes~~ made a tracked-but-uncollected `.tsx` test fail
       > **loudly**. What remains open is making such a test **run**, which is a capability, not a hole.
+      > **[2026-09-23, Phase 3 U0 — FU-51]** That capability now exists: U0 (`0389a6b`) added a `jsdom`
+      > vitest project that runs `src/**/*.test.tsx`, and retired `HARNESS_GAP` for `TEST_COLLECTION`
+      > (`src/architecture/boundaries.test.ts:570`), which requires every tracked test file to run exactly
+      > once, in its own project. U-DEFER-4 is **RE-SCOPED**, not closed; the deferred `.tsx` tests are U7's.
       > **The distinction is easy to blur and is the whole basis of this exception.**
       >
       > **What was rejected.** Retiring the criterion, or re-scoping it down to what U13 delivered. Both
@@ -200,8 +204,10 @@ zero `.DS_Store` tracked.)*
       > **Owner: the phase that introduces component testing.** Until such a phase exists this has a named
       > owner-*condition* rather than an owner — stated that way because pretending otherwise would make
       > the register look tidier than the project is. **This exception licenses nothing inside Phase 2**:
-      > `HARNESS_GAP` still hard-fails on a tracked `*.test.tsx`, which is why Phase 2's UI-touching units
+      > ~~`HARNESS_GAP` still hard-fails on a tracked `*.test.tsx`~~, which is why Phase 2's UI-touching units
       > (U19, U24) are specified around source-level assertions instead.
+      > **[2026-09-23, Phase 3 U0 — FU-51]** The struck clause was true for all of Phase 2 and is no longer
+      > true: U0 (`0389a6b`) retired `HARNESS_GAP`, and a tracked `*.test.tsx` now runs under `jsdom`.
 - [x] Coverage report lists `src/app`, `src/services`, `src/components`, `src/lib/db` — `include` is
       `src/**/*.{ts,tsx}` since `8b1bd16`.
 
@@ -502,7 +508,9 @@ Library its trust layer.
 > WITHOUT A DECISION THAT IS NOT YET MADE.** This phase's criterion *"every surface that can show partial
 > coverage states its coverage limit; **test-verified**"* needs a component-test harness that **does not
 > exist**: `vitest` collects `src/**/*.test.ts` under `environment: "node"`, so a `.test.tsx` cannot run,
-> and `HARNESS_GAP` hard-fails any tracked one. That is **U-DEFER-4**, outstanding by dated exception since
+> and ~~`HARNESS_GAP` hard-fails any tracked one~~ **[2026-09-23, Phase 3 U0 — FU-51: no longer true. U0
+> (`0389a6b`) added the harness this sentence says does not exist, and retired `HARNESS_GAP` for
+> `TEST_COLLECTION`]**. That is **U-DEFER-4**, outstanding by dated exception since
 > Phase 1, and its owner-condition names *"the phase that introduces component testing"* — which **this
 > roadmap places in Phase 4**. So the criterion's verification method is owned by a later phase than the
 > criterion. **Two ways out, and the choice is the owner's:** Phase 3 opens by building the harness, or the

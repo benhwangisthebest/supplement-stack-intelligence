@@ -243,10 +243,17 @@ Status: **7/7** of `evaluateStack`'s context fields covered (was 2/7). No dead c
   its name, which is what every rule in the file assumes. Proven red against a `git add -N`-staged
   `src/middleware.ts` (`TREE_PARTITION: … neither in a scanned layer nor exempt`) and against a staged
   symlink; both pass green while unstaged, which is why the plan §4.2 staging rule exists.
-- **`walk()` and vitest disagree on `.tsx`** (closeout finding C-12). The boundary scan considers
+- ~~**`walk()` and vitest disagree on `.tsx`** (closeout finding C-12). The boundary scan considers
   `*.test.tsx` a test file, but `vitest.config.ts` collects only `*.test.ts`, so a `.test.tsx` file would
   be neither scanned nor executed. Zero exist today; latent, and tracked as roadmap exit criterion
-  U-DEFER-4.
+  U-DEFER-4.~~ **[2026-09-23] RESOLVED by Phase 3 U0 (`0389a6b`); U-DEFER-4 RE-SCOPED, not closed.**
+  `vitest.workspace.ts:21–28` adds a `jsdom` project for `src/**/*.test.tsx`, and `vitest.config.ts:14`
+  names the existing one `node`. `HARNESS_GAP` is retired. It was a detector that failed on any tracked
+  `.test.tsx`, not a harness. `TEST_COLLECTION` (`src/architecture/boundaries.test.ts:570–654`) replaces
+  it and requires every tracked test file in the repository to run exactly once, in the project for its
+  extension; it refuses a workspace `extends` entry. U-DEFER-4's owner-condition, *"the phase that
+  introduces component testing"*, is **met** by ruling D-1(a). Writing the deferred `.tsx` tests is
+  **U7**'s scope. Record: `docs/01-plan/features/p3-u0-component-harness.plan.md`.
 
 ## Running the checks
 

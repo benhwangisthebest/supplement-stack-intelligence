@@ -16,8 +16,12 @@ import { PILLARS } from "@/components/layout/TopNav";
 // case for this file existing: the rule lived only in prose, and §3.5 says
 // prefer a mechanism over a paragraph.
 //
-// WHY SOURCE-LEVEL AND NOT A COMPONENT TEST. `boundaries.test.ts`'s
-// `HARNESS_GAP` hard-fails on any tracked `*.test.tsx`, and this unit must not
+// [2026-09-23, Phase 3 U0 — FU-51] The struck clause is no longer true: U0
+// retired `HARNESS_GAP` for `TEST_COLLECTION` and added a `jsdom` project that
+// runs `src/**/*.test.tsx` (`vitest.workspace.ts`). The rationale stands as
+// history, because it was true when this unit was written.
+// WHY SOURCE-LEVEL AND NOT A COMPONENT TEST. ~~`boundaries.test.ts`'s
+// `HARNESS_GAP` hard-fails on any tracked `*.test.tsx`,~~ and this unit must not
 // smuggle in a component-test harness to get around that — the constraint is
 // U19's and applies here identically. So the structural half is read off the
 // source text.

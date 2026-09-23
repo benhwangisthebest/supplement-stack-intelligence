@@ -154,7 +154,7 @@ the smoke test) · `npm run lint` → **377 of 377** tracked source files, 0 err
 - **FU-50 — open, owner call.** `@vitejs/plugin-react` is a declared devDependency that is installed and
   referenced by no tracked file (`git grep -n "@vitejs/plugin-react"` hits only `package.json:41` and `package-lock.json`). U0
   did not use it and did not remove it.
-- **FU-51 — open, docs.** Prose still describes `HARNESS_GAP` as live, in files outside U0's
+- **FU-51 — CLOSED at the U0 closeout (2026-09-23).** ~~open, docs.~~ Prose still describes `HARNESS_GAP` as live, in files outside U0's
   may-touch list: `src/architecture/ui-error-text.test.ts:20`, `src/architecture/nav-pillars.test.ts:20`,
   `docs/roadmap.md:193,203,505`, `docs/project-status.md:543`. These need a dated annotation (§7), not a
   deletion.
@@ -171,7 +171,13 @@ only warning is Vite's "The CJS build of Vite's Node API is deprecated", and the
 
 ## 7. Report
 
-*Filled at closeout: landing SHAs, CI run IDs, register status.*
+**Landing:** `0389a6b` `feat(test): U0 — …`. It was fast-forwarded to `main` after CI run **35828762796**
+passed on that SHA: all steps, including E2E (non-live). **Register:** U0 is marked **DONE**, U-DEFER-4
+**RE-SCOPED** (`phase-3-evidence-grounding.plan.md`, the STATUS line under U0), and the C-12 bullet in
+`docs/02-design/architecture-boundaries.md` is struck and dated. **FU-51** is closed by dated notes that
+strike rather than delete, at all six sites: `ui-error-text.test.ts:20`, `nav-pillars.test.ts:20`,
+`roadmap.md` (C-12 exception ×2 and the Phase 3 P2-6 note), `project-status.md` (the presentation-layer
+sentence). **Carried open:** FU-50 (owner), FU-52 (live, CI). **Next consumer:** U7.
 
 ---
 

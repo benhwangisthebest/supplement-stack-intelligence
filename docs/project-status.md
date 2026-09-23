@@ -538,9 +538,14 @@ purity is unenforced, the presentation layer is untestable-by-config, and none o
 `DOMAIN_IS_PURE` is enforced as a ratchet (U18), and all seven architecture specs run on every push via
 CI (including a coverage gate) **[2026-09-14, observed at U12: **20** · **21 at U22 (2026-09-15)** · **22 at U32 (2026-09-18)** · **23 at U30 (2026-09-21)** · **24 at U33 (2026-09-21)**, and the "all" is the load-bearing
 word — it was true when written and is still true, because CI runs the whole suite rather than a named
-list; only the count aged · **[2026-09-22, Phase 2 closeout] BOUND BY `SPEC_COUNT` at `28` — 24 → 26 when the two binding guards landed (they are themselves architecture specs), then → 27 at the (d1) remediation, which added `five-xx-is-logged.test.ts`, then → 28 at Phase 3 U1 landing (b), which added `canonical-layout.test.ts`. Each step moved all four sites in the same commit, because the guard reddens otherwise — which is the first time this count has constrained a landing rather than recording one. Derived from `git ls-files` over `src/architecture/*.test.ts` and asserted against this site: a unit that adds a spec now reddens the build instead of appending a further value here. This is the last hand-written value; do not restack**]**. **The presentation layer is still untestable by config**: `include` is
+list; only the count aged · **[2026-09-22, Phase 2 closeout] BOUND BY `SPEC_COUNT` at `28` — 24 → 26 when the two binding guards landed (they are themselves architecture specs), then → 27 at the (d1) remediation, which added `five-xx-is-logged.test.ts`, then → 28 at Phase 3 U1 landing (b), which added `canonical-layout.test.ts`. Each step moved all four sites in the same commit, because the guard reddens otherwise — which is the first time this count has constrained a landing rather than recording one. Derived from `git ls-files` over `src/architecture/*.test.ts` and asserted against this site: a unit that adds a spec now reddens the build instead of appending a further value here. This is the last hand-written value; do not restack**]**. ~~**The presentation layer is still untestable by config**: `include` is
 `src/**/*.test.ts` with `environment: "node"`, so a `.test.tsx` cannot run — though since U13 a tracked
-`.test.tsx` at least fails loudly via `HARNESS_GAP` instead of being silently skipped. Plus two
+`.test.tsx` at least fails loudly via `HARNESS_GAP` instead of being silently skipped.~~
+**[2026-09-23, Phase 3 U0 — FU-51] The presentation layer is testable by config.** U0 (`0389a6b`)
+added a `jsdom` vitest project for `src/**/*.test.tsx` (`vitest.workspace.ts`). It also retired
+`HARNESS_GAP` for `TEST_COLLECTION` (`src/architecture/boundaries.test.ts:570`), which requires every
+tracked test file to run exactly once, in its own project. One smoke test exists; the deferred
+component tests are U7's (U-DEFER-4 RE-SCOPED). Plus two
 content/process issues:
 
 1. **Content debt compounds fastest** — every feature built on ungrounded grades enlarges the surface a
