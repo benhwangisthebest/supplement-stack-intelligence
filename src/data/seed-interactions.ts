@@ -6,7 +6,6 @@ import type { InteractionRule } from "@/types/interaction";
 // All supplementId / otherSupplementId values must exist in SEED_SUPPLEMENTS
 // (integrity-checked in interactions.test.ts).
 export const SEED_INTERACTIONS: InteractionRule[] = [
-  // ---- supplement ↔ drug-class ----
   {
     id: "fish-oil--anticoagulant",
     kind: "supplement-drug",
@@ -14,8 +13,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "anticoagulant",
     severity: "warning",
     mechanism: "omega-3s can mildly reduce platelet aggregation, which may add to a blood thinner's effect",
-    management:
-      "Bleeding risk may be higher when combined; this is worth reviewing with the prescriber before continuing.",
+    management: "Bleeding risk may be higher when combined; this is worth reviewing with the prescriber before continuing.",
     evidenceGrade: "B",
   },
   {
@@ -25,8 +23,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "antiplatelet",
     severity: "caution",
     mechanism: "omega-3s and antiplatelet drugs both reduce platelet aggregation",
-    management:
-      "The combined effect on bleeding is usually modest, but worth mentioning to the prescriber.",
+    management: "The combined effect on bleeding is usually modest, but worth mentioning to the prescriber.",
     evidenceGrade: "C",
   },
   {
@@ -36,8 +33,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "antidiabetic",
     severity: "warning",
     mechanism: "berberine can lower blood glucose, which may add to a glucose-lowering medication",
-    management:
-      "Combined use may lower blood sugar more than expected; glucose monitoring and prescriber input are reasonable.",
+    management: "Combined use may lower blood sugar more than expected; glucose monitoring and prescriber input are reasonable.",
     evidenceGrade: "B",
   },
   {
@@ -47,8 +43,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "quinolone-antibiotic",
     severity: "caution",
     mechanism: "magnesium can bind the antibiotic in the gut and reduce its absorption",
-    management:
-      "Separating the doses by several hours generally avoids this; a clinician or pharmacist can advise on timing.",
+    management: "Separating the doses by several hours generally avoids this; a clinician or pharmacist can advise on timing.",
     evidenceGrade: "B",
   },
   {
@@ -58,8 +53,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "tetracycline-antibiotic",
     severity: "caution",
     mechanism: "magnesium can chelate tetracyclines and reduce antibiotic absorption",
-    management:
-      "Spacing the doses apart usually prevents the interaction; confirm timing with a pharmacist.",
+    management: "Spacing the doses apart usually prevents the interaction; confirm timing with a pharmacist.",
     evidenceGrade: "B",
   },
   {
@@ -69,8 +63,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "thyroid-medication",
     severity: "caution",
     mechanism: "magnesium may reduce absorption of thyroid hormone replacement",
-    management:
-      "Taking them several hours apart generally avoids the issue; a pharmacist can advise on timing.",
+    management: "Taking them several hours apart generally avoids the issue; a pharmacist can advise on timing.",
     evidenceGrade: "C",
   },
   {
@@ -80,8 +73,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "quinolone-antibiotic",
     severity: "caution",
     mechanism: "zinc can bind the antibiotic and reduce its absorption",
-    management:
-      "Separating the doses by several hours generally avoids this; check timing with a pharmacist.",
+    management: "Separating the doses by several hours generally avoids this; check timing with a pharmacist.",
     evidenceGrade: "B",
   },
   {
@@ -101,8 +93,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "thiazide-diuretic",
     severity: "caution",
     mechanism: "thiazides reduce calcium excretion, and vitamin D raises calcium absorption, which together may raise blood calcium",
-    management:
-      "At high vitamin D doses this is worth monitoring; a clinician can advise on dosing.",
+    management: "At high vitamin D doses this is worth monitoring; a clinician can advise on dosing.",
     evidenceGrade: "C",
   },
   {
@@ -122,8 +113,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "thyroid-medication",
     severity: "caution",
     mechanism: "ashwagandha may increase thyroid hormone levels, which can add to thyroid replacement",
-    management:
-      "Combined use may raise thyroid hormone more than intended; prescriber input is reasonable.",
+    management: "Combined use may raise thyroid hormone more than intended; prescriber input is reasonable.",
     evidenceGrade: "C",
   },
   {
@@ -133,8 +123,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "immunosuppressant",
     severity: "warning",
     mechanism: "ashwagandha may stimulate immune activity, which can oppose immunosuppressant therapy",
-    management:
-      "This combination may work against the medication's purpose and is worth discussing with the prescriber.",
+    management: "This combination may work against the medication's purpose and is worth discussing with the prescriber.",
     evidenceGrade: "C",
   },
   {
@@ -154,8 +143,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "anticoagulant",
     severity: "caution",
     mechanism: "some reports suggest melatonin may affect blood thinner activity",
-    management:
-      "Evidence is limited; mentioning the combination to the prescriber is reasonable.",
+    management: "Evidence is limited; mentioning the combination to the prescriber is reasonable.",
     evidenceGrade: "D",
   },
   {
@@ -165,8 +153,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "nitrate-vasodilator",
     severity: "caution",
     mechanism: "NAC may enhance the blood-vessel-widening effect of nitrates, which can lower blood pressure",
-    management:
-      "Headache or lightheadedness may be more likely; worth reviewing with the prescriber.",
+    management: "Headache or lightheadedness may be more likely; worth reviewing with the prescriber.",
     evidenceGrade: "C",
   },
   {
@@ -186,12 +173,9 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     drugClass: "stimulant",
     severity: "caution",
     mechanism: "caffeine adds to the effects of stimulant medications",
-    management:
-      "Jitteriness, raised heart rate, or sleep disruption may be more likely when combined.",
+    management: "Jitteriness, raised heart rate, or sleep disruption may be more likely when combined.",
     evidenceGrade: "C",
   },
-
-  // ---- supplement ↔ supplement ----
   {
     id: "magnesium--zinc",
     kind: "supplement-supplement",
@@ -199,8 +183,7 @@ export const SEED_INTERACTIONS: InteractionRule[] = [
     otherSupplementId: "zinc",
     severity: "info",
     mechanism: "at high doses, magnesium and zinc can compete for absorption in the gut",
-    management:
-      "At typical doses this is minor; separating them or taking with food can help if you take large amounts.",
+    management: "At typical doses this is minor; separating them or taking with food can help if you take large amounts.",
     evidenceGrade: "C",
   },
   {

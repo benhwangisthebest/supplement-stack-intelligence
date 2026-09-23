@@ -6,7 +6,6 @@ import type { Product } from "@/types";
 // no link rather than a dead one. Real listings need real URLs.
 // Doses use the same unit as each supplement's generalDose so dose-fit can compute.
 export const SEED_PRODUCTS: Product[] = [
-  // ---- Magnesium (target ~200-400 mg) ----
   {
     id: "mag-acme-glycinate",
     supplementId: "magnesium",
@@ -39,8 +38,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Cheap oxide form; lower absorption, contains fillers.",
   },
-
-  // ---- Creatine (target 3-5 g) ----
   {
     id: "cre-purelab-mono",
     supplementId: "creatine",
@@ -73,8 +70,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Flavored; contains sweeteners.",
   },
-
-  // ---- Vitamin D (target 1000-4000 IU) ----
   {
     id: "vitd-sunwell-d3",
     supplementId: "vitamin-d",
@@ -107,8 +102,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Gummy format; contains sugar and colorings.",
   },
-
-  // ---- Fish oil (target 1000-3000 mg) — allergen: fish ----
   {
     id: "fish-nordic-omega",
     supplementId: "fish-oil",
@@ -141,8 +134,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Standard fish oil; testing not disclosed.",
   },
-
-  // ---- L-theanine (target 100-200 mg) ----
   {
     id: "thea-calm-200",
     supplementId: "l-theanine",
@@ -159,8 +150,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Suntheanine brand; tested.",
   },
-
-  // ---- Glycine (target 3 g) ----
   {
     id: "gly-pure-powder",
     supplementId: "glycine",
@@ -177,8 +166,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Single-ingredient glycine.",
   },
-
-  // ---- Melatonin (target 0.5-3 mg) ----
   {
     id: "mela-night-1mg",
     supplementId: "melatonin",
@@ -211,8 +198,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "High 10mg dose, gummy with sugar.",
   },
-
-  // ---- Ashwagandha (target 300-600 mg) ----
   {
     id: "ashwa-ksm-600",
     supplementId: "ashwagandha",
@@ -229,8 +214,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "KSM-66 standardized extract.",
   },
-
-  // ---- Berberine (target 500-1500 mg) ----
   {
     id: "berb-meta-500",
     supplementId: "berberine",
@@ -247,8 +230,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Standard berberine HCl.",
   },
-
-  // ---- Zinc (target 8-25 mg) ----
   {
     id: "zinc-immune-15",
     supplementId: "zinc",
@@ -265,8 +246,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Picolinate form; USP verified.",
   },
-
-  // ---- B12 (target 250-1000 mcg) ----
   {
     id: "b12-methyl-1000",
     supplementId: "vitamin-b12",
@@ -283,8 +262,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Methyl form, sublingual.",
   },
-
-  // ---- Caffeine (target 100-200 mg) ----
   {
     id: "caf-focus-100",
     supplementId: "caffeine",
@@ -301,8 +278,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Plain 100mg caffeine.",
   },
-
-  // ---- Taurine (target 1000-3000 mg) ----
   {
     id: "tau-pure-1000",
     supplementId: "taurine",
@@ -319,8 +294,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Single-ingredient taurine.",
   },
-
-  // ---- NAC (target 600-1800 mg) ----
   {
     id: "nac-anti-600",
     supplementId: "nac",
@@ -337,8 +310,6 @@ export const SEED_PRODUCTS: Product[] = [
     affiliateLink: null,
     qualityNotes: "Tested NAC.",
   },
-
-  // ---- Protein powder (target 20-40 g) — allergen: milk ----
   {
     id: "prot-whey-iso",
     supplementId: "protein-powder",

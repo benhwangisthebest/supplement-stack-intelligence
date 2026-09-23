@@ -3,7 +3,6 @@ import type { Effect } from "@/types";
 // Design §3.1, §8.5 — effect-level grades (>=25 effects, >=1 per supplement).
 // Grades reflect curated sample data for the MVP, not a formal evidence review.
 export const SEED_EFFECTS: Effect[] = [
-  // ---- Magnesium ----
   {
     id: "magnesium-sleep",
     supplementId: "magnesium",
@@ -11,19 +10,42 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "sleep",
     grade: "B",
     confidence: "moderate",
-    summary:
-      "May improve subjective sleep quality, particularly in older adults or those with low intake.",
+    summary: "May improve subjective sleep quality, particularly in older adults or those with low intake.",
     relevantPopulation: "adults with suboptimal magnesium status",
-    studiedDose: { min: 200, max: 400, unit: "mg" },
+    studiedDose: {
+      min: 200,
+      max: 400,
+      unit: "mg",
+    },
     mechanismTags: ["GABA", "relaxation"],
     paperIds: ["p-magnesium-sleep"],
     evidenceProfile: {
       dimensions: {
-        humanEvidence: { score: 2, rationale: "Human trials, several in older adults.", paperIds: ["p-magnesium-sleep"] },
-        studyQuality: { score: 2, rationale: "Small randomized trials with some bias risk.", paperIds: ["p-magnesium-sleep"] },
-        consistency: { score: 2, rationale: "Subjective sleep benefit recurs, mainly with low status.", paperIds: ["p-magnesium-sleep"] },
-        effectSize: { score: 1, rationale: "Small subjective improvement.", paperIds: ["p-magnesium-sleep"] },
-        populationRelevance: { score: 2, rationale: "Largest in adults with suboptimal magnesium.", paperIds: [] },
+        humanEvidence: {
+          score: 2,
+          rationale: "Human trials, several in older adults.",
+          paperIds: ["p-magnesium-sleep"],
+        },
+        studyQuality: {
+          score: 2,
+          rationale: "Small randomized trials with some bias risk.",
+          paperIds: ["p-magnesium-sleep"],
+        },
+        consistency: {
+          score: 2,
+          rationale: "Subjective sleep benefit recurs, mainly with low status.",
+          paperIds: ["p-magnesium-sleep"],
+        },
+        effectSize: {
+          score: 1,
+          rationale: "Small subjective improvement.",
+          paperIds: ["p-magnesium-sleep"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "Largest in adults with suboptimal magnesium.",
+          paperIds: [],
+        },
       },
     },
   },
@@ -36,7 +58,11 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "low",
     summary: "Emerging evidence for stress symptom reduction, often combined with B6.",
     relevantPopulation: "adults reporting stress",
-    studiedDose: { min: 200, max: 400, unit: "mg" },
+    studiedDose: {
+      min: 200,
+      max: 400,
+      unit: "mg",
+    },
     mechanismTags: ["GABA", "HPA-axis"],
     paperIds: ["p-magnesium-sleep"],
   },
@@ -49,12 +75,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "low",
     summary: "Possible small improvements in insulin sensitivity in deficient individuals.",
     relevantPopulation: "insulin-resistant adults with low magnesium",
-    studiedDose: { min: 250, max: 400, unit: "mg" },
+    studiedDose: {
+      min: 250,
+      max: 400,
+      unit: "mg",
+    },
     mechanismTags: ["insulin-sensitivity"],
     paperIds: [],
   },
-
-  // ---- Creatine ----
   {
     id: "creatine-strength",
     supplementId: "creatine",
@@ -62,19 +90,42 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "training",
     grade: "A",
     confidence: "high",
-    summary:
-      "Robust evidence for improved strength, power, and lean mass when combined with resistance training.",
+    summary: "Robust evidence for improved strength, power, and lean mass when combined with resistance training.",
     relevantPopulation: "training adults across age ranges",
-    studiedDose: { min: 3, max: 5, unit: "g" },
+    studiedDose: {
+      min: 3,
+      max: 5,
+      unit: "g",
+    },
     mechanismTags: ["phosphocreatine", "ATP"],
     paperIds: ["p-creatine-strength"],
     evidenceProfile: {
       dimensions: {
-        humanEvidence: { score: 3, rationale: "Extensive RCTs in trained humans.", paperIds: ["p-creatine-strength"] },
-        studyQuality: { score: 3, rationale: "Many randomized, placebo-controlled trials.", paperIds: ["p-creatine-strength"] },
-        consistency: { score: 3, rationale: "Findings replicate across populations and protocols.", paperIds: ["p-creatine-strength"] },
-        effectSize: { score: 3, rationale: "Meaningful strength/power and lean-mass gains.", paperIds: ["p-creatine-strength"] },
-        populationRelevance: { score: 2, rationale: "Strongest in training adults; less relevant to the sedentary.", paperIds: [] },
+        humanEvidence: {
+          score: 3,
+          rationale: "Extensive RCTs in trained humans.",
+          paperIds: ["p-creatine-strength"],
+        },
+        studyQuality: {
+          score: 3,
+          rationale: "Many randomized, placebo-controlled trials.",
+          paperIds: ["p-creatine-strength"],
+        },
+        consistency: {
+          score: 3,
+          rationale: "Findings replicate across populations and protocols.",
+          paperIds: ["p-creatine-strength"],
+        },
+        effectSize: {
+          score: 3,
+          rationale: "Meaningful strength/power and lean-mass gains.",
+          paperIds: ["p-creatine-strength"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "Strongest in training adults; less relevant to the sedentary.",
+          paperIds: [],
+        },
       },
     },
   },
@@ -85,19 +136,42 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "focus",
     grade: "C",
     confidence: "low",
-    summary:
-      "Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians.",
+    summary: "Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians.",
     relevantPopulation: "sleep-deprived adults, vegetarians",
-    studiedDose: { min: 5, max: 5, unit: "g" },
+    studiedDose: {
+      min: 5,
+      max: 5,
+      unit: "g",
+    },
     mechanismTags: ["brain-energy"],
     paperIds: ["p-creatine-cognition"],
     evidenceProfile: {
       dimensions: {
-        humanEvidence: { score: 2, rationale: "Several human trials, smaller and more recent.", paperIds: ["p-creatine-cognition"] },
-        studyQuality: { score: 1, rationale: "Mixed designs; some underpowered.", paperIds: ["p-creatine-cognition"] },
-        consistency: { score: 1, rationale: "Benefit appears mainly under stressors (sleep loss, vegetarian).", paperIds: [] },
-        effectSize: { score: 1, rationale: "Modest and context-dependent.", paperIds: ["p-creatine-cognition"] },
-        populationRelevance: { score: 2, rationale: "Most relevant to sleep-deprived adults and vegetarians.", paperIds: [] },
+        humanEvidence: {
+          score: 2,
+          rationale: "Several human trials, smaller and more recent.",
+          paperIds: ["p-creatine-cognition"],
+        },
+        studyQuality: {
+          score: 1,
+          rationale: "Mixed designs; some underpowered.",
+          paperIds: ["p-creatine-cognition"],
+        },
+        consistency: {
+          score: 1,
+          rationale: "Benefit appears mainly under stressors (sleep loss, vegetarian).",
+          paperIds: [],
+        },
+        effectSize: {
+          score: 1,
+          rationale: "Modest and context-dependent.",
+          paperIds: ["p-creatine-cognition"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "Most relevant to sleep-deprived adults and vegetarians.",
+          paperIds: [],
+        },
       },
     },
   },
@@ -110,12 +184,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "low",
     summary: "May reduce muscle damage markers and support recovery between sessions.",
     relevantPopulation: "resistance-trained adults",
-    studiedDose: { min: 3, max: 5, unit: "g" },
+    studiedDose: {
+      min: 3,
+      max: 5,
+      unit: "g",
+    },
     mechanismTags: ["phosphocreatine"],
     paperIds: [],
   },
-
-  // ---- Vitamin D ----
   {
     id: "vitamin-d-deficiency",
     supplementId: "vitamin-d",
@@ -125,16 +201,40 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "high",
     summary: "Effectively raises serum 25(OH)D in deficient individuals.",
     relevantPopulation: "adults with low vitamin D status",
-    studiedDose: { min: 1000, max: 4000, unit: "IU" },
+    studiedDose: {
+      min: 1000,
+      max: 4000,
+      unit: "IU",
+    },
     mechanismTags: ["calcitriol"],
     paperIds: ["p-vitamin-d-deficiency"],
     evidenceProfile: {
       dimensions: {
-        humanEvidence: { score: 3, rationale: "Direct human supplementation trials.", paperIds: ["p-vitamin-d-deficiency"] },
-        studyQuality: { score: 3, rationale: "Well-controlled dose-response data.", paperIds: ["p-vitamin-d-deficiency"] },
-        consistency: { score: 3, rationale: "Reliably raises serum 25(OH)D.", paperIds: ["p-vitamin-d-deficiency"] },
-        effectSize: { score: 2, rationale: "Clear biomarker correction; clinical outcomes vary.", paperIds: ["p-vitamin-d-deficiency"] },
-        populationRelevance: { score: 3, rationale: "Directly applicable to deficient adults.", paperIds: [] },
+        humanEvidence: {
+          score: 3,
+          rationale: "Direct human supplementation trials.",
+          paperIds: ["p-vitamin-d-deficiency"],
+        },
+        studyQuality: {
+          score: 3,
+          rationale: "Well-controlled dose-response data.",
+          paperIds: ["p-vitamin-d-deficiency"],
+        },
+        consistency: {
+          score: 3,
+          rationale: "Reliably raises serum 25(OH)D.",
+          paperIds: ["p-vitamin-d-deficiency"],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Clear biomarker correction; clinical outcomes vary.",
+          paperIds: ["p-vitamin-d-deficiency"],
+        },
+        populationRelevance: {
+          score: 3,
+          rationale: "Directly applicable to deficient adults.",
+          paperIds: [],
+        },
       },
     },
   },
@@ -145,15 +245,16 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "foundational",
     grade: "C",
     confidence: "low",
-    summary:
-      "Mixed evidence; respiratory infection benefit appears largest in deficient people.",
+    summary: "Mixed evidence; respiratory infection benefit appears largest in deficient people.",
     relevantPopulation: "deficient adults",
-    studiedDose: { min: 1000, max: 4000, unit: "IU" },
+    studiedDose: {
+      min: 1000,
+      max: 4000,
+      unit: "IU",
+    },
     mechanismTags: ["immune-modulation"],
     paperIds: ["p-vitamin-d-deficiency"],
   },
-
-  // ---- Fish oil ----
   {
     id: "fish-oil-cardiovascular",
     supplementId: "fish-oil",
@@ -163,16 +264,40 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "moderate",
     summary: "May lower triglycerides; benefits dose-dependent on EPA/DHA content.",
     relevantPopulation: "adults with elevated triglycerides",
-    studiedDose: { min: 1000, max: 4000, unit: "mg" },
+    studiedDose: {
+      min: 1000,
+      max: 4000,
+      unit: "mg",
+    },
     mechanismTags: ["triglyceride-lowering", "anti-inflammatory"],
     paperIds: ["p-fish-oil-cv"],
     evidenceProfile: {
       dimensions: {
-        humanEvidence: { score: 2, rationale: "Human trials on triglyceride lowering.", paperIds: ["p-fish-oil-cv"] },
-        studyQuality: { score: 3, rationale: "Includes large randomized trials.", paperIds: ["p-fish-oil-cv"] },
-        consistency: { score: 2, rationale: "Triglyceride effect consistent; broader CV outcomes mixed.", paperIds: ["p-fish-oil-cv"] },
-        effectSize: { score: 1, rationale: "Dose-dependent and modest at common doses.", paperIds: ["p-fish-oil-cv"] },
-        populationRelevance: { score: 2, rationale: "Largest in adults with elevated triglycerides.", paperIds: [] },
+        humanEvidence: {
+          score: 2,
+          rationale: "Human trials on triglyceride lowering.",
+          paperIds: ["p-fish-oil-cv"],
+        },
+        studyQuality: {
+          score: 3,
+          rationale: "Includes large randomized trials.",
+          paperIds: ["p-fish-oil-cv"],
+        },
+        consistency: {
+          score: 2,
+          rationale: "Triglyceride effect consistent; broader CV outcomes mixed.",
+          paperIds: ["p-fish-oil-cv"],
+        },
+        effectSize: {
+          score: 1,
+          rationale: "Dose-dependent and modest at common doses.",
+          paperIds: ["p-fish-oil-cv"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "Largest in adults with elevated triglycerides.",
+          paperIds: [],
+        },
       },
     },
   },
@@ -185,7 +310,11 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "low",
     summary: "Some evidence for depressive symptoms with higher-EPA formulations.",
     relevantPopulation: "adults with depressive symptoms",
-    studiedDose: { min: 1000, max: 2000, unit: "mg" },
+    studiedDose: {
+      min: 1000,
+      max: 2000,
+      unit: "mg",
+    },
     mechanismTags: ["anti-inflammatory"],
     paperIds: ["p-fish-oil-mood"],
   },
@@ -198,12 +327,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "low",
     summary: "Associated with favorable markers; causal longevity benefit unproven.",
     relevantPopulation: "general adults",
-    studiedDose: { min: 1000, max: 2000, unit: "mg" },
+    studiedDose: {
+      min: 1000,
+      max: 2000,
+      unit: "mg",
+    },
     mechanismTags: ["anti-inflammatory"],
     paperIds: [],
   },
-
-  // ---- L-theanine ----
   {
     id: "l-theanine-focus",
     supplementId: "l-theanine",
@@ -211,10 +342,13 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "focus",
     grade: "B",
     confidence: "moderate",
-    summary:
-      "Combined with caffeine, improves attention and reduces jitteriness in several trials.",
+    summary: "Combined with caffeine, improves attention and reduces jitteriness in several trials.",
     relevantPopulation: "healthy adults",
-    studiedDose: { min: 100, max: 200, unit: "mg" },
+    studiedDose: {
+      min: 100,
+      max: 200,
+      unit: "mg",
+    },
     mechanismTags: ["alpha-waves", "glutamate-modulation"],
     paperIds: ["p-ltheanine-focus"],
   },
@@ -227,12 +361,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "moderate",
     summary: "May reduce acute stress and support relaxation without sedation.",
     relevantPopulation: "adults under acute stress",
-    studiedDose: { min: 200, max: 400, unit: "mg" },
+    studiedDose: {
+      min: 200,
+      max: 400,
+      unit: "mg",
+    },
     mechanismTags: ["alpha-waves", "GABA"],
     paperIds: ["p-ltheanine-stress"],
   },
-
-  // ---- Glycine ----
   {
     id: "glycine-sleep",
     supplementId: "glycine",
@@ -240,15 +376,16 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "sleep",
     grade: "B",
     confidence: "moderate",
-    summary:
-      "Pre-bed glycine may improve subjective sleep quality and next-day alertness.",
+    summary: "Pre-bed glycine may improve subjective sleep quality and next-day alertness.",
     relevantPopulation: "adults with mild sleep complaints",
-    studiedDose: { min: 3, max: 3, unit: "g" },
+    studiedDose: {
+      min: 3,
+      max: 3,
+      unit: "g",
+    },
     mechanismTags: ["inhibitory-neurotransmitter", "thermoregulation"],
     paperIds: ["p-glycine-sleep"],
   },
-
-  // ---- Melatonin ----
   {
     id: "melatonin-sleep",
     supplementId: "melatonin",
@@ -256,24 +393,45 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "sleep",
     grade: "A",
     confidence: "high",
-    summary:
-      "Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient.",
+    summary: "Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient.",
     relevantPopulation: "adults with delayed sleep onset, jet lag",
-    studiedDose: { min: 0.5, max: 3, unit: "mg" },
+    studiedDose: {
+      min: 0.5,
+      max: 3,
+      unit: "mg",
+    },
     mechanismTags: ["circadian", "MT-receptor"],
     paperIds: ["p-melatonin-sleep"],
     evidenceProfile: {
       dimensions: {
-        humanEvidence: { score: 3, rationale: "Many human trials on sleep onset.", paperIds: ["p-melatonin-sleep"] },
-        studyQuality: { score: 3, rationale: "Randomized, placebo-controlled, meta-analyzed.", paperIds: ["p-melatonin-sleep"] },
-        consistency: { score: 2, rationale: "Onset-latency benefit consistent; sleep-quality effects smaller.", paperIds: ["p-melatonin-sleep"] },
-        effectSize: { score: 2, rationale: "Reliable but modest reduction in sleep latency.", paperIds: ["p-melatonin-sleep"] },
-        populationRelevance: { score: 3, rationale: "Directly relevant to delayed onset and jet lag.", paperIds: [] },
+        humanEvidence: {
+          score: 3,
+          rationale: "Many human trials on sleep onset.",
+          paperIds: ["p-melatonin-sleep"],
+        },
+        studyQuality: {
+          score: 3,
+          rationale: "Randomized, placebo-controlled, meta-analyzed.",
+          paperIds: ["p-melatonin-sleep"],
+        },
+        consistency: {
+          score: 2,
+          rationale: "Onset-latency benefit consistent; sleep-quality effects smaller.",
+          paperIds: ["p-melatonin-sleep"],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Reliable but modest reduction in sleep latency.",
+          paperIds: ["p-melatonin-sleep"],
+        },
+        populationRelevance: {
+          score: 3,
+          rationale: "Directly relevant to delayed onset and jet lag.",
+          paperIds: [],
+        },
       },
     },
   },
-
-  // ---- Ashwagandha ----
   {
     id: "ashwagandha-stress",
     supplementId: "ashwagandha",
@@ -281,19 +439,42 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "stress",
     grade: "B",
     confidence: "moderate",
-    summary:
-      "Multiple trials show reduced perceived stress and cortisol over 6-8 weeks.",
+    summary: "Multiple trials show reduced perceived stress and cortisol over 6-8 weeks.",
     relevantPopulation: "chronically stressed adults",
-    studiedDose: { min: 300, max: 600, unit: "mg" },
+    studiedDose: {
+      min: 300,
+      max: 600,
+      unit: "mg",
+    },
     mechanismTags: ["HPA-axis", "cortisol-modulation"],
     paperIds: ["p-ashwagandha-stress"],
     evidenceProfile: {
       dimensions: {
-        humanEvidence: { score: 2, rationale: "Multiple human RCTs over 6-8 weeks.", paperIds: ["p-ashwagandha-stress"] },
-        studyQuality: { score: 2, rationale: "Randomized but mostly small, single-region trials.", paperIds: ["p-ashwagandha-stress"] },
-        consistency: { score: 2, rationale: "Stress/cortisol reductions repeat across trials.", paperIds: ["p-ashwagandha-stress"] },
-        effectSize: { score: 2, rationale: "Moderate reduction in perceived stress.", paperIds: ["p-ashwagandha-stress"] },
-        populationRelevance: { score: 2, rationale: "Studied in chronically stressed adults.", paperIds: [] },
+        humanEvidence: {
+          score: 2,
+          rationale: "Multiple human RCTs over 6-8 weeks.",
+          paperIds: ["p-ashwagandha-stress"],
+        },
+        studyQuality: {
+          score: 2,
+          rationale: "Randomized but mostly small, single-region trials.",
+          paperIds: ["p-ashwagandha-stress"],
+        },
+        consistency: {
+          score: 2,
+          rationale: "Stress/cortisol reductions repeat across trials.",
+          paperIds: ["p-ashwagandha-stress"],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Moderate reduction in perceived stress.",
+          paperIds: ["p-ashwagandha-stress"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "Studied in chronically stressed adults.",
+          paperIds: [],
+        },
       },
     },
   },
@@ -306,12 +487,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "low",
     summary: "Some evidence for improved sleep, often secondary to stress reduction.",
     relevantPopulation: "stressed adults with sleep complaints",
-    studiedDose: { min: 300, max: 600, unit: "mg" },
+    studiedDose: {
+      min: 300,
+      max: 600,
+      unit: "mg",
+    },
     mechanismTags: ["HPA-axis"],
     paperIds: ["p-ashwagandha-stress"],
   },
-
-  // ---- Berberine ----
   {
     id: "berberine-metabolic",
     supplementId: "berberine",
@@ -319,15 +502,16 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "metabolic",
     grade: "B",
     confidence: "moderate",
-    summary:
-      "May lower fasting glucose and HbA1c; effect size comparable to some first-line agents in small trials.",
+    summary: "May lower fasting glucose and HbA1c; effect size comparable to some first-line agents in small trials.",
     relevantPopulation: "adults with elevated blood sugar",
-    studiedDose: { min: 900, max: 1500, unit: "mg" },
+    studiedDose: {
+      min: 900,
+      max: 1500,
+      unit: "mg",
+    },
     mechanismTags: ["AMPK", "insulin-sensitivity"],
     paperIds: ["p-berberine-metabolic"],
   },
-
-  // ---- Zinc ----
   {
     id: "zinc-immune",
     supplementId: "zinc",
@@ -337,7 +521,11 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "moderate",
     summary: "Lozenges started early may modestly reduce common-cold duration.",
     relevantPopulation: "adults at cold onset",
-    studiedDose: { min: 10, max: 25, unit: "mg" },
+    studiedDose: {
+      min: 10,
+      max: 25,
+      unit: "mg",
+    },
     mechanismTags: ["immune-cell-function"],
     paperIds: ["p-zinc-immune"],
   },
@@ -350,12 +538,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "high",
     summary: "Effectively restores zinc status in deficient individuals.",
     relevantPopulation: "adults with low zinc intake",
-    studiedDose: { min: 8, max: 25, unit: "mg" },
+    studiedDose: {
+      min: 8,
+      max: 25,
+      unit: "mg",
+    },
     mechanismTags: ["enzyme-cofactor"],
     paperIds: ["p-zinc-deficiency"],
   },
-
-  // ---- B12 ----
   {
     id: "vitamin-b12-deficiency",
     supplementId: "vitamin-b12",
@@ -363,15 +553,16 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "deficiency",
     grade: "A",
     confidence: "high",
-    summary:
-      "Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    summary: "Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
     relevantPopulation: "vegans, older adults, malabsorbers",
-    studiedDose: { min: 250, max: 1000, unit: "mcg" },
+    studiedDose: {
+      min: 250,
+      max: 1000,
+      unit: "mcg",
+    },
     mechanismTags: ["methylation"],
     paperIds: ["p-b12-deficiency"],
   },
-
-  // ---- Caffeine ----
   {
     id: "caffeine-focus",
     supplementId: "caffeine",
@@ -381,16 +572,40 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "high",
     summary: "Strong evidence for improved alertness, reaction time, and vigilance.",
     relevantPopulation: "healthy adults",
-    studiedDose: { min: 100, max: 200, unit: "mg" },
+    studiedDose: {
+      min: 100,
+      max: 200,
+      unit: "mg",
+    },
     mechanismTags: ["adenosine-antagonism"],
     paperIds: ["p-caffeine-focus"],
     evidenceProfile: {
       dimensions: {
-        humanEvidence: { score: 3, rationale: "Large human literature on alertness.", paperIds: ["p-caffeine-focus"] },
-        studyQuality: { score: 3, rationale: "Numerous controlled crossover trials.", paperIds: ["p-caffeine-focus"] },
-        consistency: { score: 3, rationale: "Alertness/vigilance gains highly reproducible.", paperIds: ["p-caffeine-focus"] },
-        effectSize: { score: 2, rationale: "Reliable, moderate improvement.", paperIds: ["p-caffeine-focus"] },
-        populationRelevance: { score: 2, rationale: "Broad in healthy adults; tolerance varies.", paperIds: [] },
+        humanEvidence: {
+          score: 3,
+          rationale: "Large human literature on alertness.",
+          paperIds: ["p-caffeine-focus"],
+        },
+        studyQuality: {
+          score: 3,
+          rationale: "Numerous controlled crossover trials.",
+          paperIds: ["p-caffeine-focus"],
+        },
+        consistency: {
+          score: 3,
+          rationale: "Alertness/vigilance gains highly reproducible.",
+          paperIds: ["p-caffeine-focus"],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Reliable, moderate improvement.",
+          paperIds: ["p-caffeine-focus"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "Broad in healthy adults; tolerance varies.",
+          paperIds: [],
+        },
       },
     },
   },
@@ -403,12 +618,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "high",
     summary: "Improves endurance and reduces perceived exertion across many trials.",
     relevantPopulation: "athletes, training adults",
-    studiedDose: { min: 150, max: 300, unit: "mg" },
+    studiedDose: {
+      min: 150,
+      max: 300,
+      unit: "mg",
+    },
     mechanismTags: ["adenosine-antagonism", "ergogenic"],
     paperIds: ["p-caffeine-training"],
   },
-
-  // ---- Taurine ----
   {
     id: "taurine-training",
     supplementId: "taurine",
@@ -418,12 +635,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "low",
     summary: "Small possible endurance benefits; evidence mixed.",
     relevantPopulation: "training adults",
-    studiedDose: { min: 1000, max: 3000, unit: "mg" },
+    studiedDose: {
+      min: 1000,
+      max: 3000,
+      unit: "mg",
+    },
     mechanismTags: ["osmoregulation", "ergogenic"],
     paperIds: ["p-taurine-training"],
   },
-
-  // ---- NAC ----
   {
     id: "nac-antioxidant",
     supplementId: "nac",
@@ -433,12 +652,14 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "low",
     summary: "Raises glutathione; broad clinical benefits remain context-dependent.",
     relevantPopulation: "adults under oxidative stress",
-    studiedDose: { min: 600, max: 1800, unit: "mg" },
+    studiedDose: {
+      min: 600,
+      max: 1800,
+      unit: "mg",
+    },
     mechanismTags: ["glutathione", "antioxidant"],
     paperIds: ["p-nac-antioxidant"],
   },
-
-  // ---- Protein powder ----
   {
     id: "protein-powder-training",
     supplementId: "protein-powder",
@@ -446,10 +667,13 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "training",
     grade: "A",
     confidence: "high",
-    summary:
-      "Supplemental protein supports muscle mass and strength gains when total intake is adequate.",
+    summary: "Supplemental protein supports muscle mass and strength gains when total intake is adequate.",
     relevantPopulation: "resistance-trained adults",
-    studiedDose: { min: 20, max: 40, unit: "g" },
+    studiedDose: {
+      min: 20,
+      max: 40,
+      unit: "g",
+    },
     mechanismTags: ["leucine", "MPS"],
     paperIds: ["p-protein-mps"],
   },
@@ -462,7 +686,11 @@ export const SEED_EFFECTS: Effect[] = [
     confidence: "moderate",
     summary: "Supports post-exercise recovery and appetite control.",
     relevantPopulation: "active adults",
-    studiedDose: { min: 20, max: 40, unit: "g" },
+    studiedDose: {
+      min: 20,
+      max: 40,
+      unit: "g",
+    },
     mechanismTags: ["leucine", "satiety"],
     paperIds: ["p-protein-mps"],
   },

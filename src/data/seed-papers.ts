@@ -21,8 +21,7 @@ export const SEED_PAPERS: Paper[] = [
     duration: "6-12 weeks",
     outcomes: "Significant increases in maximal strength and lean body mass vs placebo.",
     limitations: "Heterogeneous training protocols across included studies.",
-    summary:
-      "Pooled analysis supports creatine as one of the most effective performance aids for strength when paired with training.",
+    summary: "Pooled analysis supports creatine as one of the most effective performance aids for strength when paired with training.",
   },
   {
     id: "p-creatine-cognition",
