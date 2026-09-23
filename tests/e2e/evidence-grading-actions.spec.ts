@@ -19,14 +19,18 @@ test.describe("L2: Library evidence breakdown", () => {
     await expect(page.getByText("strong").first()).toBeVisible();
   });
 
-  test("a legacy (unprofiled) supplement shows grades but no breakdown", async ({
+  // Phase 3 U4 (owner ruling 2026-09-23): this test used l-theanine as its
+  // "legacy (unprofiled)" example. U4 profiled every seed effect (G4 forbids a grade
+  // without a profile), so l-theanine now shows a breakdown for each of its two
+  // effects. The no-profile fallback is guarded in SupplementDetail.test.tsx with
+  // made-up effects until evidenceProfile becomes required (FU-63).
+  test("a supplement profiled by U4 (l-theanine) shows a breakdown for each effect", async ({
     page,
   }) => {
-    // L-theanine's effects have no evidenceProfile in the seed.
     await page.goto("/library/l-theanine");
     await page.getByRole("tab", { name: "Effects" }).click();
 
     await expect(page.getByRole("heading", { name: /Calm focus/i })).toBeVisible();
-    await expect(page.getByText("Evidence breakdown")).toHaveCount(0);
+    await expect(page.getByText("Evidence breakdown")).toHaveCount(2);
   });
 });
