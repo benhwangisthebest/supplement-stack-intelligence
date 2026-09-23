@@ -152,3 +152,51 @@ fixable by stating something the plan leaves implicit** — none needs a D-n rul
 the review recommends **REVISE**, which is a recommendation, not a status change. Next: the owner rules
 **D-1…D-6** with the review's decision index in view, and a landing (c) revises the draft against P-01…P-17.
 Nothing is authorised by this landing either.
+
+---
+
+## Landing (c) — revision against the review · 2026-09-22
+
+| | |
+|---|---|
+| **Anchor** | `52e00d9` (landing (b)'s merge), verified by `git rev-parse HEAD` at session open; tree clean but for untracked `.claude/launch.json` |
+| **Artifact** | `docs/01-plan/phase-3-evidence-grounding.plan.md` — **336 → 328 lines**, still **DRAFT — AWAITING OWNER APPROVAL** |
+| **Input** | The (b) review's P-01…P-17. **Not edited** — a review is a record |
+| **Outcome** | **17 of 17 addressed.** Three *actions* declined with reasons; **no finding** declined |
+| **Register** | **N-81** (`paperSchema`, no conformance assertion) and **FU-48** (G1's `src/`-only, `.ts\|.tsx`-only walk) allocated at numbers re-derived by command. N-80 widened |
+| **Decisions** | **D-1…D-6 → D-1…D-7.** D-4 split (P-15). **None ruled** |
+
+**The plan got shorter while gaining eight obligations**, because the length cap forced prose out rather
+than content: the disposition table, the unit-typing table, three new criteria and three register findings
+all landed inside a net −8 lines (336 → 328).
+
+**What the revision changed, beyond restating.** Three roadmap obligations that reached no owner now have
+one and a criterion — the ID-change migration (**U6**, `[P3-X6]`), *mutation-check each guard* (**all
+guard-shipping units**, `[P3-X7]`), and `paperIds` resolution (**U2**, `[P3-X8]`). D-3's option (a) is
+annotated as requiring a **recorded rank-1 exception** under `CLAUDE.md` §6 and is **not removed** — the
+annotation was the fix the review asked for. U4 is re-sized from "authors no new claim" to **190 content
+elements on the trust surface**, with a sourcing rule and an honestly-empty-`paperIds` clause.
+
+**Four numbers did not survive re-derivation, three of them the plan's own** (a fifth and sixth were found by the delta check, below). §7's source set is
+**38** ids, not 39 — the draft counted its own N-80 into the total, inside the section that names FU-32.
+**FU-1 is open and unowned** (Phase 1 plan `:837`, *"still open, unowned"*; Phase 2 plan `:240`), not
+"Closed in Phase 1"; it had reached §7 as a **range endpoint** (*"FU-1 … FU-46"*), not as a carried row.
+The mean is **0.8889**, and the rounded `0.89` makes D-6's discomfort read as smaller than it is. The
+fourth is the **review's**: `src/data/` holds **13** tracked files, not 12 — the review's own enumeration
+lists 13, and the finding is unaffected. **FU-1 is the one the (b) review did not catch**, which is the
+case for re-deriving rather than trusting a reviewer's set.
+
+**Verification.** `npx vitest run src/architecture` → **27 files / 393 tests, exit 0, no allowlist edit**.
+The §5 rule 10 four-check gate ran in full; figures in the landing report. Every claim written into the
+plan was opened at HEAD first, and the AC commands were re-run against the revised file rather than
+asserted. A **file-copy backup** was taken before editing, per §5 rule 11 — not `git checkout --`.
+
+**Independence, and what it caught.** A subagent that did not perform the revision re-checked P-01…P-17 against the review and the revised plan **at the working tree only**, explicitly denied this artifact and told not to trust the plan's own §10 self-assessment. **Verdict: 17 of 17 CONFIRMED addressed, none NOT** — so no stop condition fired. **It then found four defects in the revision itself, and all four are fixed:** (i) the two register-max commands printed beside N-81 and FU-48 were **circular** — a docs-wide grep now returns 81 and 48 because the allocations are themselves tracked, so both are re-scoped to the closed Phase 2 register (**N-79**, **FU-47**, re-run verbatim); (ii) *"three §2 figures rotted"* was **wrong as attributed** — one is a §2 figure (the mean), the others are §7's id total and the review's own, and that figure was load-bearing inside the FU-32 row about figures rotting; (iii) the unit table listed `[P3-X7]` on **U1 only** while it binds seven units — now stated as a convention, with U6's exclusion explained; (iv) the P-13 decline was justified *"to stay inside the 400-line cap"* in a **317-line** plan, which is not true, **so the item was satisfied rather than argued** — every unit now carries its own `**Gate:**` line and the declines drop from three to two. **The check earning its cost is the point:** a self-assessment table saying "17/17 addressed" was accurate and still sat above four defects, one of them a false statement inside the row about false statements.
+
+## Status
+
+**Landing (c) — REVISION DELIVERED.** The plan is still **DRAFT — AWAITING OWNER APPROVAL**; a revision
+answering a review is not an approval, and **nothing is authorised**. **No D-n was ruled** — the landing
+reshaped one decision (D-4 → D-4 + D-7) and annotated another (D-3's admissibility), which the brief
+permits and which presupposes neither answer. Next: the owner rules **D-1…D-7**, then the plan's status
+line moves and `docs/roadmap.md`'s Phase 3 status follows it.
