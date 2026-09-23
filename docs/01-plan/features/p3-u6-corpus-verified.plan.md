@@ -82,6 +82,22 @@ approval record, which the owner writes, and the script never invents it.
 fields"*. It says U5 returned optional `doi`/`pmid` behind the record. Regenerated, and
 `content:generate -- --check` reports 0 stale.
 
+**3.1 The rulings given with the go for (b), built in as a follow-up to (a)** (register, U6 entry). PubMed terms
+are `(<query>) AND (meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])`. Only if that
+returns no PMIDs does a second `esearch` run unfiltered (`pubmedScope: "widened"`), which is still ≤4 calls per
+claim. PubMed candidates keep esearch's relevance order and carry `pubTypes` from `PublicationTypeList`. Crossref
+candidates carry their `type`. **Split captures:** `crossref.json` and `esearch*.json` hold metadata and are
+committed. `efetch.xml` holds full abstracts, so it goes to `<run>/local/`, which is gitignored by
+`content/verification/captures/.gitignore`. `candidates.json` commits each file's SHA-256, plus each abstract's
+SHA-256, its length and an excerpt of **≤300 characters**. `u6-claims.json` now carries `libraryClaim`, copied
+by a node one-off from `seed-effects.json` and `seed-supplements.json` (the citing effects' name, grade and
+summary, plus the dimension rationale for dimension rows). Candidates are judged against that. The old free-text
+claim becomes `illustrativeDetails`, the illustrative paper's details and not a requirement. **Offline check
+(scratch):** the filter is tried first and widened on zero hits (4 calls), the efetch file lands only under
+`local/`, its committed SHA-256 equals the file's, an excerpt is exactly 300 characters, and the abstract hash
+equals an independent `shasum -a 256`. The dry run of all 32 claims under the fetch-thrower reported
+`calls made: 0 · planned: 64`.
+
 ## 4. Do / Check — (a0)
 
 **Test:** `src/components/advisor/ProvenanceChips.test.tsx` (jsdom). A paper chip → notice present,

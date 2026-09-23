@@ -5,10 +5,15 @@
 // Two modes, one per pre-registered spend scenario:
 //
 //   search  (S1) — for each claim, one Crossref query plus PubMed esearch and
-//                  efetch. Every raw response is written under --out, and the
-//                  parsed candidates go to <out>/candidates.json. This mode
-//                  writes NOTHING to the corpus or the fixture: choosing a
-//                  candidate is the owner's decision, not the script's.
+//                  efetch. PubMed is restricted to PUBMED_TYPE_FILTER and is
+//                  widened to all types only when that returns nothing. The
+//                  parsed candidates go to <out>/candidates.json, carrying
+//                  metadata and an excerpt of at most EXCERPT_CHARS. The raw
+//                  efetch XML holds full abstracts, so it goes to <out>/local/,
+//                  which is gitignored, and only its SHA-256 (plus one per
+//                  abstract) is committed. This mode writes NOTHING to the
+//                  corpus or the fixture: choosing a candidate is the owner's
+//                  decision, not the script's.
 //   resolve (S2) — for each owner-approved mapping in --approvals, one lookup
 //                  of the identifier (Crossref works/{doi}, PubMed esummary). It
 //                  refuses a mapping whose resolved title does not match the
@@ -29,6 +34,7 @@
 // Every rule about identifiers, titles and the fixture's shape comes from
 // provenance.mjs, which is the same module the build's guard reads.
 
+import { createHash } from "node:crypto";
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,7 +57,12 @@ export const SCENARIOS = Object.freeze(["S1", "S2", "S3"]);
 // NCBI allows 3 requests/second without an API key. 400 ms keeps under it.
 export const MIN_INTERVAL_MS = 400;
 const CANDIDATES_PER_SOURCE = 3;
-const EXCERPT_CHARS = 600;
+// Owner ruling (2026-09-23, U6 (b)): committed excerpts are at most 300 chars;
+// full abstracts stay local. Evidence-grade designs first, widened only on zero hits.
+export const EXCERPT_CHARS = 300;
+export const PUBMED_TYPE_FILTER =
+  "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])";
+export const sha256 = (s) => createHash("sha256").update(s, "utf8").digest("hex");
 const TOOL = "supplement-stack-intelligence-u6-capture";
 
 // ---------------------------------------------------------------------------
@@ -122,7 +133,7 @@ export function createClient(opts) {
     return u.toString();
   }
 
-  return { get, withContact, state };
+  return { get, withContact, state, dryRun: opts.dryRun };
 }
 
 // ---------------------------------------------------------------------------
@@ -161,6 +172,9 @@ export function parsePubmedXml(xml) {
       first(/<PubDate>[\s\S]*?<Year>(\d{4})<\/Year>/, a) ??
       first(/<PubDate>[\s\S]*?<MedlineDate>(\d{4})/, a);
     const doi = first(/<ArticleId IdType="doi">([^<]+)<\/ArticleId>/, a);
+    const pubTypes = [...a.matchAll(/<PublicationType[^>]*>([^<]+)<\/PublicationType>/g)].map(([, t]) =>
+      plainText(t),
+    );
     const abstract = [...a.matchAll(/<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g)]
       .map(([, attrs, text]) => {
         const label = first(/Label="([^"]+)"/, attrs);
@@ -174,7 +188,10 @@ export function parsePubmedXml(xml) {
       title: title ? plainText(title) : null,
       journal: journal ? plainText(journal) : null,
       year,
+      pubTypes,
       abstractExcerpt: abstract ? abstract.slice(0, EXCERPT_CHARS) : null,
+      abstractChars: abstract.length,
+      abstractSha256: abstract ? sha256(abstract) : null,
     });
   }
   return out;
@@ -190,7 +207,10 @@ export function parseCrossrefSearch(json) {
     title: it.title?.[0] ? plainText(it.title[0]) : null,
     journal: it["container-title"]?.[0] ? plainText(it["container-title"][0]) : null,
     year: it.issued?.["date-parts"]?.[0]?.[0] ? String(it.issued["date-parts"][0][0]) : null,
+    pubTypes: it.type ? [it.type] : [],
     abstractExcerpt: null,
+    abstractChars: 0,
+    abstractSha256: null,
   }));
 }
 
@@ -204,13 +224,15 @@ const safeName = (claimId) => claimId.replace(/[^A-Za-z0-9._-]+/g, "_");
 export async function runSearch(claims, client, outDir) {
   const rows = [];
   for (const c of claims) {
-    const dir = path.join(outDir, safeName(c.claimId));
+    const name = safeName(c.claimId);
     const files = [];
-    const save = (name, body) => {
+    // committed: raw metadata responses. local: raw efetch XML (full abstracts), hash only.
+    const save = (body, file, local) => {
       if (body === null) return;
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(path.join(dir, name), body);
-      files.push(path.relative(REPO, path.join(dir, name)));
+      const full = path.join(outDir, ...(local ? ["local"] : []), name, file);
+      mkdirSync(path.dirname(full), { recursive: true });
+      writeFileSync(full, body);
+      files.push({ path: path.relative(outDir, full), committed: !local, sha256: sha256(body) });
     };
     const cr = client.withContact(
       `https://api.crossref.org/works?rows=${CANDIDATES_PER_SOURCE}` +
@@ -218,16 +240,24 @@ export async function runSearch(claims, client, outDir) {
       "crossref",
     );
     const crBody = await client.get(cr);
-    save("crossref.json", crBody);
+    save(crBody, "crossref.json", false);
 
-    const es = client.withContact(
-      `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json` +
-        `&sort=relevance&retmax=${CANDIDATES_PER_SOURCE}&term=${encodeURIComponent(c.pubmed)}`,
-      "ncbi",
-    );
-    const esBody = await client.get(es);
-    save("esearch.json", esBody);
-    const pmids = esBody === null ? [] : (JSON.parse(esBody).esearchresult?.idlist ?? []);
+    const esearch = async (term, file) => {
+      const url = client.withContact(
+        `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json` +
+          `&sort=relevance&retmax=${CANDIDATES_PER_SOURCE}&term=${encodeURIComponent(term)}`,
+        "ncbi",
+      );
+      const body = await client.get(url);
+      save(body, file, false);
+      return body === null ? [] : (JSON.parse(body).esearchresult?.idlist ?? []);
+    };
+    let pubmedScope = "filtered";
+    let pmids = await esearch(`(${c.pubmed}) AND ${PUBMED_TYPE_FILTER}`, "esearch.json");
+    if (pmids.length === 0 && !client.dryRun) {
+      pubmedScope = "widened";
+      pmids = await esearch(c.pubmed, "esearch-widened.json");
+    }
 
     let pubmed = [];
     if (pmids.length > 0) {
@@ -237,11 +267,22 @@ export async function runSearch(claims, client, outDir) {
         "ncbi",
       );
       const efBody = await client.get(ef);
-      save("efetch.xml", efBody);
-      if (efBody !== null) pubmed = parsePubmedXml(efBody);
+      save(efBody, "efetch.xml", true);
+      if (efBody !== null) {
+        const byPmid = new Map(parsePubmedXml(efBody).map((p) => [p.pmid, p]));
+        pubmed = pmids.map((id) => byPmid.get(id)).filter(Boolean); // esearch's relevance order
+      }
     }
     const crossref = crBody === null ? [] : parseCrossrefSearch(JSON.parse(crBody));
-    rows.push({ claimId: c.claimId, claim: c.claim, files, pubmed, crossref });
+    rows.push({
+      claimId: c.claimId,
+      libraryClaim: c.libraryClaim,
+      illustrativeDetails: c.illustrativeDetails,
+      queries: { pubmed: c.pubmed, pubmedFilter: PUBMED_TYPE_FILTER, pubmedScope, crossref: c.crossref },
+      files,
+      pubmed,
+      crossref,
+    });
   }
   return rows;
 }

@@ -1,0 +1,226 @@
+[
+  {
+    "claimId": "paper:p-creatine-strength",
+    "libraryClaim": "Creatine Monohydrate — Strength & power output (Grade A): Robust evidence for improved strength, power, and lean mass when combined with resistance training.",
+    "illustrativeDetails": "Creatine monohydrate with resistance training increases maximal strength and lean body mass vs placebo (trained and untrained adults, 3-5 g/day)",
+    "pubmed": "creatine supplementation resistance training strength lean mass meta-analysis",
+    "crossref": "creatine supplementation strength lean body mass resistance training meta-analysis"
+  },
+  {
+    "claimId": "paper:p-creatine-cognition",
+    "libraryClaim": "Creatine Monohydrate — Cognitive performance (Grade C): Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians.",
+    "illustrativeDetails": "Creatine (5 g/day) gives modest cognitive benefit in healthy adults, most apparent under sleep deprivation",
+    "pubmed": "creatine supplementation cognitive performance sleep deprivation",
+    "crossref": "creatine supplementation cognitive performance sleep deprivation"
+  },
+  {
+    "claimId": "paper:p-melatonin-sleep",
+    "libraryClaim": "Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient.",
+    "illustrativeDetails": "Melatonin (0.5-5 mg) reduces sleep-onset latency and improves total sleep time in adults with sleep difficulties (meta-analysis)",
+    "pubmed": "melatonin sleep onset latency meta-analysis",
+    "crossref": "melatonin sleep onset latency total sleep time meta-analysis"
+  },
+  {
+    "claimId": "paper:p-magnesium-sleep",
+    "libraryClaim": "Magnesium — Sleep quality (Grade B): May improve subjective sleep quality, particularly in older adults or those with low intake. | Magnesium — Stress & relaxation (Grade C): Emerging evidence for stress symptom reduction, often combined with B6.",
+    "illustrativeDetails": "Magnesium (500 mg/day) improves sleep efficiency and subjective insomnia scores in older adults with insomnia vs placebo",
+    "pubmed": "magnesium supplementation insomnia elderly randomized placebo",
+    "crossref": "magnesium supplementation primary insomnia elderly double-blind placebo"
+  },
+  {
+    "claimId": "paper:p-vitamin-d-deficiency",
+    "libraryClaim": "Vitamin D3 — Correcting deficiency (Grade A): Effectively raises serum 25(OH)D in deficient individuals. | Vitamin D3 — Immune support (Grade C): Mixed evidence; respiratory infection benefit appears largest in deficient people.",
+    "illustrativeDetails": "In vitamin D-deficient adults, D3 raises serum 25(OH)D more effectively than D2 (1000-4000 IU/day)",
+    "pubmed": "vitamin D3 versus vitamin D2 serum 25-hydroxyvitamin D meta-analysis",
+    "crossref": "vitamin D3 versus D2 raising serum 25-hydroxyvitamin D meta-analysis"
+  },
+  {
+    "claimId": "paper:p-fish-oil-cv",
+    "libraryClaim": "Fish Oil (Omega-3) — Cardiovascular support (Grade B): May lower triglycerides; benefits dose-dependent on EPA/DHA content.",
+    "illustrativeDetails": "EPA/DHA (1-4 g/day) produces a dose-dependent reduction in triglycerides in adults with elevated triglycerides (meta-analysis)",
+    "pubmed": "omega-3 fatty acids triglycerides dose-response meta-analysis",
+    "crossref": "omega-3 fatty acids EPA DHA triglyceride lowering dose-response meta-analysis"
+  },
+  {
+    "claimId": "paper:p-fish-oil-mood",
+    "libraryClaim": "Fish Oil (Omega-3) — Mood support (Grade C): Some evidence for depressive symptoms with higher-EPA formulations.",
+    "illustrativeDetails": "High-EPA omega-3 (1-2 g/day EPA) modestly improves depressive symptoms vs placebo",
+    "pubmed": "EPA omega-3 depression meta-analysis",
+    "crossref": "EPA omega-3 fatty acids depressive symptoms meta-analysis"
+  },
+  {
+    "claimId": "paper:p-ltheanine-focus",
+    "libraryClaim": "L-Theanine — Calm focus (with caffeine) (Grade B): Combined with caffeine, improves attention and reduces jitteriness in several trials.",
+    "illustrativeDetails": "L-theanine (100 mg) with caffeine (50 mg) improves attention-switching and reduces distraction in healthy adults vs placebo",
+    "pubmed": "L-theanine caffeine attention randomized placebo",
+    "crossref": "L-theanine and caffeine combination attention task switching"
+  },
+  {
+    "claimId": "paper:p-ltheanine-stress",
+    "libraryClaim": "L-Theanine — Stress & relaxation (Grade B): May reduce acute stress and support relaxation without sedation.",
+    "illustrativeDetails": "L-theanine (200 mg) reduces heart rate and stress markers under acute task stress in healthy adults vs placebo",
+    "pubmed": "L-theanine acute stress heart rate randomized",
+    "crossref": "L-theanine reduces psychological and physiological stress responses"
+  },
+  {
+    "claimId": "paper:p-glycine-sleep",
+    "libraryClaim": "Glycine — Sleep quality (Grade B): Pre-bed glycine may improve subjective sleep quality and next-day alertness.",
+    "illustrativeDetails": "Glycine (3 g) before bedtime improves subjective sleep quality and next-day alertness in adults with sleep complaints",
+    "pubmed": "glycine ingestion sleep quality",
+    "crossref": "glycine ingestion before bedtime subjective sleep quality"
+  },
+  {
+    "claimId": "paper:p-ashwagandha-stress",
+    "libraryClaim": "Ashwagandha — Stress & cortisol (Grade B): Multiple trials show reduced perceived stress and cortisol over 6-8 weeks. | Ashwagandha — Sleep quality (Grade C): Some evidence for improved sleep, often secondary to stress reduction.",
+    "illustrativeDetails": "Ashwagandha root extract (300 mg twice daily) reduces perceived stress and serum cortisol in chronically stressed adults vs placebo",
+    "pubmed": "ashwagandha root extract stress cortisol randomized placebo",
+    "crossref": "ashwagandha root extract stress anxiety cortisol double-blind placebo-controlled"
+  },
+  {
+    "claimId": "paper:p-berberine-metabolic",
+    "libraryClaim": "Berberine — Blood sugar control (Grade B): May lower fasting glucose and HbA1c; effect size comparable to some first-line agents in small trials.",
+    "illustrativeDetails": "Berberine (0.9-1.5 g/day) reduces fasting glucose and HbA1c in type 2 diabetes vs placebo or oral hypoglycemics (meta-analysis)",
+    "pubmed": "berberine type 2 diabetes meta-analysis",
+    "crossref": "berberine type 2 diabetes glycemic control meta-analysis"
+  },
+  {
+    "claimId": "paper:p-zinc-immune",
+    "libraryClaim": "Zinc — Immune / cold duration (Grade B): Lozenges started early may modestly reduce common-cold duration.",
+    "illustrativeDetails": "Zinc acetate lozenges (80-100 mg/day) started early shorten common cold duration vs placebo",
+    "pubmed": "zinc acetate lozenges common cold duration",
+    "crossref": "zinc acetate lozenges common cold duration meta-analysis"
+  },
+  {
+    "claimId": "paper:p-zinc-deficiency",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "Zinc supplementation (8-25 mg/day) restores zinc status markers in populations at risk of deficiency",
+    "pubmed": "zinc supplementation biomarkers of zinc status systematic review",
+    "crossref": "zinc supplementation zinc status biomarkers systematic review"
+  },
+  {
+    "claimId": "paper:p-b12-deficiency",
+    "libraryClaim": "Vitamin B12 — Correcting deficiency (Grade A): Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    "illustrativeDetails": "Oral B12 (250-1000 mcg/day) corrects low B12 status in vegetarians and vegans",
+    "pubmed": "vitamin B12 status vegetarians vegans supplementation",
+    "crossref": "vitamin B12 deficiency vegetarians vegans oral supplementation"
+  },
+  {
+    "claimId": "paper:p-caffeine-focus",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "Caffeine (100-200 mg) consistently improves alertness, vigilance and reaction time in healthy adults (review)",
+    "pubmed": "caffeine cognitive performance vigilance alertness review",
+    "crossref": "caffeine effects on cognitive performance alertness vigilance review"
+  },
+  {
+    "claimId": "paper:p-caffeine-training",
+    "libraryClaim": "Caffeine — Exercise performance (Grade A): Improves endurance and reduces perceived exertion across many trials.",
+    "illustrativeDetails": "Caffeine (3-6 mg/kg) improves endurance, power and reduces perceived exertion in athletes and active adults (meta-analysis)",
+    "pubmed": "caffeine exercise performance meta-analysis",
+    "crossref": "caffeine ergogenic exercise performance meta-analysis"
+  },
+  {
+    "claimId": "paper:p-protein-mps",
+    "libraryClaim": "Protein Powder (Whey) — Muscle protein synthesis (Grade A): Supplemental protein supports muscle mass and strength gains when total intake is adequate. | Protein Powder (Whey) — Recovery & satiety (Grade B): Supports post-exercise recovery and appetite control.",
+    "illustrativeDetails": "Protein supplementation with resistance training gives greater gains in strength and lean mass in resistance-trained adults",
+    "pubmed": "protein supplementation resistance training muscle mass strength meta-analysis",
+    "crossref": "protein supplementation resistance training gains muscle mass strength meta-analysis"
+  },
+  {
+    "claimId": "paper:p-taurine-training",
+    "libraryClaim": "Taurine — Exercise performance (Grade C): Small possible endurance benefits; evidence mixed.",
+    "illustrativeDetails": "Taurine (1-3 g) gives small endurance improvements in trained adults in some protocols vs placebo",
+    "pubmed": "taurine supplementation endurance performance",
+    "crossref": "taurine supplementation endurance performance meta-analysis"
+  },
+  {
+    "claimId": "paper:p-nac-antioxidant",
+    "libraryClaim": "N-Acetylcysteine (NAC) — Antioxidant / glutathione (Grade C): Raises glutathione; broad clinical benefits remain context-dependent.",
+    "illustrativeDetails": "N-acetylcysteine (600-1800 mg/day) increases glutathione availability in adults vs placebo",
+    "pubmed": "N-acetylcysteine glutathione supplementation randomized",
+    "crossref": "N-acetylcysteine oral supplementation glutathione levels"
+  },
+  {
+    "claimId": "effect:magnesium-metabolic",
+    "libraryClaim": "Magnesium — Glucose metabolism (Grade C): Possible small improvements in insulin sensitivity in deficient individuals.",
+    "illustrativeDetails": "Magnesium (250-400 mg) may give small improvements in insulin sensitivity in insulin-resistant adults with low magnesium",
+    "pubmed": "magnesium supplementation insulin sensitivity meta-analysis",
+    "crossref": "magnesium supplementation insulin sensitivity glucose meta-analysis"
+  },
+  {
+    "claimId": "effect:creatine-recovery",
+    "libraryClaim": "Creatine Monohydrate — Recovery (Grade C): May reduce muscle damage markers and support recovery between sessions.",
+    "illustrativeDetails": "Creatine (3-5 g) may reduce muscle damage markers and support recovery between sessions in resistance-trained adults",
+    "pubmed": "creatine supplementation muscle damage recovery",
+    "crossref": "creatine supplementation muscle damage markers recovery"
+  },
+  {
+    "claimId": "effect:fish-oil-longevity",
+    "libraryClaim": "Fish Oil (Omega-3) — Healthy aging (Grade C): Associated with favorable markers; causal longevity benefit unproven.",
+    "illustrativeDetails": "Omega-3 (1000-2000 mg) associated with favorable aging markers; causal longevity benefit unproven",
+    "pubmed": "omega-3 fatty acids all-cause mortality meta-analysis",
+    "crossref": "omega-3 fatty acid supplementation all-cause mortality"
+  },
+  {
+    "claimId": "dimension:magnesium-sleep/populationRelevance",
+    "libraryClaim": "Magnesium — Sleep quality (Grade B): May improve subjective sleep quality, particularly in older adults or those with low intake. [dimension populationRelevance, score 2: Largest in adults with suboptimal magnesium.]",
+    "illustrativeDetails": "Magnesium sleep benefit is largest in adults with suboptimal magnesium status",
+    "pubmed": "magnesium supplementation sleep systematic review",
+    "crossref": "magnesium supplementation sleep quality systematic review"
+  },
+  {
+    "claimId": "dimension:creatine-strength/populationRelevance",
+    "libraryClaim": "Creatine Monohydrate — Strength & power output (Grade A): Robust evidence for improved strength, power, and lean mass when combined with resistance training. [dimension populationRelevance, score 2: Strongest in training adults; less relevant to the sedentary.]",
+    "illustrativeDetails": "Creatine strength benefit is strongest in training adults and less relevant to the sedentary",
+    "pubmed": "creatine supplementation resistance training older adults meta-analysis",
+    "crossref": "creatine supplementation during resistance training in older adults meta-analysis"
+  },
+  {
+    "claimId": "dimension:creatine-cognition/consistency",
+    "libraryClaim": "Creatine Monohydrate — Cognitive performance (Grade C): Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians. [dimension consistency, score 1: Benefit appears mainly under stressors (sleep loss, vegetarian).]",
+    "illustrativeDetails": "Creatine cognitive benefit appears mainly under stressors (sleep loss, vegetarian diet)",
+    "pubmed": "creatine supplementation cognitive function systematic review",
+    "crossref": "creatine supplementation cognitive function systematic review meta-analysis"
+  },
+  {
+    "claimId": "dimension:creatine-cognition/populationRelevance",
+    "libraryClaim": "Creatine Monohydrate — Cognitive performance (Grade C): Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians. [dimension populationRelevance, score 2: Most relevant to sleep-deprived adults and vegetarians.]",
+    "illustrativeDetails": "Creatine cognitive benefit is most relevant to sleep-deprived adults and vegetarians",
+    "pubmed": "creatine supplementation vegetarians cognitive",
+    "crossref": "creatine supplementation vegetarians brain function"
+  },
+  {
+    "claimId": "dimension:vitamin-d-deficiency/populationRelevance",
+    "libraryClaim": "Vitamin D3 — Correcting deficiency (Grade A): Effectively raises serum 25(OH)D in deficient individuals. [dimension populationRelevance, score 3: Directly applicable to deficient adults.]",
+    "illustrativeDetails": "Vitamin D supplementation to correct deficiency applies directly to deficient adults",
+    "pubmed": "vitamin D supplementation deficient adults serum 25-hydroxyvitamin D response",
+    "crossref": "vitamin D supplementation dose response 25-hydroxyvitamin D deficient adults"
+  },
+  {
+    "claimId": "dimension:fish-oil-cardiovascular/populationRelevance",
+    "libraryClaim": "Fish Oil (Omega-3) — Cardiovascular support (Grade B): May lower triglycerides; benefits dose-dependent on EPA/DHA content. [dimension populationRelevance, score 2: Largest in adults with elevated triglycerides.]",
+    "illustrativeDetails": "Omega-3 triglyceride-lowering effect is largest in adults with elevated triglycerides",
+    "pubmed": "omega-3 hypertriglyceridemia triglyceride lowering",
+    "crossref": "omega-3 fatty acids hypertriglyceridemia triglyceride lowering"
+  },
+  {
+    "claimId": "dimension:melatonin-sleep/populationRelevance",
+    "libraryClaim": "Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient. [dimension populationRelevance, score 3: Directly relevant to delayed onset and jet lag.]",
+    "illustrativeDetails": "Melatonin is directly relevant to delayed sleep onset and jet lag",
+    "pubmed": "melatonin jet lag",
+    "crossref": "melatonin for the prevention and treatment of jet lag"
+  },
+  {
+    "claimId": "dimension:ashwagandha-stress/populationRelevance",
+    "libraryClaim": "Ashwagandha — Stress & cortisol (Grade B): Multiple trials show reduced perceived stress and cortisol over 6-8 weeks. [dimension populationRelevance, score 2: Studied in chronically stressed adults.]",
+    "illustrativeDetails": "Ashwagandha stress effects are studied in chronically stressed adults",
+    "pubmed": "ashwagandha stress systematic review meta-analysis",
+    "crossref": "ashwagandha stress anxiety systematic review meta-analysis"
+  },
+  {
+    "claimId": "dimension:caffeine-focus/populationRelevance",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance. [dimension populationRelevance, score 2: Broad in healthy adults; tolerance varies.]",
+    "illustrativeDetails": "Caffeine alertness benefit is broad in healthy adults; tolerance varies",
+    "pubmed": "caffeine tolerance habitual consumption alertness",
+    "crossref": "caffeine withdrawal reversal habitual consumers alertness"
+  }
+]
