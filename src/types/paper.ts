@@ -18,4 +18,11 @@ export interface Paper {
   outcomes: string;
   limitations: string;
   summary: string;
+  // Phase 3 U5 (D-3): the only provenance a paper may carry, and only behind a
+  // verification record. OPTIONAL on purpose — a required identifier with no real
+  // source is the v13 fabrication path. A value here fails the build unless it is
+  // well-formed AND content/verification/provenance-fixture.json has a matching
+  // entry whose resolved title matches `title` (src/data/provenance-record.test.ts).
+  doi?: string;
+  pmid?: string;
 }

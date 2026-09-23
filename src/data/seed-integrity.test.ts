@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { SEED_PAPERS } from "@/data/seed-papers";
 import { SEED_PRODUCTS } from "@/data/seed-products";
 import { deriveGrade } from "@/lib/evidence-grading";
+import { paperSchema } from "@/lib/validation/seed";
 import type { EvidenceProfile } from "@/types/evidence-grading";
 
 // Design Ref: §8.2 — anti-fabrication guards for the trust layer.
@@ -72,6 +73,29 @@ describe("G2 — fabricated provenance is unauthorable", () => {
     });
 
     expect(offenders).toEqual([]);
+  });
+
+  // [2026-09-23, Phase 3 U5, N-80] The list above is an ENUMERATION: it never
+  // named doi/pmid, so adding either reddened nothing. G2 now also DERIVES the
+  // permitted keys from paperSchema, which tsc holds equal to Paper (seed.ts
+  // _PaperSchemaConformsToPaper). A key outside it fails here whatever its name;
+  // doi/pmid are inside it, and provenance-record.test.ts decides whether a value
+  // is verified.
+  it("no authored paper carries a key outside paperSchema", () => {
+    const allowed = new Set(Object.keys(paperSchema.shape));
+    const authored = JSON.parse(
+      readFileSync(path.join(REPO_ROOT, "content/seed/seed-papers.json"), "utf8"),
+    ) as Record<string, unknown>[];
+    expect(authored.length).toBeGreaterThan(0);
+    const offenders = authored.flatMap((p) =>
+      Object.keys(p).filter((k) => !allowed.has(k)).map((k) => `${String(p.id)}.${k}`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("paperSchema itself admits none of the v13 provenance fields", () => {
+    const shape = Object.keys(paperSchema.shape);
+    expect(FORBIDDEN_PAPER_KEYS.filter((k) => shape.includes(k))).toEqual([]);
   });
 
   it("keeps the educational content that makes a summary useful", () => {

@@ -4,6 +4,7 @@ import {
   EVIDENCE_GRADES,
   OUTCOME_CATEGORIES,
   SUPPLEMENT_FORMS,
+  type Paper,
 } from "@/types";
 import type { EvidenceLibrary } from "@/lib/evidence";
 import { defaultLibrary } from "@/lib/evidence";
@@ -51,7 +52,8 @@ export const effectSchema = z.object({
 // mechanism compelling fabrication — `link: z.string().url()` demanded a well-formed
 // URL, so with no real source, a placeholder was the only way to pass validation.
 // TypeScript could not catch this one: a Zod schema is a runtime structure the
-// compiler cannot cross-check against the Paper type. Keep the two in step by hand.
+// compiler cannot cross-check against the Paper type. ~~Keep the two in step by hand.~~
+// [Phase 3 U5, N-81] They are now held in step by _PaperSchemaConformsToPaper below.
 // Plan SC: SC-1
 export const paperSchema = z.object({
   id: z.string().min(1),
@@ -63,7 +65,21 @@ export const paperSchema = z.object({
   outcomes: z.string(),
   limitations: z.string(),
   summary: z.string().min(1),
+  // U5 (D-3): format and verification are checked against the fixture by
+  // src/data/provenance-record.test.ts, not here — this only keeps them from
+  // being silently stripped by a non-strict parse.
+  doi: z.string().min(1).optional(),
+  pmid: z.string().min(1).optional(),
 });
+
+// ---- Domain conformance (Phase 3 U5, N-81; CLAUDE.md §4 rule 2) --------------
+// Same invariant Equal<> as src/lib/validation/schemas.ts: a field added to Paper
+// but not paperSchema (or the reverse, or an optionality drift) fails tsc here
+// with TS2344. A field the type accepts and validation drops is a fabrication path.
+type Equal<X, Y> =
+  (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
+type Expect<T extends true> = T;
+export type _PaperSchemaConformsToPaper = Expect<Equal<z.infer<typeof paperSchema>, Paper>>;
 
 export interface SeedValidationResult {
   ok: boolean;
