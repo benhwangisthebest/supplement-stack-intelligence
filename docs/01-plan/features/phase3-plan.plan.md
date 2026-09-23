@@ -103,3 +103,52 @@ mechanically is work the phase should decide to do, and **FU-46** is why it is n
 **D-1…D-6**; landing **(b)** is an independent plan review in a separate session, under
 `docs/reviews/phase-3-plan-review.md`, following the Phase 0 pattern. Approval moves `docs/roadmap.md`'s
 Phase 3 status line — **not this landing.**
+
+---
+
+## Landing (b) — independent plan review · 2026-09-22
+
+> **Anchor correction, recorded because the brief's premise was false.** Landing (b)'s brief anchored to
+> "the sha of landing (a)". There was none: **(a) was never committed** — the commit was proposed and
+> approval never arrived, so HEAD was still Phase 2's `c4460c7` and both Phase 3 files were untracked. That
+> is a declared stop condition (*"the plan's HEAD or file set differs from what landing (a) reported"*) and
+> the session stopped on it rather than reviewing a working tree. On the owner's ruling, (a) was committed
+> first — `0df218e`, two files, +441 — and (b) then ran against that pushed SHA. This preserves the property
+> every prior Check in this repository has: a review names a commit a later reader can `git show`.
+
+| | |
+|---|---|
+| **Artifact** | `docs/reviews/phase-3-plan-review.md` — 182 lines, P-01…P-17, one verdict |
+| **Anchor** | `0df218e`, verified by the reviewer and by the clerk |
+| **Verdict** | **REVISE** |
+| **Severity** | 1 CRITICAL · 7 MAJOR · 7 MINOR · 2 OBSERVATION |
+| **Register** | **Nothing allocated.** Next free re-derived by command: **N-81 · FU-48 · OP-8** |
+
+**How independence was constructed.** The review was produced by a subagent that did not write the plan. Its
+only inputs were the plan, `docs/roadmap.md`, `CLAUDE.md` and the repository at HEAD. It was explicitly
+denied **this file** and the authoring session's record, and it was bound by the same spend rule as (a) —
+no network, no deployed database, no resolver. Two constraints were set on its findings: it may not rule
+**D-1…D-6**, and a finding resolvable only by a ruling must be recorded as an item naming the D-n.
+
+**Three disclosures carried into the review rather than smoothed over:** a first reviewer stalled and
+produced nothing, and was re-spawned with guardrails; one `grep` incidentally printed three lines of this
+file, so P-08 was re-grounded on the roadmap and the guard alone; and §2's three bundle figures are
+**UNVERIFIED** — their command is a build the review's budget excluded, and no other document records them.
+
+**Clerk's verification.** The clerk re-ran the load-bearing checks directly before recording them, per
+`CLAUDE.md` §5 rule 11 — a subagent's report is data *about* the tree, not the tree. Seven confirmed at
+`0df218e`, listed in the review's disclosure 4.
+
+**What the review does to this cycle.** The draft's §2 baseline, N-80, the §7 id set and the U1→U2 / U5→U6 /
+U3→U4 orderings all survived scrutiny; the reviewer additionally found a favourable fact the plan had not
+checked (all 8 profiled effects' letters already agree with `deriveGrade`). The verdict is REVISE because
+three roadmap obligations reach no unit, §7's completeness claim is false in two ways, D-3's option (a)
+would cross a rank-1 rule unlabelled, and two criteria are not falsifiable as written. **Every item is
+fixable by stating something the plan leaves implicit** — none needs a D-n ruled first.
+
+## Status
+
+**Landing (b) — REVIEW DELIVERED.** The plan remains **DRAFT — AWAITING OWNER APPROVAL** and is unedited;
+the review recommends **REVISE**, which is a recommendation, not a status change. Next: the owner rules
+**D-1…D-6** with the review's decision index in view, and a landing (c) revises the draft against P-01…P-17.
+Nothing is authorised by this landing either.
