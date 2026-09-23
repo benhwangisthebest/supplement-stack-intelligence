@@ -189,3 +189,12 @@ sample data, *not real studies* (the phrase the G3 E2E spec asserts). **Test** `
 link, DOI link, a real seed paper (`p-creatine-strength`) linking its PMID, and no link or label without an identifier.
 **Red proof:** the identifier block removed → **3 failed | 6 passed (9)**. Restored from the copy (shasum `e2ac5188…`
 equal), and the result is **9 passed (9)**.
+
+## 9. S3 decisions applied; second S3 pass. STOPPED for the owner's rulings
+
+**Applied (uncommitted, awaiting card review):** 4 new ids, resolved in S2 (4 calls, 0 refusals, fixture now 28 entries), with
+card fields only from the S3 abstracts. `p-magnesium-stress` → magnesium-stress. `p-vitamin-d-respiratory-ipd` and
+`p-vitamin-d-respiratory-update` → vitamin-d-immune (both, to show the mixed evidence). `p-ashwagandha-sleep` →
+ashwagandha-sleep. protein-powder-recovery keeps **no** citation. **Second pass** (12 calls; S3 total 36 of ≤40): the
+table is in the candidate appendix. **3 papers remain illustrative** (#14, #16, #20), and #30's dimension is still
+uncited. **Nothing retired, (d) not opened.**

@@ -202,7 +202,11 @@
         "p-creatine-vegetarian-cognition",
         "p-fish-oil-triglycerides-t2d",
         "p-ashwagandha-stress-anxiety",
-        "p-caffeine-tolerance"
+        "p-caffeine-tolerance",
+        "p-magnesium-stress",
+        "p-vitamin-d-respiratory-ipd",
+        "p-vitamin-d-respiratory-update",
+        "p-ashwagandha-sleep"
       ],
       "tombstones": []
     },

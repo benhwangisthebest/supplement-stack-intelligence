@@ -1,0 +1,488 @@
+[
+  {
+    "claimId": "paper:p-zinc-deficiency",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "S3 second pass (owner queries verbatim, 2026-09-23)",
+    "queries": {
+      "pubmed": "zinc supplementation plasma serum zinc concentration response systematic review",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "zinc supplementation plasma serum zinc concentration response systematic review"
+    },
+    "files": [
+      {
+        "path": "paper_p-zinc-deficiency/crossref.json",
+        "committed": true,
+        "sha256": "a52978cdd3e9e31294e67fb7688389aae729a23c952ac261b85ddb63bd690b1c"
+      },
+      {
+        "path": "paper_p-zinc-deficiency/esearch.json",
+        "committed": true,
+        "sha256": "a9612b2b90eead90e9f26aaa6fee90c75ea75141d6a1cbe8ac37d748cd6c5f9c"
+      },
+      {
+        "path": "local/paper_p-zinc-deficiency/efetch.xml",
+        "committed": false,
+        "sha256": "aa7f148b7af112bc42a6b3830dcdd85f3302e8dd68a05b1f7242b76d2917c06e"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "23244547",
+        "doi": "10.1017/S0007114512004382",
+        "title": "The relationship between zinc intake and serum/plasma zinc concentration in adults: a systematic review and dose-response meta-analysis by the EURRECA Network.",
+        "journal": "The British journal of nutrition",
+        "year": "2012",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Dietary Zn recommendations vary widely across Europe due to the heterogeneity of approaches used by expert panels. Under the EURopean micronutrient RECommendations Aligned (EURRECA) consortium a protocol was designed to systematically review and undertake meta-analyses of research data to create a d",
+        "abstractChars": 1711,
+        "abstractSha256": "1720015e515a40efff8a3b1d59b6d6d25ee187ed0f24d64e0d7aa87fe2f040f6"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "18289157",
+        "doi": "10.1111/j.1740-8709.2007.00124.x",
+        "title": "Systematic review of the efficacy and effectiveness of complementary feeding interventions in developing countries.",
+        "journal": "Maternal & child nutrition",
+        "year": "2008",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "UNLABELLED: [Table: see text] SUMMARY: Complementary feeding interventions are usually targeted at the age range of 6–24 months, which is the time of peak incidence of growth faltering, micronutrient deficiencies and infectious illnesses in developing countries. After 2 years of age, it is much more",
+        "abstractChars": 24360,
+        "abstractSha256": "71df1ec7ca57bc766d75640ea07cee6c3e67fcec093c1ab4ed54d657068fc65c"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36055780",
+        "doi": "10.1093/advances/nmac088",
+        "title": "Adverse Effects of Excessive Zinc Intake in Infants and Children Aged 0-3 Years: A Systematic Review and Meta-Analysis.",
+        "journal": "Advances in nutrition (Bethesda, Md.)",
+        "year": "2022",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "Zinc supplementation reduces morbidity, but evidence suggests that excessive intakes can have negative health consequences. Current guidelines of upper limits (ULs) of zinc intake for young children are extrapolated from adult data. This systematic review (PROSPERO; registration no. CRD42020215187) ",
+        "abstractChars": 2141,
+        "abstractSha256": "75f024978bbbe02fe60e12dbb00447b9ad6f3ae1262199274d96072baacb8c49"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3390/nu4080841",
+        "title": "The Relationship between Zinc Intake and Serum/Plasma Zinc Concentration in Children: A Systematic Review and Dose-Response Meta-Analysis",
+        "journal": "Nutrients",
+        "year": "2012",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.nutos.2026.100629",
+        "title": "The effect of zinc supplementation on serum concentration of lipid profile among children and adolescents: A systematic review on randomized controlled trials",
+        "journal": "Clinical Nutrition Open Science",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1002/brb3.2472/v2/review2",
+        "title": "Review for \"Serum concentration of zinc is elevated in clinically stable bipolar disorder patients\"",
+        "journal": null,
+        "year": "2021",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-caffeine-focus",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "S3 second pass (owner queries verbatim, 2026-09-23)",
+    "queries": {
+      "pubmed": "caffeine vigilance reaction time sustained attention randomized placebo",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "caffeine vigilance reaction time sustained attention randomized placebo"
+    },
+    "files": [
+      {
+        "path": "paper_p-caffeine-focus/crossref.json",
+        "committed": true,
+        "sha256": "d330aa680b359821ff8fb5f2768f80e939bd3a91761893d23febfbd6f0c800d3"
+      },
+      {
+        "path": "paper_p-caffeine-focus/esearch.json",
+        "committed": true,
+        "sha256": "f28b7b153644347583224cda5faaa2f824410f74ba28a3c6fb721cae1451a3f0"
+      },
+      {
+        "path": "local/paper_p-caffeine-focus/efetch.xml",
+        "committed": false,
+        "sha256": "caebeeef2050f598845213d9e50657303f392a982fe36b196a12bca6c9052ae8"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34960030",
+        "doi": "10.3390/nu13124478",
+        "title": "Dose-Response of Paraxanthine on Cognitive Function: A Double Blind, Placebo Controlled, Crossover Trial.",
+        "journal": "Nutrients",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "UNLABELLED: Paraxanthine (PXN) is a metabolite of caffeine that has recently been reported to enhance cognition at a dose of 200 mg. OBJECTIVE: To determine the acute and short-term (7-day) effects of varying doses of PXN on cognitive function and side effects. METHODS: In a double blind, placebo-co",
+        "abstractChars": 2825,
+        "abstractSha256": "d1b8db1dd0e7fa0e09e26fcfe50cc6a37e02553269a4d12238511adefba027ba"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "17891897",
+        "doi": null,
+        "title": "Caffeine effects on physical and cognitive performance during sustained operations.",
+        "journal": "Aviation, space, and environmental medicine",
+        "year": "2007",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "PURPOSE: This study examined caffeine (CAF) effects on physical performance and vigilance during 4 d and 3 nights of sustained operations in Special Forces personnel. METHODS: There were 20 soldiers (28.6 +/- 4.7 yr, 177.6 +/- 7.5 cm, 81.2 +/- 8.0 kg) who were divided equally into placebo (PLAC) and",
+        "abstractChars": 1473,
+        "abstractSha256": "6a7a54d08f1b6c2717d53ed7606f52a0e6110335387b5761b2e654ca41db2468"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "25527035",
+        "doi": "10.1007/s00213-014-3834-5",
+        "title": "Caffeine improves reaction time, vigilance and logical reasoning during extended periods with restricted opportunities for sleep.",
+        "journal": "Psychopharmacology",
+        "year": "2015",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't",
+          "Research Support, U.S. Gov't, Non-P.H.S."
+        ],
+        "abstractExcerpt": "RATIONALE: Various occupational groups are required to maintain optimal physical and cognitive function during overnight periods of wakefulness, often with less than optimal sleep. Strategies are required to help mitigate the impairments in cognitive function to help sustain workplace safety and pro",
+        "abstractChars": 1660,
+        "abstractSha256": "ff2f2784be1f343b37c6af7035dea449bd6728b48084ec2758969570773ff9e1"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/c2013-0-02466-8",
+        "title": "Vigilance: the Problem of Sustained Attention",
+        "journal": null,
+        "year": "1971",
+        "pubTypes": [
+          "edited-book"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1037/t10875-000",
+        "title": "WAFV Vigilance/Sustained Attention",
+        "journal": "PsycTESTS Dataset",
+        "year": "2012",
+        "pubTypes": [
+          "dataset"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/b978-0-08-016711-4.50002-9",
+        "title": "Copyright",
+        "journal": "Vigilance: the Problem of Sustained Attention",
+        "year": "1971",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-nac-antioxidant",
+    "libraryClaim": "N-Acetylcysteine (NAC) — Antioxidant / glutathione (Grade C): Raises glutathione; broad clinical benefits remain context-dependent.",
+    "illustrativeDetails": "S3 second pass (owner queries verbatim, 2026-09-23)",
+    "queries": {
+      "pubmed": "N-acetylcysteine oral supplementation blood glutathione randomized",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "N-acetylcysteine oral supplementation blood glutathione randomized"
+    },
+    "files": [
+      {
+        "path": "paper_p-nac-antioxidant/crossref.json",
+        "committed": true,
+        "sha256": "29355ae4684463d151832d6489e3e689823270d1fcd0aa9f0e325e4d37b4e0cd"
+      },
+      {
+        "path": "paper_p-nac-antioxidant/esearch.json",
+        "committed": true,
+        "sha256": "5afa4e5a3331ca35e13008f19221fe1277b7a9818a0887dcb675f0e3b160d963"
+      },
+      {
+        "path": "local/paper_p-nac-antioxidant/efetch.xml",
+        "committed": false,
+        "sha256": "804faca4356d2812a0d51c52218a193b0f6de07a0aca836d7872a215f7942f78"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35674828",
+        "doi": "10.1007/s00421-022-04964-w",
+        "title": "Blood oxidative stress biomarkers in women: influence of oral contraception, exercise, and N-acetylcysteine.",
+        "journal": "European journal of applied physiology",
+        "year": "2022",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "PURPOSE: To compare physiological responses to submaximal cycling and sprint cycling performance in women using oral contraceptives (WomenOC) and naturally cycling women (WomenNC) and to determine whether N-acetylcysteine (NAC) supplementation mediates these responses. METHODS: Twenty recreationally",
+        "abstractChars": 1908,
+        "abstractSha256": "992ac9ea0cbcb9e4fd498be7b57fd11e466066a1ab388c047715dd39681069dc"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "24576857",
+        "doi": "10.1249/MSS.0000000000000222",
+        "title": "Effect of N-acetylcysteine on cycling performance after intensified training.",
+        "journal": "Medicine and science in sports and exercise",
+        "year": "2014",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "PURPOSE: This investigation examined the ergogenic effect of short-term oral N-acetylcysteine (NAC) supplementation and the associated changes in redox balance and inflammation during intense training. METHODS: A double-blind randomized placebo-controlled crossover design was used to assess 9 d of o",
+        "abstractChars": 1957,
+        "abstractSha256": "f0ade21bf69f58f8edcac0dd3706ce29655caca37cfb7eeec389a645dee6f05b"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37386885",
+        "doi": "10.1002/npr2.12360",
+        "title": "Effects of N-acetylcysteine on oxidative stress biomarkers, depression, and anxiety symptoms in patients with multiple sclerosis.",
+        "journal": "Neuropsychopharmacology reports",
+        "year": "2023",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "AIM: N-acetylcysteine (NAC), a thiol-containing antioxidant and glutathione (GSH) precursor, attenuates oxidative stress, and possibly improves psychiatric disorders. This study aimed to evaluate the effects of oral NAC on oxidative stress, depression, and anxiety symptoms in patients with multiple ",
+        "abstractChars": 1558,
+        "abstractSha256": "1640535aaa6154ed456b9e683dc3ed6aa67b494bbbf45484670ad19f67a721f5"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1007/s00394-015-0874-5",
+        "title": "Commentary to “Randomized controlled trial of oral glutathione supplementation on body stores of glutathione”",
+        "journal": "European Journal of Nutrition",
+        "year": "2015",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1096/fasebj.27.1_supplement.862.32",
+        "title": "Enhanced Glutathione Levels in Blood and Buccal Cells by Oral Glutathione Supplementation",
+        "journal": "The FASEB Journal",
+        "year": "2013",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1515/cclm.2002.086",
+        "title": "Effects of Oral N-Acetylcysteine on Plasma Homocysteine and Whole Blood Glutathione Levels in Healthy, Non-pregnant Women",
+        "journal": "Clinical Chemistry and Laboratory Medicine",
+        "year": "2002",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:melatonin-sleep/populationRelevance",
+    "libraryClaim": "Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient. [dimension populationRelevance, score 3: Directly relevant to delayed onset and jet lag.]",
+    "illustrativeDetails": "S3 second pass (owner queries verbatim, 2026-09-23)",
+    "queries": {
+      "pubmed": "melatonin delayed sleep-wake phase disorder randomized",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "melatonin delayed sleep-wake phase disorder randomized"
+    },
+    "files": [
+      {
+        "path": "dimension_melatonin-sleep_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "ea2898bd98c5fdd28403a8658f43265cff68930d42503e8cc48a2c2b52252d9b"
+      },
+      {
+        "path": "dimension_melatonin-sleep_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "24205c2abee363cb6db1c9bc0866829795cd9060a58436995f325ec7ef3bf7ae"
+      },
+      {
+        "path": "local/dimension_melatonin-sleep_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "24395f0173eabbb37c4a85d204685e51c5e7cae60ca708ddeb7761558161e0cb"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33259790",
+        "doi": "10.1016/j.cub.2020.10.092",
+        "title": "Prolonged, Controlled Daytime versus Delayed Eating Impacts Weight and Metabolism.",
+        "journal": "Current biology : CB",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, N.I.H., Extramural",
+          "Research Support, U.S. Gov't, Non-P.H.S."
+        ],
+        "abstractExcerpt": "A delayed eating schedule is associated with increased risk of obesity and metabolic dysfunction in humans.1-9 However, there are no prolonged, highly controlled experimental studies testing the effects of meal timing on weight and metabolism in adults with a body mass index (BMI) of 19-27 kg/m2.10-",
+        "abstractChars": 1871,
+        "abstractSha256": "7f1e7e57529d5166bb454e482224195622c45a505e07138e51f6c4ce28efe341"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "22038497",
+        "doi": "10.1007/s00394-011-0263-7",
+        "title": "Effect of tart cherry juice (Prunus cerasus) on melatonin levels and enhanced sleep quality.",
+        "journal": "European journal of nutrition",
+        "year": "2012",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "BACKGROUND: Tart Montmorency cherries have been reported to contain high levels of phytochemicals including melatonin, a molecule critical in regulating the sleep-wake cycle in humans. PURPOSE: The aim of our investigation was to ascertain whether ingestion of a tart cherry juice concentrate would i",
+        "abstractChars": 1726,
+        "abstractSha256": "ba0dbe096ede3d7cee125be1d536b3854c57dc85f1958c94b150f7e8b3485400"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34030534",
+        "doi": "10.1080/07420528.2021.1930029",
+        "title": "Evening wear of blue-blocking glasses for sleep and mood disorders: a systematic review.",
+        "journal": "Chronobiology international",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Blue-blocking glasses, also known as amber glasses, are plastic glasses that primarily block blue light. Blue-blocking glasses have been studied as a sleep intervention for insomnia, delayed sleep-phase disorder, shift work, jet lag, and nonpathologic sleep improvement. Blue-blocking glasses have al",
+        "abstractChars": 2124,
+        "abstractSha256": "def5df1cf2f3712bd2c90718f88d3c10b5fbaa8e1b35479f443e2ae6a53ec788"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.26904/rf-135-1229898688",
+        "title": "Delayed sleep-wake phase disorder",
+        "journal": "Research Features",
+        "year": "2021",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.sleepx.2020.100022",
+        "title": "Efficacy and safety of supplemental melatonin for delayed sleep–wake phase disorder in children: an overview",
+        "journal": "Sleep Medicine: X",
+        "year": "2020",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/jsr.26_12619",
+        "title": "Biological and behavioural circadian rhythms in delayed sleep‐wake phase disorder and non‐24‐hour sleep‐wake rhythm disorder",
+        "journal": "Journal of Sleep Research",
+        "year": "2017",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  }
+]

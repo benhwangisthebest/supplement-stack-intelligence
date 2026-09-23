@@ -1,0 +1,30 @@
+[
+  {
+    "claimId": "paper:p-zinc-deficiency",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "S3 second pass (owner queries verbatim, 2026-09-23)",
+    "pubmed": "zinc supplementation plasma serum zinc concentration response systematic review",
+    "crossref": "zinc supplementation plasma serum zinc concentration response systematic review"
+  },
+  {
+    "claimId": "paper:p-caffeine-focus",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "S3 second pass (owner queries verbatim, 2026-09-23)",
+    "pubmed": "caffeine vigilance reaction time sustained attention randomized placebo",
+    "crossref": "caffeine vigilance reaction time sustained attention randomized placebo"
+  },
+  {
+    "claimId": "paper:p-nac-antioxidant",
+    "libraryClaim": "N-Acetylcysteine (NAC) — Antioxidant / glutathione (Grade C): Raises glutathione; broad clinical benefits remain context-dependent.",
+    "illustrativeDetails": "S3 second pass (owner queries verbatim, 2026-09-23)",
+    "pubmed": "N-acetylcysteine oral supplementation blood glutathione randomized",
+    "crossref": "N-acetylcysteine oral supplementation blood glutathione randomized"
+  },
+  {
+    "claimId": "dimension:melatonin-sleep/populationRelevance",
+    "libraryClaim": "Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient. [dimension populationRelevance, score 3: Directly relevant to delayed onset and jet lag.]",
+    "illustrativeDetails": "S3 second pass (owner queries verbatim, 2026-09-23)",
+    "pubmed": "melatonin delayed sleep-wake phase disorder randomized",
+    "crossref": "melatonin delayed sleep-wake phase disorder randomized"
+  }
+]

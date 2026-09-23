@@ -76,7 +76,9 @@
       "GABA",
       "HPA-axis"
     ],
-    "paperIds": []
+    "paperIds": [
+      "p-magnesium-stress"
+    ]
   },
   {
     "id": "magnesium-metabolic",
@@ -319,7 +321,10 @@
     "mechanismTags": [
       "immune-modulation"
     ],
-    "paperIds": []
+    "paperIds": [
+      "p-vitamin-d-respiratory-ipd",
+      "p-vitamin-d-respiratory-update"
+    ]
   },
   {
     "id": "fish-oil-cardiovascular",
@@ -629,7 +634,9 @@
     "mechanismTags": [
       "HPA-axis"
     ],
-    "paperIds": []
+    "paperIds": [
+      "p-ashwagandha-sleep"
+    ]
   },
   {
     "id": "berberine-metabolic",

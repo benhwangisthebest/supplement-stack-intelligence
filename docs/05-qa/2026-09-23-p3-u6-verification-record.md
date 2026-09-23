@@ -87,11 +87,16 @@ The queries are in `content/verification/u6-claims-s3.json`, and the filters are
 - Status: all 200. Every line is stamped `S3`, and calls were at least 400 ms apart. $0.
 - The captures follow the S1 layout (`efetch.xml` stays local, and its SHA-256 is committed). The table is appended to the candidate appendix.
 
+## S2 (cont.) and S3 second pass — 2026-09-23
+
+- **S2, 4 calls** (PubMed `esummary`), all 200, all `S2`, 0 refusals. These are the owner's S3 decisions (4 new ids), in `content/verification/u6-approvals-s3.json`. Log: `captures/2026-09-23-s2b/call-log.jsonl`.
+- **S3 second pass, 12 calls** (4 Crossref, 4 filtered `esearch`, 0 widened, 4 `efetch`), all 200, all `S3`, for 4 claims with the owner's queries verbatim (`u6-claims-s3b.json`). Log: `captures/2026-09-23-s3b/call-log.jsonl`. $0.
+
 ## Running total
 
 | Scenario | Calls | Budget |
 |---|---|---|
 | S1 | 96 | ≤130 |
-| S2 | 24 | ≤40 |
-| S3 | 24 | ≤ S1+S2 (owner capped this use at ≤40) |
-| **All** | **144** | — · **$0 total** |
+| S2 | 28 (24 + 4) | ≤40 |
+| S3 | 36 (24 + 12) | owner cap ≤40 |
+| **All** | **160** | — · **$0 total** · no paid API, no OpenAI, no deployed DB |

@@ -1,0 +1,38 @@
+[
+  {
+    "paperId": "p-magnesium-stress",
+    "kind": "pmid",
+    "id": "33864354",
+    "expectedTitle": "Effect of magnesium and vitamin B6 supplementation on mental health and quality of life in stressed healthy adults: Post-hoc analysis of a randomised controlled trial.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 S3 decisions: magnesium→stress (new id)"
+  },
+  {
+    "paperId": "p-vitamin-d-respiratory-ipd",
+    "kind": "pmid",
+    "id": "28202713",
+    "expectedTitle": "Vitamin D supplementation to prevent acute respiratory tract infections: systematic review and meta-analysis of individual participant data.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 S3 decisions: vitamin D→immune, 1 of 2 (new id)"
+  },
+  {
+    "paperId": "p-vitamin-d-respiratory-update",
+    "kind": "pmid",
+    "id": "39993397",
+    "expectedTitle": "Vitamin D supplementation to prevent acute respiratory infections: systematic review and meta-analysis of stratified aggregate data.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 S3 decisions: vitamin D→immune, 2 of 2 (new id)"
+  },
+  {
+    "paperId": "p-ashwagandha-sleep",
+    "kind": "pmid",
+    "id": "34559859",
+    "expectedTitle": "Effect of Ashwagandha (Withania somnifera) extract on sleep: A systematic review and meta-analysis.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 S3 decisions: ashwagandha→sleep (new id)"
+  }
+]

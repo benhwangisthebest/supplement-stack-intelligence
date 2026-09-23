@@ -47,6 +47,14 @@
     "verifiedOn": "2026-09-23",
     "verifiedBy": "owner"
   },
+  "pmid:28202713": {
+    "id": "28202713",
+    "kind": "pmid",
+    "resolvedTitle": "Vitamin D supplementation to prevent acute respiratory tract infections: systematic review and meta-analysis of individual participant data.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
   "pmid:28698222": {
     "id": "28698222",
     "kind": "pmid",
@@ -87,6 +95,14 @@
     "verifiedOn": "2026-09-23",
     "verifiedBy": "owner"
   },
+  "pmid:33864354": {
+    "id": "33864354",
+    "kind": "pmid",
+    "resolvedTitle": "Effect of magnesium and vitamin B6 supplementation on mental health and quality of life in stressed healthy adults: Post-hoc analysis of a randomised controlled trial.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
   "pmid:33865376": {
     "id": "33865376",
     "kind": "pmid",
@@ -99,6 +115,14 @@
     "id": "34472118",
     "kind": "pmid",
     "resolvedTitle": "Creatine supplementation effect on recovery following exercise-induced muscle damage: A systematic review and meta-analysis of randomized controlled trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:34559859": {
+    "id": "34559859",
+    "kind": "pmid",
+    "resolvedTitle": "Effect of Ashwagandha (Withania somnifera) extract on sleep: A systematic review and meta-analysis.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-23",
     "verifiedBy": "owner"
@@ -179,6 +203,14 @@
     "id": "39519498",
     "kind": "pmid",
     "resolvedTitle": "Effects of Creatine Supplementation and Resistance Training on Muscle Strength Gains in Adults <50 Years of Age: A Systematic Review and Meta-Analysis.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:39993397": {
+    "id": "39993397",
+    "kind": "pmid",
+    "resolvedTitle": "Vitamin D supplementation to prevent acute respiratory infections: systematic review and meta-analysis of stratified aggregate data.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-23",
     "verifiedBy": "owner"

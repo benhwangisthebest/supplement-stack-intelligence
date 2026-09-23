@@ -490,3 +490,59 @@ Query `protein supplementation recovery exercise-induced muscle damage` (filtere
 | 1 | 39060741 | 10.1007/s40279-024-02079-0 | Systematic Review, Meta-Analysis | 2024 | Sports medicine (Auckland, N.Z.) | Impact of Collagen Peptide Supplementation in Combination with Long-Term Physical Training on Strength, Musculotendinous Remodeling, Functional Recovery, and Body Composition in Healthy Adults: A Systematic Review with Meta-analysis. | INTRODUCTION: Over the past decade, collagen peptide (CP) supplements have received considerable attention in sports nut… | doesn't | collagen peptides, not whey |
 | 2 | 37462346 | 10.1080/15502783.2023.2236060 | Systematic Review | 2023 | Journal of the International Society of Sports Nutrition | Effects of dietary supplements on athletic performance in elite soccer players: a systematic review. | Dietary supplements are widely used among athletes, and soccer players are no exception. Nevertheless, evidence supporti… | doesn't | soccer supplements review; no protein recovery finding |
 | 3 | 33441158 | 10.1186/s12970-020-00405-1 | Randomized Controlled Trial | 2021 | Journal of the International Society of Sports Nutrition | The effect of Omega-3 polyunsaturated fatty acid supplementation on exercise-induced muscle damage. | BACKGROUND: Exercise-induced muscle damage (EIMD) results in transient muscle inflammation, strength loss, muscle sorene… | doesn't | omega-3, not protein |
+
+---
+
+# S3 second pass — 4 claims, owner queries verbatim (2026-09-23)
+
+> Generated from `content/verification/captures/2026-09-23-s3b/candidates.json` (S3, 12 calls; S3 total 36 of ≤40). Same filters as before. Relevant Crossref title-only records are listed too. Verdicts are Claude's judgement, **not decisions**.
+
+## `paper:p-zinc-deficiency`
+
+**Library claim:** Zinc — Correcting deficiency (Grade A): Effectively restores zinc status in deficient individuals.
+
+Query `zinc supplementation plasma serum zinc concentration response systematic review` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 23244547 | 10.1017/S0007114512004382 | Meta-Analysis, Systematic Review | 2012 | The British journal of nutrition | The relationship between zinc intake and serum/plasma zinc concentration in adults: a systematic review and dose-response meta-analysis by the EURRECA Network. | partial | dose-response MA: doubling zinc intake → ~6% higher serum/plasma zinc; not restricted to deficient people; authors question its use for setting intakes |
+| 2 | 18289157 | 10.1111/j.1740-8709.2007.00124.x | Systematic Review | 2008 | Maternal & child nutrition | Systematic review of the efficacy and effectiveness of complementary feeding interventions in developing countries. | doesn't | complementary feeding in developing countries |
+| 3 | 36055780 | 10.1093/advances/nmac088 | Meta-Analysis, Systematic Review | 2022 | Advances in nutrition (Bethesda, Md.) | Adverse Effects of Excessive Zinc Intake in Infants and Children Aged 0-3 Years: A Systematic Review and Meta-Analysis. | doesn't | adverse effects of excess zinc in infants |
+
+## `paper:p-caffeine-focus`
+
+**Library claim:** Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance.
+
+Query `caffeine vigilance reaction time sustained attention randomized placebo` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 34960030 | 10.3390/nu13124478 | Randomized Controlled Trial | 2021 | Nutrients | Dose-Response of Paraxanthine on Cognitive Function: A Double Blind, Placebo Controlled, Crossover Trial. | doesn't | paraxanthine (a caffeine metabolite), not caffeine |
+| 2 | 17891897 | — | Randomized Controlled Trial | 2007 | Aviation, space, and environmental medicine | Caffeine effects on physical and cognitive performance during sustained operations. | partial | caffeine maintained vigilance in sustained military operations; no DOI |
+| 3 | 25527035 | 10.1007/s00213-014-3834-5 | Randomized Controlled Trial | 2015 | Psychopharmacology | Caffeine improves reaction time, vigilance and logical reasoning during extended periods with restricted opportunities for sleep. | **supports** | RCT: caffeine improved reaction time, vigilance and reasoning over nights of restricted sleep (800 mg/day total); narrow population |
+
+## `paper:p-nac-antioxidant`
+
+**Library claim:** N-Acetylcysteine (NAC) — Antioxidant / glutathione (Grade C): Raises glutathione; broad clinical benefits remain context-dependent.
+
+Query `N-acetylcysteine oral supplementation blood glutathione randomized` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 35674828 | 10.1007/s00421-022-04964-w | Randomized Controlled Trial | 2022 | European journal of applied physiology | Blood oxidative stress biomarkers in women: influence of oral contraception, exercise, and N-acetylcysteine. | partial | same as S3 — oxidative stress in women on oral contraceptives; glutathione not the headline |
+| 2 | 24576857 | 10.1249/MSS.0000000000000222 | Randomized Controlled Trial | 2014 | Medicine and science in sports and exercise | Effect of N-acetylcysteine on cycling performance after intensified training. | partial | same as S3 — athletes; improved redox balance, glutathione measured |
+| 3 | 37386885 | 10.1002/npr2.12360 | Randomized Controlled Trial | 2023 | Neuropsychopharmacology reports | Effects of N-acetylcysteine on oxidative stress biomarkers, depression, and anxiety symptoms in patients with multiple sclerosis. | doesn't | same as S3 — MS; erythrocyte GSH unchanged |
+| CR | — | 10.1515/cclm.2002.086 | journal-article | 2002 | Clinical Chemistry and Laboratory Medicine | Effects of Oral N-Acetylcysteine on Plasma Homocysteine and Whole Blood Glutathione Levels in Healthy, Non-pregnant Women | title only | title: oral NAC and whole-blood glutathione in healthy women (2002); matches the claim; no abstract captured |
+
+## `dimension:melatonin-sleep/populationRelevance`
+
+**Library claim:** Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient. [dimension populationRelevance, score 3: Directly relevant to delayed onset and jet lag.]
+
+Query `melatonin delayed sleep-wake phase disorder randomized` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 33259790 | 10.1016/j.cub.2020.10.092 | Randomized Controlled Trial | 2021 | Current biology : CB | Prolonged, Controlled Daytime versus Delayed Eating Impacts Weight and Metabolism. | doesn't | meal timing |
+| 2 | 22038497 | 10.1007/s00394-011-0263-7 | Randomized Controlled Trial | 2012 | European journal of nutrition | Effect of tart cherry juice (Prunus cerasus) on melatonin levels and enhanced sleep quality. | doesn't | tart cherry juice |
+| 3 | 34030534 | 10.1080/07420528.2021.1930029 | Systematic Review | 2021 | Chronobiology international | Evening wear of blue-blocking glasses for sleep and mood disorders: a systematic review. | doesn't | blue-blocking glasses |
+| CR | — | 10.1016/j.sleepx.2020.100022 | journal-article | 2020 | Sleep Medicine: X | Efficacy and safety of supplemental melatonin for delayed sleep–wake phase disorder in children: an overview | title only | title: supplemental melatonin for DSWPD in children, an overview (2020); children only; no abstract captured |

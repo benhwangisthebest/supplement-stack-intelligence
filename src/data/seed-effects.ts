@@ -65,7 +65,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["GABA", "HPA-axis"],
-    paperIds: [],
+    paperIds: ["p-magnesium-stress"],
   },
   {
     id: "magnesium-metabolic",
@@ -254,7 +254,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "IU",
     },
     mechanismTags: ["immune-modulation"],
-    paperIds: [],
+    paperIds: ["p-vitamin-d-respiratory-ipd", "p-vitamin-d-respiratory-update"],
   },
   {
     id: "fish-oil-cardiovascular",
@@ -494,7 +494,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["HPA-axis"],
-    paperIds: [],
+    paperIds: ["p-ashwagandha-sleep"],
   },
   {
     id: "berberine-metabolic",
