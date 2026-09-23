@@ -178,4 +178,8 @@ The N-series max is **83**. No new N- finding.
 
 ## 8. Report
 
-*(filled in at report)*
+**U3 DONE — 2026-09-23.** Landing (a) `89e22bd` was branched from `main`, pushed, and passed CI run
+`35833745258` on the pushed SHA. It was fast-forwarded to `main`, and its branch was deleted on both sides.
+**Owner rulings recorded in the register:** the AC-2 deviation, and FU-55 (closed). **Carried items retired:**
+none. **`[P3-X1]`** stays unticked until U4 empties `UNPROFILED_GRADE_ALLOWLIST`. **Next unit:** U5
+(register order U1 → U2 → U3 → U5 → U6 → U4).
