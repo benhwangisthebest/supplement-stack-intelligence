@@ -1,6 +1,7 @@
 import type { Paper } from "@/types";
 
-// Design Ref: §5.1 — illustrative evidence summary card.
+// Design Ref: §5.1 — evidence summary card. (Illustrative until Phase 3 U6; every cited
+// paper is now verified — see IllustrativeDatasetNotice.)
 //
 // v13 (evidence-disclosure): the provenance line (authors · journal (year) · n=…), the
 // study-type pill, and the "View source ↗" anchor are gone. They presented recalled,
@@ -13,8 +14,8 @@ import type { Paper } from "@/types";
 // Phase 3 U6 (c2), owner scope addition 2026-09-23: the ONE external link a card may
 // carry is built from a `pmid`/`doi` that the build has verified against
 // content/verification/provenance-fixture.json (src/data/provenance-record.test.ts),
-// so SC-3's intent — no fabricated link — holds. A card without an identifier is an
-// illustrative summary and renders no link; IllustrativeDatasetNotice says so.
+// so SC-3's intent — no fabricated link — holds. A paper without an identifier renders
+// no link; since the U6 closeout no CITED paper lacks one (P7), so none reaches here.
 const PUBMED = "https://pubmed.ncbi.nlm.nih.gov/";
 const DOI_ORG = "https://doi.org/";
 const LINK = "font-medium text-body underline underline-offset-2 hover:text-ink";

@@ -659,7 +659,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["glutathione", "antioxidant"],
-    paperIds: ["p-nac-antioxidant"],
+    paperIds: [],
   },
   {
     id: "protein-powder-training",

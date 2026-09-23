@@ -1,23 +1,21 @@
 // Design Ref: §5.3 — the disclosure the Library never had.
 //
-// The seed evidence dataset is illustrative. Before v13 the UI presented it as real
-// research (author · journal · year · n=…, under a "View source ↗" link) while only a
-// source-file comment admitted otherwise. Users never saw the comment.
+// History (kept, per CLAUDE.md §7): before v13 the UI presented an illustrative
+// evidence dataset as real research, and this notice was the fix — "Illustrative
+// dataset … not real studies". U6 (a0) mounted it on the advisor's source chips
+// (N-84); U6 (c)/(c2) reworded it for a partly verified corpus.
 //
-// This notice must be MOUNTED on every surface rendering evidence-derived content —
-// a disclosure that exists but isn't reachable from production is the same class of
-// defect as the v11 rule that passed 385 unit tests while being dead code.
-// Plan SC: SC-4 (reachability, asserted via the production render path — guard G3)
+// Phase 3 U6 closeout (owner, 2026-09-23): EVERY paper the corpus cites now carries a
+// DOI/PMID verified against content/verification/provenance-fixture.json, which P7 in
+// src/data/provenance-record.test.ts enforces, and PaperSummaryCard links it. So the
+// notice no longer says any summary is illustrative. It says what IS true: where
+// titles and details come from, and that grades are this app's own assessment rather
+// than the papers' conclusions. It covers evidence summaries and grades only. No other
+// dataset (products, interactions, food pairings) was ever in its wording.
 //
-// Phase 3 U6 (a0), N-84: the advisor's source chips were such a surface and had no
-// notice — a chip's text IS the illustrative title. The `inline` variant is the
-// chips' copy of the same disclosure (ProvenanceChips.test.tsx). Both variants live
-// here so U6 (c) revises one file when verified papers make the wording untrue.
-//
-// U6 (c2), owner scope addition 2026-09-23: the corpus is MIXED, and the card now
-// says which is which — PaperSummaryCard links a fixture-verified PMID/DOI, and a
-// card without that link is illustrative. The copy points at that link. Keep "not
-// real studies": the G3 E2E spec asserts it on the production render path.
+// The component keeps its name so its two Library mounts (SupplementDetail.tsx) stay
+// untouched. It must stay MOUNTED on every surface rendering evidence-derived content
+// (Plan SC: SC-4, reachability asserted by the G3 E2E spec).
 export function IllustrativeDatasetNotice({
   variant = "panel",
 }: {
@@ -25,25 +23,24 @@ export function IllustrativeDatasetNotice({
 }) {
   if (variant === "inline") {
     return (
-      <p data-testid="illustrative-dataset-notice" className="mt-1.5 text-xs text-muted">
-        <span className="font-medium">Partly verified sources.</span> A paper cited
-        here is verified when its Library card links a PubMed or DOI record; the rest
-        are illustrative sample data, not real studies. Grades are this app&apos;s own
-        assessment.
+      <p data-testid="evidence-sources-notice" className="mt-1.5 text-xs text-muted">
+        <span className="font-medium">Sources.</span> Papers cited here are verified
+        against their PubMed or DOI record, linked on each Library card. Grades are this
+        app&apos;s own assessment of the evidence, not the papers&apos; conclusions.
       </p>
     );
   }
   return (
     <aside
-      data-testid="illustrative-dataset-notice"
+      data-testid="evidence-sources-notice"
       className="mb-4 rounded-lg border border-hairline bg-surface-card p-3 text-xs text-body"
     >
-      <span className="font-medium text-ink">Evidence summaries — partly verified.</span>{" "}
-      A summary with a PubMed or DOI link is verified: its title is the paper&apos;s own,
-      and its details come only from that paper&apos;s abstract (or read &ldquo;Not
-      reported in abstract&rdquo;). A summary without a link is illustrative sample data
-      written to demonstrate the product — not real studies — and should not be treated
-      as a citation. Evidence grades are this app&apos;s own assessment.
+      <span className="font-medium text-ink">Evidence sources.</span> Each summary is
+      matched to a published paper, linked by its PubMed or DOI record: the title is the
+      paper&apos;s own, and the details come only from that paper&apos;s abstract (or read
+      &ldquo;Not reported in abstract&rdquo;). A summary condenses an abstract, so read
+      the paper before relying on it. Evidence grades are this app&apos;s own assessment
+      of the evidence, not the papers&apos; conclusions.
     </aside>
   );
 }

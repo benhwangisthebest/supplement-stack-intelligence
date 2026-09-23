@@ -169,15 +169,15 @@ export const getSupplement: AdvisorTool<GetSupplementInput, SupplementDetail> = 
         refId: e.effectId,
         label: `${supp.name} → ${e.name}, Grade ${e.grade}`,
       })),
-      // Phase 3 U6 (c), owner ruling 2026-09-23: a paper carrying a doi/pmid has a
-      // fixture-verified record (src/data/provenance-record.test.ts), so it is not
-      // illustrative and loses the note. Unverified papers keep it. Citations already
+      // Phase 3 U6: every paper an effect cites carries a fixture-verified doi/pmid,
+      // enforced by P7 (src/data/provenance-record.test.ts), so a paper citation is
+      // never illustrative and carries no "Illustrative evidence summary" note. The
+      // note was dropped at the U6 closeout (owner, 2026-09-23). Citations already
       // persisted in advisor_messages are not rewritten.
       ...sourcePapers.map((p) => ({
         kind: "paper" as const,
         refId: p.id,
         label: p.title,
-        ...(p.doi || p.pmid ? {} : { detail: "Illustrative evidence summary" }),
       })),
     ];
     return ok(detail, citations);

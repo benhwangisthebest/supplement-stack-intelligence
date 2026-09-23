@@ -1,7 +1,7 @@
-// Phase 3 U6 (a0) — N-84's UI gap. A paper chip's text is the paper's illustrative
-// title (src/lib/advisor/tools.ts, `label: p.title`), so the advisor's source chips
-// must carry the same illustrative-dataset disclosure the Library mounts on that
-// content. Red proof: removing the notice from ProvenanceChips fails the first two
+// Phase 3 U6 (a0) — N-84's UI gap. A paper chip's text is the paper's title
+// (src/lib/advisor/tools.ts, `label: p.title`), so the advisor's source chips must
+// carry the same sources notice the Library mounts on that content (reworded at the
+// U6 closeout, once every cited paper was verified). Red proof: removing the notice from ProvenanceChips fails the first two
 // tests (docs/01-plan/features/p3-u6-corpus-verified.plan.md).
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -22,14 +22,15 @@ const grade: Citation = {
 };
 const interaction: Citation = { kind: "interaction-rule", refId: "rule-x", label: "Some rule" };
 
-const notice = () => screen.queryByTestId("illustrative-dataset-notice");
+const notice = () => screen.queryByTestId("evidence-sources-notice");
 
-describe("ProvenanceChips — illustrative-dataset notice (N-84)", () => {
+describe("ProvenanceChips — sources notice (N-84)", () => {
   it("discloses the dataset when a paper chip is shown, alongside the chip", () => {
     render(<ProvenanceChips citations={[paper]} />);
     const sources = screen.getByRole("list", { name: "Sources" });
     expect(within(sources).getByText(paper.label)).toBeTruthy();
-    expect(notice()?.textContent).toMatch(/verified when its Library card links a PubMed or DOI record.*not real studies/);
+    expect(notice()?.textContent).toMatch(/verified against their PubMed or DOI record.*this app's own assessment/);
+    expect(notice()?.textContent).not.toMatch(/illustrative|not real studies/i);
   });
 
   it("discloses the dataset when only an effect-grade chip is shown", () => {

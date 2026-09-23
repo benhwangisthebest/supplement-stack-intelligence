@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { assessLabMarkers } from "@/lib/biomarkers";
-import { getEffectsForSupplement, getSupplementBySlug } from "@/lib/evidence";
+import {
+  getAllSupplements,
+  getEffectsForSupplement,
+  getPaperById,
+  getSupplementBySlug,
+} from "@/lib/evidence";
 import { findInteractions } from "@/lib/interactions";
 import { evaluateStack } from "@/lib/stack-evaluator";
 import { computeTrends } from "@/lib/lab-trends";
@@ -73,15 +78,19 @@ describe("getSupplement", () => {
     expect(getSupplement.handler({ slug: "ghost" }, ctx).ok).toBe(false);
   });
 
-  // Phase 3 U6 (c): only an unverified paper is labelled illustrative.
-  it("a verified paper's citation carries no illustrative note; an unverified one keeps it", () => {
-    const paperCites = (slug: string) =>
-      getSupplement.handler({ slug }, ctx).citations.filter((c) => c.kind === "paper");
-    const verified = paperCites("creatine").find((c) => c.refId === "p-creatine-strength");
-    expect(verified).toBeDefined();
-    expect(verified!.detail).toBeUndefined();
-    const unverified = paperCites("nac").find((c) => c.refId === "p-nac-antioxidant");
-    expect(unverified?.detail).toBe("Illustrative evidence summary");
+  // Phase 3 U6 closeout: every cited paper is verified, so no paper citation, for
+  // any supplement, carries an illustrative note, and each one names a paper with an
+  // identifier.
+  it("no paper citation is labelled illustrative, and each cites a paper with a doi/pmid", () => {
+    const all = getAllSupplements().flatMap((s) =>
+      getSupplement.handler({ slug: s.slug }, ctx).citations.filter((c) => c.kind === "paper"),
+    );
+    expect(all.length).toBeGreaterThan(0);
+    for (const c of all) {
+      expect(c.detail).toBeUndefined();
+      const paper = getPaperById(c.refId);
+      expect(Boolean(paper?.doi || paper?.pmid)).toBe(true);
+    }
   });
 });
 

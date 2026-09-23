@@ -86,3 +86,35 @@ describe("P6 — no paper cites an identifier on the do-not-cite list (U6, owner
     expect(result.doNotCite).toEqual([]);
   });
 });
+
+// P7 — Phase 3 U6 closeout, [P3-X2]: 100% of citations carry a verified identifier.
+// P3 fails an identifier with no fixture entry; P7 closes the other half: a CITED
+// paper with no identifier at all. Every paperIds entry in seed-effects.json, at any
+// depth (effect level and evidence-profile dimensions), must name a paper that has a
+// doi or pmid, which P2–P4 then verify against the fixture.
+describe("P7 — every cited paper carries a doi or pmid ([P3-X2])", () => {
+  const effects = readJson("content/seed/seed-effects.json");
+  const cited: { where: string; id: string }[] = [];
+  const walk = (node: unknown, where: string): void => {
+    if (Array.isArray(node)) node.forEach((v, i) => walk(v, `${where}[${i}]`));
+    else if (node && typeof node === "object")
+      for (const [k, v] of Object.entries(node)) {
+        if (k === "paperIds" && Array.isArray(v)) v.forEach((id, i) => cited.push({ where: `${where}.${k}[${i}]`, id }));
+        else walk(v, `${where}.${k}`);
+      }
+  };
+  walk(effects, "seed-effects.json");
+  const byId = new Map(papers.map((p) => [p.id, p]));
+
+  it("finds citations to check (anti-vacuity)", () => {
+    expect(cited.length).toBeGreaterThan(0);
+  });
+
+  it("no cited paper lacks an identifier", () => {
+    const bare = cited.filter(({ id }) => {
+      const p = byId.get(id);
+      return !p || (p.doi === undefined && p.pmid === undefined);
+    });
+    expect(bare.map((c) => `${c.where} → ${c.id}`)).toEqual([]);
+  });
+});

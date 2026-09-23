@@ -7,9 +7,10 @@ import { IllustrativeDatasetNotice } from "@/components/evidence/IllustrativeDat
 import { citationHref } from "@/lib/advisor/citation-href";
 import type { Citation } from "@/types/advisor";
 
-// Phase 3 U6 (a0), N-84: kinds whose chip text comes from the illustrative seed
-// evidence dataset (a paper's title, an effect's grade). Any of them in the list
-// mounts the disclosure the Library shows on the same content.
+// Phase 3 U6 (a0), N-84: kinds whose chip text comes from the seed evidence corpus
+// (a paper's title, an effect's grade). Any of them in the list mounts the sources
+// notice the Library shows on the same content. Since the U6 closeout every cited
+// paper is verified (P7), so the notice states provenance rather than disclaiming it.
 const EVIDENCE_DATASET_KINDS: ReadonlySet<Citation["kind"]> = new Set(["paper", "effect-grade"]);
 
 const KIND_LABEL: Record<Citation["kind"], string> = {
@@ -17,7 +18,7 @@ const KIND_LABEL: Record<Citation["kind"], string> = {
   "interaction-rule": "Interaction",
   "biomarker-rule": "Biomarker",
   "lab-trend": "Lab trend",
-  paper: "Evidence summary", // v13: not a citable paper — see types/paper.ts
+  paper: "Paper", // U6: every cited paper carries a fixture-verified DOI/PMID (P7)
   "stack-eval": "Stack",
   "side-effect": "Side-effect",
 };

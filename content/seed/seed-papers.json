@@ -157,14 +157,15 @@
   },
   {
     "id": "p-zinc-deficiency",
-    "title": "Zinc supplementation and status markers",
-    "population": "Populations at risk of zinc deficiency",
-    "intervention": "Dietary and supplemental zinc",
-    "dose": "8-25 mg/day",
-    "duration": "Varied",
-    "outcomes": "Supplementation restored zinc status in deficient groups.",
-    "limitations": "Observational components limit causal inference.",
-    "summary": "Confirms zinc supplementation corrects deficiency in at-risk populations."
+    "title": "The relationship between zinc intake and serum/plasma zinc concentration in adults: a systematic review and dose-response meta-analysis by the EURRECA Network.",
+    "population": "Adults, in RCTs and observational studies (EURRECA review, literature to February 2010)",
+    "intervention": "Zinc intake, including supplementation, vs serum/plasma zinc concentration",
+    "dose": "Dose-response across intakes (no single dose)",
+    "duration": "Not reported in abstract",
+    "outcomes": "Pooled intake-status coefficient 0.08: each doubling of zinc intake was associated with about 6% higher serum/plasma zinc.",
+    "limitations": "High heterogeneity (I² 84.5%); authors note it is debated whether this relationship can set intakes needed for normal zinc status.",
+    "summary": "Dose-response meta-analysis: higher zinc intake was associated with modestly higher serum/plasma zinc in adults (about 6% per doubling of intake).",
+    "pmid": "23244547"
   },
   {
     "id": "p-b12-deficiency",
@@ -180,14 +181,15 @@
   },
   {
     "id": "p-caffeine-focus",
-    "title": "Caffeine and cognitive performance: a review",
-    "population": "Healthy adults",
-    "intervention": "Caffeine vs placebo",
-    "dose": "100-200 mg",
-    "duration": "Acute",
-    "outcomes": "Consistent improvements in alertness, vigilance, and reaction time.",
-    "limitations": "Tolerance and withdrawal can confound habitual users.",
-    "summary": "Robust acute cognitive benefits; effects partly offset by tolerance."
+    "title": "Caffeine improves reaction time, vigilance and logical reasoning during extended periods with restricted opportunities for sleep.",
+    "population": "20 Special Forces soldiers (mean age 28.6)",
+    "intervention": "Caffeine vs placebo during three nights of sustained wakefulness, each followed by a 4-hour afternoon sleep",
+    "dose": "200 mg four times a night (800 mg/day)",
+    "duration": "Three successive nights",
+    "outcomes": "Caffeine maintained psychomotor vigilance speed, improved field vigilance detection, increased correct responses on a vigilance monitor and speeded logical reasoning; marksmanship unchanged.",
+    "limitations": "Not reported in abstract",
+    "summary": "RCT: repeated caffeine doses maintained vigilance, reaction speed and reasoning in soldiers during nights of restricted sleep.",
+    "pmid": "25527035"
   },
   {
     "id": "p-caffeine-training",

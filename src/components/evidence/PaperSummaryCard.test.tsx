@@ -1,6 +1,6 @@
 // Phase 3 U6 (c2) — owner scope addition 2026-09-23. A verified paper's card shows its
 // PMID/DOI as links to pubmed.ncbi.nlm.nih.gov / doi.org, which is how a reader tells a
-// verified summary from an illustrative one (IllustrativeDatasetNotice points at it).
+// summary's source (IllustrativeDatasetNotice points at the link).
 // Red proof: removing the identifier block from PaperSummaryCard fails the first three
 // tests (docs/01-plan/features/p3-u6-corpus-verified.plan.md §8).
 import { cleanup, render, screen } from "@testing-library/react";
@@ -46,7 +46,7 @@ describe("PaperSummaryCard — verified identifiers (U6 c2)", () => {
     ).toBe(`https://pubmed.ncbi.nlm.nih.gov/${paper!.pmid}/`);
   });
 
-  it("an illustrative paper (no identifier) renders no link and no 'Verified source'", () => {
+  it("a paper with no identifier renders no link and no 'Verified source'", () => {
     render(<PaperSummaryCard paper={base} />);
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.queryByTestId("paper-identifiers")).toBeNull();

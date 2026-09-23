@@ -10,18 +10,29 @@ import { expect, test } from "@playwright/test";
 
 const PLACEHOLDER_HOST = ["example", "org"].join(".");
 
+// Phase 3 U6 closeout (owner, 2026-09-23): every cited paper is verified (P7), so the
+// notice no longer says "not real studies". It states where titles and details come
+// from, and the Evidence summaries tab must link each paper's PubMed/DOI record. The
+// retired assertions checked the "illustrative dataset" wording; see the U6 artifact.
 test.describe("G3: evidence disclosure is reachable in production", () => {
-  test("the Effects tab renders the illustrative-dataset notice", async ({ page }) => {
+  test("the Effects tab renders the sources notice", async ({ page }) => {
     await page.goto("/library/creatine");
     await page.getByRole("tab", { name: /effects/i }).click();
-    await expect(page.getByTestId("illustrative-dataset-notice").first()).toBeVisible();
-    await expect(page.getByText(/not real studies/i).first()).toBeVisible();
+    await expect(page.getByTestId("evidence-sources-notice").first()).toBeVisible();
+    await expect(page.getByText(/linked by its PubMed or DOI record/i).first()).toBeVisible();
+    await expect(page.getByText(/not real studies/i)).toHaveCount(0);
   });
 
-  test("the Evidence summaries tab renders the notice and is relabelled", async ({ page }) => {
+  test("the Evidence summaries tab renders the notice and links each paper's record", async ({ page }) => {
     await page.goto("/library/creatine");
     await page.getByRole("tab", { name: /evidence summaries/i }).click();
-    await expect(page.getByTestId("illustrative-dataset-notice").first()).toBeVisible();
+    await expect(page.getByTestId("evidence-sources-notice").first()).toBeVisible();
+    const cards = page.locator('[id^="paper-"]');
+    const n = await cards.count();
+    expect(n).toBeGreaterThan(0);
+    await expect(
+      page.locator('[data-testid="paper-identifiers"] a[href^="https://pubmed.ncbi.nlm.nih.gov/"], [data-testid="paper-identifiers"] a[href^="https://doi.org/"]'),
+    ).toHaveCount(n);
   });
 
   test("no 'View source' affordance survives anywhere on a supplement page", async ({ page }) => {
