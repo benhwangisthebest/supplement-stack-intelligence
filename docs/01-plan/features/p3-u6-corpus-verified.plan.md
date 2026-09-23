@@ -190,11 +190,11 @@ link, DOI link, a real seed paper (`p-creatine-strength`) linking its PMID, and 
 **Red proof:** the identifier block removed → **3 failed | 6 passed (9)**. Restored from the copy (shasum `e2ac5188…`
 equal), and the result is **9 passed (9)**.
 
-## 9. S3 decisions applied; second S3 pass. STOPPED for the owner's rulings
+## 9. S3 decisions, second pass, closeout — DONE 2026-09-23
 
-**Applied (uncommitted, awaiting card review):** 4 new ids, resolved in S2 (4 calls, 0 refusals, fixture now 28 entries), with
-card fields only from the S3 abstracts. `p-magnesium-stress` → magnesium-stress. `p-vitamin-d-respiratory-ipd` and
-`p-vitamin-d-respiratory-update` → vitamin-d-immune (both, to show the mixed evidence). `p-ashwagandha-sleep` →
-ashwagandha-sleep. protein-powder-recovery keeps **no** citation. **Second pass** (12 calls; S3 total 36 of ≤40): the
-table is in the candidate appendix. **3 papers remain illustrative** (#14, #16, #20), and #30's dimension is still
-uncited. **Nothing retired, (d) not opened.**
+**S3 decisions** (`6b16376`): 4 new ids for the second effects (S2 4). **Second pass** (S3 12) → #14 23244547, #16 25527035
+(S2 2). **#20: no call.** The DOI's captured Crossref title states no direction, so NAC is uncited. #30 stays uncited.
+**All cited verified** (`e1d5f37`): **P7** (red: re-citing bare `p-nac-antioxidant`) and the notice restated as a sources note
+(it never covered other datasets). The `tools.ts` note is dropped (red), and E2E G3 asserts a link on every creatine card.
+**Historic chips** (`d917841`): stored pre-U6 labels resolve to the verified title at render (red: 2 of 11).
+**Closeout:** AC-4 **30/30** · AC-5 **0 diffs** · 162 calls, $0 · `[P3-X2]` ticked · `[P3-X6]` not needed · FU-57…60 · U4 list in the register.

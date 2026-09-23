@@ -92,11 +92,20 @@ The queries are in `content/verification/u6-claims-s3.json`, and the filters are
 - **S2, 4 calls** (PubMed `esummary`), all 200, all `S2`, 0 refusals. These are the owner's S3 decisions (4 new ids), in `content/verification/u6-approvals-s3.json`. Log: `captures/2026-09-23-s2b/call-log.jsonl`.
 - **S3 second pass, 12 calls** (4 Crossref, 4 filtered `esearch`, 0 widened, 4 `efetch`), all 200, all `S3`, for 4 claims with the owner's queries verbatim (`u6-claims-s3b.json`). Log: `captures/2026-09-23-s3b/call-log.jsonl`. $0.
 
-## Running total
+## S2 (final) — owner rulings on the second pass — 2026-09-23
 
-| Scenario | Calls | Budget |
-|---|---|---|
-| S1 | 96 | ≤130 |
-| S2 | 28 (24 + 4) | ≤40 |
-| S3 | 36 (24 + 12) | owner cap ≤40 |
-| **All** | **160** | — · **$0 total** · no paid API, no OpenAI, no deployed DB |
+- **S2, 2 calls** (PubMed `esummary`), all 200, all `S2`, 0 refusals: #14 → 23244547 and #16 → 25527035 (`u6-approvals-s3b.json`). Log: `captures/2026-09-23-s2c/call-log.jsonl`.
+- **#20: no call.** The owner approved DOI 10.1515/cclm.2002.086 only if its resolver title stated the direction of the effect. Crossref's record for that DOI, already captured in the S3 second pass (`captures/2026-09-23-s3b/paper_p-nac-antioxidant/crossref.json`), reads *"Effects of Oral N-Acetylcysteine on Plasma Homocysteine and Whole Blood Glutathione Levels …"*, which states no direction. The citation was removed without a lookup.
+
+## Final totals — U6 closeout (2026-09-23)
+
+| Scenario | Calls | Budget | Runs |
+|---|---|---|---|
+| S1 search | **96** | ≤130 | `2026-09-23-s1` |
+| S2 capture | **30** (24 + 4 + 2) | ≤40 | `-s2`, `-s2b`, `-s2c` |
+| S3 re-search | **36** (24 + 12) | ≤ S1+S2; owner cap ≤40 | `-s3`, `-s3b` |
+| **Total** | **162** | — | **$0** |
+
+**Every call returned HTTP 200.** No call went outside S1–S3, to a paid API, or to OpenAI. **Deployed database: never touched.** No
+retirement was needed, so `[P3-X6]`'s migration path was not opened (see the register). **Fixture:** 30 entries, all
+`verifiedBy: "owner"`, `verifiedOn: 2026-09-23`. **Refresh:** re-verify every entry at the Phase 3 closeout (U5's refresh policy).
