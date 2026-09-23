@@ -19,8 +19,9 @@ disclosure, although the Library discloses the same content (N-84's UI gap).
 **Owner rulings in force (2026-09-23, recorded in the register before any work).** **R1:** a real paper for
 the same claim → keep the id, take the resolver's title, attach `doi`/`pmid`. None found → retire via
 tombstone, with its deployed-DB migration as a separate landing (own go, own OP row). *"Unverified but
-disclosed"* is not an option. **R2:** (a0) adds the notice to the chips before any live work. **R3:** the
-contact email is **pending** and blocks (b).
+disclosed"* is not an option. **R2:** (a0) adds the notice to the chips before any live work. **R3:** no
+contact email (**none**, owner, 2026-09-23), so the script runs with `--no-mailto`. The rulings given with the go for (b)
+(search rules, split captures, (c)'s rewrite rule and `tools.ts` scope) are in the register.
 
 **Hard rules.** (1) No identifier, title or abstract from memory: every candidate comes from a resolver
 response captured in this session. (2) `verifiedBy: "owner"` only for a mapping the owner approved in writing
@@ -55,7 +56,31 @@ in `advisor_messages.citations[]`, so historic rows keep it whatever (c) does. (
 
 ## 3. Design — (a) the capture script
 
-*(Written at landing (a).)*
+`content/verification/capture.mjs` is plain Node with no dependencies, and **owner-run**. It imports every
+identifier, title and fixture rule from `provenance.mjs`, the module U5's guard reads, so the script and the
+build share one set of rules. **Nothing under `src/` imports it.** The check,
+`git grep -nE "(from|import\()\s*['\"][^'\"]*capture(\.mjs)?['\"]" -- src`, gives exit 1 (no match). The
+only mention under `src/` is the regenerated preamble comment. Hard rule 4 holds.
+
+| Mode | Scenario | Calls | Writes |
+|---|---|---|---|
+| `search --claims F` | S1 | per claim: 1 Crossref `works?query.bibliographic` + PubMed `esearch` + `efetch` (**3**, ≤4 budgeted) | raw responses under `--out/<claim>/`, parsed `candidates.json`. **Never** the corpus or the fixture |
+| `resolve --approvals F [--write]` | S2 | 1 per approved identifier: Crossref `works/{doi}` or PubMed `esummary` | with `--write`, fixture entries + the paper's `title` and `doi`/`pmid` in `seed-papers.json`; then `content:generate` |
+
+**Controls.** `--dry-run` sends no request and prints each planned call. `--max-calls N` is a hard cap: the
+call past it throws `STOP`. Every call carries `--scenario`, written to its line in `call-log.jsonl`. Calls go
+one at a time, at least **400 ms** apart (NCBI allows 3 req/s without a key). A **host allowlist**
+(`api.crossref.org`, `eutils.ncbi.nlm.nih.gov`) throws `STOP` for any other host. The contact address is
+`--mailto` or an explicit `--no-mailto`, and it is **redacted** in the call log. `resolve` **refuses** a
+mapping that has no written owner approval (`approvedBy` ∈ `VERIFIERS`, plus `approvedOn` and
+`approvalRef`), a malformed identifier, or a resolved title that does not match the approved one under
+`normaliseTitle`. This is the stop condition *"resolver data doesn't match"*. Any refusal blocks `--write`.
+The merged fixture must pass `validateFixture` before anything is written. `verifiedBy` is copied from the
+approval record, which the owner writes, and the script never invents it.
+
+**FU-56.** The `seed-papers` preamble (`content/modules.json`) no longer says the type *"no longer has
+fields"*. It says U5 returned optional `doi`/`pmid` behind the record. Regenerated, and
+`content:generate -- --check` reports 0 stale.
 
 ## 4. Do / Check — (a0)
 
@@ -74,3 +99,30 @@ no notice; no citations → nothing rendered.
 
 Restored from the backup. The restored file's `shasum` equals the backup's
 (`fc4eeec5150152db03c6b940cd9838da2f930363`), and `npx vitest run --project jsdom` → **5 passed (5)**.
+
+## 5. Do / Check — (a)
+
+**AC-2, zero network in a dry run.** Both modes were run with `--dry-run` and
+`--import 'data:…globalThis.fetch=()=>{throw …}'`, so any network call would have crashed the run. Both
+exited 0. The call log reads `{"dryRun":true,"callsMade":0,"planned":4,…}` for search (2 claims × 2 calls;
+`efetch` is not planned because a dry `esearch` returns no PMIDs), and `callsMade":0,"planned":1` for resolve.
+The second approval, whose `approvedBy` was `"nobody"`, was `REFUSED … no written owner approval recorded`.
+
+**Offline behaviour check (scratch, not committed).** The script was run against a stub `fetch` and
+synthetic, visibly fake data. PubMed XML parsing covers entities, inline `<i>`, labelled abstract sections
+and the DOI. The Crossref parse, `resolve` building a `validateFixture`-clean entry, and `applyResolved`
+retitling the paper all behaved. A title mismatch was refused, the cap threw on the 4th call of 3, a
+non-allowlisted host threw, the limiter waited between back-to-back calls, and search made exactly 3 calls
+per claim with the contact address attached. Result: all assertions passed.
+
+**Red proof, U5's guard against a planted unverifiable DOI.** The seed file was backed up by copy, and
+`p-creatine-strength.doi = "10.0000/u6-planted-unverifiable"` was planted:
+
+```
+   × P2/P3 — doi > P3 doi: every well-formed paper doi has a fixture entry
++   "p-creatine-strength.doi \"10.0000/u6-planted-unverifiable\": no fixture entry for doi:10.0000/u6-planted-unverifiable",
+      Tests  1 failed | 7 passed (8)
+```
+
+Restored from the copy. The `shasum` values match (`f57967e9…`), `git diff content/seed` is empty, and the
+file → **8 passed (8)**.
