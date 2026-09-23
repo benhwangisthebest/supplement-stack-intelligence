@@ -186,4 +186,11 @@ and the N-series max is **83**.
 
 ## 8. Report
 
-*Written at closeout.*
+**U5 DONE — 2026-09-23.** Landing (a) `67f9765` was branched from `main`, pushed, and passed CI run
+`35836042868` on the pushed SHA. It was then fast-forwarded to `main`, and the branch was deleted on both
+sides. **Carried items closed:** N-80, N-81. **Owner rulings recorded in the register:** the verifier list,
+the resolver list, and FU-56 → U6. **AC-6 refresh policy** is in the register's U5 entry. **New at
+closeout, owner-directed:** **N-84**, which says the 20 seed papers carry illustrative titles. All 20 are
+cited, by 24 effects and 8 profiles. The Library discloses this, and the advisor chips do not. Each paper
+needs an owner decision in U6: re-source it or uncite it (register §3). **`[P3-X2]`** stays unticked.
+**Next unit:** U6 (register order U1 → U2 → U3 → U5 → U6 → U4).
