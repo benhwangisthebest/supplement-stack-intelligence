@@ -655,3 +655,32 @@ to add FU-45/FU-46, plus:** **P2-3, reopened** (§7.2 above) · two new rows fro
 (the "two fixtures" overclaim) and **N-79** (the shared undisclosed `stripComments` blind spot in
 `NO_PINNED_MODEL_ID`, `five-xx-is-logged.test.ts:194`, `not-found-uniformity.test.ts:70`) — numbers are this
 certifier's proposal, not an enactment; I hold no mandate to edit the plan.
+
+### 7.7 Closing pass on `ee9db07` (next unused subsection — §7.1 already names "the three rules")
+
+**HEAD = `ee9db07`, confirmed.**
+
+**1. P2-3 — VERIFIED.** Recomputed: routes = 25, `route.test.ts` = 25, `getUser(` in 25/25 (all via
+`git ls-files`/grep). Wrapped-vs-not script (comment-stripped, `/\bhandle[(<]/`) → 23 wrapped/31 call sites,
+unwrapped = exactly `advisor/route.ts` + `advisor/actions/route.ts`. `respond.ts:322` is
+`instanceof NotConfiguredError`; zero production `includes("not configured")` hits. Both paid routes import
+`enforceRateLimit`; `security-headers.test.ts` exists, middleware imports the CSP module. All three struck
+bullets and all three `25`s re-derive true.
+
+**2. N-78 — dispositioned, core claim VERIFIED, one overclaim found.** Reconstructed pre-`bac5928` scanner:
+"AFTER a substitution" fixture → `false` (red, genuine guard); "INSIDE" fixture → `true` (already green, not
+a regression guard) — matches the row. Fixture B relabelled in place, not deleted; `vitest run` on all three
+touched files = 85/85 green. **NOT VERIFIED: "§10.11 … say[s] two regression fixtures."** `grep -i fixture`
+over §10.11 at `ee9db07` and pre-(d1) `40fc2b6` returns nothing — §10.11 never made a fixture-count claim, so
+nothing there needed dating; the citation is false, though harmless. **N-79 — VERIFIED**: all three named
+guards carry the disclosure (grep-confirmed); suite green.
+
+**3. Survives-list — VERIFIED.** §10.7 flattens to 28 distinct ids across 22 rows, no range notation left;
+report §10's 22 rows flatten to the identical 28-id set (grouped differently, same members). **FU-39
+excluded — correct** (plan line 349: "raised … DROPPED here"). **FU-47 included — correct** (open, no
+closing unit, present in both tables).
+
+**4. Verdict: COMPLETE WITH FOLLOW-UP — restated.** No rank-1 violation, fabrication, or live unmitigated
+defect found. The one flaw (N-78's false §10.11 citation) is a pointer error inside a sound correction, not
+a functional gap. Settled by: striking "§10.11" from N-78's row, or showing the phrase there under some
+other search.
