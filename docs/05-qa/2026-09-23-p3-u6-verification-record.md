@@ -55,6 +55,43 @@ claims where the filtered PubMed search returned 1). The table and the agent's v
 `docs/01-plan/features/p3-u6-corpus-verified.candidates.md`. **No mapping was approved or written.** The
 fixture is still `{}` and `content/seed/` is unchanged.
 
-## S2 — landing (c), capture
+## S2 — landing (c), capture — 2026-09-23
 
-*Not yet run. It needs the owner's per-claim decisions and a separate go.*
+**Owner go:** the (c) decisions in chat on 2026-09-23 (*"Apply everything else in (c): capture fixtures for the
+approved rows"*). **24 approved identifiers** (23 PMIDs, 1 DOI), recorded with their approval references in
+`content/verification/u6-approvals.json`.
+
+| Host | Endpoint | Calls | Expected |
+|---|---|---|---|
+| `eutils.ncbi.nlm.nih.gov` | `esummary` (PMID) | **23** | 23 |
+| `api.crossref.org` | `works/{doi}` | **1** | 1 |
+| **Total** | | **24** | **≤40** |
+
+- Status: all 200. Every line is stamped `S2`. The run lasted 08:56:04Z–08:56:13Z, with calls at least 400 ms apart.
+- **Refusals: 0.** Every resolved title matched the approved S1 title under `normaliseTitle`. **24 fixture entries**
+  were written with `verifiedBy: "owner"`, `verifiedOn: 2026-09-23`.
+- $0. No paid API, no OpenAI call, no deployed DB. Log: `content/verification/captures/2026-09-23-s2/call-log.jsonl`.
+
+## S3 — targeted re-search of 8 claims — 2026-09-23
+
+**Owner go:** *"S3 go: re-search exactly these 8 … ≤40 calls"* (chat, 2026-09-23). This is the budgeted re-run.
+The queries are in `content/verification/u6-claims-s3.json`, and the filters are the same as S1.
+
+| Host | Endpoint | Calls | Expected |
+|---|---|---|---|
+| `api.crossref.org` | `/works?query.bibliographic` | **8** | 8 |
+| `eutils.ncbi.nlm.nih.gov` | `esearch` (filtered; 0 widened) | **8** | 8–16 |
+| `eutils.ncbi.nlm.nih.gov` | `efetch` | **8** | ≤8 |
+| **Total** | | **24** | **≤40** |
+
+- Status: all 200. Every line is stamped `S3`, and calls were at least 400 ms apart. $0.
+- The captures follow the S1 layout (`efetch.xml` stays local, and its SHA-256 is committed). The table is appended to the candidate appendix.
+
+## Running total
+
+| Scenario | Calls | Budget |
+|---|---|---|
+| S1 | 96 | ≤130 |
+| S2 | 24 | ≤40 |
+| S3 | 24 | ≤ S1+S2 (owner capped this use at ≤40) |
+| **All** | **144** | — · **$0 total** |

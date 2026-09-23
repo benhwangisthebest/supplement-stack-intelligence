@@ -1,0 +1,58 @@
+[
+  {
+    "claimId": "paper:p-zinc-deficiency",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "pubmed": "zinc supplementation plasma serum zinc concentration",
+    "crossref": "zinc supplementation plasma zinc concentration meta-analysis"
+  },
+  {
+    "claimId": "paper:p-caffeine-focus",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "pubmed": "caffeine vigilance reaction time alertness placebo",
+    "crossref": "caffeine vigilance reaction time alertness placebo-controlled"
+  },
+  {
+    "claimId": "paper:p-nac-antioxidant",
+    "libraryClaim": "N-Acetylcysteine (NAC) — Antioxidant / glutathione (Grade C): Raises glutathione; broad clinical benefits remain context-dependent.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "pubmed": "oral N-acetylcysteine supplementation blood glutathione",
+    "crossref": "oral N-acetylcysteine supplementation glutathione concentrations"
+  },
+  {
+    "claimId": "dimension:melatonin-sleep/populationRelevance",
+    "libraryClaim": "Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient. [dimension populationRelevance, score 3: Directly relevant to delayed onset and jet lag.]",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "pubmed": "melatonin (jet lag OR delayed sleep phase)",
+    "crossref": "melatonin prevention treatment jet lag"
+  },
+  {
+    "claimId": "effect:magnesium-stress",
+    "libraryClaim": "Magnesium — Stress & relaxation (Grade C): Emerging evidence for stress symptom reduction, often combined with B6.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "pubmed": "magnesium supplementation stress anxiety",
+    "crossref": "magnesium supplementation subjective anxiety stress systematic review"
+  },
+  {
+    "claimId": "effect:vitamin-d-immune",
+    "libraryClaim": "Vitamin D3 — Immune support (Grade C): Mixed evidence; respiratory infection benefit appears largest in deficient people.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "pubmed": "vitamin D supplementation acute respiratory infection",
+    "crossref": "vitamin D supplementation prevent acute respiratory tract infection meta-analysis"
+  },
+  {
+    "claimId": "effect:ashwagandha-sleep",
+    "libraryClaim": "Ashwagandha — Sleep quality (Grade C): Some evidence for improved sleep, often secondary to stress reduction.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "pubmed": "ashwagandha Withania somnifera sleep",
+    "crossref": "ashwagandha sleep quality meta-analysis"
+  },
+  {
+    "claimId": "effect:protein-powder-recovery",
+    "libraryClaim": "Protein Powder (Whey) — Recovery & satiety (Grade B): Supports post-exercise recovery and appetite control.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "pubmed": "protein supplementation recovery exercise-induced muscle damage",
+    "crossref": "protein supplementation recovery exercise-induced muscle damage"
+  }
+]

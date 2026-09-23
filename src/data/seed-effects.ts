@@ -65,7 +65,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["GABA", "HPA-axis"],
-    paperIds: ["p-magnesium-sleep"],
+    paperIds: [],
   },
   {
     id: "magnesium-metabolic",
@@ -82,7 +82,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["insulin-sensitivity"],
-    paperIds: [],
+    paperIds: ["p-magnesium-glucose"],
   },
   {
     id: "creatine-strength",
@@ -125,7 +125,7 @@ export const SEED_EFFECTS: Effect[] = [
         populationRelevance: {
           score: 2,
           rationale: "Strongest in training adults; less relevant to the sedentary.",
-          paperIds: [],
+          paperIds: ["p-creatine-strength"],
         },
       },
     },
@@ -145,7 +145,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "g",
     },
     mechanismTags: ["brain-energy"],
-    paperIds: ["p-creatine-cognition"],
+    paperIds: ["p-creatine-cognition", "p-creatine-vegetarian-cognition"],
     evidenceProfile: {
       dimensions: {
         humanEvidence: {
@@ -161,7 +161,7 @@ export const SEED_EFFECTS: Effect[] = [
         consistency: {
           score: 1,
           rationale: "Benefit appears mainly under stressors (sleep loss, vegetarian).",
-          paperIds: [],
+          paperIds: ["p-creatine-cognition"],
         },
         effectSize: {
           score: 1,
@@ -171,7 +171,7 @@ export const SEED_EFFECTS: Effect[] = [
         populationRelevance: {
           score: 2,
           rationale: "Most relevant to sleep-deprived adults and vegetarians.",
-          paperIds: [],
+          paperIds: ["p-creatine-vegetarian-cognition"],
         },
       },
     },
@@ -191,7 +191,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "g",
     },
     mechanismTags: ["phosphocreatine"],
-    paperIds: [],
+    paperIds: ["p-creatine-recovery"],
   },
   {
     id: "vitamin-d-deficiency",
@@ -234,7 +234,7 @@ export const SEED_EFFECTS: Effect[] = [
         populationRelevance: {
           score: 3,
           rationale: "Directly applicable to deficient adults.",
-          paperIds: [],
+          paperIds: ["p-vitamin-d-deficiency"],
         },
       },
     },
@@ -254,7 +254,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "IU",
     },
     mechanismTags: ["immune-modulation"],
-    paperIds: ["p-vitamin-d-deficiency"],
+    paperIds: [],
   },
   {
     id: "fish-oil-cardiovascular",
@@ -271,7 +271,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["triglyceride-lowering", "anti-inflammatory"],
-    paperIds: ["p-fish-oil-cv"],
+    paperIds: ["p-fish-oil-cv", "p-fish-oil-triglycerides-t2d"],
     evidenceProfile: {
       dimensions: {
         humanEvidence: {
@@ -297,7 +297,7 @@ export const SEED_EFFECTS: Effect[] = [
         populationRelevance: {
           score: 2,
           rationale: "Largest in adults with elevated triglycerides.",
-          paperIds: [],
+          paperIds: ["p-fish-oil-triglycerides-t2d"],
         },
       },
     },
@@ -334,7 +334,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["anti-inflammatory"],
-    paperIds: [],
+    paperIds: ["p-fish-oil-longevity"],
   },
   {
     id: "l-theanine-focus",
@@ -448,7 +448,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["HPA-axis", "cortisol-modulation"],
-    paperIds: ["p-ashwagandha-stress"],
+    paperIds: ["p-ashwagandha-stress", "p-ashwagandha-stress-anxiety"],
     evidenceProfile: {
       dimensions: {
         humanEvidence: {
@@ -474,7 +474,7 @@ export const SEED_EFFECTS: Effect[] = [
         populationRelevance: {
           score: 2,
           rationale: "Studied in chronically stressed adults.",
-          paperIds: [],
+          paperIds: ["p-ashwagandha-stress-anxiety"],
         },
       },
     },
@@ -494,7 +494,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["HPA-axis"],
-    paperIds: ["p-ashwagandha-stress"],
+    paperIds: [],
   },
   {
     id: "berberine-metabolic",
@@ -579,7 +579,7 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mg",
     },
     mechanismTags: ["adenosine-antagonism"],
-    paperIds: ["p-caffeine-focus"],
+    paperIds: ["p-caffeine-focus", "p-caffeine-tolerance"],
     evidenceProfile: {
       dimensions: {
         humanEvidence: {
@@ -605,7 +605,7 @@ export const SEED_EFFECTS: Effect[] = [
         populationRelevance: {
           score: 2,
           rationale: "Broad in healthy adults; tolerance varies.",
-          paperIds: [],
+          paperIds: ["p-caffeine-tolerance"],
         },
       },
     },
@@ -693,6 +693,6 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "g",
     },
     mechanismTags: ["leucine", "satiety"],
-    paperIds: ["p-protein-mps"],
+    paperIds: [],
   },
 ];

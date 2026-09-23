@@ -147,13 +147,13 @@ export const getSupplement: AdvisorTool<GetSupplementInput, SupplementDetail> = 
     const supp = getSupplementBySlug(input.slug ?? "");
     if (!supp) return empty(`No supplement with slug "${input.slug}".`);
     const effects = getEffectsForSupplement(supp.id);
-    const papers = effects
+    const sourcePapers = effects
       .flatMap((e) => getPapersForEffect(e))
-      .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i)
-      // v13 (evidence-disclosure): year/studyType removed. A grounded tool's output is
-      // restated by the model as sourced fact, so recalled citation metadata was the
-      // most damaging place fabricated provenance could surface. Plan SC: SC-5
-      .map((p) => ({ id: p.id, title: p.title }));
+      .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i);
+    // v13 (evidence-disclosure): year/studyType removed. A grounded tool's output is
+    // restated by the model as sourced fact, so recalled citation metadata was the
+    // most damaging place fabricated provenance could surface. Plan SC: SC-5
+    const papers = sourcePapers.map((p) => ({ id: p.id, title: p.title }));
     const detail: SupplementDetail = {
       ...hitFor(supp),
       aliases: supp.aliases,
@@ -169,11 +169,15 @@ export const getSupplement: AdvisorTool<GetSupplementInput, SupplementDetail> = 
         refId: e.effectId,
         label: `${supp.name} → ${e.name}, Grade ${e.grade}`,
       })),
-      ...papers.map((p) => ({
+      // Phase 3 U6 (c), owner ruling 2026-09-23: a paper carrying a doi/pmid has a
+      // fixture-verified record (src/data/provenance-record.test.ts), so it is not
+      // illustrative and loses the note. Unverified papers keep it. Citations already
+      // persisted in advisor_messages are not rewritten.
+      ...sourcePapers.map((p) => ({
         kind: "paper" as const,
         refId: p.id,
         label: p.title,
-        detail: "Illustrative evidence summary",
+        ...(p.doi || p.pmid ? {} : { detail: "Illustrative evidence summary" }),
       })),
     ];
     return ok(detail, citations);

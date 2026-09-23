@@ -1,0 +1,970 @@
+[
+  {
+    "claimId": "paper:p-zinc-deficiency",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "queries": {
+      "pubmed": "zinc supplementation plasma serum zinc concentration",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "zinc supplementation plasma zinc concentration meta-analysis"
+    },
+    "files": [
+      {
+        "path": "paper_p-zinc-deficiency/crossref.json",
+        "committed": true,
+        "sha256": "d8386bf57914af79dc663301dfba4f80ba84c773106027c139b3ded6036ddc0c"
+      },
+      {
+        "path": "paper_p-zinc-deficiency/esearch.json",
+        "committed": true,
+        "sha256": "dd092a4c9169f100e0cfc0d7906ca97d01ad5186be73bab1853930d4d09a31c5"
+      },
+      {
+        "path": "local/paper_p-zinc-deficiency/efetch.xml",
+        "committed": false,
+        "sha256": "042ab3ba1d591e22bf0a8081f6e43dd7c9555eb985620b07d5c633f34c09fb60"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "27087396",
+        "doi": "10.1002/14651858.CD009747.pub2",
+        "title": "Daily iron supplementation for improving anaemia, iron status and health in menstruating women.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2016",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Iron-deficiency anaemia is highly prevalent among non-pregnant women of reproductive age (menstruating women) worldwide, although the prevalence is highest in lower-income settings. Iron-deficiency anaemia has been associated with a range of adverse health outcomes, which restitution of ",
+        "abstractChars": 4977,
+        "abstractSha256": "a141aef3e308452e18a5c409880073be85ce448bf26a7dd867494553632be6d6"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "23806573",
+        "doi": "10.1016/j.biopsych.2013.05.008",
+        "title": "Zinc in depression: a meta-analysis.",
+        "journal": "Biological psychiatry",
+        "year": "2013",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: Zinc is an essential micronutrient with diverse biological roles in cell growth, apoptosis and metabolism, and in the regulation of endocrine, immune, and neuronal functions implicated in the pathophysiology of depression. This study sought to quantitatively summarize the clinical data c",
+        "abstractChars": 2011,
+        "abstractSha256": "3b827325e914dbc3f7281e2d56234c8316824e59c522da26289aa5c53cec5991"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30012497",
+        "doi": "10.1016/j.ejphar.2018.07.019",
+        "title": "The effect of zinc supplementation on plasma C-reactive protein concentrations: A systematic review and meta-analysis of randomized controlled trials.",
+        "journal": "European journal of pharmacology",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Previous studies have shown zinc has potential anti-inflammatory and anti-oxidative effects. However, findings from clinical trials about the effect of zinc on plasma C-reactive protein (CRP) appeared inconsistent and uncertain. Therefore, the aim of this meta-analysis was to summarize the effect of",
+        "abstractChars": 1715,
+        "abstractSha256": "ed335d3180f7755e2039a2f2110f3340e1b7085b6decb78f9d2ad04c89b36687"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.37766/inplasy2024.9.0031",
+        "title": "Systematic Review and Meta-analysis on the Efficacy of Zinc Supplementation in Reducing Dysmenorrhea Pain",
+        "journal": null,
+        "year": "2024",
+        "pubTypes": [
+          "report"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3403/30093170u",
+        "title": "Zinc and zinc alloys",
+        "journal": null,
+        "year": null,
+        "pubTypes": [
+          "standard"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3403/30093170",
+        "title": "Zinc and zinc alloys",
+        "journal": null,
+        "year": null,
+        "pubTypes": [
+          "standard"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-caffeine-focus",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "queries": {
+      "pubmed": "caffeine vigilance reaction time alertness placebo",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "caffeine vigilance reaction time alertness placebo-controlled"
+    },
+    "files": [
+      {
+        "path": "paper_p-caffeine-focus/crossref.json",
+        "committed": true,
+        "sha256": "5b918ca44173296388f44078e517a4bdef70412f9a992cae4b3b7d322f5278fd"
+      },
+      {
+        "path": "paper_p-caffeine-focus/esearch.json",
+        "committed": true,
+        "sha256": "328cee22f647de39139c4c64fa5cdeb831f45abf0a3fb89da1f0b34be7478f2a"
+      },
+      {
+        "path": "local/paper_p-caffeine-focus/efetch.xml",
+        "committed": false,
+        "sha256": "74a565868d619f35b22874ceea62737c47f12c26f1461d21378287d17049aad9"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "18006208",
+        "doi": "10.1016/j.biopsycho.2007.09.008",
+        "title": "The effects of L-theanine, caffeine and their combination on cognition and mood.",
+        "journal": "Biological psychology",
+        "year": "2008",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "L-Theanine is an amino acid found naturally in tea. Despite the common consumption of L-theanine, predominantly in combination with caffeine in the form of tea, only one study to date has examined the cognitive effects of this substance alone, and none have examined its effects when combined with ca",
+        "abstractChars": 1386,
+        "abstractSha256": "387d341f5aec1fb42bed06021ceb14cc8b49bfdf0f5502284a98806ca732cbdf"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "32593750",
+        "doi": "10.1016/j.physbeh.2020.113031",
+        "title": "Effect of acute caffeine intake on hit accuracy and reaction time in professional e-sports players.",
+        "journal": "Physiology & behavior",
+        "year": "2020",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Caffeine is considered a cognitive enhancer at low to moderate doses because it improves alertness, vigilance, attention, and reaction time. However, no previous investigation has assessed the effect of acute caffeine intake on e-sports-specific performance. The aim of this investigation was to dete",
+        "abstractChars": 1783,
+        "abstractSha256": "8941a94713d84c67f4ef55a46cf260335697461515e54dcde697fe2c8bbed9c4"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "3680601",
+        "doi": null,
+        "title": "The effects of caffeine and aspirin on mood and performance.",
+        "journal": "Journal of clinical psychopharmacology",
+        "year": "1987",
+        "pubTypes": [
+          "Clinical Trial",
+          "Controlled Clinical Trial",
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Caffeine, in addition to being a food constituent, is also a common analgesic adjuvant that is used in combination with aspirin in certain over-the-counter preparations. Caffeine has previously been shown to significantly improve certain aspects of human performance, particularly sustained vigilance",
+        "abstractChars": 1337,
+        "abstractSha256": "db9819a23c49d754eb9f48a5ce39ff02ced95e960389ee1dc8dfbd5eef7e3605"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1007/s00213-013-3339-7",
+        "title": "Effects of upper respiratory tract illnesses, ibuprofen and caffeine on reaction time and alertness",
+        "journal": "Psychopharmacology",
+        "year": "2013",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1080/01421599881237",
+        "title": "Learning about clinical trials: the Western multicentre,randomized,double-blind, placebo-controlled clinical trial on the effect of caffeine on alertness and cardiovascular parameters",
+        "journal": "Medical Teacher",
+        "year": "1998",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/0003-6870(90)90226-n",
+        "title": "A new self-rating vigilance scale: The ratio alertness scale (Une Nouvelle Echelle de Vigilance Auto-Estimee: The Ratio Alertness Scale)",
+        "journal": "Applied Ergonomics",
+        "year": "1990",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "paper:p-nac-antioxidant",
+    "libraryClaim": "N-Acetylcysteine (NAC) — Antioxidant / glutathione (Grade C): Raises glutathione; broad clinical benefits remain context-dependent.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "queries": {
+      "pubmed": "oral N-acetylcysteine supplementation blood glutathione",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "oral N-acetylcysteine supplementation glutathione concentrations"
+    },
+    "files": [
+      {
+        "path": "paper_p-nac-antioxidant/crossref.json",
+        "committed": true,
+        "sha256": "b6f743b8482ce88766f78070e45c1555b95285aa25b4bb99fc8835ca2a40d519"
+      },
+      {
+        "path": "paper_p-nac-antioxidant/esearch.json",
+        "committed": true,
+        "sha256": "178bbe18efe70d44a968ea2b886a75e41c6a30d617bcbd35858676dd7d447848"
+      },
+      {
+        "path": "local/paper_p-nac-antioxidant/efetch.xml",
+        "committed": false,
+        "sha256": "804faca4356d2812a0d51c52218a193b0f6de07a0aca836d7872a215f7942f78"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35674828",
+        "doi": "10.1007/s00421-022-04964-w",
+        "title": "Blood oxidative stress biomarkers in women: influence of oral contraception, exercise, and N-acetylcysteine.",
+        "journal": "European journal of applied physiology",
+        "year": "2022",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "PURPOSE: To compare physiological responses to submaximal cycling and sprint cycling performance in women using oral contraceptives (WomenOC) and naturally cycling women (WomenNC) and to determine whether N-acetylcysteine (NAC) supplementation mediates these responses. METHODS: Twenty recreationally",
+        "abstractChars": 1908,
+        "abstractSha256": "992ac9ea0cbcb9e4fd498be7b57fd11e466066a1ab388c047715dd39681069dc"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "24576857",
+        "doi": "10.1249/MSS.0000000000000222",
+        "title": "Effect of N-acetylcysteine on cycling performance after intensified training.",
+        "journal": "Medicine and science in sports and exercise",
+        "year": "2014",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "PURPOSE: This investigation examined the ergogenic effect of short-term oral N-acetylcysteine (NAC) supplementation and the associated changes in redox balance and inflammation during intense training. METHODS: A double-blind randomized placebo-controlled crossover design was used to assess 9 d of o",
+        "abstractChars": 1957,
+        "abstractSha256": "f0ade21bf69f58f8edcac0dd3706ce29655caca37cfb7eeec389a645dee6f05b"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37386885",
+        "doi": "10.1002/npr2.12360",
+        "title": "Effects of N-acetylcysteine on oxidative stress biomarkers, depression, and anxiety symptoms in patients with multiple sclerosis.",
+        "journal": "Neuropsychopharmacology reports",
+        "year": "2023",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "AIM: N-acetylcysteine (NAC), a thiol-containing antioxidant and glutathione (GSH) precursor, attenuates oxidative stress, and possibly improves psychiatric disorders. This study aimed to evaluate the effects of oral NAC on oxidative stress, depression, and anxiety symptoms in patients with multiple ",
+        "abstractChars": 1558,
+        "abstractSha256": "1640535aaa6154ed456b9e683dc3ed6aa67b494bbbf45484670ad19f67a721f5"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.ymgme.2014.12.057",
+        "title": "Repeated-dose oral N-acetylcysteine: Effect on brain and blood glutathione concentrations",
+        "journal": "Molecular Genetics and Metabolism",
+        "year": "2015",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/jvim.12048",
+        "title": "Effect of N -Acetylcysteine Supplementation on Intracellular Glutathione, Urine Isoprostanes, Clinical Score, and Survival in Hospitalized Ill Dogs",
+        "journal": "Journal of Veterinary Internal Medicine",
+        "year": "2013",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3410/f.12520.470002",
+        "title": "Faculty Opinions recommendation of High-dose oral N-acetylcysteine, a glutathione prodrug, modulates inflammation in cystic fibrosis.",
+        "journal": "Faculty Opinions – Post-Publication Peer Review of the Biomedical Literature",
+        "year": "2006",
+        "pubTypes": [
+          "dataset"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "dimension:melatonin-sleep/populationRelevance",
+    "libraryClaim": "Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient. [dimension populationRelevance, score 3: Directly relevant to delayed onset and jet lag.]",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "queries": {
+      "pubmed": "melatonin (jet lag OR delayed sleep phase)",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "melatonin prevention treatment jet lag"
+    },
+    "files": [
+      {
+        "path": "dimension_melatonin-sleep_populationRelevance/crossref.json",
+        "committed": true,
+        "sha256": "b767f81534493fb0b45f829efec657e54c51a56c5578ec903a4b600c1ed86c3a"
+      },
+      {
+        "path": "dimension_melatonin-sleep_populationRelevance/esearch.json",
+        "committed": true,
+        "sha256": "70387092abd4f35c94a742bd8c825d1b314fb934057906dec16e4f476fe4b533"
+      },
+      {
+        "path": "local/dimension_melatonin-sleep_populationRelevance/efetch.xml",
+        "committed": false,
+        "sha256": "6045d9861434544574522090d281ecbe2e71628ac03d75184b37baf180693274"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33259790",
+        "doi": "10.1016/j.cub.2020.10.092",
+        "title": "Prolonged, Controlled Daytime versus Delayed Eating Impacts Weight and Metabolism.",
+        "journal": "Current biology : CB",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, N.I.H., Extramural",
+          "Research Support, U.S. Gov't, Non-P.H.S."
+        ],
+        "abstractExcerpt": "A delayed eating schedule is associated with increased risk of obesity and metabolic dysfunction in humans.1-9 However, there are no prolonged, highly controlled experimental studies testing the effects of meal timing on weight and metabolism in adults with a body mass index (BMI) of 19-27 kg/m2.10-",
+        "abstractChars": 1871,
+        "abstractSha256": "7f1e7e57529d5166bb454e482224195622c45a505e07138e51f6c4ce28efe341"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "24780537",
+        "doi": null,
+        "title": "Jet lag.",
+        "journal": "BMJ clinical evidence",
+        "year": "2014",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "INTRODUCTION: Jet lag is a syndrome caused by disruption of the 'body clock', and affects most air travellers crossing five or more time zones; it is worse on eastward than on westward flights. METHODS AND OUTCOMES: We conducted a systematic review and aimed to answer the following clinical question",
+        "abstractChars": 1118,
+        "abstractSha256": "09ffb12f7358f03c3c6b739c37e74741e16c551be2b0217ffa8600d6d439bcfb"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34030534",
+        "doi": "10.1080/07420528.2021.1930029",
+        "title": "Evening wear of blue-blocking glasses for sleep and mood disorders: a systematic review.",
+        "journal": "Chronobiology international",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Blue-blocking glasses, also known as amber glasses, are plastic glasses that primarily block blue light. Blue-blocking glasses have been studied as a sleep intervention for insomnia, delayed sleep-phase disorder, shift work, jet lag, and nonpathologic sleep improvement. Blue-blocking glasses have al",
+        "abstractChars": 2124,
+        "abstractSha256": "def5df1cf2f3712bd2c90718f88d3c10b5fbaa8e1b35479f443e2ae6a53ec788"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1002/14651858.cd001520",
+        "title": "Melatonin for the prevention and treatment of jet lag",
+        "journal": "Cochrane Database of Systematic Reviews",
+        "year": "2002",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1201/b11101-30",
+        "title": "Melatonin and Treatment of Disorders Related to Jet Lag and Shift Work",
+        "journal": "Melatonin in the Promotion of Health",
+        "year": "2011",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/b978-0-12-378610-4.00285-0",
+        "title": "Light and Melatonin Treatment for Jet Lag Disorder",
+        "journal": "Encyclopedia of Sleep",
+        "year": "2013",
+        "pubTypes": [
+          "book-chapter"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "effect:magnesium-stress",
+    "libraryClaim": "Magnesium — Stress & relaxation (Grade C): Emerging evidence for stress symptom reduction, often combined with B6.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "queries": {
+      "pubmed": "magnesium supplementation stress anxiety",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "magnesium supplementation subjective anxiety stress systematic review"
+    },
+    "files": [
+      {
+        "path": "effect_magnesium-stress/crossref.json",
+        "committed": true,
+        "sha256": "9a69fa59d348b7f8ddc4f8e61f6d11f602583c07f3d80b451bfe0325bb7f946b"
+      },
+      {
+        "path": "effect_magnesium-stress/esearch.json",
+        "committed": true,
+        "sha256": "150a891a66d5a83369c2a8d6eaf59f6080e1f034251491b2de21c10b183fc98a"
+      },
+      {
+        "path": "local/effect_magnesium-stress/efetch.xml",
+        "committed": false,
+        "sha256": "5a2680e2a112bef556dc74ee68ac7bf145e9828c7e236bf4a711a7846c91aded"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "28445426",
+        "doi": "10.3390/nu9050429",
+        "title": "The Effects of Magnesium Supplementation on Subjective Anxiety and Stress-A Systematic Review.",
+        "journal": "Nutrients",
+        "year": "2017",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Anxiety related conditions are the most common affective disorders present in the general population with a lifetime prevalence of over 15%. Magnesium (Mg) status is associated with subjective anxiety, leading to the proposition that Mg supplementation may attenuate anxiety symptoms. Thi",
+        "abstractChars": 1579,
+        "abstractSha256": "f164516f4c3f8d743e66ff968cc1a7e346c9e555aacedfcfd8e11a7ea9c70937"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33864354",
+        "doi": "10.1002/smi.3051",
+        "title": "Effect of magnesium and vitamin B6 supplementation on mental health and quality of life in stressed healthy adults: Post-hoc analysis of a randomised controlled trial.",
+        "journal": "Stress and health : journal of the International Society for the Investigation of Stress",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Magnesium status and vitamin B6 intake have been linked to mental health and/or quality of life (QoL). In an 8-week Phase IV randomised controlled study in individuals with low magnesemia and severe/extremely severe stress but who were otherwise healthy, greater stress reduction was achieved with ma",
+        "abstractChars": 1392,
+        "abstractSha256": "b180475570a0646eca1604243ff8056d1c11f2b8f0702c592a4f1c9727406919"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "32503201",
+        "doi": "10.3390/nu12061661",
+        "title": "The Role and the Effect of Magnesium in Mental Disorders: A Systematic Review.",
+        "journal": "Nutrients",
+        "year": "2020",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "INTRODUCTION: Magnesium is an essential cation involved in many functions within the central nervous system, including transmission and intracellular signal transduction. Several studies have shown its usefulness in neurological and psychiatric diseases. Furthermore, it seems that magnesium levels a",
+        "abstractChars": 2436,
+        "abstractSha256": "30fc0f09af4d0d0a4067240cee0246309897797865de5e3469a8d938bfb9022c"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3390/nu9050429",
+        "title": "The Effects of Magnesium Supplementation on Subjective Anxiety and Stress—A Systematic Review",
+        "journal": "Nutrients",
+        "year": "2017",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.21203/rs.3.rs-192269/v1",
+        "title": "Oral Magnesium Supplementation for Insomnia in Older Adults: A Systematic Review &amp; Meta-Analysis",
+        "journal": null,
+        "year": "2021",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3389/fvets.2020.596205",
+        "title": "Is Magnesium Supplementation an Effective Nutritional Method to Reduce Stress in Domestic Pigs? A Systematic Review",
+        "journal": "Frontiers in Veterinary Science",
+        "year": "2021",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "effect:vitamin-d-immune",
+    "libraryClaim": "Vitamin D3 — Immune support (Grade C): Mixed evidence; respiratory infection benefit appears largest in deficient people.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "queries": {
+      "pubmed": "vitamin D supplementation acute respiratory infection",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "vitamin D supplementation prevent acute respiratory tract infection meta-analysis"
+    },
+    "files": [
+      {
+        "path": "effect_vitamin-d-immune/crossref.json",
+        "committed": true,
+        "sha256": "d002b29eb6c6575d28b573cba79aed35bcacb69095814f3cedff63ae10c74a1d"
+      },
+      {
+        "path": "effect_vitamin-d-immune/esearch.json",
+        "committed": true,
+        "sha256": "5b834dab46ff23ad2994a59a68bf7d48949726d73a2e3b0dc35f4790b2bb2584"
+      },
+      {
+        "path": "local/effect_vitamin-d-immune/efetch.xml",
+        "committed": false,
+        "sha256": "9c6be8c9830763c31f12c065eec14f9692ab153c61d49fbd0ed32de83830b690"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "28202713",
+        "doi": "10.1136/bmj.i6583",
+        "title": "Vitamin D supplementation to prevent acute respiratory tract infections: systematic review and meta-analysis of individual participant data.",
+        "journal": "BMJ (Clinical research ed.)",
+        "year": "2017",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Objectives To assess the overall effect of vitamin D supplementation on risk of acute respiratory tract infection, and to identify factors modifying this effect.Design Systematic review and meta-analysis of individual participant data (IPD) from randomised controlled trials.Data sources Medline, Emb",
+        "abstractChars": 2364,
+        "abstractSha256": "651bc1f1bdfb54f0fbd2010bf3fed2c609ba90e580898c0469c1e36998bdd20f"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39993397",
+        "doi": "10.1016/S2213-8587(24)00348-6",
+        "title": "Vitamin D supplementation to prevent acute respiratory infections: systematic review and meta-analysis of stratified aggregate data.",
+        "journal": "The lancet. Diabetes & endocrinology",
+        "year": "2025",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "BACKGROUND: A 2021 meta-analysis of 37 randomised controlled trials (RCTs) of vitamin D supplementation for prevention of acute respiratory infections (ARIs) revealed a statistically significant protective effect of the intervention (odds ratio [OR] 0·92 [95% CI 0·86 to 0·99]). Since then, six eligi",
+        "abstractChars": 2562,
+        "abstractSha256": "6e28a550d62695013b1931596c8f36211193f60475166eb004c44159c382479f"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30675873",
+        "doi": "10.3310/hta23020",
+        "title": "Vitamin D supplementation to prevent acute respiratory infections: individual participant data meta-analysis.",
+        "journal": "Health technology assessment (Winchester, England)",
+        "year": "2019",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "BACKGROUND: Randomised controlled trials (RCTs) exploring the potential of vitamin D to prevent acute respiratory infections have yielded mixed results. Individual participant data (IPD) meta-analysis has the potential to identify factors that may explain this heterogeneity. OBJECTIVES: To assess th",
+        "abstractChars": 3047,
+        "abstractSha256": "6a8b5a528ad1b639daa2bf37b4ba8cad07c3688badbdb380deca5bc7813da5ad"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3410/f.727312221.793530613",
+        "title": "Faculty Opinions recommendation of Vitamin D supplementation to prevent acute respiratory tract infections: systematic review and meta-analysis of individual participant data.",
+        "journal": "Faculty Opinions – Post-Publication Peer Review of the Biomedical Literature",
+        "year": "2017",
+        "pubTypes": [
+          "dataset"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3410/f.727312221.793529718",
+        "title": "Faculty Opinions recommendation of Vitamin D supplementation to prevent acute respiratory tract infections: systematic review and meta-analysis of individual participant data.",
+        "journal": "Faculty Opinions – Post-Publication Peer Review of the Biomedical Literature",
+        "year": "2017",
+        "pubTypes": [
+          "dataset"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3410/f.727312221.793540420",
+        "title": "Faculty Opinions recommendation of Vitamin D supplementation to prevent acute respiratory tract infections: systematic review and meta-analysis of individual participant data.",
+        "journal": "Faculty Opinions – Post-Publication Peer Review of the Biomedical Literature",
+        "year": "2017",
+        "pubTypes": [
+          "dataset"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "effect:ashwagandha-sleep",
+    "libraryClaim": "Ashwagandha — Sleep quality (Grade C): Some evidence for improved sleep, often secondary to stress reduction.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "queries": {
+      "pubmed": "ashwagandha Withania somnifera sleep",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "ashwagandha sleep quality meta-analysis"
+    },
+    "files": [
+      {
+        "path": "effect_ashwagandha-sleep/crossref.json",
+        "committed": true,
+        "sha256": "a0e989bcb8428ba06dd8b6255a8539cdf26bab76ee01636bdd9a3d9e852eb48c"
+      },
+      {
+        "path": "effect_ashwagandha-sleep/esearch.json",
+        "committed": true,
+        "sha256": "c548f3735f603f6738902e68fa74f6a061a428235438d9dcd334878c727d2099"
+      },
+      {
+        "path": "local/effect_ashwagandha-sleep/efetch.xml",
+        "committed": false,
+        "sha256": "083d2700c00e686e88be8c8ed2553de165c635a43673cd244cf2efdccedd2717"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34559859",
+        "doi": "10.1371/journal.pone.0257843",
+        "title": "Effect of Ashwagandha (Withania somnifera) extract on sleep: A systematic review and meta-analysis.",
+        "journal": "PloS one",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "OBJECTIVE: To determine the effect of Ashwagandha extract on sleep. METHODS: A comprehensive search was conducted in CENTRAL, MEDLINE, SCOPUS, Google Scholars, World Health Organization Trials Portal, ClinicalTrials.gov, Clinical Trial Registry of India, and AYUSH Research Portal for all appropriate",
+        "abstractChars": 1576,
+        "abstractSha256": "b04ed0024925188c4016810869a03d4a20fea61e26d39a8daf6c9b78957331c1"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39083548",
+        "doi": "10.1002/hup.2911",
+        "title": "Safety and efficacy of Withania somnifera for anxiety and insomnia: Systematic review and meta-analysis.",
+        "journal": "Human psychopharmacology",
+        "year": "2024",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "OBJECTIVE: Despite the historical neurological use of Withania somnifera, limited evidence supports its efficacy for conditions like anxiety and insomnia. Given its known anti-stress properties, this review evaluated its safety and efficacy for anxiety and insomnia. METHODS: We searched Medline, Coc",
+        "abstractChars": 1420,
+        "abstractSha256": "fbb0bdd611faa389048453d3a4cd4677fa918de82180e6b5ce1cf4ede7e08010"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "32818573",
+        "doi": "10.1016/j.jep.2020.113276",
+        "title": "Clinical evaluation of the pharmacological impact of ashwagandha root extract on sleep in healthy volunteers and insomnia patients: A double-blind, randomized, parallel-group, placebo-controlled study.",
+        "journal": "Journal of ethnopharmacology",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Multicenter Study",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "ETHNOPHARMACOLOGICAL RELEVANCE: Ashwagandha (Withania somnifera (L.) Dunal.) is long known for its sleep-inducing effects. Ashwagandha can be proposed as an alternative to the recommended present treatments for insomnia. This study aimed to evaluate the pharmacological effect of Ashwagandha root ext",
+        "abstractChars": 2508,
+        "abstractSha256": "3723212522924d3ad288270b8dcc0fba0af7612362d089752ca9df8420ea8b41"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.2139/ssrn.4755628",
+        "title": "Effects of Different Exercise on Sleep Quality and Quality of Life in Patients with Obstructive Sleep Apnoea: Systematic Review and Meta-Analysis",
+        "journal": null,
+        "year": "2024",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1371/journal.pone.0257843",
+        "title": "Effect of Ashwagandha (Withania somnifera) extract on sleep: A systematic review and meta-analysis",
+        "journal": "PLOS ONE",
+        "year": "2021",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.12775/jehs.2024.52.015",
+        "title": "The impact of ashwagandha on sleep quality, anxiety reduction, and stress lowering: comparative analysis of available studies",
+        "journal": "Journal of Education, Health and Sport",
+        "year": "2024",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "effect:protein-powder-recovery",
+    "libraryClaim": "Protein Powder (Whey) — Recovery & satiety (Grade B): Supports post-exercise recovery and appetite control.",
+    "illustrativeDetails": "S3 re-search (owner ruling 2026-09-23)",
+    "queries": {
+      "pubmed": "protein supplementation recovery exercise-induced muscle damage",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "protein supplementation recovery exercise-induced muscle damage"
+    },
+    "files": [
+      {
+        "path": "effect_protein-powder-recovery/crossref.json",
+        "committed": true,
+        "sha256": "58ce96a5163fc3b76563946d08a2190f97ce1e292c69b3b5d672aa2e8ccbd12e"
+      },
+      {
+        "path": "effect_protein-powder-recovery/esearch.json",
+        "committed": true,
+        "sha256": "e5b4775bdff74e00f0ec337de51c85f94d1c8cfda5a299eb0405eec7a128dc0e"
+      },
+      {
+        "path": "local/effect_protein-powder-recovery/efetch.xml",
+        "committed": false,
+        "sha256": "4edeeeda343359466e31ccbfaff913d6b4b412157636814250a417d859738294"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39060741",
+        "doi": "10.1007/s40279-024-02079-0",
+        "title": "Impact of Collagen Peptide Supplementation in Combination with Long-Term Physical Training on Strength, Musculotendinous Remodeling, Functional Recovery, and Body Composition in Healthy Adults: A Systematic Review with Meta-analysis.",
+        "journal": "Sports medicine (Auckland, N.Z.)",
+        "year": "2024",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article",
+          "Meta-Analysis"
+        ],
+        "abstractExcerpt": "INTRODUCTION: Over the past decade, collagen peptide (CP) supplements have received considerable attention in sports nutrition research. These supplements have shown promising results in improving personal health, enhancing athletic performance, and preventing injuries in some but not all studies. O",
+        "abstractChars": 3075,
+        "abstractSha256": "eeff3931fcfa4a4f27fd25ff06aa9df27f83375de590d4559ca1eb50104dcbac"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "37462346",
+        "doi": "10.1080/15502783.2023.2236060",
+        "title": "Effects of dietary supplements on athletic performance in elite soccer players: a systematic review.",
+        "journal": "Journal of the International Society of Sports Nutrition",
+        "year": "2023",
+        "pubTypes": [
+          "Systematic Review",
+          "Journal Article"
+        ],
+        "abstractExcerpt": "Dietary supplements are widely used among athletes, and soccer players are no exception. Nevertheless, evidence supporting the use of dietary supplements aiming to enhance performance in soccer is somewhat contradictory, scarce, or even nonexistent. Thus, the present study aimed to systematically re",
+        "abstractChars": 2491,
+        "abstractSha256": "790c9a8010883866b0a0e446e89110ebbc534bb2af7fe85a0f3dab0a9b246b69"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33441158",
+        "doi": "10.1186/s12970-020-00405-1",
+        "title": "The effect of Omega-3 polyunsaturated fatty acid supplementation on exercise-induced muscle damage.",
+        "journal": "Journal of the International Society of Sports Nutrition",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "BACKGROUND: Exercise-induced muscle damage (EIMD) results in transient muscle inflammation, strength loss, muscle soreness and may cause subsequent exercise avoidance. Omega-3 (n-3) supplementation may minimise EIMD via its anti-inflammatory properties, however, its efficacy remains unclear. METHODS",
+        "abstractChars": 1486,
+        "abstractSha256": "74d8d73dda354041600550a265a84d785885dde33782d251de8765528a963a18"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.31274/rtd-180813-15967",
+        "title": "Impact of protein supplementation on muscle recovery after exercise-induced muscle soreness",
+        "journal": null,
+        "year": null,
+        "pubTypes": [
+          "dissertation"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1111/jhn.13084/v1/review1",
+        "title": "Review for \"Effects of vitamin D supplementation on muscle function and recovery after exercise‐induced muscle damage: a systematic review\"",
+        "journal": null,
+        "year": "2022",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1186/isrctn21076380",
+        "title": "Effects of probiotic (BC30) supplementation on exercise-induced muscle damage, perceived recovery and athletic performance",
+        "journal": "http://isrctn.com/",
+        "year": "2015",
+        "pubTypes": [
+          "dataset"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  }
+]

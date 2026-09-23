@@ -2,8 +2,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  DO_NOT_CITE,
   KINDS,
   checkPapers,
+  fixtureKey,
+  isWellFormed,
   validateFixture,
 } from "../../content/verification/provenance.mjs";
 
@@ -64,5 +67,22 @@ describe("P4 — a recorded identifier belongs to the paper that cites it", () =
 describe("P5 — the fixture records nothing the corpus does not cite", () => {
   it("has no orphan entries", () => {
     expect(result.orphans).toEqual([]);
+  });
+});
+
+describe("P6 — no paper cites an identifier on the do-not-cite list (U6, owner 2026-09-23)", () => {
+  it("the list is non-empty and every key is a well-formed, normalised fixture key", () => {
+    expect(Object.keys(DO_NOT_CITE).length).toBeGreaterThan(0);
+    for (const key of Object.keys(DO_NOT_CITE)) {
+      const [kind, ...rest] = key.split(":");
+      const id = rest.join(":");
+      expect(KINDS).toContain(kind);
+      expect(isWellFormed(kind, id)).toBe(true);
+      expect(fixtureKey(kind, id)).toBe(key);
+    }
+  });
+
+  it("no paper doi/pmid is on the list", () => {
+    expect(result.doNotCite).toEqual([]);
   });
 });

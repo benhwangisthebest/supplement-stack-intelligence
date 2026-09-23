@@ -76,9 +76,7 @@
       "GABA",
       "HPA-axis"
     ],
-    "paperIds": [
-      "p-magnesium-sleep"
-    ]
+    "paperIds": []
   },
   {
     "id": "magnesium-metabolic",
@@ -97,7 +95,9 @@
     "mechanismTags": [
       "insulin-sensitivity"
     ],
-    "paperIds": []
+    "paperIds": [
+      "p-magnesium-glucose"
+    ]
   },
   {
     "id": "creatine-strength",
@@ -153,7 +153,9 @@
         "populationRelevance": {
           "score": 2,
           "rationale": "Strongest in training adults; less relevant to the sedentary.",
-          "paperIds": []
+          "paperIds": [
+            "p-creatine-strength"
+          ]
         }
       }
     }
@@ -176,7 +178,8 @@
       "brain-energy"
     ],
     "paperIds": [
-      "p-creatine-cognition"
+      "p-creatine-cognition",
+      "p-creatine-vegetarian-cognition"
     ],
     "evidenceProfile": {
       "dimensions": {
@@ -197,7 +200,9 @@
         "consistency": {
           "score": 1,
           "rationale": "Benefit appears mainly under stressors (sleep loss, vegetarian).",
-          "paperIds": []
+          "paperIds": [
+            "p-creatine-cognition"
+          ]
         },
         "effectSize": {
           "score": 1,
@@ -209,7 +214,9 @@
         "populationRelevance": {
           "score": 2,
           "rationale": "Most relevant to sleep-deprived adults and vegetarians.",
-          "paperIds": []
+          "paperIds": [
+            "p-creatine-vegetarian-cognition"
+          ]
         }
       }
     }
@@ -231,7 +238,9 @@
     "mechanismTags": [
       "phosphocreatine"
     ],
-    "paperIds": []
+    "paperIds": [
+      "p-creatine-recovery"
+    ]
   },
   {
     "id": "vitamin-d-deficiency",
@@ -286,7 +295,9 @@
         "populationRelevance": {
           "score": 3,
           "rationale": "Directly applicable to deficient adults.",
-          "paperIds": []
+          "paperIds": [
+            "p-vitamin-d-deficiency"
+          ]
         }
       }
     }
@@ -308,9 +319,7 @@
     "mechanismTags": [
       "immune-modulation"
     ],
-    "paperIds": [
-      "p-vitamin-d-deficiency"
-    ]
+    "paperIds": []
   },
   {
     "id": "fish-oil-cardiovascular",
@@ -331,7 +340,8 @@
       "anti-inflammatory"
     ],
     "paperIds": [
-      "p-fish-oil-cv"
+      "p-fish-oil-cv",
+      "p-fish-oil-triglycerides-t2d"
     ],
     "evidenceProfile": {
       "dimensions": {
@@ -366,7 +376,9 @@
         "populationRelevance": {
           "score": 2,
           "rationale": "Largest in adults with elevated triglycerides.",
-          "paperIds": []
+          "paperIds": [
+            "p-fish-oil-triglycerides-t2d"
+          ]
         }
       }
     }
@@ -409,7 +421,9 @@
     "mechanismTags": [
       "anti-inflammatory"
     ],
-    "paperIds": []
+    "paperIds": [
+      "p-fish-oil-longevity"
+    ]
   },
   {
     "id": "l-theanine-focus",
@@ -555,7 +569,8 @@
       "cortisol-modulation"
     ],
     "paperIds": [
-      "p-ashwagandha-stress"
+      "p-ashwagandha-stress",
+      "p-ashwagandha-stress-anxiety"
     ],
     "evidenceProfile": {
       "dimensions": {
@@ -590,7 +605,9 @@
         "populationRelevance": {
           "score": 2,
           "rationale": "Studied in chronically stressed adults.",
-          "paperIds": []
+          "paperIds": [
+            "p-ashwagandha-stress-anxiety"
+          ]
         }
       }
     }
@@ -612,9 +629,7 @@
     "mechanismTags": [
       "HPA-axis"
     ],
-    "paperIds": [
-      "p-ashwagandha-stress"
-    ]
+    "paperIds": []
   },
   {
     "id": "berberine-metabolic",
@@ -719,7 +734,8 @@
       "adenosine-antagonism"
     ],
     "paperIds": [
-      "p-caffeine-focus"
+      "p-caffeine-focus",
+      "p-caffeine-tolerance"
     ],
     "evidenceProfile": {
       "dimensions": {
@@ -754,7 +770,9 @@
         "populationRelevance": {
           "score": 2,
           "rationale": "Broad in healthy adults; tolerance varies.",
-          "paperIds": []
+          "paperIds": [
+            "p-caffeine-tolerance"
+          ]
         }
       }
     }
@@ -865,8 +883,6 @@
       "leucine",
       "satiety"
     ],
-    "paperIds": [
-      "p-protein-mps"
-    ]
+    "paperIds": []
   }
 ]

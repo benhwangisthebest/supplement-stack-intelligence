@@ -47,8 +47,7 @@ two Library tabs that mount the notice. Chips of other kinds (interaction, bioma
 side-effect) get no notice, because the dataset is not their source. Both variants sit in one file, so (c)
 revises one place when verified papers make the wording untrue.
 
-**Callers.** `ProvenanceChips` is mounted once (`AdvisorMessageBubble.tsx:54`). `IllustrativeDatasetNotice`
-is mounted at `SupplementDetail.tsx:149,182`, both on the default variant, so neither changes.
+**Callers.** `ProvenanceChips` is mounted once (`AdvisorMessageBubble.tsx:54`), and the notice at `SupplementDetail.tsx:149,182` (default variant).
 
 **Not changed, recorded for (c):** a paper citation's `detail` is `"Illustrative evidence summary"`
 (`src/lib/advisor/tools.ts:176`, the chip's hover `title`). It is outside U6's May-touch, and it is persisted
@@ -124,12 +123,9 @@ exited 0. The call log reads `{"dryRun":true,"callsMade":0,"planned":4,…}` for
 `efetch` is not planned because a dry `esearch` returns no PMIDs), and `callsMade":0,"planned":1` for resolve.
 The second approval, whose `approvedBy` was `"nobody"`, was `REFUSED … no written owner approval recorded`.
 
-**Offline behaviour check (scratch, not committed).** The script was run against a stub `fetch` and
-synthetic, visibly fake data. PubMed XML parsing covers entities, inline `<i>`, labelled abstract sections
-and the DOI. The Crossref parse, `resolve` building a `validateFixture`-clean entry, and `applyResolved`
-retitling the paper all behaved. A title mismatch was refused, the cap threw on the 4th call of 3, a
-non-allowlisted host threw, the limiter waited between back-to-back calls, and search made exactly 3 calls
-per claim with the contact address attached. Result: all assertions passed.
+**Offline behaviour check (scratch, not committed):** against a stub `fetch` and visibly fake data, the parsers,
+`resolve`, `applyResolved`, the title-mismatch refusal, the call cap, the host allowlist and the rate limiter all behaved as
+specified. All assertions passed.
 
 **Red proof, U5's guard against a planted unverifiable DOI.** The seed file was backed up by copy, and
 `p-creatine-strength.doi = "10.0000/u6-planted-unverifiable"` was planted:
@@ -182,3 +178,23 @@ A separate paper is a new id, a manifest `add`, and more S1/S3 calls.
 **What (c) needs from the owner, per claim:** the approved PMID and/or DOI, or *retire*, or *re-search*
 (S3, with the query to use). **Nothing was written:** the fixture is still `{}`, `content/seed/` is
 unchanged, and no `verifiedBy` exists.
+
+## 7. Do / Check — (c), owner decisions applied; S3 run. STOPPED before commit
+
+**Decisions:** owner, chat 2026-09-23, recorded per identifier in `content/verification/u6-approvals.json`. **S2**
+24 calls: 0 refusals, 24 fixture entries (`verifiedBy: "owner"`). **S3** 24 calls. Record: `docs/05-qa/…-record.md`.
+**Corpus:** 27 papers, of which **24 are verified** (17 existing, retitled per R1; 7 new ids as manifest `add`s). **3
+remain illustrative** until S3 is decided: `p-zinc-deficiency`, `p-caffeine-focus`, `p-nac-antioxidant`. Card fields: **168
+rewritten** from abstracts, 41 of them *"Not reported in abstract"*. Review table: **`p3-u6-corpus-verified.cards.md`**.
+**Citations:** 3 effects and 7 dimensions gained one (#21–23, #25–29, #31–32; #24 has none, per the ruling). Each paper
+cited by a dimension also joins its effect's `paperIds`, because `EvidenceBreakdown` renders only papers it was
+passed (`EvidenceBreakdown.tsx:58-60` returns `null` otherwise). **Shared papers** stay with their first effect. Four
+second-effect citations were removed (magnesium-stress, vitamin-d-immune, ashwagandha-sleep, protein-powder-recovery),
+and S3 candidates are appended to the candidate appendix. **Guards:** `DO_NOT_CITE` in `provenance.mjs` (PMID 25924708
+plus its DOI). P6 fails a paper citing it (red proof: planted on `p-zinc-immune`, 1 of 10 red, restored), the fixture may
+not hold it, and `resolve` refuses it (0 calls). **`tools.ts`:** a paper with `doi`/`pmid` loses the illustrative note
+(red: unconditional note → the new `tools.test.ts` case fails, restored, shasum equal). **Notice** revised to *"partly
+verified"*, true on every page. Which card is verified is not yet visible (see closeout finding). **Gate:** tsc 0 · lint
+382/382 · vitest **1492/1492 across 118 files** · build 0 · `verify:rendering` OK · E2E `evidence-disclosure` 18/18 ·
+`content:generate --check` 0 stale. **AC-5:** 0 grade/confidence/score diffs over 27 effects vs `4ee80b6`. **AC-4 not
+yet met**: 3 cited papers carry no identifier.

@@ -39,6 +39,7 @@ import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  DO_NOT_CITE,
   SOURCES,
   VERIFIERS,
   fixtureKey,
@@ -306,6 +307,10 @@ export async function runResolve(approvals, client, today) {
     }
     if (!isWellFormed(a.kind, a.id)) {
       refusals.push(`${where}: malformed ${a.kind}`);
+      continue;
+    }
+    if (Object.prototype.hasOwnProperty.call(DO_NOT_CITE, fixtureKey(a.kind, a.id))) {
+      refusals.push(`${where}: on the do-not-cite list — not resolved`);
       continue;
     }
     let url;

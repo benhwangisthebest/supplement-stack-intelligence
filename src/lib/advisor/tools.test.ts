@@ -72,6 +72,17 @@ describe("getSupplement", () => {
   it("empty for an unknown slug", () => {
     expect(getSupplement.handler({ slug: "ghost" }, ctx).ok).toBe(false);
   });
+
+  // Phase 3 U6 (c): only an unverified paper is labelled illustrative.
+  it("a verified paper's citation carries no illustrative note; an unverified one keeps it", () => {
+    const paperCites = (slug: string) =>
+      getSupplement.handler({ slug }, ctx).citations.filter((c) => c.kind === "paper");
+    const verified = paperCites("creatine").find((c) => c.refId === "p-creatine-strength");
+    expect(verified).toBeDefined();
+    expect(verified!.detail).toBeUndefined();
+    const unverified = paperCites("nac").find((c) => c.refId === "p-nac-antioxidant");
+    expect(unverified?.detail).toBe("Illustrative evidence summary");
+  });
 });
 
 describe("evaluateStack", () => {

@@ -388,3 +388,105 @@ PubMed scope: filtered · query `caffeine tolerance habitual consumption alertne
 | 1 | 23108937 | 10.1007/s00213-012-2889-4 | Randomized Controlled Trial | 2013 | Psychopharmacology | Faster but not smarter: effects of caffeine and caffeine withdrawal on alertness and performance. | RATIONALE: Despite 100 years of psychopharmacological research, the extent to which caffeine consumption benefits human … | partial | tolerance: habitual users gain little net alertness — supports 'tolerance varies', tensions with Grade A | efetch.xml (local) |
 | 2 | 16541243 | 10.1007/s00213-006-0341-3 | Randomized Controlled Trial | 2006 | Psychopharmacology | Subjective, behavioral, and physiological effects of acute caffeine in light, nondependent caffeine users. | RATIONALE: Caffeine produces mild psychostimulant effects that are thought to underlie its widespread use. However, the … | **supports** | acute effects in light, nondependent users | efetch.xml (local) |
 | 3 | 16423144 | 10.1111/j.1469-7610.2005.01457.x | Randomized Controlled Trial | 2006 | Journal of child psychology and psychiatry, and allied disciplines | Psychostimulant and other effects of caffeine in 9- to 11-year-old children. | BACKGROUND: Recent research on adults suggests that "beneficial" psychostimulant effects of caffeine are found only in t… | doesn't | children | efetch.xml (local) |
+
+---
+
+# S3 re-search — the 8 claims the owner sent back (2026-09-23)
+
+> Generated from `content/verification/captures/2026-09-23-s3/candidates.json` (S3, 24 calls). Same filters as S1, with targeted queries (`content/verification/u6-claims-s3.json`). Verdicts are Claude's judgement against the Library claim. **They are not decisions.**
+
+## S3-1. `paper:p-zinc-deficiency` — **no candidate supports — owner decides**
+
+**Library claim:** Zinc — Correcting deficiency (Grade A): Effectively restores zinc status in deficient individuals.
+
+Query `zinc supplementation plasma serum zinc concentration` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Excerpt | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 27087396 | 10.1002/14651858.CD009747.pub2 | Meta-Analysis, Systematic Review | 2016 | The Cochrane database of systematic reviews | Daily iron supplementation for improving anaemia, iron status and health in menstruating women. | BACKGROUND: Iron-deficiency anaemia is highly prevalent among non-pregnant women of reproductive age (menstruating women… | doesn't | iron, not zinc |
+| 2 | 23806573 | 10.1016/j.biopsych.2013.05.008 | Meta-Analysis | 2013 | Biological psychiatry | Zinc in depression: a meta-analysis. | BACKGROUND: Zinc is an essential micronutrient with diverse biological roles in cell growth, apoptosis and metabolism, a… | doesn't | zinc levels in depression; no supplementation outcome |
+| 3 | 30012497 | 10.1016/j.ejphar.2018.07.019 | Meta-Analysis, Systematic Review | 2018 | European journal of pharmacology | The effect of zinc supplementation on plasma C-reactive protein concentrations: A systematic review and meta-analysis of randomized controlled trials. | Previous studies have shown zinc has potential anti-inflammatory and anti-oxidative effects. However, findings from clin… | doesn't | zinc supplementation lowers CRP; zinc status not the outcome |
+
+## S3-2. `paper:p-caffeine-focus` — **no full support — owner decides**
+
+**Library claim:** Caffeine — Alertness & focus (Grade A): Strong evidence for improved alertness, reaction time, and vigilance.
+
+Query `caffeine vigilance reaction time alertness placebo` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Excerpt | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 18006208 | 10.1016/j.biopsycho.2007.09.008 | Randomized Controlled Trial | 2008 | Biological psychology | The effects of L-theanine, caffeine and their combination on cognition and mood. | L-Theanine is an amino acid found naturally in tea. Despite the common consumption of L-theanine, predominantly in combi… | partial | theanine+caffeine study; caffeine raised alertness ratings, combination is the focus |
+| 2 | 32593750 | 10.1016/j.physbeh.2020.113031 | Randomized Controlled Trial | 2020 | Physiology & behavior | Effect of acute caffeine intake on hit accuracy and reaction time in professional e-sports players. | Caffeine is considered a cognitive enhancer at low to moderate doses because it improves alertness, vigilance, attention… | partial | 3 mg/kg improved reaction time and accuracy; e-sports players only |
+| 3 | 3680601 | — | Clinical Trial, Controlled Clinical Trial, Randomized Controlled Trial | 1987 | Journal of clinical psychopharmacology | The effects of caffeine and aspirin on mood and performance. | Caffeine, in addition to being a food constituent, is also a common analgesic adjuvant that is used in combination with … | partial | vigilance up, reaction time down, but caffeine combined with aspirin; 1987; no DOI |
+
+## S3-3. `paper:p-nac-antioxidant` — **no full support — owner decides**
+
+**Library claim:** N-Acetylcysteine (NAC) — Antioxidant / glutathione (Grade C): Raises glutathione; broad clinical benefits remain context-dependent.
+
+Query `oral N-acetylcysteine supplementation blood glutathione` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Excerpt | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 35674828 | 10.1007/s00421-022-04964-w | Randomized Controlled Trial | 2022 | European journal of applied physiology | Blood oxidative stress biomarkers in women: influence of oral contraception, exercise, and N-acetylcysteine. | PURPOSE: To compare physiological responses to submaximal cycling and sprint cycling performance in women using oral con… | partial | women on oral contraceptives, exercise oxidative stress; glutathione not the headline |
+| 2 | 24576857 | 10.1249/MSS.0000000000000222 | Randomized Controlled Trial | 2014 | Medicine and science in sports and exercise | Effect of N-acetylcysteine on cycling performance after intensified training. | PURPOSE: This investigation examined the ergogenic effect of short-term oral N-acetylcysteine (NAC) supplementation and … | partial | measured reduced/oxidised glutathione; improved redox balance and cycling in athletes |
+| 3 | 37386885 | 10.1002/npr2.12360 | Randomized Controlled Trial | 2023 | Neuropsychopharmacology reports | Effects of N-acetylcysteine on oxidative stress biomarkers, depression, and anxiety symptoms in patients with multiple sclerosis. | AIM: N-acetylcysteine (NAC), a thiol-containing antioxidant and glutathione (GSH) precursor, attenuates oxidative stress… | doesn't | MS patients; erythrocyte GSH did NOT change — tension with 'raises glutathione' (for U4) |
+
+## S3-4. `dimension:melatonin-sleep/populationRelevance` — **no full support — owner decides**
+
+**Library claim:** Melatonin — Sleep onset (Grade A): Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient. [dimension populationRelevance, score 3: Directly relevant to delayed onset and jet lag.]
+
+Query `melatonin (jet lag OR delayed sleep phase)` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Excerpt | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 33259790 | 10.1016/j.cub.2020.10.092 | Randomized Controlled Trial | 2021 | Current biology : CB | Prolonged, Controlled Daytime versus Delayed Eating Impacts Weight and Metabolism. | A delayed eating schedule is associated with increased risk of obesity and metabolic dysfunction in humans.1-9 However, … | doesn't | meal timing, not melatonin |
+| 2 | 24780537 | — | Systematic Review | 2014 | BMJ clinical evidence | Jet lag. | INTRODUCTION: Jet lag is a syndrome caused by disruption of the 'body clock', and affects most air travellers crossing f… | partial | BMJ Clin Evid jet-lag review lists melatonin; findings not in abstract; no DOI |
+| 3 | 34030534 | 10.1080/07420528.2021.1930029 | Systematic Review | 2021 | Chronobiology international | Evening wear of blue-blocking glasses for sleep and mood disorders: a systematic review. | Blue-blocking glasses, also known as amber glasses, are plastic glasses that primarily block blue light. Blue-blocking g… | doesn't | blue-blocking glasses |
+
+## S3-5. `effect:magnesium-stress` — candidate supports
+
+**Library claim:** Magnesium — Stress & relaxation (Grade C): Emerging evidence for stress symptom reduction, often combined with B6.
+
+Query `magnesium supplementation stress anxiety` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Excerpt | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 28445426 | 10.3390/nu9050429 | Systematic Review | 2017 | Nutrients | The Effects of Magnesium Supplementation on Subjective Anxiety and Stress-A Systematic Review. | BACKGROUND: Anxiety related conditions are the most common affective disorders present in the general population with a … | partial | suggestive benefit on subjective anxiety; poor-quality evidence; no study measured stress |
+| 2 | 33864354 | 10.1002/smi.3051 | Randomized Controlled Trial | 2021 | Stress and health : journal of the International Society for the Investigation of Stress | Effect of magnesium and vitamin B6 supplementation on mental health and quality of life in stressed healthy adults: Post-hoc analysis of a randomised controlled trial. | Magnesium status and vitamin B6 intake have been linked to mental health and/or quality of life (QoL). In an 8-week Phas… | **supports** | Mg ± B6 in stressed adults with low magnesemia: meaningful benefit; post-hoc analysis |
+| 3 | 32503201 | 10.3390/nu12061661 | Systematic Review | 2020 | Nutrients | The Role and the Effect of Magnesium in Mental Disorders: A Systematic Review. | INTRODUCTION: Magnesium is an essential cation involved in many functions within the central nervous system, including t… | partial | mental disorders review; supplementation 'could be beneficial' |
+
+## S3-6. `effect:vitamin-d-immune` — candidate supports
+
+**Library claim:** Vitamin D3 — Immune support (Grade C): Mixed evidence; respiratory infection benefit appears largest in deficient people.
+
+Query `vitamin D supplementation acute respiratory infection` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Excerpt | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 28202713 | 10.1136/bmj.i6583 | Meta-Analysis, Systematic Review | 2017 | BMJ (Clinical research ed.) | Vitamin D supplementation to prevent acute respiratory tract infections: systematic review and meta-analysis of individual participant data. | Objectives To assess the overall effect of vitamin D supplementation on risk of acute respiratory tract infection, and t… | **supports** | IPD MA: protective against acute respiratory infection; most benefit in the very deficient |
+| 2 | 39993397 | 10.1016/S2213-8587(24)00348-6 | Systematic Review, Meta-Analysis | 2025 | The lancet. Diabetes & endocrinology | Vitamin D supplementation to prevent acute respiratory infections: systematic review and meta-analysis of stratified aggregate data. | BACKGROUND: A 2021 meta-analysis of 37 randomised controlled trials (RCTs) of vitamin D supplementation for prevention o… | partial | 2025 update: similar point estimate but CI now includes 1 — no significant protection (for U4) |
+| 3 | 30675873 | 10.3310/hta23020 | Meta-Analysis | 2019 | Health technology assessment (Winchester, England) | Vitamin D supplementation to prevent acute respiratory infections: individual participant data meta-analysis. | BACKGROUND: Randomised controlled trials (RCTs) exploring the potential of vitamin D to prevent acute respiratory infect… | **supports** | HTA IPD MA: benefit in deficient individuals and without bolus dosing |
+
+## S3-7. `effect:ashwagandha-sleep` — candidate supports
+
+**Library claim:** Ashwagandha — Sleep quality (Grade C): Some evidence for improved sleep, often secondary to stress reduction.
+
+Query `ashwagandha Withania somnifera sleep` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Excerpt | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 34559859 | 10.1371/journal.pone.0257843 | Meta-Analysis, Systematic Review | 2021 | PloS one | Effect of Ashwagandha (Withania somnifera) extract on sleep: A systematic review and meta-analysis. | OBJECTIVE: To determine the effect of Ashwagandha extract on sleep. METHODS: A comprehensive search was conducted in CEN… | **supports** | MA: extract improved sleep in adults |
+| 2 | 39083548 | 10.1002/hup.2911 | Systematic Review, Meta-Analysis | 2024 | Human psychopharmacology | Safety and efficacy of Withania somnifera for anxiety and insomnia: Systematic review and meta-analysis. | OBJECTIVE: Despite the historical neurological use of Withania somnifera, limited evidence supports its efficacy for con… | **supports** | MA: reduced sleep-onset latency, raised total sleep time and PSQI |
+| 3 | 32818573 | 10.1016/j.jep.2020.113276 | Multicenter Study, Randomized Controlled Trial | 2021 | Journal of ethnopharmacology | Clinical evaluation of the pharmacological impact of ashwagandha root extract on sleep in healthy volunteers and insomnia patients: A double-blind, randomized, parallel-group, placebo-controlled study. | ETHNOPHARMACOLOGICAL RELEVANCE: Ashwagandha (Withania somnifera (L.) Dunal.) is long known for its sleep-inducing effect… | **supports** | RCT: root extract improved sleep quality in healthy and insomnia groups |
+
+## S3-8. `effect:protein-powder-recovery` — **no candidate supports — owner decides**
+
+**Library claim:** Protein Powder (Whey) — Recovery & satiety (Grade B): Supports post-exercise recovery and appetite control.
+
+Query `protein supplementation recovery exercise-induced muscle damage` (filtered)
+
+| # | PMID | DOI | Type | Year | Journal | Title | Excerpt | Verdict | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 39060741 | 10.1007/s40279-024-02079-0 | Systematic Review, Meta-Analysis | 2024 | Sports medicine (Auckland, N.Z.) | Impact of Collagen Peptide Supplementation in Combination with Long-Term Physical Training on Strength, Musculotendinous Remodeling, Functional Recovery, and Body Composition in Healthy Adults: A Systematic Review with Meta-analysis. | INTRODUCTION: Over the past decade, collagen peptide (CP) supplements have received considerable attention in sports nut… | doesn't | collagen peptides, not whey |
+| 2 | 37462346 | 10.1080/15502783.2023.2236060 | Systematic Review | 2023 | Journal of the International Society of Sports Nutrition | Effects of dietary supplements on athletic performance in elite soccer players: a systematic review. | Dietary supplements are widely used among athletes, and soccer players are no exception. Nevertheless, evidence supporti… | doesn't | soccer supplements review; no protein recovery finding |
+| 3 | 33441158 | 10.1186/s12970-020-00405-1 | Randomized Controlled Trial | 2021 | Journal of the International Society of Sports Nutrition | The effect of Omega-3 polyunsaturated fatty acid supplementation on exercise-induced muscle damage. | BACKGROUND: Exercise-induced muscle damage (EIMD) results in transient muscle inflammation, strength loss, muscle sorene… | doesn't | omega-3, not protein |

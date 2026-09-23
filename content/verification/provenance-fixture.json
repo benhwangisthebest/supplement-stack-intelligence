@@ -1,1 +1,194 @@
-{}
+{
+  "doi:10.1111/j.1479-8425.2007.00262.x": {
+    "id": "10.1111/j.1479-8425.2007.00262.x",
+    "kind": "doi",
+    "resolvedTitle": "Glycine ingestion improves subjective sleep quality in human volunteers, correlating with polysomnographic changes",
+    "source": "crossref",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:16930802": {
+    "id": "16930802",
+    "kind": "pmid",
+    "resolvedTitle": "L-Theanine reduces psychological and physiological stress responses.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:21118604": {
+    "id": "21118604",
+    "kind": "pmid",
+    "resolvedTitle": "The influence of creatine supplementation on the cognitive functioning of vegetarians and omnivores.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:22552031": {
+    "id": "22552031",
+    "kind": "pmid",
+    "resolvedTitle": "Comparison of vitamin D2 and vitamin D3 supplementation in raising serum 25-hydroxyvitamin D status: a systematic review and meta-analysis.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:23108937": {
+    "id": "23108937",
+    "kind": "pmid",
+    "resolvedTitle": "Faster but not smarter: effects of caffeine and caffeine withdrawal on alertness and performance.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:23691095": {
+    "id": "23691095",
+    "kind": "pmid",
+    "resolvedTitle": "Meta-analysis: melatonin for the treatment of primary sleep disorders.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:28698222": {
+    "id": "28698222",
+    "kind": "pmid",
+    "resolvedTitle": "A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:29546641": {
+    "id": "29546641",
+    "kind": "pmid",
+    "resolvedTitle": "The Effects of an Oral Taurine Dose and Supplementation Period on Endurance Exercise Performance in Humans: A Meta-Analysis.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:29704637": {
+    "id": "29704637",
+    "kind": "pmid",
+    "resolvedTitle": "Effects of creatine supplementation on cognitive function of healthy individuals: A systematic review of randomized controlled trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:31383846": {
+    "id": "31383846",
+    "kind": "pmid",
+    "resolvedTitle": "Efficacy of omega-3 PUFAs in depression: A meta-analysis.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:32114706": {
+    "id": "32114706",
+    "kind": "pmid",
+    "resolvedTitle": "Omega-3 fatty acids for the primary and secondary prevention of cardiovascular disease.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:33865376": {
+    "id": "33865376",
+    "kind": "pmid",
+    "resolvedTitle": "Oral magnesium supplementation for insomnia in older adults: a Systematic Review & Meta-Analysis.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:34472118": {
+    "id": "34472118",
+    "kind": "pmid",
+    "resolvedTitle": "Creatine supplementation effect on recovery following exercise-induced muscle damage: A systematic review and meta-analysis of randomized controlled trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:34836329": {
+    "id": "34836329",
+    "kind": "pmid",
+    "resolvedTitle": "Oral Magnesium Supplementation for Treating Glucose Metabolism Parameters in People with or at Risk of Diabetes: A Systematic Review and Meta-Analysis of Double-Blind Randomized Controlled Trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:34956436": {
+    "id": "34956436",
+    "kind": "pmid",
+    "resolvedTitle": "The Effect of Berberine on Metabolic Profiles in Type 2 Diabetic Patients: A Systematic Review and Meta-Analysis of Randomized Controlled Trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:36017529": {
+    "id": "36017529",
+    "kind": "pmid",
+    "resolvedTitle": "Does Ashwagandha supplementation have a beneficial effect on the management of anxiety and stress? A systematic review and meta-analysis of randomized controlled trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:36615805": {
+    "id": "36615805",
+    "kind": "pmid",
+    "resolvedTitle": "Effects of Caffeine Intake on Endurance Running Performance and Time to Exhaustion: A Systematic Review and Meta-Analysis.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:37264945": {
+    "id": "37264945",
+    "kind": "pmid",
+    "resolvedTitle": "Association Between Omega-3 Fatty Acid Intake and Dyslipidemia: A Continuous Dose-Response Meta-Analysis of Randomized Controlled Trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:37832082": {
+    "id": "37832082",
+    "kind": "pmid",
+    "resolvedTitle": "A standardized Ashwagandha root extract alleviates stress, anxiety, and improves quality of life in healthy adults by modulating stress hormones: Results from a randomized, double-blind, placebo-controlled study.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:38719213": {
+    "id": "38719213",
+    "kind": "pmid",
+    "resolvedTitle": "Zinc for prevention and treatment of the common cold.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:39163858": {
+    "id": "39163858",
+    "kind": "pmid",
+    "resolvedTitle": "Impact of omega-3 fatty acids on hypertriglyceridemia, lipidomics, and gut microbiome in patients with type 2 diabetes.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:39373282": {
+    "id": "39373282",
+    "kind": "pmid",
+    "resolvedTitle": "A systematic review and meta-analysis of functional vitamin B12 status among adult vegans.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:39519498": {
+    "id": "39519498",
+    "kind": "pmid",
+    "resolvedTitle": "Effects of Creatine Supplementation and Resistance Training on Muscle Strength Gains in Adults <50 Years of Age: A Systematic Review and Meta-Analysis.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:40314930": {
+    "id": "40314930",
+    "kind": "pmid",
+    "resolvedTitle": "Effects of Tea (Camellia sinensis) or its Bioactive Compounds l-Theanine or l-Theanine plus Caffeine on Cognition, Sleep, and Mood in Healthy Participants: A Systematic Review and Meta-Analysis of Randomized Controlled Trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  }
+}

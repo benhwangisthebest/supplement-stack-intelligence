@@ -29,6 +29,19 @@ export const SOURCES = Object.freeze({
   pmid: Object.freeze(["pubmed-eutils"]),
 });
 
+/**
+ * Identifiers that must never be cited, keyed by fixtureKey, each with its reason.
+ * A paper carrying one fails the build (DO-NOT-CITE bucket), the fixture may not
+ * hold an entry for one, and U6's capture script refuses to resolve one.
+ * Adding an entry is an owner decision; removing one is a reviewed diff.
+ */
+export const DO_NOT_CITE = Object.freeze({
+  // Owner, 2026-09-23 (U6 (c) decision #13). Surfaced by U6 S1 as a candidate for
+  // p-zinc-immune; the record's own title marks it withdrawn.
+  "pmid:25924708": "WITHDRAWN Cochrane review (Zinc for the common cold, 2015)",
+  "doi:10.1002/14651858.cd001364.pub5": "WITHDRAWN Cochrane review (Zinc for the common cold, 2015)",
+});
+
 const ENTRY_KEYS = ["id", "kind", "resolvedTitle", "source", "verifiedOn", "verifiedBy"];
 
 // DOI: a bare DOI — no "doi:" or https://doi.org/ prefix — using Crossref's
@@ -103,6 +116,9 @@ export function validateFixture(fixture, today = new Date().toISOString().slice(
     }
     if (!isIsoDate(e.verifiedOn)) errors.push(`${at}: verifiedOn must be an ISO date YYYY-MM-DD`);
     else if (e.verifiedOn > today) errors.push(`${at}: verifiedOn ${e.verifiedOn} is in the future`);
+    if (Object.prototype.hasOwnProperty.call(DO_NOT_CITE, key)) {
+      errors.push(`${at}: ${key} is on the do-not-cite list (${DO_NOT_CITE[key]})`);
+    }
     if (!VERIFIERS.includes(e.verifiedBy)) {
       errors.push(`${at}: verifiedBy must be one of ${VERIFIERS.join("|")}`);
     }
@@ -117,10 +133,11 @@ export function validateFixture(fixture, today = new Date().toISOString().slice(
  *   unverified — well-formed, no fixture entry
  *   mismatched — has an entry, but its resolvedTitle is not the paper's title
  *   orphans    — fixture keys no paper cites (a record of nothing)
+ *   doNotCite  — well-formed, but on DO_NOT_CITE (checked before the fixture)
  */
 export function checkPapers(papers, fixture) {
-  /** @type {{ malformed: string[], unverified: string[], mismatched: string[], orphans: string[] }} */
-  const out = { malformed: [], unverified: [], mismatched: [], orphans: [] };
+  /** @type {{ malformed: string[], unverified: string[], mismatched: string[], orphans: string[], doNotCite: string[] }} */
+  const out = { malformed: [], unverified: [], mismatched: [], orphans: [], doNotCite: [] };
   const used = new Set();
   for (const p of papers) {
     for (const kind of KINDS) {
@@ -132,6 +149,10 @@ export function checkPapers(papers, fixture) {
         continue;
       }
       const key = fixtureKey(kind, value);
+      if (Object.prototype.hasOwnProperty.call(DO_NOT_CITE, key)) {
+        out.doNotCite.push(`${where}: ${key} is on the do-not-cite list (${DO_NOT_CITE[key]})`);
+        continue;
+      }
       used.add(key);
       const entry = fixture[key];
       if (!entry) {

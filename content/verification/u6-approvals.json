@@ -1,0 +1,218 @@
+[
+  {
+    "paperId": "p-creatine-strength",
+    "kind": "pmid",
+    "id": "39519498",
+    "expectedTitle": "Effects of Creatine Supplementation and Resistance Training on Muscle Strength Gains in Adults <50 Years of Age: A Systematic Review and Meta-Analysis.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #1"
+  },
+  {
+    "paperId": "p-creatine-cognition",
+    "kind": "pmid",
+    "id": "29704637",
+    "expectedTitle": "Effects of creatine supplementation on cognitive function of healthy individuals: A systematic review of randomized controlled trials.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #2"
+  },
+  {
+    "paperId": "p-melatonin-sleep",
+    "kind": "pmid",
+    "id": "23691095",
+    "expectedTitle": "Meta-analysis: melatonin for the treatment of primary sleep disorders.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #3"
+  },
+  {
+    "paperId": "p-magnesium-sleep",
+    "kind": "pmid",
+    "id": "33865376",
+    "expectedTitle": "Oral magnesium supplementation for insomnia in older adults: a Systematic Review & Meta-Analysis.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #4"
+  },
+  {
+    "paperId": "p-vitamin-d-deficiency",
+    "kind": "pmid",
+    "id": "22552031",
+    "expectedTitle": "Comparison of vitamin D2 and vitamin D3 supplementation in raising serum 25-hydroxyvitamin D status: a systematic review and meta-analysis.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #5"
+  },
+  {
+    "paperId": "p-fish-oil-cv",
+    "kind": "pmid",
+    "id": "37264945",
+    "expectedTitle": "Association Between Omega-3 Fatty Acid Intake and Dyslipidemia: A Continuous Dose-Response Meta-Analysis of Randomized Controlled Trials.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #6"
+  },
+  {
+    "paperId": "p-fish-oil-mood",
+    "kind": "pmid",
+    "id": "31383846",
+    "expectedTitle": "Efficacy of omega-3 PUFAs in depression: A meta-analysis.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #7"
+  },
+  {
+    "paperId": "p-ltheanine-focus",
+    "kind": "pmid",
+    "id": "40314930",
+    "expectedTitle": "Effects of Tea (Camellia sinensis) or its Bioactive Compounds l-Theanine or l-Theanine plus Caffeine on Cognition, Sleep, and Mood in Healthy Participants: A Systematic Review and Meta-Analysis of Randomized Controlled Trials.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #8"
+  },
+  {
+    "paperId": "p-ltheanine-stress",
+    "kind": "pmid",
+    "id": "16930802",
+    "expectedTitle": "L-Theanine reduces psychological and physiological stress responses.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #9"
+  },
+  {
+    "paperId": "p-glycine-sleep",
+    "kind": "doi",
+    "id": "10.1111/j.1479-8425.2007.00262.x",
+    "expectedTitle": "Glycine ingestion improves subjective sleep quality in human volunteers, correlating with polysomnographic changes",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #10"
+  },
+  {
+    "paperId": "p-ashwagandha-stress",
+    "kind": "pmid",
+    "id": "37832082",
+    "expectedTitle": "A standardized Ashwagandha root extract alleviates stress, anxiety, and improves quality of life in healthy adults by modulating stress hormones: Results from a randomized, double-blind, placebo-controlled study.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #11"
+  },
+  {
+    "paperId": "p-berberine-metabolic",
+    "kind": "pmid",
+    "id": "34956436",
+    "expectedTitle": "The Effect of Berberine on Metabolic Profiles in Type 2 Diabetic Patients: A Systematic Review and Meta-Analysis of Randomized Controlled Trials.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #12"
+  },
+  {
+    "paperId": "p-zinc-immune",
+    "kind": "pmid",
+    "id": "38719213",
+    "expectedTitle": "Zinc for prevention and treatment of the common cold.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #13"
+  },
+  {
+    "paperId": "p-b12-deficiency",
+    "kind": "pmid",
+    "id": "39373282",
+    "expectedTitle": "A systematic review and meta-analysis of functional vitamin B12 status among adult vegans.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #15"
+  },
+  {
+    "paperId": "p-caffeine-training",
+    "kind": "pmid",
+    "id": "36615805",
+    "expectedTitle": "Effects of Caffeine Intake on Endurance Running Performance and Time to Exhaustion: A Systematic Review and Meta-Analysis.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #17"
+  },
+  {
+    "paperId": "p-protein-mps",
+    "kind": "pmid",
+    "id": "28698222",
+    "expectedTitle": "A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #18"
+  },
+  {
+    "paperId": "p-taurine-training",
+    "kind": "pmid",
+    "id": "29546641",
+    "expectedTitle": "The Effects of an Oral Taurine Dose and Supplementation Period on Endurance Exercise Performance in Humans: A Meta-Analysis.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #19"
+  },
+  {
+    "paperId": "p-magnesium-glucose",
+    "kind": "pmid",
+    "id": "34836329",
+    "expectedTitle": "Oral Magnesium Supplementation for Treating Glucose Metabolism Parameters in People with or at Risk of Diabetes: A Systematic Review and Meta-Analysis of Double-Blind Randomized Controlled Trials.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #21 (new id)"
+  },
+  {
+    "paperId": "p-creatine-recovery",
+    "kind": "pmid",
+    "id": "34472118",
+    "expectedTitle": "Creatine supplementation effect on recovery following exercise-induced muscle damage: A systematic review and meta-analysis of randomized controlled trials.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #22 (new id)"
+  },
+  {
+    "paperId": "p-fish-oil-longevity",
+    "kind": "pmid",
+    "id": "32114706",
+    "expectedTitle": "Omega-3 fatty acids for the primary and secondary prevention of cardiovascular disease.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #23 (new id)"
+  },
+  {
+    "paperId": "p-creatine-vegetarian-cognition",
+    "kind": "pmid",
+    "id": "21118604",
+    "expectedTitle": "The influence of creatine supplementation on the cognitive functioning of vegetarians and omnivores.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #27 (new id)"
+  },
+  {
+    "paperId": "p-fish-oil-triglycerides-t2d",
+    "kind": "pmid",
+    "id": "39163858",
+    "expectedTitle": "Impact of omega-3 fatty acids on hypertriglyceridemia, lipidomics, and gut microbiome in patients with type 2 diabetes.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #29 (new id)"
+  },
+  {
+    "paperId": "p-ashwagandha-stress-anxiety",
+    "kind": "pmid",
+    "id": "36017529",
+    "expectedTitle": "Does Ashwagandha supplementation have a beneficial effect on the management of anxiety and stress? A systematic review and meta-analysis of randomized controlled trials.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #31 (new id)"
+  },
+  {
+    "paperId": "p-caffeine-tolerance",
+    "kind": "pmid",
+    "id": "23108937",
+    "expectedTitle": "Faster but not smarter: effects of caffeine and caffeine withdrawal on alertness and performance.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U6 (c) decisions #32 (new id)"
+  }
+]
