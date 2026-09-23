@@ -535,8 +535,8 @@ export const SEED_EFFECTS: Effect[] = [
     supplementId: "zinc",
     name: "Correcting deficiency",
     outcomeCategory: "deficiency",
-    grade: "A",
-    confidence: "high",
+    grade: "C",
+    confidence: "low",
     summary: "Effectively restores zinc status in deficient individuals.",
     relevantPopulation: "adults with low zinc intake",
     studiedDose: {
@@ -546,14 +546,43 @@ export const SEED_EFFECTS: Effect[] = [
     },
     mechanismTags: ["enzyme-cofactor"],
     paperIds: ["p-zinc-deficiency"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 2,
+          rationale: "Meta-analysis of human randomised trials and observational studies relating zinc intake to serum/plasma zinc.",
+          paperIds: ["p-zinc-deficiency"],
+        },
+        studyQuality: {
+          score: 1,
+          rationale: "Pools randomised trials with observational studies; the abstract reports no quality assessment.",
+          paperIds: ["p-zinc-deficiency"],
+        },
+        consistency: {
+          score: 1,
+          rationale: "High heterogeneity across studies (I² 84.5%).",
+          paperIds: ["p-zinc-deficiency"],
+        },
+        effectSize: {
+          score: 1,
+          rationale: "About 6% higher serum/plasma zinc for each doubling of zinc intake.",
+          paperIds: ["p-zinc-deficiency"],
+        },
+        populationRelevance: {
+          score: 1,
+          rationale: "Adults generally; the abstract reports no analysis of deficient individuals.",
+          paperIds: ["p-zinc-deficiency"],
+        },
+      },
+    },
   },
   {
     id: "vitamin-b12-deficiency",
     supplementId: "vitamin-b12",
     name: "Correcting deficiency",
     outcomeCategory: "deficiency",
-    grade: "A",
-    confidence: "high",
+    grade: "B",
+    confidence: "moderate",
     summary: "Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
     relevantPopulation: "vegans, older adults, malabsorbers",
     studiedDose: {
@@ -562,7 +591,36 @@ export const SEED_EFFECTS: Effect[] = [
       unit: "mcg",
     },
     mechanismTags: ["methylation"],
-    paperIds: ["p-b12-deficiency"],
+    paperIds: ["p-b12-deficiency", "p-b12-oral-routes", "p-b12-oral-vs-im"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 2,
+          rationale: "16 human studies (6,098 participants) of oral, sublingual or injected B12, mixing trials with observational studies; 3 small randomised trials compare oral with injected B12.",
+          paperIds: ["p-b12-oral-routes", "p-b12-oral-vs-im"],
+        },
+        studyQuality: {
+          score: 1,
+          rationale: "The randomised evidence is rated low quality, from 3 trials with 153 participants.",
+          paperIds: ["p-b12-oral-vs-im"],
+        },
+        consistency: {
+          score: 1,
+          rationale: "Substantial heterogeneity between studies (I² > 80% in most comparisons).",
+          paperIds: ["p-b12-oral-routes"],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Serum cobalamin +402.6 pg/mL and homocysteine −4.83 µmol/L; no trial reported clinical signs or symptoms.",
+          paperIds: ["p-b12-oral-routes", "p-b12-oral-vs-im"],
+        },
+        populationRelevance: {
+          score: 3,
+          rationale: "People with B12 deficiency, with comparable effects across age groups and after gastrectomy; vegans using supplements had better B12 status than non-users.",
+          paperIds: ["p-b12-oral-routes", "p-b12-oral-vs-im", "p-b12-deficiency"],
+        },
+      },
+    },
   },
   {
     id: "caffeine-focus",
@@ -626,6 +684,35 @@ export const SEED_EFFECTS: Effect[] = [
     },
     mechanismTags: ["adenosine-antagonism", "ergogenic"],
     paperIds: ["p-caffeine-training"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 3,
+          rationale: "21 placebo-controlled crossover trials in runners.",
+          paperIds: ["p-caffeine-training"],
+        },
+        studyQuality: {
+          score: 2,
+          rationale: "Randomised, blinded crossover trials rated unclear-to-low risk of bias; 254 participants in total.",
+          paperIds: ["p-caffeine-training"],
+        },
+        consistency: {
+          score: 2,
+          rationale: "Benefit found in both recreational and trained runners, and in both test types.",
+          paperIds: ["p-caffeine-training"],
+        },
+        effectSize: {
+          score: 2,
+          rationale: "Medium for time to exhaustion (g 0.39); small for time trials (g −0.10).",
+          paperIds: ["p-caffeine-training"],
+        },
+        populationRelevance: {
+          score: 2,
+          rationale: "Recreational and trained runners, mostly men; few women studied.",
+          paperIds: ["p-caffeine-training"],
+        },
+      },
+    },
   },
   {
     id: "taurine-training",
@@ -677,6 +764,35 @@ export const SEED_EFFECTS: Effect[] = [
     },
     mechanismTags: ["leucine", "MPS"],
     paperIds: ["p-protein-mps"],
+    evidenceProfile: {
+      dimensions: {
+        humanEvidence: {
+          score: 3,
+          rationale: "49 randomised trials in 1863 healthy adults.",
+          paperIds: ["p-protein-mps"],
+        },
+        studyQuality: {
+          score: 2,
+          rationale: "Randomised controlled trials of at least 6 weeks; the abstract reports no risk-of-bias rating.",
+          paperIds: ["p-protein-mps"],
+        },
+        consistency: {
+          score: 2,
+          rationale: "Gains significant across strength and muscle-size outcomes; smaller with age, larger in trained people.",
+          paperIds: ["p-protein-mps"],
+        },
+        effectSize: {
+          score: 1,
+          rationale: "+2.49 kg one-repetition maximum and +0.30 kg fat-free mass.",
+          paperIds: ["p-protein-mps"],
+        },
+        populationRelevance: {
+          score: 3,
+          rationale: "Healthy adults in resistance training; the fat-free-mass gain was larger in resistance-trained people.",
+          paperIds: ["p-protein-mps"],
+        },
+      },
+    },
   },
   {
     id: "protein-powder-recovery",

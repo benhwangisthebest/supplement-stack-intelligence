@@ -1,0 +1,30 @@
+[
+  {
+    "claimId": "s4:b12-oral-supplementation",
+    "libraryClaim": "Vitamin B12 — Correcting deficiency (Grade A at fe0441d; B1 draft C): Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    "illustrativeDetails": "S4, U4 ruling R7 (owner queries verbatim, 2026-09-23)",
+    "pubmed": "oral vitamin B12 supplementation deficiency randomized",
+    "crossref": "oral vitamin B12 supplementation deficiency randomized"
+  },
+  {
+    "claimId": "s4:b12-oral-vs-im",
+    "libraryClaim": "Vitamin B12 — Correcting deficiency (Grade A at fe0441d; B1 draft C): Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    "illustrativeDetails": "S4, U4 ruling R7 (owner queries verbatim, 2026-09-23)",
+    "pubmed": "oral versus intramuscular vitamin B12",
+    "crossref": "oral versus intramuscular vitamin B12"
+  },
+  {
+    "claimId": "s4:zinc-deficiency-randomized",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A at fe0441d; B1 draft C): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "S4, U4 ruling R7 (owner queries verbatim, 2026-09-23)",
+    "pubmed": "zinc supplementation zinc deficiency randomized serum zinc",
+    "crossref": "zinc supplementation zinc deficiency randomized serum zinc"
+  },
+  {
+    "claimId": "s4:zinc-deficient-populations-ma",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A at fe0441d; B1 draft C): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "S4, U4 ruling R7 (owner queries verbatim, 2026-09-23)",
+    "pubmed": "zinc supplementation deficient populations meta-analysis",
+    "crossref": "zinc supplementation deficient populations meta-analysis"
+  }
+]

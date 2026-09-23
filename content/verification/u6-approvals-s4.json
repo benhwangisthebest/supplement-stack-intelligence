@@ -1,0 +1,20 @@
+[
+  {
+    "paperId": "p-b12-oral-routes",
+    "kind": "pmid",
+    "id": "41487531",
+    "expectedTitle": "Efficacy of sublingual and oral vitamin B12 versus intramuscular administration: insights from a systematic review and meta-analysis.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U4 S4 decision B-1"
+  },
+  {
+    "paperId": "p-b12-oral-vs-im",
+    "kind": "pmid",
+    "id": "29543316",
+    "expectedTitle": "Oral vitamin B(12) versus intramuscular vitamin B(12) for vitamin B(12) deficiency.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-23",
+    "approvalRef": "owner, chat 2026-09-23, U4 S4 decision B-2; title approved verbatim as PubMed esummary renders it (option i)"
+  }
+]

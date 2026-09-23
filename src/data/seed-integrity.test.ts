@@ -201,12 +201,8 @@ const UNPROFILED_GRADE_ALLOWLIST: readonly string[] = [
   "ashwagandha-sleep",
   "berberine-metabolic",
   "zinc-immune",
-  "zinc-deficiency",
-  "vitamin-b12-deficiency",
-  "caffeine-training",
   "taurine-training",
   "nac-antioxidant",
-  "protein-powder-training",
   "protein-powder-recovery",
 ];
 
@@ -247,5 +243,26 @@ describe("G4 — an effect's grade is derived from its evidenceProfile", () => {
   it("G4f every allowlisted id is an effect id, listed once", () => {
     expect(UNPROFILED_GRADE_ALLOWLIST.filter((id) => !effectIds.has(id))).toEqual([]);
     expect(allowed.size).toBe(UNPROFILED_GRADE_ALLOWLIST.length);
+  });
+});
+
+// G5 — confidence cannot outrun the grade (Phase 3 U4, owner ruling R8, 2026-09-23).
+// U4 derives grades from verified profiles, and several fall (zinc-deficiency A → C).
+// `confidence` is a separate hand-authored field, so an effect could keep "high"
+// beside a Grade C, and every surface showing both would contradict itself.
+// Red proof: zinc-deficiency at C with confidence "high" failed this test before
+// its confidence was set (docs/01-plan/features/p3-u4-profiles.plan.md).
+describe("G5 — confidence \"high\" requires Grade A or B", () => {
+  const effects = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, "content/seed/seed-effects.json"), "utf8"),
+  ) as { id: string; grade: string; confidence: string }[];
+
+  it("G5a reads the authored effects, and some carry confidence high (anti-vacuity)", () => {
+    expect(effects.some((e) => e.confidence === "high")).toBe(true);
+  });
+
+  it("G5b no effect below Grade B carries confidence high", () => {
+    const bad = effects.filter((e) => e.confidence === "high" && e.grade !== "A" && e.grade !== "B");
+    expect(bad.map((e) => `${e.id}: Grade ${e.grade}, confidence high`)).toEqual([]);
   });
 });

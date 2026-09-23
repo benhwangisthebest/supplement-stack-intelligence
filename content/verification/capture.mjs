@@ -28,7 +28,7 @@
 //   --dry-run        no request leaves the machine; each planned call is printed
 //                    and the call log records 0 calls made
 //   --max-calls N    hard cap. The call that would exceed it throws STOP
-//   --scenario S     S1 | S2 | S3, stamped on every call-log line
+//   --scenario S     S1 | S2 | S3 | S4, stamped on every call-log line
 //   rate limit       one request at a time, at least MIN_INTERVAL_MS apart
 //   host allowlist   api.crossref.org and eutils.ncbi.nlm.nih.gov only
 //   --mailto EMAIL | --no-mailto   the contact both services ask for. It is
@@ -57,7 +57,7 @@ const FIXTURE = path.join(REPO, "content/verification/provenance-fixture.json");
 const PAPERS = path.join(REPO, "content/seed/seed-papers.json");
 
 export const ALLOWED_HOSTS = Object.freeze(["api.crossref.org", "eutils.ncbi.nlm.nih.gov"]);
-export const SCENARIOS = Object.freeze(["S1", "S2", "S3"]);
+export const SCENARIOS = Object.freeze(["S1", "S2", "S3", "S4"]); // S4: U4 ruling R7 (2026-09-23), scoped addendum
 // NCBI allows 3 requests/second without an API key. 400 ms keeps under it.
 export const MIN_INTERVAL_MS = 400;
 const CANDIDATES_PER_SOURCE = 3;

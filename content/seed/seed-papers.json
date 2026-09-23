@@ -369,5 +369,29 @@
     "limitations": "Limited data on serious adverse effects; long-term safety unknown.",
     "summary": "Meta-analysis: ashwagandha extract had a small beneficial effect on sleep in adults, larger in insomnia, at ≥600 mg/day and over ≥8 weeks.",
     "pmid": "34559859"
+  },
+  {
+    "id": "p-b12-oral-routes",
+    "title": "Efficacy of sublingual and oral vitamin B12 versus intramuscular administration: insights from a systematic review and meta-analysis.",
+    "population": "16 studies, 6,098 participants (randomised trials, cohort and case-control studies), including age and clinical-condition subgroups such as gastrectomy",
+    "intervention": "Oral or sublingual vitamin B12 vs intramuscular injection",
+    "dose": "Not reported in abstract; no dose-response effect observed",
+    "duration": "Not reported in abstract",
+    "outcomes": "Serum cobalamin rose (pooled mean difference +402.6 pg/mL) and homocysteine fell (-4.83 µmol/L) across all routes; no significant difference between oral, sublingual and intramuscular routes, or between randomised and observational studies.",
+    "limitations": "Substantial heterogeneity (I² > 80% in most comparisons); Egger's test indicated potential publication bias.",
+    "summary": "Meta-analysis: oral and sublingual B12 raised serum cobalamin and lowered homocysteine about as well as intramuscular injection, with high heterogeneity between studies.",
+    "pmid": "41487531"
+  },
+  {
+    "id": "p-b12-oral-vs-im",
+    "title": "Oral vitamin B(12) versus intramuscular vitamin B(12) for vitamin B(12) deficiency.",
+    "population": "People with vitamin B12 deficiency (3 randomised trials, 153 participants; mean age 38.6 to 72 years)",
+    "intervention": "Oral vs intramuscular vitamin B12",
+    "dose": "Oral 1000 µg/day (two trials) or 2000 µg/day (one trial)",
+    "duration": "Three to four months",
+    "outcomes": "At 1000 µg/day, oral B12 showed no clinically relevant difference in serum B12 from intramuscular; at 2000 µg/day, serum B12 was 680 pg/mL higher with oral. Oral treatment cost less in one trial.",
+    "limitations": "Low-quality evidence (serious imprecision); only one trial at low or unclear risk of bias in all domains; no meta-analysis; no trial reported clinical signs or symptoms of deficiency.",
+    "summary": "Cochrane review: low-quality evidence that oral and intramuscular B12 normalise serum B12 similarly in people with deficiency, with oral treatment costing less.",
+    "pmid": "29543316"
   }
 ]

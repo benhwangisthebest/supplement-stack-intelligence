@@ -1,0 +1,494 @@
+[
+  {
+    "claimId": "s4:b12-oral-supplementation",
+    "libraryClaim": "Vitamin B12 — Correcting deficiency (Grade A at fe0441d; B1 draft C): Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    "illustrativeDetails": "S4, U4 ruling R7 (owner queries verbatim, 2026-09-23)",
+    "queries": {
+      "pubmed": "oral vitamin B12 supplementation deficiency randomized",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "oral vitamin B12 supplementation deficiency randomized"
+    },
+    "files": [
+      {
+        "path": "s4_b12-oral-supplementation/crossref.json",
+        "committed": true,
+        "sha256": "71d7e8341dab95c497e794b9b21e6e48ca5281f569b7559f9280c7d1ddd4b954"
+      },
+      {
+        "path": "s4_b12-oral-supplementation/esearch.json",
+        "committed": true,
+        "sha256": "88f86f83771f91257bc78f868566881422622f6beb0c1b489bcfc9be884400aa"
+      },
+      {
+        "path": "local/s4_b12-oral-supplementation/efetch.xml",
+        "committed": false,
+        "sha256": "42f17362d6f906cd85f2feb339698673d1418ba0698d7245a2a9ab50036db888"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "38231320",
+        "doi": "10.1007/s11845-023-03602-4",
+        "title": "Efficacy of different routes of vitamin B12 supplementation for the treatment of patients with vitamin B12 deficiency: A systematic review and network meta-analysis.",
+        "journal": "Irish journal of medical science",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review",
+          "Network Meta-Analysis"
+        ],
+        "abstractExcerpt": "BACKGROUND: This systematic review and network meta-analysis aimed to evaluate the three different administration routes of vitamin B12: oral, intramuscular (IM), and sublingual (SL) routes. METHODS: We searched four electronic databases (PubMed, Scopus, Web of Science, and Cochrane CENTRAL Register",
+        "abstractChars": 1742,
+        "abstractSha256": "0f9e05358072e47facf6a0b3614ae1233ce40759b933eff665ff6aff25a47b7e"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "38189492",
+        "doi": "10.1002/14651858.CD013823.pub2",
+        "title": "Vitamin B12 supplementation during pregnancy for maternal and child health outcomes.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2024",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Vitamin B12 deficiency is a major public health problem worldwide, with the highest burden in elderly people, pregnant women, and young children. Due to its role in DNA synthesis and methylation, folate metabolism, and erythropoiesis, vitamin B12 supplementation during pregnancy may conf",
+        "abstractChars": 5574,
+        "abstractSha256": "5c45d2ac7c88c22561db1941998082a4f09dc6969dbe6da31f228cdb10ccb53b"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "38051700",
+        "doi": "10.1371/journal.pmed.1004260",
+        "title": "Maternal B-vitamin and vitamin D status before, during, and after pregnancy and the influence of supplementation preconception and during pregnancy: Prespecified secondary analysis of the NiPPeR double-blind randomized controlled trial.",
+        "journal": "PLoS medicine",
+        "year": "2023",
+        "pubTypes": [
+          "Randomized Controlled Trial",
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: Maternal vitamin status preconception and during pregnancy has important consequences for pregnancy outcome and offspring development. Changes in vitamin status from preconception through early and late pregnancy and postpartum have been inferred from cross-sectional data, but longitudin",
+        "abstractChars": 4906,
+        "abstractSha256": "9216a1ffd68aad2dc581f8346254981901f83061cbba6fb3bcbf6eaad33dd139"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/s0016-5085(12)60808-7",
+        "title": "Sa1100 Randomized Open Label Trial Comparing Efficacy of Oral Versus Intramuscular Vitamin B12 Supplementation for Treatment of Vitamin B12 Deficiency",
+        "journal": "Gastroenterology",
+        "year": "2012",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1097/01.hs9.0000976888.81647.a8",
+        "title": "PB2548: COMPARISON BETWEEN WEEKLY INTRAVENOUS VERSUS DAILY ORAL VITAMIN B12 SUPPLEMENTATION IN ANEMIA WITH VITAMIN B12 DEFICIENCY",
+        "journal": "HemaSphere",
+        "year": "2023",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1182/blood-2022-159348",
+        "title": "Comparison between Weekly Intravenous Versus Daily Oral Vitamin B12 Supplementation in Vitamin B12 Deficiency Anemia [Courage-12]: A Randomized, Open Label, Single Centre Study",
+        "journal": "Blood",
+        "year": "2022",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "s4:b12-oral-vs-im",
+    "libraryClaim": "Vitamin B12 — Correcting deficiency (Grade A at fe0441d; B1 draft C): Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    "illustrativeDetails": "S4, U4 ruling R7 (owner queries verbatim, 2026-09-23)",
+    "queries": {
+      "pubmed": "oral versus intramuscular vitamin B12",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "oral versus intramuscular vitamin B12"
+    },
+    "files": [
+      {
+        "path": "s4_b12-oral-vs-im/crossref.json",
+        "committed": true,
+        "sha256": "a9808025b645eff9874e9facef83ae86fdd58ca2ca5cc581ff24f624ae475b07"
+      },
+      {
+        "path": "s4_b12-oral-vs-im/esearch.json",
+        "committed": true,
+        "sha256": "02dd161f66c7a34a29b50ba1bcc429b2028a8764dced5318db8d530b41d1ad13"
+      },
+      {
+        "path": "local/s4_b12-oral-vs-im/efetch.xml",
+        "committed": false,
+        "sha256": "ebd33aedd8901932bbae89b414c5e365b8155b18636c728e48921d5f722fcc79"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "29543316",
+        "doi": "10.1002/14651858.CD004655.pub3",
+        "title": "Oral vitamin B12 versus intramuscular vitamin B12 for vitamin B12 deficiency.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Vitamin B12 deficiency is common, and the incidence increases with age. Most people with vitamin B12 deficiency are treated in primary care with intramuscular (IM) vitamin B12. Doctors may not be prescribing oral vitamin B12 formulations because they may be unaware of this option or have",
+        "abstractChars": 3842,
+        "abstractSha256": "1a5ab11305aa3a682a6c136c19ed7eca8200784741c2d8c2aba3e2a0483a2647"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "41487531",
+        "doi": "10.3389/fphar.2025.1602976",
+        "title": "Efficacy of sublingual and oral vitamin B12 versus intramuscular administration: insights from a systematic review and meta-analysis.",
+        "journal": "Frontiers in pharmacology",
+        "year": "2025",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Vitamin B12 deficiency is a widespread condition, particularly among elderly individuals, patients with malabsorption syndromes, and those following plant-based diets. This systematic review and meta-analysis aimed to evaluate and compare the effectiveness of sublingual and oral vitamin ",
+        "abstractChars": 2796,
+        "abstractSha256": "0e0a77037751368bd8c5a1f752fcb30597a3a6013208ebf5f2995c54468590e4"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "16034940",
+        "doi": "10.1002/14651858.CD004655.pub2",
+        "title": "Oral vitamin B12 versus intramuscular vitamin B12 for vitamin B12 deficiency.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2005",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Vitamin B12 deficiency is common and rises with age. Most people with vitamin B12 deficiency are treated in primary care with intramuscular vitamin B12 which is a considerable source of work for health care professionals. Several case control and case series studies have reported equal e",
+        "abstractChars": 2654,
+        "abstractSha256": "4a0bce7ea00559e50c908d368c2b5b6d8bd068b24ccea9751419df55f0a39500"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1093/fampra/cml008",
+        "title": "Oral vitamin B12 versus intramuscular vitamin B12 for vitamin B12 deficiency: a systematic review of randomized controlled trials",
+        "journal": "Family Practice",
+        "year": "2006",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1002/14651858.cd004655.pub2",
+        "title": "Oral vitamin B12 versus intramuscular vitamin B12 for vitamin B12 deficiency",
+        "journal": "Cochrane Database of Systematic Reviews",
+        "year": "2005",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1007/bf03084126",
+        "title": "Vitamine B12 oraal versus intramusculair voor vitamine-B12-deficiëntie",
+        "journal": "Huisarts en Wetenschap",
+        "year": "2005",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "s4:zinc-deficiency-randomized",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A at fe0441d; B1 draft C): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "S4, U4 ruling R7 (owner queries verbatim, 2026-09-23)",
+    "queries": {
+      "pubmed": "zinc supplementation zinc deficiency randomized serum zinc",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "zinc supplementation zinc deficiency randomized serum zinc"
+    },
+    "files": [
+      {
+        "path": "s4_zinc-deficiency-randomized/crossref.json",
+        "committed": true,
+        "sha256": "bec09af040912a9cda282bacd7e1cb3f83cb4a4e91df2ca66f7efadc0f8aff41"
+      },
+      {
+        "path": "s4_zinc-deficiency-randomized/esearch.json",
+        "committed": true,
+        "sha256": "35769fccd8003460160288738124452d329dcb53fa5b383b032cacd698afd81c"
+      },
+      {
+        "path": "local/s4_zinc-deficiency-randomized/efetch.xml",
+        "committed": false,
+        "sha256": "7d3556468a06b4e9ab81e87447820b948f0f48bd9d35312a2df46ee400bc50a3"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "32075071",
+        "doi": "10.3390/nu12020491",
+        "title": "Vitamin and Mineral Supplementation During Pregnancy on Maternal, Birth, Child Health and Development Outcomes in Low- and Middle-Income Countries: A Systematic Review and Meta-Analysis.",
+        "journal": "Nutrients",
+        "year": "2020",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "Almost two billion people are deficient in key vitamins and minerals, mostly women and children in low- and middle-income countries (LMICs). Deficiencies worsen during pregnancy due to increased energy and nutritional demands, causing adverse outcomes in mother and child, but could be mitigated by i",
+        "abstractChars": 2438,
+        "abstractSha256": "462df7c78447ac900592c149fdad8c4d2bca027af6a8a65b9c5dbffc28c01a9c"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36849195",
+        "doi": "10.1136/bmjgh-2022-010745",
+        "title": "Oral iron supplementation and anaemia in children according to schedule, duration, dose and cosupplementation: a systematic review and meta-analysis of 129 randomised trials.",
+        "journal": "BMJ global health",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article",
+          "Research Support, N.I.H., Extramural",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "INTRODUCTION: WHO guidelines on iron supplementation among children call for further research to identify the optimal schedule, duration, dose and cosupplementation regimen. METHODS: A systematic review and meta-analysis of randomised controlled trials was undertaken. Randomised controlled trials pr",
+        "abstractChars": 1917,
+        "abstractSha256": "85f148a483602bd5ab9c849e760136954a8fec2dec25f1ed297360470ad4172a"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "27087396",
+        "doi": "10.1002/14651858.CD009747.pub2",
+        "title": "Daily iron supplementation for improving anaemia, iron status and health in menstruating women.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2016",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Iron-deficiency anaemia is highly prevalent among non-pregnant women of reproductive age (menstruating women) worldwide, although the prevalence is highest in lower-income settings. Iron-deficiency anaemia has been associated with a range of adverse health outcomes, which restitution of ",
+        "abstractChars": 4977,
+        "abstractSha256": "a141aef3e308452e18a5c409880073be85ce448bf26a7dd867494553632be6d6"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.61336/cmejgm/2025-12-30",
+        "title": "Effects of Zinc Supplementation on Serum Zinc Concentrations and Cellular Immune Function in Older Adults with Marginal Zinc Status: A Randomized Controlled Pilot Trial",
+        "journal": "CME Journal Geriatric Medicine",
+        "year": "2025",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.3390/biom14070863",
+        "title": "Zinc Deficiency and Zinc Supplementation in Allergic Diseases",
+        "journal": "Biomolecules",
+        "year": "2024",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.2139/ssrn.3273670",
+        "title": "Prevalence of Zinc Deficiency and Effect of Zinc Supplementation on Prevention of Acute Respiratory Infections: A Non Randomized Open Label Study",
+        "journal": null,
+        "year": "2018",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "s4:zinc-deficient-populations-ma",
+    "libraryClaim": "Zinc — Correcting deficiency (Grade A at fe0441d; B1 draft C): Effectively restores zinc status in deficient individuals.",
+    "illustrativeDetails": "S4, U4 ruling R7 (owner queries verbatim, 2026-09-23)",
+    "queries": {
+      "pubmed": "zinc supplementation deficient populations meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "zinc supplementation deficient populations meta-analysis"
+    },
+    "files": [
+      {
+        "path": "s4_zinc-deficient-populations-ma/crossref.json",
+        "committed": true,
+        "sha256": "12befb5a4bd2b71c6a6e316f785868e2a21cfd3d27582888ac97f356f622cd0b"
+      },
+      {
+        "path": "s4_zinc-deficient-populations-ma/esearch.json",
+        "committed": true,
+        "sha256": "a718fdfa502c11208834e7ca7acd278b1e99370e3de2b67af69cd1255752e54d"
+      },
+      {
+        "path": "local/s4_zinc-deficient-populations-ma/efetch.xml",
+        "committed": false,
+        "sha256": "b15298304ea03fca92fbad86a6fed30e229fd36c44bd6a4d7e20db3989a71394"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "36849195",
+        "doi": "10.1136/bmjgh-2022-010745",
+        "title": "Oral iron supplementation and anaemia in children according to schedule, duration, dose and cosupplementation: a systematic review and meta-analysis of 129 randomised trials.",
+        "journal": "BMJ global health",
+        "year": "2023",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article",
+          "Research Support, N.I.H., Extramural",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "INTRODUCTION: WHO guidelines on iron supplementation among children call for further research to identify the optimal schedule, duration, dose and cosupplementation regimen. METHODS: A systematic review and meta-analysis of randomised controlled trials was undertaken. Randomised controlled trials pr",
+        "abstractChars": 1917,
+        "abstractSha256": "85f148a483602bd5ab9c849e760136954a8fec2dec25f1ed297360470ad4172a"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "33724446",
+        "doi": "10.1002/14651858.CD000230.pub6",
+        "title": "Zinc supplementation for improving pregnancy and infant outcome.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2021",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: It has been suggested that low serum zinc levels may be associated with suboptimal outcomes of pregnancy, such as prolonged labour, atonic postpartum haemorrhage, pregnancy-induced hypertension, preterm labour and post-term pregnancies, although these associations have not yet been estab",
+        "abstractChars": 3481,
+        "abstractSha256": "167b5ef713c382a1c42ff29029465522b54659f18c9b4bfe73e96ff1286cbbdc"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "23764669",
+        "doi": "10.1590/s1020-49892013000500009",
+        "title": "Zinc supplementation for treating diarrhea in children: a systematic review and meta-analysis.",
+        "journal": "Revista panamericana de salud publica = Pan American journal of public health",
+        "year": "2013",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "OBJECTIVE: To update the available evidence about zinc use for treating diarrhea in children and to assess its effect on the malnourished population, a subgroup that has not been fully explored in previous analyses. METHODS: A systematic review was performed of randomized clinical trials that assess",
+        "abstractChars": 1587,
+        "abstractSha256": "85f2e2185286f27cabdbfb9bc4d00ff96872c68db716e10a76f8cf951781065e"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.37766/inplasy2024.9.0031",
+        "title": "Systematic Review and Meta-analysis on the Efficacy of Zinc Supplementation in Reducing Dysmenorrhea Pain",
+        "journal": null,
+        "year": "2024",
+        "pubTypes": [
+          "report"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1007/s12011-015-0244-4",
+        "title": "Deficient Zinc Levels and Myocardial Infarction",
+        "journal": "Biological Trace Element Research",
+        "year": "2015",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.37766/inplasy2026.2.0017",
+        "title": "Zinc Supplementation and Systemic Inflammation in Aging: A Systematic Review and Meta-Analysis of Effects on Immune Biomarkers in Older Adults",
+        "journal": null,
+        "year": "2026",
+        "pubTypes": [
+          "report"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  }
+]

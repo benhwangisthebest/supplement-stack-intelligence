@@ -206,7 +206,9 @@
         "p-magnesium-stress",
         "p-vitamin-d-respiratory-ipd",
         "p-vitamin-d-respiratory-update",
-        "p-ashwagandha-sleep"
+        "p-ashwagandha-sleep",
+        "p-b12-oral-routes",
+        "p-b12-oral-vs-im"
       ],
       "tombstones": []
     },

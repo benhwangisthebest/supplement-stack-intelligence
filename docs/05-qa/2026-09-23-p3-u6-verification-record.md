@@ -109,3 +109,29 @@ The queries are in `content/verification/u6-claims-s3.json`, and the filters are
 **Every call returned HTTP 200.** No call went outside S1–S3, to a paid API, or to OpenAI. **Deployed database: never touched.** No
 retirement was needed, so `[P3-X6]`'s migration path was not opened (see the register). **Fixture:** 30 entries, all
 `verifiedBy: "owner"`, `verifiedOn: 2026-09-23`. **Refresh:** re-verify every entry at the Phase 3 closeout (U5's refresh policy).
+
+## S4 — scoped U6 addendum for U4 (owner ruling R7) — 2026-09-23
+
+**Why.** U4's B1 draft derived Grade C for `zinc-deficiency` and `vitamin-b12-deficiency`, because each effect's only verified paper does not test correcting a deficiency. The owner held both and ruled one search. **Budget: ≤16 calls**, with U6's filters and capture rules: the PubMed type filter, widening only on an empty result, metadata committed, abstracts in the gitignored `local/` folder with a SHA-256 committed. There were four queries, taken verbatim from the owner (`content/verification/u6-claims-s4.json`). `capture.mjs`'s `SCENARIOS` gained `"S4"` so its calls are stamped correctly. Nothing else in the script changed.
+
+| Run | Calls | Hosts | Status | Budget |
+|---|---|---|---|---|
+| `2026-09-23-s4` search | **12** (4 queries × Crossref + esearch + efetch; no widening needed) | Crossref 4 · NCBI 8 | all **200** | ≤16 |
+
+Dry run first: 0 calls made, 8 planned (efetch is only planned once a live esearch returns ids). Live window 19:50:36–19:50:42Z, slowest response 767 ms, 523,339 bytes logged. **$0. No OpenAI, no paid API, deployed DB not touched.** The search writes nothing to the corpus or the fixture. The candidate table and its outcome for U4 are in `docs/01-plan/features/p3-u4-profiles.s4.md`.
+
+**Running total: 174 calls** (U6 162 + S4 12), $0.
+
+## S2 for S4's B-1/B-2 (owner decision R11) — 2026-09-23
+
+| Run | Calls | Status | Outcome |
+|---|---|---|---|
+| `2026-09-23-s2d` | **2** (PubMed `esummary` ×2) | all **200** | B-1 matched; **B-2 (29543316) refused**: resolved title ≠ approved title. All-or-nothing, so **nothing written** |
+| `2026-09-23-s2e` | **2**, after the F-2 `normaliseTitle` fix | all **200** | **B-2 refused again; nothing written.** F-2 did not remove the mismatch, so its cause is **not established**: `resolve` does not save the response body. |
+
+**Running total: 178 calls** (U6 162 · S4 12 · S2 4), $0. No OpenAI, no paid API, deployed DB untouched.
+| `2026-09-23-s2f` | **2**, with response bodies now saved (committed) | all **200** | **B-2 refused a third time; nothing written.** Saved body (`s2f/p-b12-oral-vs-im/esummary.json`): `"title":"Oral vitamin B(12) versus intramuscular vitamin B(12) for vitamin B(12) deficiency."`. **Verified cause:** esummary renders the subscript as parentheses, which `normaliseTitle` turns into a space (`b 12`), while the approved title from efetch reads `b12`. It is neither tag markup nor HTML entities. |
+
+**Running total: 180 calls** (U6 162 · S4 12 · S2 6), $0.
+
+**S2, final run** (`2026-09-23-s2g`, **2** calls, all **200**). B-2's approved title was set, on the owner's option (i), to PubMed's `esummary` text verbatim. **Both matched and 2 fixture entries were written** (`pmid:41487531`, `pmid:29543316`), so the fixture holds 32 entries. **U4 live total: 20 calls** (S4 12 · S2 8). **Running total: 182 calls, $0.**
