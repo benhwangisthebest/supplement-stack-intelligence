@@ -20,6 +20,9 @@
 //                  title the owner approved. With --write, it records the
 //                  fixture entry and sets the paper's title and doi/pmid in
 //                  content/seed/seed-papers.json. Run content:generate after.
+//                  Every response body is saved, committed, at
+//                  <out>/<paperId>/esummary.json (or crossref-work.json), so a
+//                  refusal can be read back (U4, owner 2026-09-23).
 //
 // Controls, all enforced here rather than by convention:
 //   --dry-run        no request leaves the machine; each planned call is printed
@@ -296,7 +299,11 @@ export async function runSearch(claims, client, outDir) {
  * approvals: [{ paperId, kind, id, expectedTitle, approvedBy, approvedOn, approvalRef }].
  * Returns { entries, refusals }. Writes nothing; see applyResolved.
  */
-export async function runResolve(approvals, client, today) {
+export async function runResolve(approvals, client, today, outDir) {
+  // U4 (owner, 2026-09-23): every resolver response body is kept as committed
+  // metadata at <outDir>/<paperId>/, as S1 keeps its search responses. Without it,
+  // a refused mapping (PMID 29543316, twice) could not be diagnosed.
+  if (!outDir) throw new Error("runResolve: outDir is required (every response body is saved)");
   const entries = [];
   const refusals = [];
   for (const a of approvals) {
@@ -327,6 +334,9 @@ export async function runResolve(approvals, client, today) {
     }
     const body = await client.get(url);
     if (body === null) continue; // dry run
+    const saved = path.join(outDir, safeName(a.paperId), a.kind === "doi" ? "crossref-work.json" : "esummary.json");
+    mkdirSync(path.dirname(saved), { recursive: true });
+    writeFileSync(saved, body);
     const json = JSON.parse(body);
     const title = a.kind === "doi" ? json?.message?.title?.[0] : json?.result?.[a.id]?.title;
     if (typeof title !== "string" || title.trim() === "") {
@@ -416,7 +426,7 @@ async function main() {
       if (!dryRun) writeFileSync(path.join(outDir, "candidates.json"), JSON.stringify(rows, null, 2) + "\n");
     } else {
       const approvals = JSON.parse(readFileSync(path.resolve(REPO, flags.approvals), "utf8"));
-      const { entries, refusals } = await runResolve(approvals, client, today);
+      const { entries, refusals } = await runResolve(approvals, client, today, outDir);
       for (const r of refusals) console.error(`REFUSED ${r}`);
       if (flags.write && !dryRun) {
         if (refusals.length > 0) throw new Error("STOP: refusals present, nothing written");
