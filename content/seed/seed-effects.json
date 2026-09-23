@@ -63,7 +63,7 @@
     "supplementId": "magnesium",
     "name": "Stress & relaxation",
     "outcomeCategory": "stress",
-    "grade": "C",
+    "grade": "D",
     "confidence": "low",
     "summary": "Emerging evidence for stress symptom reduction, often combined with B6.",
     "relevantPopulation": "adults reporting stress",
@@ -78,7 +78,42 @@
     ],
     "paperIds": [
       "p-magnesium-stress"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 1,
+          "rationale": "One randomised trial in stressed adults with low blood magnesium, comparing magnesium plus B6 with magnesium alone.",
+          "paperIds": [
+            "p-magnesium-stress"
+          ]
+        },
+        "studyQuality": {
+          "score": 1,
+          "rationale": "Post-hoc secondary analysis with no placebo arm.",
+          "paperIds": [
+            "p-magnesium-stress"
+          ]
+        },
+        "consistency": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "effectSize": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "populationRelevance": {
+          "score": 1,
+          "rationale": "Only adults with severe stress and low blood magnesium.",
+          "paperIds": [
+            "p-magnesium-stress"
+          ]
+        }
+      }
+    }
   },
   {
     "id": "magnesium-metabolic",
@@ -99,7 +134,44 @@
     ],
     "paperIds": [
       "p-magnesium-glucose"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Meta-analysis of double-blind placebo-controlled trials in people with or at high risk of diabetes; the abstract gives no trial count.",
+          "paperIds": [
+            "p-magnesium-glucose"
+          ]
+        },
+        "studyQuality": {
+          "score": 2,
+          "rationale": "Double-blind randomised trials only; the abstract reports no risk-of-bias rating.",
+          "paperIds": [
+            "p-magnesium-glucose"
+          ]
+        },
+        "consistency": {
+          "score": 2,
+          "rationale": "Glucose measures improved both in people with diabetes and in those at high risk.",
+          "paperIds": [
+            "p-magnesium-glucose"
+          ]
+        },
+        "effectSize": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        },
+        "populationRelevance": {
+          "score": 1,
+          "rationale": "People with or at high risk of diabetes; magnesium status is not reported in the abstract.",
+          "paperIds": [
+            "p-magnesium-glucose"
+          ]
+        }
+      }
+    }
   },
   {
     "id": "creatine-strength",
@@ -242,7 +314,44 @@
     ],
     "paperIds": [
       "p-creatine-recovery"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Meta-analysis of 9 randomised placebo-controlled trials.",
+          "paperIds": [
+            "p-creatine-recovery"
+          ]
+        },
+        "studyQuality": {
+          "score": 1,
+          "rationale": "Included trials carried a medium risk of bias.",
+          "paperIds": [
+            "p-creatine-recovery"
+          ]
+        },
+        "consistency": {
+          "score": 1,
+          "rationale": "High heterogeneity; creatine kinase fell, but lactate dehydrogenase did not change overall.",
+          "paperIds": [
+            "p-creatine-recovery"
+          ]
+        },
+        "effectSize": {
+          "score": 1,
+          "rationale": "Lower creatine kinase (weighted mean difference −30.94); no overall change in lactate dehydrogenase.",
+          "paperIds": [
+            "p-creatine-recovery"
+          ]
+        },
+        "populationRelevance": {
+          "score": 0,
+          "rationale": "Not addressed by a verified paper in the corpus.",
+          "paperIds": []
+        }
+      }
+    }
   },
   {
     "id": "vitamin-d-deficiency",
@@ -324,7 +433,51 @@
     "paperIds": [
       "p-vitamin-d-respiratory-ipd",
       "p-vitamin-d-respiratory-update"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Large placebo-controlled trial meta-analyses: protection overall in 2017, not statistically significant in the 2025 update.",
+          "paperIds": [
+            "p-vitamin-d-respiratory-ipd",
+            "p-vitamin-d-respiratory-update"
+          ]
+        },
+        "studyQuality": {
+          "score": 2,
+          "rationale": "Double-blind randomised trials, rated high quality in 2017; the 2025 update found funnel-plot asymmetry.",
+          "paperIds": [
+            "p-vitamin-d-respiratory-ipd",
+            "p-vitamin-d-respiratory-update"
+          ]
+        },
+        "consistency": {
+          "score": 1,
+          "rationale": "The 2017 analysis found protection with significant heterogeneity; the 2025 update does not.",
+          "paperIds": [
+            "p-vitamin-d-respiratory-ipd",
+            "p-vitamin-d-respiratory-update"
+          ]
+        },
+        "effectSize": {
+          "score": 1,
+          "rationale": "Odds ratio 0.88 in 2017; 0.94, with a confidence interval including no effect, in 2025.",
+          "paperIds": [
+            "p-vitamin-d-respiratory-ipd",
+            "p-vitamin-d-respiratory-update"
+          ]
+        },
+        "populationRelevance": {
+          "score": 1,
+          "rationale": "2017 found most benefit in very deficient people; the 2025 update found no modification by baseline vitamin D status.",
+          "paperIds": [
+            "p-vitamin-d-respiratory-ipd",
+            "p-vitamin-d-respiratory-update"
+          ]
+        }
+      }
+    }
   },
   {
     "id": "fish-oil-cardiovascular",
@@ -393,7 +546,7 @@
     "supplementId": "fish-oil",
     "name": "Mood support",
     "outcomeCategory": "mood",
-    "grade": "C",
+    "grade": "B",
     "confidence": "low",
     "summary": "Some evidence for depressive symptoms with higher-EPA formulations.",
     "relevantPopulation": "adults with depressive symptoms",
@@ -407,7 +560,46 @@
     ],
     "paperIds": [
       "p-fish-oil-mood"
-    ]
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 3,
+          "rationale": "26 double-blind placebo-controlled trials, 2,160 participants.",
+          "paperIds": [
+            "p-fish-oil-mood"
+          ]
+        },
+        "studyQuality": {
+          "score": 2,
+          "rationale": "Double-blind randomised trials only; the abstract reports no risk-of-bias rating.",
+          "paperIds": [
+            "p-fish-oil-mood"
+          ]
+        },
+        "consistency": {
+          "score": 1,
+          "rationale": "Benefit only in the EPA-rich subgroups of one meta-analysis (EPA-major P = 0.03); DHA-dominant formulations showed none.",
+          "paperIds": [
+            "p-fish-oil-mood"
+          ]
+        },
+        "effectSize": {
+          "score": 2,
+          "rationale": "Overall SMD −0.28; −0.50 and −1.03 for EPA-pure and EPA-major formulations at about 1 g/day.",
+          "paperIds": [
+            "p-fish-oil-mood"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Trials in depression; participants are not described further in the abstract.",
+          "paperIds": [
+            "p-fish-oil-mood"
+          ]
+        }
+      }
+    }
   },
   {
     "id": "fish-oil-longevity",

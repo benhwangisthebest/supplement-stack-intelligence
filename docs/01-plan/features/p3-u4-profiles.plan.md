@@ -79,8 +79,8 @@ phrase planted in one rationale, then the file restored.
 | F-1 | `fix(grading): …` | `478ccf7` | `35915836110` success | exact composite at the thresholds (26/1024 → 0/1024; no seed flip) |
 | (withdrawn) | `fix(provenance): …` | `26c396f`, **never merged** | `35916425609` success | tag-stripping fix built on a wrong diagnosis; branch deleted on owner ruling (§5 F-2) |
 | resolve bodies | `feat(capture): …` | `b5d1b62` | `35926528714` success | S2 saves every response body; red 2/2 → green |
-| B1 | `feat(content): U4 B1 — …` | — | — | 4 Grade A profiles, the S4 files and B12's two new papers. Appendices [B1](p3-u4-profiles.b1.md) and [S4](p3-u4-profiles.s4.md) |
-| B2 | `feat(content): U4 B2 — …` | — | — | 5 profiles. Appendix [B2](p3-u4-profiles.b2.md) |
+| B1 | `feat(content): U4 B1 — …` | `5b55d5b` | `35927219723` success | 4 Grade A profiles, the S4 files and B12's two new papers. Appendices [B1](p3-u4-profiles.b1.md) and [S4](p3-u4-profiles.s4.md) |
+| B2 | `feat(content): U4 B2 — …` | (this landing) | — | 5 profiles: magnesium-stress C → D, fish-oil-mood C → B, three unchanged at C. Appendix [B2](p3-u4-profiles.b2.md) |
 
 **Live calls under U4 (R7, R11):** S4 search **12**, plus S2 resolve **8** (`s2d`, `s2e` and `s2f` refused B-2; `s2g` wrote both). All 20 returned 200, $0. The dated record is `docs/05-qa/2026-09-23-p3-u6-verification-record.md`.
 
@@ -92,7 +92,7 @@ phrase planted in one rationale, then the file restored.
 
 ## 5. Findings (raised by U4; open unless marked)
 
-**F-1 — `compositeScore` can land an exact threshold composite just below it.** It sums `weight × score / 3` in floating point, so an exact-arithmetic 0.55 computes as `0.5499999999999999` for scores (2,1,1,2,3) and derives **C**. The same exact value from (2,2,2,1,0) computes as `0.55` and derives **B**. Two profiles with the same exact composite can therefore get different letters. **U4 may not touch the rubric**, and no drafted profile relies on the boundary; every exact-boundary composite is flagged in its appendix. The fix is for the owner (e.g. round to 1e-9 before comparing), and it needs a rubric-owner unit.
+**F-1 (history) — `compositeScore` could land an exact threshold composite just below it.** It sums `weight × score / 3` in floating point, so an exact-arithmetic 0.55 computes as `0.5499999999999999` for scores (2,1,1,2,3) and derives **C**. The same exact value from (2,2,2,1,0) computes as `0.55` and derives **B**. Two profiles with the same exact composite can therefore get different letters. **U4 may not touch the rubric**, and no drafted profile relies on the boundary; every exact-boundary composite is flagged in its appendix. The fix is for the owner (e.g. round to 1e-9 before comparing), and it needs a rubric-owner unit.
 
 **F-1 — CLOSED by `478ccf7`** (owner-approved scoped exception, `fix(grading)`). The composite is rounded to 1e-9. Mismatches against exact arithmetic went from 26/1024 profiles to 0/1024, and no seed grade flipped.
 

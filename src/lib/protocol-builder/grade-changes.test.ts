@@ -35,6 +35,10 @@ const PINS: { batch: string; effect: string; supplementId: string; goal: Outcome
   { batch: "B1", effect: "zinc-deficiency", supplementId: "zinc", goal: "deficiency", grade: "C", tier: "advanced" },
   // B1: vitamin-b12-deficiency A → B (B-1 + B-2 + the vegan study; quality and consistency weak)
   { batch: "B1", effect: "vitamin-b12-deficiency", supplementId: "vitamin-b12", goal: "deficiency", grade: "B", tier: "targeted" },
+  // B2: magnesium-stress C → D (one post-hoc trial, no placebo arm)
+  { batch: "B2", effect: "magnesium-stress", supplementId: "magnesium", goal: "stress", grade: "D", tier: "experimental" },
+  // B2: fish-oil-mood C → B (26 RCTs; benefit only in EPA-rich subgroups, consistency weak)
+  { batch: "B2", effect: "fish-oil-mood", supplementId: "fish-oil", goal: "mood", grade: "B", tier: "targeted" },
 ];
 
 describe("U4 grade changes: the protocol tier each changed effect now produces (R10)", () => {

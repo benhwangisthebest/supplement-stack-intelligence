@@ -189,11 +189,6 @@ const ALLOWLIST_ORIGIN: ReadonlySet<string> = new Set([
   "protein-powder-recovery",
 ]);
 const UNPROFILED_GRADE_ALLOWLIST: readonly string[] = [
-  "magnesium-stress",
-  "magnesium-metabolic",
-  "creatine-recovery",
-  "vitamin-d-immune",
-  "fish-oil-mood",
   "fish-oil-longevity",
   "l-theanine-focus",
   "l-theanine-stress",
