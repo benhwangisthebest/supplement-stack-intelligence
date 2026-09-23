@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { IllustrativeDatasetNotice } from "@/components/evidence/IllustrativeDatasetNotice";
 import { citationHref } from "@/lib/advisor/citation-href";
+import { getPaperById } from "@/lib/evidence";
 import type { Citation } from "@/types/advisor";
 
 // Phase 3 U6 (a0), N-84: kinds whose chip text comes from the seed evidence corpus
@@ -12,6 +13,20 @@ import type { Citation } from "@/types/advisor";
 // notice the Library shows on the same content. Since the U6 closeout every cited
 // paper is verified (P7), so the notice states provenance rather than disclaiming it.
 const EVIDENCE_DATASET_KINDS: ReadonlySet<Citation["kind"]> = new Set(["paper", "effect-grade"]);
+
+// Phase 3 U6 closeout. A citation's label and detail are PERSISTED in
+// advisor_messages.citations and loaded as stored (src/lib/advisor/repo.ts), so a
+// message written before U6 still carries a paper's old illustrative title and the
+// "Illustrative evidence summary" note. The rows are not edited (owner ruling). The
+// chip resolves a paper by its refId at render time instead: a verified paper shows
+// its current, fixture-verified title, and the stale note is not shown. An unknown
+// refId falls back to what was stored.
+function displayed(c: Citation): { label: string; detail?: string } {
+  if (c.kind !== "paper") return { label: c.label, detail: c.detail };
+  const paper = getPaperById(c.refId);
+  if (!paper || !(paper.doi || paper.pmid)) return { label: c.label, detail: c.detail };
+  return { label: paper.title };
+}
 
 const KIND_LABEL: Record<Citation["kind"], string> = {
   "effect-grade": "Evidence",
@@ -31,16 +46,17 @@ export function ProvenanceChips({ citations }: { citations: Citation[] }) {
       <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Sources">
         {citations.map((c) => {
           const href = citationHref(c);
+          const shown = displayed(c);
           const body = (
             <>
               <span className="font-medium text-muted">{KIND_LABEL[c.kind]}</span>
-              <span className="text-body">{c.label}</span>
+              <span className="text-body">{shown.label}</span>
             </>
           );
           const className =
             "inline-flex items-center gap-1 rounded-full border border-hairline bg-surface-soft px-2 py-0.5 text-xs";
           return (
-            <li key={`${c.kind}:${c.refId}`} title={c.detail}>
+            <li key={`${c.kind}:${c.refId}`} title={shown.detail}>
               {href ? (
                 <Link href={href} className={`${className} hover:bg-surface-card`}>
                   {body}
