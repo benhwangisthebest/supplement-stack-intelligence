@@ -1,0 +1,140 @@
+[
+  {
+    "module": "seed-biomarker-relevance",
+    "exportName": "SEED_BIOMARKER_RELEVANCE",
+    "typeName": "BiomarkerRelevanceRule",
+    "preamble": [
+      "import type { BiomarkerRelevanceRule } from \"@/types/biomarker\";",
+      "",
+      "// Seed-as-code: curated biomarker↔supplement relevance. NOT medical advice.",
+      "// Design §3.1, §8.5. Conservative links against the 15 seeded supplements only.",
+      "// biomarkerId → SEED_BIOMARKERS; supplementId → SEED_SUPPLEMENTS.",
+      "// Integrity-checked in biomarkers.test.ts.",
+      ""
+    ]
+  },
+  {
+    "module": "seed-biomarkers",
+    "exportName": "SEED_BIOMARKERS",
+    "typeName": "Biomarker",
+    "preamble": [
+      "import type { Biomarker } from \"@/types/biomarker\";",
+      "",
+      "// Seed-as-code: curated biomarker registry. NOT medical advice; population-level",
+      "// reference ranges only. Design §3.1, §8.5.",
+      "//",
+      "// unitConversions: keys are NORMALIZED units (lowercased, µ→u, spaces stripped) →",
+      "// multiply factor to reach canonicalUnit. The canonical unit's factor is 1.",
+      "// HbA1c is %-only by design: %↔mmol/mol is affine, not a simple factor (Design §8.5).",
+      ""
+    ]
+  },
+  {
+    "module": "seed-effects",
+    "exportName": "SEED_EFFECTS",
+    "typeName": "Effect",
+    "preamble": [
+      "import type { Effect } from \"@/types\";",
+      "",
+      "// Design §3.1, §8.5 — effect-level grades (>=25 effects, >=1 per supplement).",
+      "// Grades reflect curated sample data for the MVP, not a formal evidence review.",
+      ""
+    ]
+  },
+  {
+    "module": "seed-food-pairings",
+    "exportName": "SEED_FOOD_PAIRINGS",
+    "typeName": "InteractionRule",
+    "preamble": [
+      "import type { InteractionRule } from \"@/types/interaction\";",
+      "",
+      "// Seed-as-code: curated, conservative supplement↔food pairings (v12). NOT medical advice.",
+      "// Design Ref: §3.1, §8.5 — food-pairings data model.",
+      "// Curation rules (mirror seed-interactions.ts):",
+      "//   - only well-documented, absorption-relevant pairings;",
+      "//   - every supplementId must exist in SEED_SUPPLEMENTS (integrity-checked in tests);",
+      "//   - `direction: \"synergy\"` = pairs well (boosts/helps); `\"avoid\"` = reduces benefit / adds load;",
+      "//   - absence of a rule never implies \"no effect\".",
+      "// Severity convention (Design §4.4): synergy → \"info\"; avoid → \"caution\"/\"warning\".",
+      ""
+    ]
+  },
+  {
+    "module": "seed-interactions",
+    "exportName": "SEED_INTERACTIONS",
+    "typeName": "InteractionRule",
+    "preamble": [
+      "import type { InteractionRule } from \"@/types/interaction\";",
+      "",
+      "// Seed-as-code: curated, conservative interaction rules. NOT medical advice.",
+      "// Design §3.1, §8.5 — ≥8 supplement↔drug + ≥3 supplement↔supplement.",
+      "// Curation rule: only well-documented pairs; absence of a rule never implies \"safe\".",
+      "// All supplementId / otherSupplementId values must exist in SEED_SUPPLEMENTS",
+      "// (integrity-checked in interactions.test.ts).",
+      ""
+    ]
+  },
+  {
+    "module": "seed-papers",
+    "exportName": "SEED_PAPERS",
+    "typeName": "Paper",
+    "preamble": [
+      "import type { Paper } from \"@/types\";",
+      "",
+      "// Design Ref: §3.1, §5.1 — ILLUSTRATIVE evidence summaries, NOT citable studies.",
+      "//",
+      "// v13 (evidence-disclosure) removed authors/journal/year/link/studyType/sampleSize.",
+      "// These were LLM-recalled citations: real researchers and real journals, but with",
+      "// metadata that does not reliably match reality (e.g. Branch JD's creatine",
+      "// meta-analysis is 2003 in IJSNEM, not 2018 in JSCR). Real-looking and unverifiable",
+      "// is worse than absent — so provenance is gone rather than wrong, and the Paper type",
+      "// no longer has fields to put it in.",
+      "//",
+      "// The stripped values survive in git at d89cf1c. They are LEADS for a future",
+      "// grounding cycle, not sources: real literature needs a real DOI/PMID, verified.",
+      ""
+    ]
+  },
+  {
+    "module": "seed-products",
+    "exportName": "SEED_PRODUCTS",
+    "typeName": "Product",
+    "preamble": [
+      "import type { Product } from \"@/types\";",
+      "",
+      "// Design §8.5 — mock product catalog keyed by supplementId. Curated sample data,",
+      "// not real listings. v13 (evidence-disclosure): affiliateLink is null throughout —",
+      "// placeholder URLs pointed at a domain that sells nothing, so the card now renders",
+      "// no link rather than a dead one. Real listings need real URLs.",
+      "// Doses use the same unit as each supplement's generalDose so dose-fit can compute.",
+      ""
+    ]
+  },
+  {
+    "module": "seed-side-effects",
+    "exportName": "SEED_SIDE_EFFECTS",
+    "typeName": "SideEffectProfile",
+    "preamble": [
+      "// Domain (data) — side-effect-engine (v11). Curated commonly-reported effects.",
+      "// Design Ref: §8.5 — seed-as-code, curated sample data, NOT medical advice.",
+      "// Labels align with the sideEffects prose already in seed-supplements.ts, mapped",
+      "// to the canonical vocabulary. `paperIds` are intentionally empty for now",
+      "// (curated-dataset backed) — the UI shows citation chips only when present.",
+      "import type { SideEffectProfile } from \"@/types/side-effect\";",
+      "",
+      ""
+    ]
+  },
+  {
+    "module": "seed-supplements",
+    "exportName": "SEED_SUPPLEMENTS",
+    "typeName": "Supplement",
+    "preamble": [
+      "import type { Supplement } from \"@/types\";",
+      "",
+      "// Design §8.5 — minimum 15 supplements (Plan seed list).",
+      "// Seed-as-code: curated sample data, not medical advice. id === slug for simplicity.",
+      ""
+    ]
+  }
+]

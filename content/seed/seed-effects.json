@@ -1,0 +1,872 @@
+[
+  {
+    "id": "magnesium-sleep",
+    "supplementId": "magnesium",
+    "name": "Sleep quality",
+    "outcomeCategory": "sleep",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "May improve subjective sleep quality, particularly in older adults or those with low intake.",
+    "relevantPopulation": "adults with suboptimal magnesium status",
+    "studiedDose": {
+      "min": 200,
+      "max": 400,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "GABA",
+      "relaxation"
+    ],
+    "paperIds": [
+      "p-magnesium-sleep"
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Human trials, several in older adults.",
+          "paperIds": [
+            "p-magnesium-sleep"
+          ]
+        },
+        "studyQuality": {
+          "score": 2,
+          "rationale": "Small randomized trials with some bias risk.",
+          "paperIds": [
+            "p-magnesium-sleep"
+          ]
+        },
+        "consistency": {
+          "score": 2,
+          "rationale": "Subjective sleep benefit recurs, mainly with low status.",
+          "paperIds": [
+            "p-magnesium-sleep"
+          ]
+        },
+        "effectSize": {
+          "score": 1,
+          "rationale": "Small subjective improvement.",
+          "paperIds": [
+            "p-magnesium-sleep"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Largest in adults with suboptimal magnesium.",
+          "paperIds": []
+        }
+      }
+    }
+  },
+  {
+    "id": "magnesium-stress",
+    "supplementId": "magnesium",
+    "name": "Stress & relaxation",
+    "outcomeCategory": "stress",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Emerging evidence for stress symptom reduction, often combined with B6.",
+    "relevantPopulation": "adults reporting stress",
+    "studiedDose": {
+      "min": 200,
+      "max": 400,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "GABA",
+      "HPA-axis"
+    ],
+    "paperIds": [
+      "p-magnesium-sleep"
+    ]
+  },
+  {
+    "id": "magnesium-metabolic",
+    "supplementId": "magnesium",
+    "name": "Glucose metabolism",
+    "outcomeCategory": "metabolic",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Possible small improvements in insulin sensitivity in deficient individuals.",
+    "relevantPopulation": "insulin-resistant adults with low magnesium",
+    "studiedDose": {
+      "min": 250,
+      "max": 400,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "insulin-sensitivity"
+    ],
+    "paperIds": []
+  },
+  {
+    "id": "creatine-strength",
+    "supplementId": "creatine",
+    "name": "Strength & power output",
+    "outcomeCategory": "training",
+    "grade": "A",
+    "confidence": "high",
+    "summary": "Robust evidence for improved strength, power, and lean mass when combined with resistance training.",
+    "relevantPopulation": "training adults across age ranges",
+    "studiedDose": {
+      "min": 3,
+      "max": 5,
+      "unit": "g"
+    },
+    "mechanismTags": [
+      "phosphocreatine",
+      "ATP"
+    ],
+    "paperIds": [
+      "p-creatine-strength"
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 3,
+          "rationale": "Extensive RCTs in trained humans.",
+          "paperIds": [
+            "p-creatine-strength"
+          ]
+        },
+        "studyQuality": {
+          "score": 3,
+          "rationale": "Many randomized, placebo-controlled trials.",
+          "paperIds": [
+            "p-creatine-strength"
+          ]
+        },
+        "consistency": {
+          "score": 3,
+          "rationale": "Findings replicate across populations and protocols.",
+          "paperIds": [
+            "p-creatine-strength"
+          ]
+        },
+        "effectSize": {
+          "score": 3,
+          "rationale": "Meaningful strength/power and lean-mass gains.",
+          "paperIds": [
+            "p-creatine-strength"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Strongest in training adults; less relevant to the sedentary.",
+          "paperIds": []
+        }
+      }
+    }
+  },
+  {
+    "id": "creatine-cognition",
+    "supplementId": "creatine",
+    "name": "Cognitive performance",
+    "outcomeCategory": "focus",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Emerging evidence for cognitive benefits, strongest under sleep deprivation or in vegetarians.",
+    "relevantPopulation": "sleep-deprived adults, vegetarians",
+    "studiedDose": {
+      "min": 5,
+      "max": 5,
+      "unit": "g"
+    },
+    "mechanismTags": [
+      "brain-energy"
+    ],
+    "paperIds": [
+      "p-creatine-cognition"
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Several human trials, smaller and more recent.",
+          "paperIds": [
+            "p-creatine-cognition"
+          ]
+        },
+        "studyQuality": {
+          "score": 1,
+          "rationale": "Mixed designs; some underpowered.",
+          "paperIds": [
+            "p-creatine-cognition"
+          ]
+        },
+        "consistency": {
+          "score": 1,
+          "rationale": "Benefit appears mainly under stressors (sleep loss, vegetarian).",
+          "paperIds": []
+        },
+        "effectSize": {
+          "score": 1,
+          "rationale": "Modest and context-dependent.",
+          "paperIds": [
+            "p-creatine-cognition"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Most relevant to sleep-deprived adults and vegetarians.",
+          "paperIds": []
+        }
+      }
+    }
+  },
+  {
+    "id": "creatine-recovery",
+    "supplementId": "creatine",
+    "name": "Recovery",
+    "outcomeCategory": "recovery",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "May reduce muscle damage markers and support recovery between sessions.",
+    "relevantPopulation": "resistance-trained adults",
+    "studiedDose": {
+      "min": 3,
+      "max": 5,
+      "unit": "g"
+    },
+    "mechanismTags": [
+      "phosphocreatine"
+    ],
+    "paperIds": []
+  },
+  {
+    "id": "vitamin-d-deficiency",
+    "supplementId": "vitamin-d",
+    "name": "Correcting deficiency",
+    "outcomeCategory": "deficiency",
+    "grade": "A",
+    "confidence": "high",
+    "summary": "Effectively raises serum 25(OH)D in deficient individuals.",
+    "relevantPopulation": "adults with low vitamin D status",
+    "studiedDose": {
+      "min": 1000,
+      "max": 4000,
+      "unit": "IU"
+    },
+    "mechanismTags": [
+      "calcitriol"
+    ],
+    "paperIds": [
+      "p-vitamin-d-deficiency"
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 3,
+          "rationale": "Direct human supplementation trials.",
+          "paperIds": [
+            "p-vitamin-d-deficiency"
+          ]
+        },
+        "studyQuality": {
+          "score": 3,
+          "rationale": "Well-controlled dose-response data.",
+          "paperIds": [
+            "p-vitamin-d-deficiency"
+          ]
+        },
+        "consistency": {
+          "score": 3,
+          "rationale": "Reliably raises serum 25(OH)D.",
+          "paperIds": [
+            "p-vitamin-d-deficiency"
+          ]
+        },
+        "effectSize": {
+          "score": 2,
+          "rationale": "Clear biomarker correction; clinical outcomes vary.",
+          "paperIds": [
+            "p-vitamin-d-deficiency"
+          ]
+        },
+        "populationRelevance": {
+          "score": 3,
+          "rationale": "Directly applicable to deficient adults.",
+          "paperIds": []
+        }
+      }
+    }
+  },
+  {
+    "id": "vitamin-d-immune",
+    "supplementId": "vitamin-d",
+    "name": "Immune support",
+    "outcomeCategory": "foundational",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Mixed evidence; respiratory infection benefit appears largest in deficient people.",
+    "relevantPopulation": "deficient adults",
+    "studiedDose": {
+      "min": 1000,
+      "max": 4000,
+      "unit": "IU"
+    },
+    "mechanismTags": [
+      "immune-modulation"
+    ],
+    "paperIds": [
+      "p-vitamin-d-deficiency"
+    ]
+  },
+  {
+    "id": "fish-oil-cardiovascular",
+    "supplementId": "fish-oil",
+    "name": "Cardiovascular support",
+    "outcomeCategory": "metabolic",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "May lower triglycerides; benefits dose-dependent on EPA/DHA content.",
+    "relevantPopulation": "adults with elevated triglycerides",
+    "studiedDose": {
+      "min": 1000,
+      "max": 4000,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "triglyceride-lowering",
+      "anti-inflammatory"
+    ],
+    "paperIds": [
+      "p-fish-oil-cv"
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Human trials on triglyceride lowering.",
+          "paperIds": [
+            "p-fish-oil-cv"
+          ]
+        },
+        "studyQuality": {
+          "score": 3,
+          "rationale": "Includes large randomized trials.",
+          "paperIds": [
+            "p-fish-oil-cv"
+          ]
+        },
+        "consistency": {
+          "score": 2,
+          "rationale": "Triglyceride effect consistent; broader CV outcomes mixed.",
+          "paperIds": [
+            "p-fish-oil-cv"
+          ]
+        },
+        "effectSize": {
+          "score": 1,
+          "rationale": "Dose-dependent and modest at common doses.",
+          "paperIds": [
+            "p-fish-oil-cv"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Largest in adults with elevated triglycerides.",
+          "paperIds": []
+        }
+      }
+    }
+  },
+  {
+    "id": "fish-oil-mood",
+    "supplementId": "fish-oil",
+    "name": "Mood support",
+    "outcomeCategory": "mood",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Some evidence for depressive symptoms with higher-EPA formulations.",
+    "relevantPopulation": "adults with depressive symptoms",
+    "studiedDose": {
+      "min": 1000,
+      "max": 2000,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "anti-inflammatory"
+    ],
+    "paperIds": [
+      "p-fish-oil-mood"
+    ]
+  },
+  {
+    "id": "fish-oil-longevity",
+    "supplementId": "fish-oil",
+    "name": "Healthy aging",
+    "outcomeCategory": "longevity",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Associated with favorable markers; causal longevity benefit unproven.",
+    "relevantPopulation": "general adults",
+    "studiedDose": {
+      "min": 1000,
+      "max": 2000,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "anti-inflammatory"
+    ],
+    "paperIds": []
+  },
+  {
+    "id": "l-theanine-focus",
+    "supplementId": "l-theanine",
+    "name": "Calm focus (with caffeine)",
+    "outcomeCategory": "focus",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "Combined with caffeine, improves attention and reduces jitteriness in several trials.",
+    "relevantPopulation": "healthy adults",
+    "studiedDose": {
+      "min": 100,
+      "max": 200,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "alpha-waves",
+      "glutamate-modulation"
+    ],
+    "paperIds": [
+      "p-ltheanine-focus"
+    ]
+  },
+  {
+    "id": "l-theanine-stress",
+    "supplementId": "l-theanine",
+    "name": "Stress & relaxation",
+    "outcomeCategory": "stress",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "May reduce acute stress and support relaxation without sedation.",
+    "relevantPopulation": "adults under acute stress",
+    "studiedDose": {
+      "min": 200,
+      "max": 400,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "alpha-waves",
+      "GABA"
+    ],
+    "paperIds": [
+      "p-ltheanine-stress"
+    ]
+  },
+  {
+    "id": "glycine-sleep",
+    "supplementId": "glycine",
+    "name": "Sleep quality",
+    "outcomeCategory": "sleep",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "Pre-bed glycine may improve subjective sleep quality and next-day alertness.",
+    "relevantPopulation": "adults with mild sleep complaints",
+    "studiedDose": {
+      "min": 3,
+      "max": 3,
+      "unit": "g"
+    },
+    "mechanismTags": [
+      "inhibitory-neurotransmitter",
+      "thermoregulation"
+    ],
+    "paperIds": [
+      "p-glycine-sleep"
+    ]
+  },
+  {
+    "id": "melatonin-sleep",
+    "supplementId": "melatonin",
+    "name": "Sleep onset",
+    "outcomeCategory": "sleep",
+    "grade": "A",
+    "confidence": "high",
+    "summary": "Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient.",
+    "relevantPopulation": "adults with delayed sleep onset, jet lag",
+    "studiedDose": {
+      "min": 0.5,
+      "max": 3,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "circadian",
+      "MT-receptor"
+    ],
+    "paperIds": [
+      "p-melatonin-sleep"
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 3,
+          "rationale": "Many human trials on sleep onset.",
+          "paperIds": [
+            "p-melatonin-sleep"
+          ]
+        },
+        "studyQuality": {
+          "score": 3,
+          "rationale": "Randomized, placebo-controlled, meta-analyzed.",
+          "paperIds": [
+            "p-melatonin-sleep"
+          ]
+        },
+        "consistency": {
+          "score": 2,
+          "rationale": "Onset-latency benefit consistent; sleep-quality effects smaller.",
+          "paperIds": [
+            "p-melatonin-sleep"
+          ]
+        },
+        "effectSize": {
+          "score": 2,
+          "rationale": "Reliable but modest reduction in sleep latency.",
+          "paperIds": [
+            "p-melatonin-sleep"
+          ]
+        },
+        "populationRelevance": {
+          "score": 3,
+          "rationale": "Directly relevant to delayed onset and jet lag.",
+          "paperIds": []
+        }
+      }
+    }
+  },
+  {
+    "id": "ashwagandha-stress",
+    "supplementId": "ashwagandha",
+    "name": "Stress & cortisol",
+    "outcomeCategory": "stress",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "Multiple trials show reduced perceived stress and cortisol over 6-8 weeks.",
+    "relevantPopulation": "chronically stressed adults",
+    "studiedDose": {
+      "min": 300,
+      "max": 600,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "HPA-axis",
+      "cortisol-modulation"
+    ],
+    "paperIds": [
+      "p-ashwagandha-stress"
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 2,
+          "rationale": "Multiple human RCTs over 6-8 weeks.",
+          "paperIds": [
+            "p-ashwagandha-stress"
+          ]
+        },
+        "studyQuality": {
+          "score": 2,
+          "rationale": "Randomized but mostly small, single-region trials.",
+          "paperIds": [
+            "p-ashwagandha-stress"
+          ]
+        },
+        "consistency": {
+          "score": 2,
+          "rationale": "Stress/cortisol reductions repeat across trials.",
+          "paperIds": [
+            "p-ashwagandha-stress"
+          ]
+        },
+        "effectSize": {
+          "score": 2,
+          "rationale": "Moderate reduction in perceived stress.",
+          "paperIds": [
+            "p-ashwagandha-stress"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Studied in chronically stressed adults.",
+          "paperIds": []
+        }
+      }
+    }
+  },
+  {
+    "id": "ashwagandha-sleep",
+    "supplementId": "ashwagandha",
+    "name": "Sleep quality",
+    "outcomeCategory": "sleep",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Some evidence for improved sleep, often secondary to stress reduction.",
+    "relevantPopulation": "stressed adults with sleep complaints",
+    "studiedDose": {
+      "min": 300,
+      "max": 600,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "HPA-axis"
+    ],
+    "paperIds": [
+      "p-ashwagandha-stress"
+    ]
+  },
+  {
+    "id": "berberine-metabolic",
+    "supplementId": "berberine",
+    "name": "Blood sugar control",
+    "outcomeCategory": "metabolic",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "May lower fasting glucose and HbA1c; effect size comparable to some first-line agents in small trials.",
+    "relevantPopulation": "adults with elevated blood sugar",
+    "studiedDose": {
+      "min": 900,
+      "max": 1500,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "AMPK",
+      "insulin-sensitivity"
+    ],
+    "paperIds": [
+      "p-berberine-metabolic"
+    ]
+  },
+  {
+    "id": "zinc-immune",
+    "supplementId": "zinc",
+    "name": "Immune / cold duration",
+    "outcomeCategory": "foundational",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "Lozenges started early may modestly reduce common-cold duration.",
+    "relevantPopulation": "adults at cold onset",
+    "studiedDose": {
+      "min": 10,
+      "max": 25,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "immune-cell-function"
+    ],
+    "paperIds": [
+      "p-zinc-immune"
+    ]
+  },
+  {
+    "id": "zinc-deficiency",
+    "supplementId": "zinc",
+    "name": "Correcting deficiency",
+    "outcomeCategory": "deficiency",
+    "grade": "A",
+    "confidence": "high",
+    "summary": "Effectively restores zinc status in deficient individuals.",
+    "relevantPopulation": "adults with low zinc intake",
+    "studiedDose": {
+      "min": 8,
+      "max": 25,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "enzyme-cofactor"
+    ],
+    "paperIds": [
+      "p-zinc-deficiency"
+    ]
+  },
+  {
+    "id": "vitamin-b12-deficiency",
+    "supplementId": "vitamin-b12",
+    "name": "Correcting deficiency",
+    "outcomeCategory": "deficiency",
+    "grade": "A",
+    "confidence": "high",
+    "summary": "Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    "relevantPopulation": "vegans, older adults, malabsorbers",
+    "studiedDose": {
+      "min": 250,
+      "max": 1000,
+      "unit": "mcg"
+    },
+    "mechanismTags": [
+      "methylation"
+    ],
+    "paperIds": [
+      "p-b12-deficiency"
+    ]
+  },
+  {
+    "id": "caffeine-focus",
+    "supplementId": "caffeine",
+    "name": "Alertness & focus",
+    "outcomeCategory": "focus",
+    "grade": "A",
+    "confidence": "high",
+    "summary": "Strong evidence for improved alertness, reaction time, and vigilance.",
+    "relevantPopulation": "healthy adults",
+    "studiedDose": {
+      "min": 100,
+      "max": 200,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "adenosine-antagonism"
+    ],
+    "paperIds": [
+      "p-caffeine-focus"
+    ],
+    "evidenceProfile": {
+      "dimensions": {
+        "humanEvidence": {
+          "score": 3,
+          "rationale": "Large human literature on alertness.",
+          "paperIds": [
+            "p-caffeine-focus"
+          ]
+        },
+        "studyQuality": {
+          "score": 3,
+          "rationale": "Numerous controlled crossover trials.",
+          "paperIds": [
+            "p-caffeine-focus"
+          ]
+        },
+        "consistency": {
+          "score": 3,
+          "rationale": "Alertness/vigilance gains highly reproducible.",
+          "paperIds": [
+            "p-caffeine-focus"
+          ]
+        },
+        "effectSize": {
+          "score": 2,
+          "rationale": "Reliable, moderate improvement.",
+          "paperIds": [
+            "p-caffeine-focus"
+          ]
+        },
+        "populationRelevance": {
+          "score": 2,
+          "rationale": "Broad in healthy adults; tolerance varies.",
+          "paperIds": []
+        }
+      }
+    }
+  },
+  {
+    "id": "caffeine-training",
+    "supplementId": "caffeine",
+    "name": "Exercise performance",
+    "outcomeCategory": "training",
+    "grade": "A",
+    "confidence": "high",
+    "summary": "Improves endurance and reduces perceived exertion across many trials.",
+    "relevantPopulation": "athletes, training adults",
+    "studiedDose": {
+      "min": 150,
+      "max": 300,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "adenosine-antagonism",
+      "ergogenic"
+    ],
+    "paperIds": [
+      "p-caffeine-training"
+    ]
+  },
+  {
+    "id": "taurine-training",
+    "supplementId": "taurine",
+    "name": "Exercise performance",
+    "outcomeCategory": "training",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Small possible endurance benefits; evidence mixed.",
+    "relevantPopulation": "training adults",
+    "studiedDose": {
+      "min": 1000,
+      "max": 3000,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "osmoregulation",
+      "ergogenic"
+    ],
+    "paperIds": [
+      "p-taurine-training"
+    ]
+  },
+  {
+    "id": "nac-antioxidant",
+    "supplementId": "nac",
+    "name": "Antioxidant / glutathione",
+    "outcomeCategory": "longevity",
+    "grade": "C",
+    "confidence": "low",
+    "summary": "Raises glutathione; broad clinical benefits remain context-dependent.",
+    "relevantPopulation": "adults under oxidative stress",
+    "studiedDose": {
+      "min": 600,
+      "max": 1800,
+      "unit": "mg"
+    },
+    "mechanismTags": [
+      "glutathione",
+      "antioxidant"
+    ],
+    "paperIds": [
+      "p-nac-antioxidant"
+    ]
+  },
+  {
+    "id": "protein-powder-training",
+    "supplementId": "protein-powder",
+    "name": "Muscle protein synthesis",
+    "outcomeCategory": "training",
+    "grade": "A",
+    "confidence": "high",
+    "summary": "Supplemental protein supports muscle mass and strength gains when total intake is adequate.",
+    "relevantPopulation": "resistance-trained adults",
+    "studiedDose": {
+      "min": 20,
+      "max": 40,
+      "unit": "g"
+    },
+    "mechanismTags": [
+      "leucine",
+      "MPS"
+    ],
+    "paperIds": [
+      "p-protein-mps"
+    ]
+  },
+  {
+    "id": "protein-powder-recovery",
+    "supplementId": "protein-powder",
+    "name": "Recovery & satiety",
+    "outcomeCategory": "recovery",
+    "grade": "B",
+    "confidence": "moderate",
+    "summary": "Supports post-exercise recovery and appetite control.",
+    "relevantPopulation": "active adults",
+    "studiedDose": {
+      "min": 20,
+      "max": 40,
+      "unit": "g"
+    },
+    "mechanismTags": [
+      "leucine",
+      "satiety"
+    ],
+    "paperIds": [
+      "p-protein-mps"
+    ]
+  }
+]

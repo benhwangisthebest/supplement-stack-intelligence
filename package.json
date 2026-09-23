@@ -20,7 +20,8 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed": "tsx src/lib/db/seed.ts",
     "probe:advisor": "tsx scripts/probes/openai-advisor-probe.ts",
-    "probe:labimport": "tsx scripts/probes/openai-labimport-probe.ts"
+    "probe:labimport": "tsx scripts/probes/openai-labimport-probe.ts",
+    "content:generate": "node content/generate.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

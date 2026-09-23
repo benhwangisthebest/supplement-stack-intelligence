@@ -18,7 +18,8 @@
 //                Infinity, -0, symbols and bigints throw rather than degrade
 //
 // No comments and no blank lines are emitted inside the value. Editorial notes
-// that used to live between array elements have no home here yet (FU-49).
+// that used to live between array elements live in content/notes.json, a
+// sidecar that is never emitted (FU-49, decided by U2 on 2026-09-23).
 
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const INDENT = "  ";

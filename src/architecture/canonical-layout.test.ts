@@ -21,8 +21,9 @@
 // THE ROUND TRIP, per module: import the exported SEED_* value →
 // JSON.stringify → JSON.parse → content/emit.mjs → compare with the file on
 // disk. Anything JSON cannot carry (undefined, a Date, a function, a spelling
-// like 18.0) fails here rather than being lost later. No JSON corpus is
-// committed.
+// like 18.0) fails here rather than being lost later. ~~No JSON corpus is
+// committed.~~ [2026-09-23, U2] One is now: content/seed/*.json is the source,
+// and CONTENT_FIDELITY below is the guard that compares against it.
 //
 // The preamble (everything before `export const`) is read from the file under
 // test, so it is reproduced by construction and proves nothing.
@@ -35,6 +36,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { emitModule } from "../../content/emit.mjs";
+import { renderAll } from "../../content/generate.mjs";
 
 const ROOT = path.resolve(__dirname, "../..");
 
@@ -87,5 +89,55 @@ describe(`CANONICAL_LAYOUT — ${modules.length} SEED_* modules compared byte-fo
 
     const identical = emitted.equals(committed);
     expect(identical, identical ? "" : `${rel}: ${firstDifference(emitted, committed)}`).toBe(true);
+  });
+});
+
+// CONTENT_FIDELITY — each committed SEED_* module is byte-for-byte what
+// content/generate.mjs renders from the JSON corpus in content/.
+// Spec: Phase 3 plan §4 U2, landing (a); the U1 AC-2 obligation (owner, 2026-09-23).
+//
+// This is the half CANONICAL_LAYOUT cannot see. Its reference value is the JSON
+// under content/seed/, not the file under test, so a hand-edited value, a hand
+// key-reorder, or a hand-edited preamble in a generated .ts each fails here.
+// The fix is never to edit src/data/seed-*.ts: edit the JSON and run
+// `npm run content:generate`.
+//
+// ANTI-VACUITY: the rendered set must equal the tracked SEED_* set exactly, in
+// both directions, and is pinned at EXPECTED_MODULES.
+
+const rendered = renderAll();
+
+describe(`CONTENT_FIDELITY — ${rendered.length} generated modules compared byte-for-byte with content/`, () => {
+  it("renders exactly the tracked SEED_* set, never zero", () => {
+    expect(rendered.length).toBe(EXPECTED_MODULES);
+    expect(rendered.map((r) => r.target).sort()).toEqual(modules);
+  });
+
+  it.each(rendered.map((r) => [r.target, r.text] as const))(
+    "%s — is exactly what content/generate.mjs renders from JSON",
+    (rel, text) => {
+      const committed = readFileSync(path.join(ROOT, rel));
+      const expected = Buffer.from(text, "utf8");
+      const identical = expected.equals(committed);
+      expect(
+        identical,
+        identical ? "" : `${rel}: hand-edited? ${firstDifference(expected, committed)}. Edit content/seed/ and run npm run content:generate`,
+      ).toBe(true);
+    },
+  );
+});
+
+// FU-49 — editorial notes live in content/notes.json, a sidecar the generator
+// never reads. A note must still point at a record that exists, or it rots.
+describe("CONTENT_NOTES — every sidecar note anchors to a real record", () => {
+  const notes = JSON.parse(readFileSync(path.join(ROOT, "content/notes.json"), "utf8")) as {
+    module: string;
+    anchorId: string;
+  }[];
+
+  it.each(notes.map((n) => [`${n.module}#${n.anchorId}`, n] as const))("%s resolves", (_label, n) => {
+    const file = path.join(ROOT, "content/seed", `${n.module}.json`);
+    const ids = (JSON.parse(readFileSync(file, "utf8")) as { id?: unknown }[]).map((r) => r.id);
+    expect(ids, `${n.module} has no record with id ${n.anchorId}`).toContain(n.anchorId);
   });
 });
