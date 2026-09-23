@@ -1,3 +1,4 @@
+// GENERATED from content/seed/seed-effects.json — edit the JSON, then run npm run content:generate
 import type { Effect } from "@/types";
 
 // Design §3.1, §8.5 — effect-level grades (>=25 effects, >=1 per supplement).

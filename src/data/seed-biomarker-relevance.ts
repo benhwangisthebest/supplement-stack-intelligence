@@ -1,3 +1,4 @@
+// GENERATED from content/seed/seed-biomarker-relevance.json — edit the JSON, then run npm run content:generate
 import type { BiomarkerRelevanceRule } from "@/types/biomarker";
 
 // Seed-as-code: curated biomarker↔supplement relevance. NOT medical advice.

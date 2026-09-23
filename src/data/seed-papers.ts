@@ -1,3 +1,4 @@
+// GENERATED from content/seed/seed-papers.json — edit the JSON, then run npm run content:generate
 import type { Paper } from "@/types";
 
 // Design Ref: §3.1, §5.1 — ILLUSTRATIVE evidence summaries, NOT citable studies.

@@ -1,3 +1,4 @@
+// GENERATED from content/seed/seed-biomarkers.json — edit the JSON, then run npm run content:generate
 import type { Biomarker } from "@/types/biomarker";
 
 // Seed-as-code: curated biomarker registry. NOT medical advice; population-level

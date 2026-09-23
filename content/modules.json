@@ -4,6 +4,7 @@
     "exportName": "SEED_BIOMARKER_RELEVANCE",
     "typeName": "BiomarkerRelevanceRule",
     "preamble": [
+      "// GENERATED from content/seed/seed-biomarker-relevance.json — edit the JSON, then run npm run content:generate",
       "import type { BiomarkerRelevanceRule } from \"@/types/biomarker\";",
       "",
       "// Seed-as-code: curated biomarker↔supplement relevance. NOT medical advice.",
@@ -18,6 +19,7 @@
     "exportName": "SEED_BIOMARKERS",
     "typeName": "Biomarker",
     "preamble": [
+      "// GENERATED from content/seed/seed-biomarkers.json — edit the JSON, then run npm run content:generate",
       "import type { Biomarker } from \"@/types/biomarker\";",
       "",
       "// Seed-as-code: curated biomarker registry. NOT medical advice; population-level",
@@ -34,6 +36,7 @@
     "exportName": "SEED_EFFECTS",
     "typeName": "Effect",
     "preamble": [
+      "// GENERATED from content/seed/seed-effects.json — edit the JSON, then run npm run content:generate",
       "import type { Effect } from \"@/types\";",
       "",
       "// Design §3.1, §8.5 — effect-level grades (>=25 effects, >=1 per supplement).",
@@ -46,6 +49,7 @@
     "exportName": "SEED_FOOD_PAIRINGS",
     "typeName": "InteractionRule",
     "preamble": [
+      "// GENERATED from content/seed/seed-food-pairings.json — edit the JSON, then run npm run content:generate",
       "import type { InteractionRule } from \"@/types/interaction\";",
       "",
       "// Seed-as-code: curated, conservative supplement↔food pairings (v12). NOT medical advice.",
@@ -64,6 +68,7 @@
     "exportName": "SEED_INTERACTIONS",
     "typeName": "InteractionRule",
     "preamble": [
+      "// GENERATED from content/seed/seed-interactions.json — edit the JSON, then run npm run content:generate",
       "import type { InteractionRule } from \"@/types/interaction\";",
       "",
       "// Seed-as-code: curated, conservative interaction rules. NOT medical advice.",
@@ -79,6 +84,7 @@
     "exportName": "SEED_PAPERS",
     "typeName": "Paper",
     "preamble": [
+      "// GENERATED from content/seed/seed-papers.json — edit the JSON, then run npm run content:generate",
       "import type { Paper } from \"@/types\";",
       "",
       "// Design Ref: §3.1, §5.1 — ILLUSTRATIVE evidence summaries, NOT citable studies.",
@@ -100,6 +106,7 @@
     "exportName": "SEED_PRODUCTS",
     "typeName": "Product",
     "preamble": [
+      "// GENERATED from content/seed/seed-products.json — edit the JSON, then run npm run content:generate",
       "import type { Product } from \"@/types\";",
       "",
       "// Design §8.5 — mock product catalog keyed by supplementId. Curated sample data,",
@@ -115,6 +122,7 @@
     "exportName": "SEED_SIDE_EFFECTS",
     "typeName": "SideEffectProfile",
     "preamble": [
+      "// GENERATED from content/seed/seed-side-effects.json — edit the JSON, then run npm run content:generate",
       "// Domain (data) — side-effect-engine (v11). Curated commonly-reported effects.",
       "// Design Ref: §8.5 — seed-as-code, curated sample data, NOT medical advice.",
       "// Labels align with the sideEffects prose already in seed-supplements.ts, mapped",
@@ -130,6 +138,7 @@
     "exportName": "SEED_SUPPLEMENTS",
     "typeName": "Supplement",
     "preamble": [
+      "// GENERATED from content/seed/seed-supplements.json — edit the JSON, then run npm run content:generate",
       "import type { Supplement } from \"@/types\";",
       "",
       "// Design §8.5 — minimum 15 supplements (Plan seed list).",

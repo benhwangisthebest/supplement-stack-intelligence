@@ -1,3 +1,4 @@
+// GENERATED from content/seed/seed-products.json — edit the JSON, then run npm run content:generate
 import type { Product } from "@/types";
 
 // Design §8.5 — mock product catalog keyed by supplementId. Curated sample data,

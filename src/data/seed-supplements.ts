@@ -1,3 +1,4 @@
+// GENERATED from content/seed/seed-supplements.json — edit the JSON, then run npm run content:generate
 import type { Supplement } from "@/types";
 
 // Design §8.5 — minimum 15 supplements (Plan seed list).

@@ -1,3 +1,4 @@
+// GENERATED from content/seed/seed-food-pairings.json — edit the JSON, then run npm run content:generate
 import type { InteractionRule } from "@/types/interaction";
 
 // Seed-as-code: curated, conservative supplement↔food pairings (v12). NOT medical advice.

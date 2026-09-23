@@ -1,3 +1,4 @@
+// GENERATED from content/seed/seed-side-effects.json — edit the JSON, then run npm run content:generate
 // Domain (data) — side-effect-engine (v11). Curated commonly-reported effects.
 // Design Ref: §8.5 — seed-as-code, curated sample data, NOT medical advice.
 // Labels align with the sideEffects prose already in seed-supplements.ts, mapped
