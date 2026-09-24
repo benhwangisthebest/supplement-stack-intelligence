@@ -1,10 +1,12 @@
 import { foodPairingsForSupplement } from "@/lib/interactions";
-import { DISCLAIMERS } from "@/lib/safety";
+import { COVERAGE } from "@/lib/safety";
+import { CoverageLimit } from "@/components/evidence/CoverageLimit";
 import type { InteractionRule } from "@/types/interaction";
 
 // Design Ref: §5.1 — Library "Food & absorption" section. Server component over
 // static seed data. Synergy renders as helpful guidance; avoid as gentle caution.
-// Empty state never implies "no effect" (Plan SC: non-implying-safety copy).
+// Empty state never implies "no effect" (Plan SC: non-implying-safety copy); Phase 3
+// U7 routes both coverage statements through <CoverageLimit> (CoverageLimit.test.tsx).
 
 function PairingCard({
   rule,
@@ -43,10 +45,7 @@ export function FoodPairingSection({ supplementId }: { supplementId: string }) {
       <h2 className="text-lg font-semibold tracking-tight">Food &amp; absorption</h2>
 
       {rules.length === 0 ? (
-        <p className="mt-2 text-sm text-muted">
-          No food-pairing guidance in our dataset yet. This does not mean food has
-          no effect — our dataset is limited.
-        </p>
+        <CoverageLimit copy={COVERAGE.foodNone} className="mt-2" />
       ) : (
         <div className="mt-3 space-y-5">
           {pairsWell.length > 0 && (
@@ -73,7 +72,7 @@ export function FoodPairingSection({ supplementId }: { supplementId: string }) {
         </div>
       )}
 
-      <p className="mt-3 text-xs text-muted-soft">{DISCLAIMERS.food}</p>
+      <CoverageLimit copy={COVERAGE.foodLimit} className="mt-3" />
     </section>
   );
 }

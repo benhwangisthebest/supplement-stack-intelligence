@@ -17,6 +17,7 @@ import {
   getSupplement,
   labTrends,
   searchLibrary,
+  sideEffectWatch,
   toolByName,
 } from "./tools";
 import { makeContext } from "./mock-adapter";
@@ -133,6 +134,20 @@ describe("checkInteractions", () => {
     );
     expect(r.ok).toBe(false);
     expect(r.emptyReason).toMatch(/no medications/i);
+  });
+});
+
+// Phase 3 U7 (S8) — coverage honesty. An empty watch list must not read as "no
+// side-effects": the dataset is curated and partial, the same hedge
+// checkInteractions already carries. A custom item (no supplementId) can never
+// match a curated profile, so this case does not depend on which seed rows exist.
+describe("sideEffectWatch", () => {
+  it("empty (never 'none can occur') when no curated profile matches", () => {
+    const custom = { ...ctx.stackItems[0], supplementId: null, customName: "Made-up blend" };
+    const r = sideEffectWatch.handler({}, makeContext({ stackItems: [custom] }));
+    expect(r.ok).toBe(false);
+    expect(r.emptyReason).toMatch(/dataset is limited/i);
+    expect(r.emptyReason).toMatch(/does not mean/i);
   });
 });
 

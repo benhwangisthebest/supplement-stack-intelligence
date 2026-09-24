@@ -30,6 +30,85 @@ export const DISCLAIMERS = {
 } as const;
 
 /**
+ * Phase 3 U7 — coverage honesty (roadmap item 4, [P3-X4], CLAUDE.md §2.2 rule 10).
+ * Every surface that shows a curated dataset states its coverage limit through
+ * `<CoverageLimit copy={COVERAGE.…} />`. `none`: the dataset holds nothing for this
+ * subject, and that must not read as "there is nothing". `limit`: it holds
+ * something, and that is not everything. Reviewed strings are reused by
+ * reference, not retyped, so one wording cannot drift into two.
+ * Cycle record: docs/01-plan/features/p3-u7-coverage-honesty.plan.md.
+ */
+export type CoverageDataset =
+  | "effects"
+  | "interactions"
+  | "food"
+  | "side-effects"
+  | "safety-lists"
+  | "stack-evaluation";
+export type CoverageState = "none" | "limit";
+export interface CoverageCopy {
+  dataset: CoverageDataset;
+  state: CoverageState;
+  text: string;
+}
+
+export const COVERAGE = {
+  effectsNone: {
+    dataset: "effects",
+    state: "none",
+    text: "No graded effects for this supplement in our dataset yet. This does not mean it has no effect — our dataset is limited.",
+  },
+  effectsLimit: {
+    dataset: "effects",
+    state: "limit",
+    text: "These are the effects this library has graded so far. An effect not shown here has not been assessed — that is not the same as having no effect.",
+  },
+  interactionsNone: {
+    dataset: "interactions",
+    state: "none",
+    text: "No known interactions in our dataset. This does not mean a combination is safe — our dataset is limited.",
+  },
+  interactionsLimit: { dataset: "interactions", state: "limit", text: DISCLAIMERS.interaction },
+  foodNone: {
+    dataset: "food",
+    state: "none",
+    text: "No food-pairing guidance in our dataset yet. This does not mean food has no effect — our dataset is limited.",
+  },
+  foodLimit: { dataset: "food", state: "limit", text: DISCLAIMERS.food },
+  watchNone: {
+    dataset: "side-effects",
+    state: "none",
+    text: "No notes on what to watch for this supplement in our dataset yet. This does not mean it has no side effects — our dataset is limited.",
+  },
+  watchLimit: { dataset: "side-effects", state: "limit", text: DISCLAIMERS.sideEffect },
+  sideEffectsNone: {
+    dataset: "safety-lists",
+    state: "none",
+    text: "No side effects listed in our dataset. This does not mean none can occur — our dataset is limited.",
+  },
+  contraindicationsNone: {
+    dataset: "safety-lists",
+    state: "none",
+    text: "No contraindications listed in our dataset. This does not mean there are none — our dataset is limited.",
+  },
+  safetyListsLimit: {
+    dataset: "safety-lists",
+    state: "limit",
+    text: "Side effects and contraindications show what our dataset holds, not everything that can occur. If you take medications, are pregnant, or have a medical condition, this may be worth discussing with a clinician.",
+  },
+  stackEvaluationLimit: {
+    dataset: "stack-evaluation",
+    state: "limit",
+    text: "These checks cover only what our curated dataset holds. The absence of a flag does not mean a stack is safe.",
+  },
+  stackCustomItems: {
+    dataset: "stack-evaluation",
+    state: "limit",
+    text: "Custom items that are not in the Library are not checked for interactions, dose, allergens or evidence.",
+  },
+} as const satisfies Record<string, CoverageCopy>;
+
+/**
  * Affirmative directive/diagnostic claims the product must never produce.
  * Phrased as full clauses so safe negations ("does not diagnose, treat, cure")
  * in disclaimers are not falsely flagged.

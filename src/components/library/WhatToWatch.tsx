@@ -1,7 +1,13 @@
 // Presentation — side-effect-engine v11 (Design §5.3). Curated "what to watch"
 // section on a Library supplement page. Public — driven only by the curated seed
-// (no user data). Correlational language via lib/safety; hidden when no profile.
-import { DISCLAIMERS } from "@/lib/safety";
+// (no user data). Correlational language via lib/safety.
+//
+// Phase 3 U7: this section used to return null when a supplement had no curated
+// profile ("no hollow section"), so on those pages the absence of side-effect
+// notes disappeared silently, which reads as "nothing to watch" (CLAUDE.md §2.2
+// rule 10). It now states the gap instead (CoverageLimit.test.tsx).
+import { COVERAGE } from "@/lib/safety";
+import { CoverageLimit } from "@/components/evidence/CoverageLimit";
 import { profileForSupplement } from "@/lib/side-effects";
 import { sideEffectLabel } from "@/lib/side-effects/vocab";
 import type { FrequencyTier } from "@/types/side-effect";
@@ -14,7 +20,14 @@ const TIER_LABEL: Record<FrequencyTier, string> = {
 
 export function WhatToWatch({ supplementId }: { supplementId: string }) {
   const profile = profileForSupplement(supplementId);
-  if (!profile || profile.entries.length === 0) return null; // no hollow section
+  if (!profile || profile.entries.length === 0) {
+    return (
+      <section>
+        <h3 className="text-sm font-semibold text-ink">What to watch</h3>
+        <CoverageLimit copy={COVERAGE.watchNone} className="mt-1" />
+      </section>
+    );
+  }
 
   return (
     <section>
@@ -36,7 +49,7 @@ export function WhatToWatch({ supplementId }: { supplementId: string }) {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs text-muted">{DISCLAIMERS.sideEffect}</p>
+      <CoverageLimit copy={COVERAGE.watchLimit} className="mt-2" />
     </section>
   );
 }

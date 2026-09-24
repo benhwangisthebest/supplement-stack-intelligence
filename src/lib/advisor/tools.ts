@@ -319,8 +319,10 @@ export const sideEffectWatch: AdvisorTool<SideEffectInput, SideEffectFinding[]> 
     }
     const findings = curatedWatchList(ctx.stackItems);
     if (findings.length === 0) {
+      // Phase 3 U7 (S8): hedged like checkInteractions' empty result, so an empty
+      // watch list never reads as "no side-effects" (CLAUDE.md §2.2 rule 10).
       return empty(
-        "No curated side-effect profile matched the supplements in the current stack.",
+        "No curated side-effect profile matched the supplements in the current stack — but the dataset is limited, so this does not mean they have no side-effects.",
       );
     }
     const citations: Citation[] = findings.map((f) => ({

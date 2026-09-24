@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Effect, Paper, Supplement } from "@/types";
+import { COVERAGE } from "@/lib/safety";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
+import { CoverageLimit } from "@/components/evidence/CoverageLimit";
 import { EffectGradeBadge } from "@/components/evidence/EffectGradeBadge";
 import { EvidenceBreakdown } from "@/components/evidence/EvidenceBreakdown";
 import { IllustrativeDatasetNotice } from "@/components/evidence/IllustrativeDatasetNotice";
@@ -62,11 +64,15 @@ function SummaryTab({ supplement }: { supplement: Supplement }) {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <section>
           <h3 className="text-sm font-semibold text-ink">Side effects</h3>
-          <ul className="mt-1 list-disc pl-5 text-sm text-body">
-            {supplement.sideEffects.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
+          {supplement.sideEffects.length ? (
+            <ul className="mt-1 list-disc pl-5 text-sm text-body">
+              {supplement.sideEffects.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          ) : (
+            <CoverageLimit copy={COVERAGE.sideEffectsNone} className="mt-1" />
+          )}
         </section>
         <section>
           <h3 className="text-sm font-semibold text-ink">Contraindications</h3>
@@ -77,10 +83,13 @@ function SummaryTab({ supplement }: { supplement: Supplement }) {
               ))}
             </ul>
           ) : (
-            <p className="mt-1 text-sm text-muted">None noted.</p>
+            // Phase 3 U7: was "None noted.", which reads as "there are none".
+            <CoverageLimit copy={COVERAGE.contraindicationsNone} className="mt-1" />
           )}
         </section>
       </div>
+      {/* Phase 3 U7 — both lists are curated and partial ([P3-X4]). */}
+      <CoverageLimit copy={COVERAGE.safetyListsLimit} className="-mt-2" />
 
       {supplement.allergenTags.length > 0 && (
         <section>
@@ -147,6 +156,8 @@ function EffectsTab({ effects, papers }: { effects: Effect[]; papers: Paper[] })
     <div className="space-y-4">
       {/* Plan SC: SC-4 — evidence-derived content requires the disclosure. */}
       <IllustrativeDatasetNotice />
+      {/* Phase 3 U7 — the sources notice covers provenance, not completeness. */}
+      <CoverageLimit copy={effects.length ? COVERAGE.effectsLimit : COVERAGE.effectsNone} />
       {effects.map((e) => (
         // v8: anchor target for advisor provenance chips (citationHref → #effect-{id}).
         <article

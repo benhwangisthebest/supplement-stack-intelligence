@@ -1,10 +1,12 @@
 import { getSupplementById } from "@/lib/evidence";
 import { interactionsForSupplement } from "@/lib/interactions";
-import { DISCLAIMERS } from "@/lib/safety";
+import { COVERAGE } from "@/lib/safety";
+import { CoverageLimit } from "@/components/evidence/CoverageLimit";
 import type { InteractionRule, InteractionSeverity } from "@/types/interaction";
 
 // Design §5.4 — Library "Interactions" section. Server component over static seed data.
-// Empty state never implies safety (Plan FR-10).
+// Empty state never implies safety (Plan FR-10); Phase 3 U7 routes both coverage
+// statements through <CoverageLimit> (CoverageLimit.test.tsx).
 const SEVERITY_STYLES: Record<InteractionSeverity, string> = {
   serious: "bg-error/10 text-error border-error/30",
   warning: "bg-warning/10 text-warning border-warning/30",
@@ -36,10 +38,7 @@ export function InteractionSection({ supplementId }: { supplementId: string }) {
       <h2 className="text-lg font-semibold tracking-tight">Interactions</h2>
 
       {rules.length === 0 ? (
-        <p className="mt-2 text-sm text-muted">
-          No known interactions in our dataset. This does not mean a combination is
-          safe — our dataset is limited.
-        </p>
+        <CoverageLimit copy={COVERAGE.interactionsNone} className="mt-2" />
       ) : (
         <ul className="mt-3 space-y-3">
           {rules.map((rule) => (
@@ -68,7 +67,7 @@ export function InteractionSection({ supplementId }: { supplementId: string }) {
         </ul>
       )}
 
-      <p className="mt-3 text-xs text-muted-soft">{DISCLAIMERS.interaction}</p>
+      <CoverageLimit copy={COVERAGE.interactionsLimit} className="mt-3" />
     </section>
   );
 }

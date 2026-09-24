@@ -8,7 +8,8 @@ import type {
   Stack,
   StackItem,
 } from "@/types";
-import { DISCLAIMERS } from "@/lib/safety";
+import { COVERAGE, DISCLAIMERS } from "@/lib/safety";
+import { CoverageLimit } from "@/components/evidence/CoverageLimit";
 import { CollapseToggle } from "@/components/ui/CollapseToggle";
 import { AddItemForm, type SupplementOption } from "./AddItemForm";
 import { FlagCard } from "./FlagCard";
@@ -94,6 +95,9 @@ export function StackWorkspace({
   const hasAnyInteraction = flags.some((f) =>
     INTERACTION_CATEGORIES.has(f.category),
   );
+  // Phase 3 U7: every rule in stack-evaluator/rules.ts skips an item with no
+  // supplementId, so a custom item is never checked. Say so only when one exists.
+  const hasCustomItem = items.some((i) => !i.supplementId);
 
   return (
     <div className="space-y-8">
@@ -187,6 +191,18 @@ export function StackWorkspace({
 
         {hasAnyInteraction && (
           <p className="mt-3 text-xs text-muted-soft">{DISCLAIMERS.interaction}</p>
+        )}
+
+        {/* Phase 3 U7 — a clean run used to show "0 critical · 0 warning · 0 info"
+            and nothing else: the interaction disclaimer rendered only when an
+            interaction WAS found, so absence read as safety (CLAUDE.md §2.2 rule 10). */}
+        {summary && (
+          <>
+            <CoverageLimit copy={COVERAGE.stackEvaluationLimit} className="mt-3" />
+            {hasCustomItem && (
+              <CoverageLimit copy={COVERAGE.stackCustomItems} className="mt-1" />
+            )}
+          </>
         )}
           </>
         )}
