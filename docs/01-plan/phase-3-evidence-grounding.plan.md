@@ -343,6 +343,7 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 > - **(a):** guard landed with a per-edge allowlist = `ALLOWLIST_ORIGIN` (11 edges, frozen at `ae567fd`),
 >   shrink-only and ratcheted. Red run with the allowlist emptied: 11 edges named (AC-1). AC-2 and AC-6
 >   mutations recorded. `SPEC_COUNT` 28 → **29** at all four sites and the pin.
+> - **[2026-09-24] U9 DONE.** Owner ruling on the stop: **option A** — one named exemption for this edge; B and C declined. (a) **`080d3ce`** (CI 36067623005 success); (b) **`d8d3542`** (CI 36069654107 success): the other 10 edges moved to props from server parents, no `src/lib` change, no new route, allowlist empty, one mutation-checked jsdom test file per moved component. `[P3-X9]` ticked. The paragraph below is the (a)-time record, kept as written.
 > - **(b) STOPPED — `AdvisorPanel → @/lib/api/error-text`.** `errorText` runs on runtime error envelopes,
 >   so it cannot be a prop, and every alternative (duplicate it and break `ui-error-text.test.ts:249`;
 >   move it out of `src/lib`; have the route return the text) is outside the brief's "May touch". Phase 2
@@ -362,6 +363,7 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 > **For the phase closeout** *(owner, 2026-09-24; recorded here, deliberately not edited now)*:
 > 1. `CLAUDE.md` §5's measured baseline still says *"27 executable architecture specs"*. It is stale: `git ls-files 'src/architecture/*.test.ts' | wc -l` → **28** at `f262437`, and U9 adds one more. The phase closeout re-derives it by that command and corrects the line. It is not one of `SPEC_COUNT`'s four bound sites, which is why nothing reddened.
 > 2. `docs/01-plan/features/p3-u4-profiles.closeout.md` §5 (*Notes for U7*) still reads as open. The phase closeout adds a dated pointer: its notes 1, 2 and 4 were closed at `8c01a61`, and note 3 (FU-59) was closed in part at `841893e`, with products remaining open (see the U7 cycle artifact §7).
+> 3. *(added at the U9 closeout on the owner's U9 ruling, 2026-09-24)* `CLAUDE.md` §4's enforcement-status row for **rule 7** (*"Not enforced — would fail today on 8 of 31 client components"*) is stale. Rule 7 is now **enforced** by `src/architecture/client-props.test.ts` (`CLIENT_TAKES_PROPS`), over the transitive client graph, with **one named exemption** (`AdvisorPanel → @/lib/api/error-text`) and an empty allowlist. U9 was not permitted to edit `CLAUDE.md`; the phase closeout corrects the row. (`SPEC_COUNT` is **29** since `080d3ce`, which also bears on item 1.)
 
 ---
 
@@ -387,7 +389,7 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 - [ ] **[P3-X6]** *(plan-only; **U6: tombstone path not needed** — no id retired or renamed, no migration, 2026-09-23. Stays open for any later unit, e.g. FU-57)* Any ID retired or renamed in this phase carries a manifest tombstone with `supersededBy`/`migration` **and** a data migration over every `persistedAt` surface the manifest lists for that namespace. *(U6)*
 - [ ] **[P3-X7]** *(plan-only)* Every guard this phase ships has a recorded red-evidence entry against the bug it targets. *(U0, U1, U2, U3, U4, U5, U7, U8, U9)*
 - [x] **[P3-X8]** *(plan-only)* Every `paperIds` entry resolves, **and the guard is red against a planted dangling id**. *(U2)* — **[2026-09-23] MET:** G3 at `5975576`, red recorded in the U2 cycle artifact §6.
-- [ ] **[P3-X9]** *(plan-only — **D-7**)* `CLAUDE.md` §4 rule 7 is **mechanically enforced**, and the guard was **red against all 8 components before the refactor**. *(U9)*
+- [x] **[P3-X9]** *(plan-only — **D-7**)* `CLAUDE.md` §4 rule 7 is **mechanically enforced**, and the guard was **red against all 8 components before the refactor**. *(U9)* — **[2026-09-24] MET, U9 closeout: 0 violators, 1 named exemption (`errorText`), allowlist empty.** Enforced by `CLIENT_TAKES_PROPS` (`src/architecture/client-props.test.ts`), landed at `080d3ce` and red against **9 files / 11 edges** before any component moved (the "8" above is §4's directive-only count, superseded by the derived client-graph set; under the owner's type-only ruling that count is 7). Refactor `d8d3542`: allowlist `[]` (R7h), the one `NAMED_EXEMPTIONS` entry red-proved by R7f/R7g. Record: `docs/01-plan/features/p3-u9-rule7.plan.md`.
 
 **Roadmap item → unit.** 1 → U5, U6 · 2 → U3, U4 · 3 → U1, U2 · 4 → U7 · 5 → U8.
 **Roadmap *Testing* requirement → unit** *(added at (c); the draft traced Included work only, which is how three obligations reached no owner)*: placeholder guard → U2 (**FU-48**) · provenance-without-verification → U5 · `paperIds` resolve → U2 (`[P3-X8]`) · grade-has-a-profile → U3, U4 · DOI/PMID format-and-record → U5, U6 · **mutation-check each guard** → all units, via `[P3-X7]`. **Migration requirement → U6** (`[P3-X6]`). **Excluded, as the roadmap excludes them:** live PubMed ingestion, context-adjusted evidence (Phase 4), commerce, new pillars.

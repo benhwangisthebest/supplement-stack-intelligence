@@ -233,3 +233,17 @@ check clean.
 `profile-props.ts`, `citation-index.ts`) are **new files under `src/components/`**, not `src/lib` (which the
 brief closes to change). They are server-side adapters that call existing lib functions — "moving a call site"
 — and are imported at runtime only by `src/app` pages.
+
+## 9. Closeout — 2026-09-24
+
+| Landing | Commit | CI |
+|---|---|---|
+| (a) guard, red against 9 files / 11 edges | `080d3ce` | 36067623005 — success |
+| (b) client components take props | `d8d3542` | 36069654107 — success |
+
+- **`[P3-X9]` ticked:** 0 violators, 1 named exemption (`errorText`), allowlist empty.
+- **`[P3-X7]` (U9's share):** red evidence recorded above — §3 (AC-1, AC-2, AC-6), §8 (R7f, R7g, M1–M12).
+- **For the phase closeout** (recorded in the register's carry-forward list, item 3): `CLAUDE.md` §4's rule-7
+  row ("Not enforced, 8 of 31") is stale — rule 7 is enforced by `client-props.test.ts` with the one named
+  exemption. U9 could not edit `CLAUDE.md`.
+- **Next:** U8, in a fresh session.
