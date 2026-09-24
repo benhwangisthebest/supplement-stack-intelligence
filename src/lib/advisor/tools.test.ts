@@ -174,6 +174,17 @@ describe("uncited effects carry the D2 sentence", () => {
     const e = r.data!.flatMap((h) => h.effects).find((x) => x.effectId === "protein-powder-recovery")!;
     expect(e.summary).toContain(d2);
   });
+
+  // Copy table row 14, pinned verbatim (U7 follow-up, owner 2026-09-24): the seed
+  // summary no longer repeats D2's sense, so the model reads each once.
+  it("row 14: the uncited effect's full text, exactly", () => {
+    const r = getSupplement.handler({ slug: "nac" }, ctx);
+    const nac = r.data!.effects.find((e) => e.effectId === "nac-antioxidant")!;
+    expect(nac.summary).toBe(
+      "This library searched for a verified paper on this effect and has not found one. " +
+        "No verified evidence in this library for this effect. That is not the same as evidence that it doesn't work.",
+    );
+  });
 });
 
 describe("biomarkerFindings", () => {

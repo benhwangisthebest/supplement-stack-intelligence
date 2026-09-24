@@ -1115,7 +1115,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "longevity",
     grade: "D",
     confidence: "low",
-    summary: "No verified evidence in this library: this effect cites no paper.",
+    summary: "This library searched for a verified paper on this effect and has not found one.",
     relevantPopulation: "not described by a verified paper in this library",
     studiedDose: {
       min: 600,
@@ -1207,7 +1207,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "recovery",
     grade: "D",
     confidence: "low",
-    summary: "No verified evidence in this library: this effect cites no paper.",
+    summary: "This library searched for a verified paper on this effect and has not found one.",
     relevantPopulation: "not described by a verified paper in this library",
     studiedDose: {
       min: 20,
