@@ -345,6 +345,16 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 >   `/stack-lab/[stackId]` **+9.0%**, and no recorded figure moved. U9 (b) then took them 14–16% below that.
 > - **H = 1%** is chosen in the artifact §3. At that H, every route U9 moved would be caught if the move
 >   were reversed. At 2%, `/stack-lab` would be hidden (1.45%).
+> - **(a) landed** as `4326811`, CI `36071597754` success.
+> - **(b):** `npm run verify:bundle` (`scripts/verify-bundle.mjs`) checks `measured ≤ floor(baseline × 1.01)`
+>   on every page route and on shared-by-all. The route set must match exactly. It never writes the
+>   baseline; only `npm run bundle:baseline` does.
+>   - **Red (AC-3):** an inflated `/library` chunk fails with the route, 111955 B, the limit 111253 B and
+>     H 1%. After the restore it passes.
+>   - **R-U9:** reverting U9 (b) at source, in a scratch worktree, fails exactly the four routes U9 moved.
+>     `/stack-lab` is caught by 506 B.
+>   - **M1–M5** (boundary, no build, missing and stale routes, shared chunk) are each red. The record is in
+>     artifact §5.
 
 **U9 — `CLAUDE.md` §4 rule 7: the guard first, then the refactor *(new at (d), on D-7)*.** **8 of 31** client components import `@/lib` or `@/data` (one type-only); §2 prints the command. **The owner's ruling is guard-then-refactor, in that order and in one unit** — so rule 7 stops being a paragraph and becomes mechanical, which is `CLAUDE.md` §3 principle 5 applied to the rule that has gone unenforced longest. **The order is the whole point:** a guard written after the refactor is green on arrival and proves nothing. **Two costs U9 must carry, named here so they are not discovered later:** the new spec adds one to the architecture-spec count, and `SPEC_COUNT` binds that number at **four** documented sites plus its own pin (`spec-count.test.ts:97`), all of which U9 updates. ~~27 → 28~~ **[2026-09-23]** U1 (b) already took it to **28**, so U9 **re-derives the count when it lands** (`git ls-files 'src/architecture/*.test.ts' | wc -l`) rather than carrying a number from this paragraph; and the refactor spans `advisor/`, `auth/`, `checkin/`, `profile/` and `stack/`, not only the Library surface U7 touches. **`auth/AuthForm.tsx` is type-only** and U9 states whether a type-only import is a violation before it counts as one.
 **Red proof:** the guard is red against all **8** before any component moves, and the failure output is recorded — `[P3-X7]`.

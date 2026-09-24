@@ -203,3 +203,76 @@ looser H would let feature growth pass silently, and silent growth is what D-5 r
 
 **Owed at (c):** if the first CI run's cross-zlib spread comes out anywhere near 1%, H is revisited with
 that number. It must not be silently widened.
+
+## 4. Landing (a) — gate and landing
+
+The gate ran in a `git worktree` with **no `.env.local`**, the same as CI. That keeps the non-live E2E away
+from the deployed Supabase. Results:
+
+- tsc 0
+- lint 400 of 400, 0 errors
+- vitest 130 files / 1611 tests, including the jsdom project at 11 / 73
+- `next build` 0
+- `verify:rendering` OK
+- E2E non-live: **70 passed / 30 `[LIVE]` skipped**
+- null bytes: 0 in all five files
+
+**Commit `4326811`**, CI **`36071597754`**: success.
+
+## 5. Landing (b) — the assertion
+
+`scripts/verify-bundle.mjs` (`npm run verify:bundle`) checks every page route and shared-by-all against
+`measured ≤ floor(baseline × 1.01)`. H is a named constant, `HEADROOM_PERCENT`. The script:
+
+- reads the last build and never builds;
+- never writes the baseline. The only writer is `npm run bundle:baseline`, so accepting a new figure always
+  shows up as a diff of `docs/05-qa/bundle-baseline.json`;
+- requires the route set to match **exactly**, in both directions. U8-F1 is the reason: the routes nobody
+  recorded were the routes that grew;
+- prints each route's measured size, baseline, delta and limit, plus both zlib versions. The CI log is
+  therefore the cross-zlib measurement that §2 could not take locally.
+
+**Red evidence (`[P3-X7]`, U8's share).** Every run below was restored from a file-copy backup (`cp`, then
+`cmp`), never `git checkout` (`CLAUDE.md` §5 rule 11). Green was confirmed after each restore.
+
+**AC-3 — an inflated route fails and names the route, its size, the limit and H.** The `/library` page
+chunk had 1600 random bytes appended, base64-encoded:
+
+```
+verify:bundle — H = 1% · baseline zlib 1.3.1-e00f703 · this zlib 1.3.1-e00f703
+  /library                     111955 / baseline   110152 (+1803 B, 1.637%) · limit 111253
+verify:bundle — 1 BUDGET FAILURE(S):
+  ✗ /library: first-load JS is 111955 B (112 kB), over its limit of 111253 B (baseline 110152 B + H 1%), by 702 B.
+exit=1
+```
+
+Restored, then run again: `verify:bundle — OK. Every route is within 1% of its baseline.` exit=0.
+
+**Below the limit, it stays green, as it should.** A first inflation of 900 random bytes as base64 gzipped
+to +1044 B (0.948%). That is under the 111253 B limit, and the check passed.
+
+**R-U9: the realistic regression, reversing U9 (b) at source level.** This ran in the scratch worktree
+only, on a detached HEAD: `git revert --no-commit d8d3542`, then `next build` and `verify:bundle` against
+the committed baseline. It was not committed, and the worktree was reset to a clean `4326811` afterwards:
+
+```
+verify:bundle — 4 BUDGET FAILURE(S):
+  ✗ /advisor: first-load JS is 133504 B (134 kB), over its limit of 115750 B (baseline 114604 B + H 1%), by 17754 B.
+  ✗ /profile: first-load JS is 119733 B (120 kB), over its limit of 118021 B (baseline 116853 B + H 1%), by 1712 B.
+  ✗ /stack-lab: first-load JS is 113847 B (114 kB), over its limit of 113341 B (baseline 112219 B + H 1%), by 506 B.
+  ✗ /stack-lab/[stackId]: first-load JS is 137422 B (137 kB), over its limit of 116673 B (baseline 115518 B + H 1%), by 20749 B.
+```
+
+The four figures equal `080d3ce`'s from §2 byte for byte, so the revert reproduced the pre-U9 client
+bundles exactly. **All four routes U9 moved fail, and no others do**, which is the prediction in §3's
+table. `/stack-lab` is caught by 506 B. At H = 2% it would have passed.
+
+**Guard mutations (`CLAUDE.md` §5 rule 2):**
+
+| # | Mutation | Result |
+|---|---|---|
+| M1 | Boundary: `compare()` with measured = limit, then limit + 1 | `[]` at the limit; limit + 1 → `…over its limit of 101000 B … by 1 B.` |
+| M2 | `.next/` moved away | `…app-build-manifest.json not found. Run npm run build first…` exit 1 |
+| M3 | `/advisor` deleted from the baseline | `✗ /advisor: in this build but has no baseline, so it has no budget.` exit 1 |
+| M4 | `/gone` added to the baseline | `✗ /gone: in the baseline but not in this build. The baseline is stale.` exit 1 |
+| M5 | Shared webpack runtime chunk inflated | 11 failures: shared-by-all (`107181 B … over its limit of 106366 B`) plus all 10 routes |

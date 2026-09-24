@@ -17,6 +17,7 @@
     "verify:middleware": "node scripts/verify-middleware-live.mjs",
     "verify:rendering": "node scripts/verify-rendering.mjs",
     "bundle:baseline": "node scripts/bundle-sizes.mjs --write",
+    "verify:bundle": "node scripts/verify-bundle.mjs",
     "verify:migrations": "node scripts/verify-migrations.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed": "tsx src/lib/db/seed.ts",
