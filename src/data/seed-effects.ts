@@ -655,7 +655,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "sleep",
     grade: "A",
     confidence: "high",
-    summary: "Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient.",
+    summary: "May modestly shorten sleep-onset latency (about 7 minutes) and improve sleep quality in primary sleep disorders; higher doses and longer use showed larger effects.",
     relevantPopulation: "adults with delayed sleep onset, jet lag",
     studiedDose: {
       min: 0.5,

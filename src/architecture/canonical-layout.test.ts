@@ -141,3 +141,43 @@ describe("CONTENT_NOTES — every sidecar note anchors to a real record", () => 
     expect(ids, `${n.module} has no record with id ${n.anchorId}`).toContain(n.anchorId);
   });
 });
+
+// CONTENT_EDIT_PROPAGATES — P-12, [P3-X5] (Phase 3 U4, owner ruling FU-53).
+// A content correction ships by editing the authored JSON alone: content/generate.mjs
+// turns that one edit into the emitted constant, and nothing under src/ is written
+// by hand (CONTENT_FIDELITY above fails a hand edit). This drives the real emitter
+// over the real authored effects. Unchanged JSON must emit the committed module
+// byte for byte, and a single-field edit must reach the emitted text. Red proof:
+// making the emitter drop `summary` fails both tests
+// (docs/01-plan/features/p3-u4-profiles.plan.md, the melatonin correction).
+describe("CONTENT_EDIT_PROPAGATES — an edit to the authored JSON alone changes the emitted constant (P-12)", () => {
+  const specs = JSON.parse(readFileSync(path.join(ROOT, "content/modules.json"), "utf8")) as {
+    module: string;
+    exportName: string;
+    typeName: string;
+    preamble: string[];
+  }[];
+  const spec = specs.find((s) => s.module === "seed-effects")!;
+  const emit = (value: unknown[]) =>
+    emitModule({ preamble: spec.preamble.join("\n"), exportName: spec.exportName, typeName: spec.typeName }, value);
+  const authored = JSON.parse(readFileSync(path.join(ROOT, "content/seed/seed-effects.json"), "utf8")) as {
+    id: string;
+    summary: string;
+  }[];
+  const committed = readFileSync(path.join(ROOT, "src/data/seed-effects.ts"), "utf8");
+
+  it("unchanged authored JSON emits the committed module byte for byte", () => {
+    expect(emit(authored)).toBe(committed);
+  });
+
+  it("a one-field edit to the authored JSON reaches the emitted constant", () => {
+    const edited = structuredClone(authored);
+    const target = edited.find((e) => e.id === "melatonin-sleep")!;
+    const before = target.summary;
+    target.summary = "P-12 probe: an edited summary.";
+    const out = emit(edited);
+    expect(out).not.toBe(committed);
+    expect(out).toContain(`summary: ${JSON.stringify(target.summary)},`);
+    expect(out).not.toContain(JSON.stringify(before));
+  });
+});

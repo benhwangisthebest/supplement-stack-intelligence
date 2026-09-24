@@ -103,6 +103,19 @@ phrase planted in one rationale, then the file restored.
 
 **B3's first CI run failed.** `evidence-grading-actions.spec.ts:22` used l-theanine as its *unprofiled* example, and B3 profiled it. The per-landing gate had run only the disclosure spec. **Owner fix (a), `bfa7602`:** the spec now asserts l-theanine's breakdown appears. The no-profile fallback is guarded by `SupplementDetail.test.tsx` with made-up effects: rendering the breakdown unconditionally made it fail; restored, shasum equal. FU-63 retires both when `evidenceProfile` becomes required. **Standing rule since then:** the full non-live E2E suite runs before every landing.
 
+**`[P3-X5]`: the recorded demonstration** (B5 row 1, its own commit). **(1)** Only `content/seed/seed-effects.json` was edited: melatonin-sleep's `summary`. `npm run content:generate -- --check` then reported `src/data/seed-effects.ts` **stale**, so the drift is caught before anyone regenerates. **(2)** `npm run content:generate` → *"wrote 9 modules, 1 changed"*. **(3)** `--check` → 0 stale. Nothing under `src/` was hand-edited. The two diffs, one line each:
+
+```
+content/seed/seed-effects.json
+-    "summary": "Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient.",
++    "summary": "May modestly shorten sleep-onset latency (about 7 minutes) and improve sleep quality in primary sleep disorders; higher doses and longer use showed larger effects.",
+src/data/seed-effects.ts (regenerated)
+-    summary: "Reduces sleep-onset latency and helps shift circadian timing; lower doses often sufficient.",
++    summary: "May modestly shorten sleep-onset latency (about 7 minutes) and improve sleep quality in primary sleep disorders; higher doses and longer use showed larger effects.",
+```
+
+**P-12 test:** `CONTENT_EDIT_PROPAGATES` in `src/architecture/canonical-layout.test.ts` drives the real emitter over the real authored effects. Unchanged JSON emits the committed module byte for byte, and a one-field edit reaches the emitted constant. **Red proof:** making the emitter drop `summary` failed both tests. Restored from backup (shasum `3ada0252` before and after), 23/23 pass. The spec count is unchanged, because it is a new `describe` in an existing spec.
+
 ## 4. Appendices
 
 - [B1 — the four Grade A effects](p3-u4-profiles.b1.md)
