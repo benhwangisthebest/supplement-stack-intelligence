@@ -330,6 +330,26 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 **Red proof:** the guard is red against all **8** before any component moves, and the failure output is recorded — `[P3-X7]`.
 **Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured) · `npx next build` — plus the red proof, recorded.
 
+> **[2026-09-24] U9 status — (a) LANDED, (b) STOPPED on a stop condition.** Cycle artifact:
+> `docs/01-plan/features/p3-u9-rule7.plan.md` (bkit `p3-u9-rule7`), which carries the red output verbatim.
+> - **Owner ruling (2026-09-24):** `import type` from `@/lib`/`@/data` is **not** a rule-7 violation. Under
+>   §4's directive-only predicate that makes the set **7**, not 8 (`auth/AuthForm.tsx` is type-only).
+> - **The guard's derived set is 9 files / 11 edges, not 7 or 8.** `CLIENT_TAKES_PROPS`
+>   (`src/architecture/client-props.test.ts`) walks the *client graph* — everything reachable from a
+>   `"use client"` module over runtime imports, which is what Next bundles for the browser, and what AC-6
+>   (`CoverageLimit`, no directive) requires. That adds `ui/Disclaimer.tsx` and `advisor/ProvenanceChips.tsx`.
+>   `CoverageLimit` is in the graph and clean (type-only). The "8" above and in `[P3-X9]` is left as written
+>   (append-only); the derived figure supersedes it.
+> - **(a):** guard landed with a per-edge allowlist = `ALLOWLIST_ORIGIN` (11 edges, frozen at `ae567fd`),
+>   shrink-only and ratcheted. Red run with the allowlist emptied: 11 edges named (AC-1). AC-2 and AC-6
+>   mutations recorded. `SPEC_COUNT` 28 → **29** at all four sites and the pin.
+> - **(b) STOPPED — `AdvisorPanel → @/lib/api/error-text`.** `errorText` runs on runtime error envelopes,
+>   so it cannot be a prop, and every alternative (duplicate it and break `ui-error-text.test.ts:249`;
+>   move it out of `src/lib`; have the route return the text) is outside the brief's "May touch". Phase 2
+>   U19 made `errorText` client-callable on purpose; rule 7 as written forbids it. **Owner ruling needed.**
+>   The other 10 edges were assessed feasible with no lib change and no new route; none has been moved,
+>   because the ruling may change which of them need to move.
+
 **U10 — rule-8 component tests *(new, appended 2026-09-24 on the owner's FU-64 ruling, a rank-2 instruction)*.** Owner text, verbatim: *"U10 — rule-8 component tests. Confirm the list of components that render a safety flag, evidence grade or citation without a component test, then write one per component, each red-proved. Closes FU-64 and U-DEFER-4 in full."*
 - **Order:** after U9 and U8, before the phase closeout.
 - **Type:** deterministic. There is no network, DB or OpenAI call, and every component test runs on U0's jsdom project.
