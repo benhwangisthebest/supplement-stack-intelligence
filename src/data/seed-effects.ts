@@ -43,9 +43,9 @@ export const SEED_EFFECTS: Effect[] = [
           paperIds: ["p-magnesium-sleep"],
         },
         populationRelevance: {
-          score: 2,
-          rationale: "Largest in adults with suboptimal magnesium.",
-          paperIds: [],
+          score: 1,
+          rationale: "Older adults with insomnia; magnesium status is not reported in the abstract.",
+          paperIds: ["p-magnesium-sleep"],
         },
       },
     },
@@ -103,7 +103,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "metabolic",
     grade: "C",
     confidence: "low",
-    summary: "Possible small improvements in insulin sensitivity in deficient individuals.",
+    summary: "May improve glucose measures and insulin-sensitivity markers in people with or at high risk of diabetes.",
     relevantPopulation: "insulin-resistant adults with low magnesium",
     studiedDose: {
       min: 250,
@@ -517,7 +517,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "focus",
     grade: "B",
     confidence: "moderate",
-    summary: "Combined with caffeine, improves attention and reduces jitteriness in several trials.",
+    summary: "Combined with caffeine, may improve some attention measures in healthy people; the effects are small and uncertain.",
     relevantPopulation: "healthy adults",
     studiedDose: {
       min: 100,
@@ -563,7 +563,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "stress",
     grade: "D",
     confidence: "low",
-    summary: "May reduce acute stress and support relaxation without sedation.",
+    summary: "May reduce heart-rate and salivary IgA responses to acute stress; the evidence is one small laboratory trial.",
     relevantPopulation: "adults under acute stress",
     studiedDose: {
       min: 200,
@@ -609,7 +609,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "sleep",
     grade: "D",
     confidence: "low",
-    summary: "Pre-bed glycine may improve subjective sleep quality and next-day alertness.",
+    summary: "No verified evidence in this library: the one cited paper has no abstract to summarise.",
     relevantPopulation: "adults with mild sleep complaints",
     studiedDose: {
       min: 3,
@@ -687,9 +687,9 @@ export const SEED_EFFECTS: Effect[] = [
           paperIds: ["p-melatonin-sleep"],
         },
         populationRelevance: {
-          score: 3,
-          rationale: "Directly relevant to delayed onset and jet lag.",
-          paperIds: [],
+          score: 1,
+          rationale: "Adults and children with primary sleep disorders; jet lag and delayed sleep phase are not studied.",
+          paperIds: ["p-melatonin-sleep"],
         },
       },
     },
@@ -747,7 +747,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "sleep",
     grade: "B",
     confidence: "moderate",
-    summary: "Some evidence for improved sleep, often secondary to stress reduction.",
+    summary: "May modestly improve sleep in adults, with larger effects in insomnia, at 600 mg/day or more and over 8 weeks or longer.",
     relevantPopulation: "stressed adults with sleep complaints",
     studiedDose: {
       min: 300,
@@ -793,7 +793,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "metabolic",
     grade: "B",
     confidence: "moderate",
-    summary: "May lower fasting glucose and HbA1c; effect size comparable to some first-line agents in small trials.",
+    summary: "May lower HbA1c and fasting glucose in type 2 diabetes, alone or added to standard therapy.",
     relevantPopulation: "adults with elevated blood sugar",
     studiedDose: {
       min: 900,
@@ -839,7 +839,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "foundational",
     grade: "C",
     confidence: "low",
-    summary: "Lozenges started early may modestly reduce common-cold duration.",
+    summary: "Used as treatment, zinc may shorten colds (low-certainty evidence); it shows little or no effect on preventing them.",
     relevantPopulation: "adults at cold onset",
     studiedDose: {
       min: 10,
@@ -885,7 +885,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "deficiency",
     grade: "C",
     confidence: "low",
-    summary: "Effectively restores zinc status in deficient individuals.",
+    summary: "Higher zinc intake is associated with modestly higher serum zinc (about 6% per doubling of intake); the cited evidence does not analyse deficient individuals.",
     relevantPopulation: "adults with low zinc intake",
     studiedDose: {
       min: 8,
@@ -931,7 +931,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "deficiency",
     grade: "B",
     confidence: "moderate",
-    summary: "Reliably corrects B12 deficiency, especially relevant for plant-based diets.",
+    summary: "Oral, sublingual and injected B12 raised serum B12 comparably in people with deficiency, on low-quality randomised evidence; vegans using supplements had better B12 status than non-users.",
     relevantPopulation: "vegans, older adults, malabsorbers",
     studiedDose: {
       min: 250,
@@ -1023,7 +1023,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "training",
     grade: "A",
     confidence: "high",
-    summary: "Improves endurance and reduces perceived exertion across many trials.",
+    summary: "Has evidence for improved endurance running performance, mainly time to exhaustion, in recreational and trained runners.",
     relevantPopulation: "athletes, training adults",
     studiedDose: {
       min: 150,
@@ -1069,7 +1069,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "training",
     grade: "C",
     confidence: "low",
-    summary: "Small possible endurance benefits; evidence mixed.",
+    summary: "Has evidence for improved endurance performance, with similar benefit for single or repeated doses of 1–6 g.",
     relevantPopulation: "training adults",
     studiedDose: {
       min: 1000,
@@ -1115,7 +1115,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "longevity",
     grade: "D",
     confidence: "low",
-    summary: "Raises glutathione; broad clinical benefits remain context-dependent.",
+    summary: "No verified evidence in this library: this effect cites no paper.",
     relevantPopulation: "adults under oxidative stress",
     studiedDose: {
       min: 600,
@@ -1207,7 +1207,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "recovery",
     grade: "D",
     confidence: "low",
-    summary: "Supports post-exercise recovery and appetite control.",
+    summary: "No verified evidence in this library: this effect cites no paper.",
     relevantPopulation: "active adults",
     studiedDose: {
       min: 20,

@@ -116,6 +116,8 @@ src/data/seed-effects.ts (regenerated)
 
 **P-12 test:** `CONTENT_EDIT_PROPAGATES` in `src/architecture/canonical-layout.test.ts` drives the real emitter over the real authored effects. Unchanged JSON emits the committed module byte for byte, and a one-field edit reaches the emitted constant. **Red proof:** making the emitter drop `summary` failed both tests. Restored from backup (shasum `3ada0252` before and after), 23/23 pass. The spec count is unchanged, because it is a new `describe` in an existing spec.
 
+**B5 (the rest), red proofs.** **G6** (R5, *score > 0 requires a cited paper*) failed at B5's base on exactly `magnesium-sleep/populationRelevance` (2) and `melatonin-sleep/populationRelevance` (3). Both were re-judged from their own papers (1 each, cited), with no grade change: magnesium-sleep 0.617 → 0.583 B, melatonin-sleep 0.883 → 0.817 A. **G7** (AC-3 seed safety sweep, 27 summaries plus 135 rationales, `containsBannedLanguage`, unchanged list) failed on a *"this cures"* planted in a rationale and on a *"you should take"* planted in a summary. After each, the file was restored from backup (shasum `1296a726` before and after), and 21/21 passed.
+
 ## 4. Appendices
 
 - [B1 — the four Grade A effects](p3-u4-profiles.b1.md)

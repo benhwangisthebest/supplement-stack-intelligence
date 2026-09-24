@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { SEED_PAPERS } from "@/data/seed-papers";
 import { SEED_PRODUCTS } from "@/data/seed-products";
 import { deriveGrade } from "@/lib/evidence-grading";
+import { containsBannedLanguage } from "@/lib/safety";
 import { paperSchema } from "@/lib/validation/seed";
 import type { EvidenceProfile } from "@/types/evidence-grading";
 
@@ -256,5 +257,53 @@ describe("G5 — confidence follows the grade (A high · B moderate · C/D low)"
   it("G5b every effect's confidence is the one its grade maps to", () => {
     const bad = effects.filter((e) => e.confidence !== CONFIDENCE_FOR_GRADE[e.grade]);
     expect(bad.map((e) => `${e.id}: Grade ${e.grade}, confidence ${e.confidence} (expected ${CONFIDENCE_FOR_GRADE[e.grade]})`)).toEqual([]);
+  });
+});
+
+// G6 — a dimension scored above 0 cites a paper (Phase 3 U4, owner ruling R5, 2026-09-23).
+// The rubric reads only `score`, so nothing stopped a dimension claiming "moderate"
+// or "strong" with an empty paperIds, i.e. with no verified evidence behind it.
+// R5 rules that an uncited dimension scores 0. Red proof: at U4 B5's base this
+// failed on exactly magnesium-sleep/populationRelevance (2) and
+// melatonin-sleep/populationRelevance (3), whose citations U6 had removed.
+describe("G6 — score > 0 requires a cited paper (R5)", () => {
+  const effects = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, "content/seed/seed-effects.json"), "utf8"),
+  ) as { id: string; evidenceProfile?: EvidenceProfile }[];
+  const dims = effects.flatMap((e) =>
+    Object.entries(e.evidenceProfile?.dimensions ?? {}).map(([k, d]) => ({ at: `${e.id}/${k}`, d })),
+  );
+
+  it("G6a reads every profile dimension (anti-vacuity)", () => {
+    expect(dims.length).toBeGreaterThan(100);
+  });
+
+  it("G6b no dimension scores above 0 with an empty paperIds", () => {
+    expect(dims.filter(({ d }) => d.score > 0 && d.paperIds.length === 0).map(({ at, d }) => `${at}: score ${d.score}, no paper`)).toEqual([]);
+  });
+});
+
+// G7 — the seed-text safety sweep (Phase 3 U4, AC-3; CLAUDE.md §2.1 rule 6). Every
+// rendered effect summary and every dimension rationale in the authored corpus is
+// checked with the existing banned-phrase list (src/lib/safety, unchanged). Before
+// U4 only profiled rationales were swept (evidence-grading.test.ts), and summaries
+// never were. Red proof: a banned phrase planted in one rationale failed G7b and was
+// restored from backup (docs/01-plan/features/p3-u4-profiles.plan.md).
+describe("G7 — no seed summary or rationale uses banned language", () => {
+  const effects = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, "content/seed/seed-effects.json"), "utf8"),
+  ) as { id: string; summary: string; evidenceProfile?: EvidenceProfile }[];
+  const texts = effects.flatMap((e) => [
+    { at: `${e.id}.summary`, text: e.summary },
+    ...Object.entries(e.evidenceProfile?.dimensions ?? {}).map(([k, d]) => ({ at: `${e.id}/${k}.rationale`, text: d.rationale })),
+  ]);
+
+  it("G7a sweeps every summary and every rationale (anti-vacuity)", () => {
+    expect(texts.filter((t) => t.at.endsWith(".summary"))).toHaveLength(effects.length);
+    expect(texts.length).toBeGreaterThan(effects.length * 5);
+  });
+
+  it("G7b none contains banned language", () => {
+    expect(texts.filter((t) => containsBannedLanguage(t.text)).map((t) => `${t.at}: ${t.text}`)).toEqual([]);
   });
 });
