@@ -15,6 +15,22 @@
     "verifiedOn": "2026-09-23",
     "verifiedBy": "owner"
   },
+  "pmid:20464765": {
+    "id": "20464765",
+    "kind": "pmid",
+    "resolvedTitle": "Caffeine for the prevention of injuries and errors in shift workers.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner"
+  },
+  "pmid:20521321": {
+    "id": "20521321",
+    "kind": "pmid",
+    "resolvedTitle": "Effects of caffeine and glucose, alone and combined, on cognitive performance.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner"
+  },
   "pmid:21118604": {
     "id": "21118604",
     "kind": "pmid",
@@ -79,6 +95,14 @@
     "verifiedOn": "2026-09-23",
     "verifiedBy": "owner"
   },
+  "pmid:28969341": {
+    "id": "28969341",
+    "kind": "pmid",
+    "resolvedTitle": "Caffeine to optimize cognitive function for military mission-readiness: a systematic review and recommendations for the field.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner"
+  },
   "pmid:29543316": {
     "id": "29543316",
     "kind": "pmid",
@@ -141,6 +165,14 @@
     "resolvedTitle": "Creatine supplementation effect on recovery following exercise-induced muscle damage: A systematic review and meta-analysis of randomized controlled trials.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:34473295": {
+    "id": "34473295",
+    "kind": "pmid",
+    "resolvedTitle": "Effects of Vitamin D Supplementation on Insulin Sensitivity and Secretion in Prediabetes.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-24",
     "verifiedBy": "owner"
   },
   "pmid:34559859": {
@@ -221,6 +253,14 @@
     "resolvedTitle": "A systematic review and meta-analysis of functional vitamin B12 status among adult vegans.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-23",
+    "verifiedBy": "owner"
+  },
+  "pmid:39396907": {
+    "id": "39396907",
+    "kind": "pmid",
+    "resolvedTitle": "Efficacy of weekly versus daily cholecalciferol for repleting serum vitamin D (25(OH)D) deficiency: A systematic review and meta-analysis of randomized controlled trials.",
+    "source": "pubmed-eutils",
+    "verifiedOn": "2026-09-24",
     "verifiedBy": "owner"
   },
   "pmid:39519498": {

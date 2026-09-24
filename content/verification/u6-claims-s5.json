@@ -1,0 +1,30 @@
+[
+  {
+    "claimId": "s5:vitd-deficient-rct",
+    "libraryClaim": "Vitamin D — Correcting deficiency (Grade A at fe0441d): Effectively raises serum 25(OH)D in deficient individuals.",
+    "illustrativeDetails": "S5, U4 ruling R16 (owner queries verbatim, 2026-09-24)",
+    "pubmed": "vitamin D supplementation deficient adults serum 25-hydroxyvitamin D randomized placebo",
+    "crossref": "vitamin D supplementation deficient adults serum 25-hydroxyvitamin D randomized placebo"
+  },
+  {
+    "claimId": "s5:vitd3-correction-ma",
+    "libraryClaim": "Vitamin D — Correcting deficiency (Grade A at fe0441d): Effectively raises serum 25(OH)D in deficient individuals.",
+    "illustrativeDetails": "S5, U4 ruling R16 (owner queries verbatim, 2026-09-24)",
+    "pubmed": "vitamin D3 supplementation vitamin D deficiency correction meta-analysis",
+    "crossref": "vitamin D3 supplementation vitamin D deficiency correction meta-analysis"
+  },
+  {
+    "claimId": "s5:caffeine-alertness-ma",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A at fe0441d): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "S5, U4 ruling R16 (owner queries verbatim, 2026-09-24)",
+    "pubmed": "caffeine alertness vigilance randomized placebo meta-analysis",
+    "crossref": "caffeine alertness vigilance randomized placebo meta-analysis"
+  },
+  {
+    "claimId": "s5:caffeine-attention-rct",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A at fe0441d): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "S5, U4 ruling R16 (owner queries verbatim, 2026-09-24)",
+    "pubmed": "caffeine sustained attention reaction time healthy adults randomized",
+    "crossref": "caffeine sustained attention reaction time healthy adults randomized"
+  }
+]

@@ -51,6 +51,16 @@ const PINS: { batch: string; effect: string; supplementId: string; goal: Outcome
   { batch: "B4", effect: "nac-antioxidant", supplementId: "nac", goal: "longevity", grade: "D", tier: "experimental" },
   // B4: protein-powder-recovery B → D (R5: cites no paper; no verified evidence in this library)
   { batch: "B4", effect: "protein-powder-recovery", supplementId: "protein-powder", goal: "recovery", grade: "D", tier: "experimental" },
+  // B6: magnesium-sleep B → D (3 small RCTs, moderate-to-high risk of bias, low to very low quality)
+  { batch: "B6", effect: "magnesium-sleep", supplementId: "magnesium", goal: "sleep", grade: "D", tier: "experimental" },
+  // B6: vitamin-d-deficiency A → B (one placebo RCT; the meta-analyses compare forms and regimens)
+  { batch: "B6", effect: "vitamin-d-deficiency", supplementId: "vitamin-d", goal: "deficiency", grade: "B", tier: "targeted" },
+  // B6: fish-oil-cardiovascular B → A (90 RCTs, near-linear triglyceride lowering)
+  { batch: "B6", effect: "fish-oil-cardiovascular", supplementId: "fish-oil", goal: "metabolic", grade: "A", tier: "foundational" },
+  // B6: melatonin-sleep A → B (19 RCTs; modest effects; primary sleep disorders only)
+  { batch: "B6", effect: "melatonin-sleep", supplementId: "melatonin", goal: "sleep", grade: "B", tier: "targeted" },
+  // B6: caffeine-focus A → B (high risk of bias; benefit mainly under sleep loss)
+  { batch: "B6", effect: "caffeine-focus", supplementId: "caffeine", goal: "focus", grade: "B", tier: "targeted" },
 ];
 
 describe("U4 grade changes: the protocol tier each changed effect now produces (R10)", () => {

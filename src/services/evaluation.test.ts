@@ -270,8 +270,10 @@ describe("runEvaluation — 7/7 context-field reachability (U12)", () => {
     {
       field: "stack",
       // Required field — varied, not removed (see the note above). Stack intent
-      // selects the representative effect, so it changes evidence-fit output.
-      on: () => getStackMock.mockResolvedValue({ ...stack, intent: "training" }),
+      // gates evidence-fit: an experimental stack skips it, so the flag the
+      // sleep stack raises disappears. (U4 B6: magnesium has no A/B effect for
+      // any intent, so varying sleep → training no longer changes the output.)
+      on: () => getStackMock.mockResolvedValue({ ...stack, intent: "experimental" }),
       off: () => getStackMock.mockResolvedValue({ ...stack, intent: "sleep" }),
     },
     {

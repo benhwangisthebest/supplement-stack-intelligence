@@ -135,3 +135,11 @@ Dry run first: 0 calls made, 8 planned (efetch is only planned once a live esear
 **Running total: 180 calls** (U6 162 · S4 12 · S2 6), $0.
 
 **S2, final run** (`2026-09-23-s2g`, **2** calls, all **200**). B-2's approved title was set, on the owner's option (i), to PubMed's `esummary` text verbatim. **Both matched and 2 fixture entries were written** (`pmid:41487531`, `pmid:29543316`), so the fixture holds 32 entries. **U4 live total: 20 calls** (S4 12 · S2 8). **Running total: 182 calls, $0.**
+
+## S5 — scoped search for U4 B6 (owner ruling R16) — 2026-09-24
+
+Four owner queries, taken verbatim (`content/verification/u6-claims-s5.json`), two each for vitamin-d-deficiency and caffeine-focus, run with S4's filters and capture rules. `capture.mjs` `SCENARIOS` gained `"S5"`. **Dry run first** (0 calls, 8 planned). **Live: 12 calls** (Crossref 4, NCBI 8), **all 200**, no widening needed. **$0; no OpenAI, no paid API, deployed DB untouched.** Nothing was written to the corpus or the fixture. The candidate table is `docs/01-plan/features/p3-u4-profiles.s5.md`.
+
+**Running total: 194 calls** (U6 162 · S4 12 · S2 8 · S5 12), $0.
+
+**S2 for S5's approvals** (`2026-09-24-s2h`, owner decision 2026-09-24: V-1, V-3, C-1, C-2, C-4; approvals `content/verification/u6-approvals-s5.json`). Dry run first (0 calls, 5 planned). **Live: 5 calls** (NCBI `esummary`), **all 200**, every response body saved. **All 5 titles matched; no refusals.** 5 fixture entries written (`pmid:34473295`, `pmid:39396907`, `pmid:20464765`, `pmid:28969341`, `pmid:20521321`), so the fixture holds 37 entries. The 5 corpus rows (`p-vitamin-d-prediabetes-rct`, `p-vitamin-d-weekly-daily`, `p-caffeine-shift-work`, `p-caffeine-military`, `p-caffeine-glucose`) are manifest adds whose card fields were written only from their S5-captured abstracts (SHA-256 matched). **U4 live total: 37 calls** (S4 12 · S2 13 · S5 12). **Running total: 199 calls, $0.**

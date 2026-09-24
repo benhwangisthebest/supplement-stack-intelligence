@@ -29,14 +29,17 @@ function group(result: ReturnType<typeof generateProtocol>, goal: OutcomeCategor
 }
 
 describe("generateProtocol", () => {
-  it("groups suggestions by goal, grade-ranked (A first)", () => {
+  it("groups suggestions by goal, grade-ranked (highest first)", () => {
     const result = generateProtocol({ profile: makeProfile({ goals: ["sleep"] }) });
     const sleep = group(result, "sleep");
     expect(sleep).toBeDefined();
     expect(sleep!.suggestions.length).toBeGreaterThan(1);
-    // melatonin has a grade-A sleep effect → ranked first (no lab boost).
+    // melatonin has the top sleep grade → ranked first (no lab boost). Its
+    // grade is derived from its profile: B since U4 B6 (A before).
     expect(sleep!.suggestions[0].supplementId).toBe("melatonin");
-    expect(sleep!.suggestions[0].grade).toBe("A");
+    expect(sleep!.suggestions[0].grade).toBe("B");
+    const grades = sleep!.suggestions.map((s) => s.grade);
+    expect(grades).toEqual([...grades].sort());
   });
 
   it("excludes allergen-conflicting supplements", () => {

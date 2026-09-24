@@ -1,0 +1,477 @@
+[
+  {
+    "claimId": "s5:vitd-deficient-rct",
+    "libraryClaim": "Vitamin D — Correcting deficiency (Grade A at fe0441d): Effectively raises serum 25(OH)D in deficient individuals.",
+    "illustrativeDetails": "S5, U4 ruling R16 (owner queries verbatim, 2026-09-24)",
+    "queries": {
+      "pubmed": "vitamin D supplementation deficient adults serum 25-hydroxyvitamin D randomized placebo",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "vitamin D supplementation deficient adults serum 25-hydroxyvitamin D randomized placebo"
+    },
+    "files": [
+      {
+        "path": "s5_vitd-deficient-rct/crossref.json",
+        "committed": true,
+        "sha256": "55afd7de755e2d6090b0cf6f996e1016a7c030ee1e06e91b90e29dba40faa20f"
+      },
+      {
+        "path": "s5_vitd-deficient-rct/esearch.json",
+        "committed": true,
+        "sha256": "695023d4f2eb46f5b35aa3487fd8bc1d11a79b23df14eb1b7d4ad17fba987b29"
+      },
+      {
+        "path": "local/s5_vitd-deficient-rct/efetch.xml",
+        "committed": false,
+        "sha256": "41af328d52c4dfc7963c7338606f3feddcc7e89c190b3fde288082e386011c4f"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35939577",
+        "doi": "10.1056/NEJMoa2202106",
+        "title": "Supplemental Vitamin D and Incident Fractures in Midlife and Older Adults.",
+        "journal": "The New England journal of medicine",
+        "year": "2022",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "BACKGROUND: Vitamin D supplements are widely recommended for bone health in the general population, but data on whether they prevent fractures have been inconsistent. METHODS: In an ancillary study of the Vitamin D and Omega-3 Trial (VITAL), we tested whether supplemental vitamin D3 would result in ",
+        "abstractChars": 2369,
+        "abstractSha256": "4d7688fc8729090c4e4151866d1ef53bb8f69d47211b12074fbc8213b6265b4b"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "30089075",
+        "doi": "10.1056/NEJMoa1800927",
+        "title": "Vitamin D Supplementation in Pregnancy and Lactation and Infant Growth.",
+        "journal": "The New England journal of medicine",
+        "year": "2018",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "BACKGROUND: It is unclear whether maternal vitamin D supplementation during pregnancy and lactation improves fetal and infant growth in regions where vitamin D deficiency is common. METHODS: We conducted a randomized, double-blind, placebo-controlled trial in Bangladesh to assess the effects of week",
+        "abstractChars": 2245,
+        "abstractSha256": "01d2869acafc2d377cafa2dc9a2993c2dec704bf96935ad6697c0b0a757d412f"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34473295",
+        "doi": "10.1210/clinem/dgab649",
+        "title": "Effects of Vitamin D Supplementation on Insulin Sensitivity and Secretion in Prediabetes.",
+        "journal": "The Journal of clinical endocrinology and metabolism",
+        "year": "2022",
+        "pubTypes": [
+          "Journal Article",
+          "Multicenter Study",
+          "Randomized Controlled Trial",
+          "Research Support, N.I.H., Extramural",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "CONTEXT: Vitamin D regulates glucose homeostasis pathways, but effects of vitamin D supplementation on β-cell function remain unclear. OBJECTIVE: To investigate the effects of vitamin D3 supplementation on insulin sensitivity and β-cell function. METHODS: This is a prespecified secondary analysis of",
+        "abstractChars": 1691,
+        "abstractSha256": "33a4647ef8538a44b4c59c12b50e7f40508a4f11481c75cd4d63f96628178ac8"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.26226/morressier.60b65c8a85c68bde00a3571a",
+        "title": "Preliminary cost-effectiveness of vitamin D3 supplementation in older adults with vitamin D deficiency (defined by serum 25-hydroxyvitamin D) in Ireland",
+        "journal": null,
+        "year": "2021",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/s1744-1161(10)70061-2",
+        "title": "OP035 BIOAVAILABILITY OF VITAMIN D2 FROM UVB-IRRADIATED BUTTON MUSHROOMS IN HEALTHY ADULTS DEFICIENT IN SERUM 25-HYDROXYVITAMIN D (25OHD): A RANDOMIZED-CONTROLLED TRIAL",
+        "journal": "Clinical Nutrition Supplements",
+        "year": "2010",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1002/brb3.71095/v1/review1",
+        "title": "Review for \"Serum 25-Hydroxyvitamin D3 Status in Adolescents with Anxiety Disorders: A Case-Control and Vitamin D Supplementation Substudy\"",
+        "journal": null,
+        "year": "2025",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "s5:vitd3-correction-ma",
+    "libraryClaim": "Vitamin D — Correcting deficiency (Grade A at fe0441d): Effectively raises serum 25(OH)D in deficient individuals.",
+    "illustrativeDetails": "S5, U4 ruling R16 (owner queries verbatim, 2026-09-24)",
+    "queries": {
+      "pubmed": "vitamin D3 supplementation vitamin D deficiency correction meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "vitamin D3 supplementation vitamin D deficiency correction meta-analysis"
+    },
+    "files": [
+      {
+        "path": "s5_vitd3-correction-ma/crossref.json",
+        "committed": true,
+        "sha256": "edc98904b03222e6363e61ac2a890bad5718caf9f5e1a93d620d1cbaed8c0cbb"
+      },
+      {
+        "path": "s5_vitd3-correction-ma/esearch.json",
+        "committed": true,
+        "sha256": "1633bf99e3d23e98368117aea75249fb906fe776efc138dc657977b5779df9c5"
+      },
+      {
+        "path": "local/s5_vitd3-correction-ma/efetch.xml",
+        "committed": false,
+        "sha256": "a2e5f9061d2932e3f3f47dc77740ef6ac3c9b2098ddb97483f278c5a3cf4df8d"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "39396907",
+        "doi": "10.1111/bcpt.14092",
+        "title": "Efficacy of weekly versus daily cholecalciferol for repleting serum vitamin D (25(OH)D) deficiency: A systematic review and meta-analysis of randomized controlled trials.",
+        "journal": "Basic & clinical pharmacology & toxicology",
+        "year": "2024",
+        "pubTypes": [
+          "Comparative Study",
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND/RATIONALE: Weekly cholecalciferol can replace daily supplementation to reduce pill burden in patients with complex medication regimens and hypovitaminosis D, but evidence supporting this switch is unclear. OBJECTIVE: We aimed to determine whether weekly cholecalciferol was superior to dai",
+        "abstractChars": 1500,
+        "abstractSha256": "72925eeb1119201de83e01904eb01198f1ef15660dccc13975fc089721980ef4"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "31809869",
+        "doi": "10.1016/j.jsbmb.2019.105561",
+        "title": "The effects of correction of vitamin D deficiency on arterial stiffness: A systematic review and updated meta-analysis of randomized controlled trials.",
+        "journal": "The Journal of steroid biochemistry and molecular biology",
+        "year": "2020",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "It is unclear whether nutritional vitamin D supplementation in vitamin d-deficient persons improves arterial stiffness. To conduct a meta-analysis of the effects of the nutritional vitamin D therapy on arterial stiffness in adults with vitamin D deficiency, the Scopus, PUBMED, EMBASE, and Cochrane d",
+        "abstractChars": 2004,
+        "abstractSha256": "5c022746a7f0eb76aebf9ef939e9ef685a15b4d6a85f0d0aface95fbb27b345a"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "34718374",
+        "doi": "10.1093/advances/nmab126",
+        "title": "The Effect of Maternal Vitamin D Supplementation on Vitamin D Status of Exclusively Breastfeeding Mothers and Their Nursing Infants: A Systematic Review and Meta-Analysis of Randomized Clinical Trials.",
+        "journal": "Advances in nutrition (Bethesda, Md.)",
+        "year": "2022",
+        "pubTypes": [
+          "Meta-Analysis",
+          "Systematic Review",
+          "Journal Article",
+          "Research Support, Non-U.S. Gov't"
+        ],
+        "abstractExcerpt": "The optimal vitamin D supplementation plan during lactation is unclear. We investigated the effect of maternal vitamin D supplementation on mother-infant dyads' vitamin D status during lactation. All controlled trials that compared vitamin D supplements to placebo or low doses of vitamin D in breast",
+        "abstractChars": 2040,
+        "abstractSha256": "24515739cb05cb8272ed457feb4e34686cbddd658b0aba533a2407f096d36e2e"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.26226/morressier.60b65c8a85c68bde00a3571a",
+        "title": "Preliminary cost-effectiveness of vitamin D3 supplementation in older adults with vitamin D deficiency (defined by serum 25-hydroxyvitamin D) in Ireland",
+        "journal": null,
+        "year": "2021",
+        "pubTypes": [
+          "posted-content"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/j.bone.2009.06.012",
+        "title": "High-dose oral vitamin D3 supplementation in rheumatology patients with severe vitamin D3 deficiency",
+        "journal": "Bone",
+        "year": "2009",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.46998/ijcmcr.2026.60.001499",
+        "title": "Correction of Vitamin D Deficiency and Improvement in Clinical Symptoms Following 90-Day Supplementation with a Plant-Based Lichen-Derived Vitamin D3 Formulation: A Prospective Case Series",
+        "journal": "International Journal of Clinical Studies and Medical Case Reports",
+        "year": "2026",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "s5:caffeine-alertness-ma",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A at fe0441d): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "S5, U4 ruling R16 (owner queries verbatim, 2026-09-24)",
+    "queries": {
+      "pubmed": "caffeine alertness vigilance randomized placebo meta-analysis",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "caffeine alertness vigilance randomized placebo meta-analysis"
+    },
+    "files": [
+      {
+        "path": "s5_caffeine-alertness-ma/crossref.json",
+        "committed": true,
+        "sha256": "d1a6879a829be7a32bd6b76e29da180059398f1e1a6cf59ff41b01cef40d58d8"
+      },
+      {
+        "path": "s5_caffeine-alertness-ma/esearch.json",
+        "committed": true,
+        "sha256": "6e7c5f719a7eef46b8fccf362bb8aff4d6262ad9f95f5a567d7ae4164a56a4d3"
+      },
+      {
+        "path": "local/s5_caffeine-alertness-ma/efetch.xml",
+        "committed": false,
+        "sha256": "6225f919ee189b87a4c9477a072442cfaf1e45beac35925d6d9cb6fa83e1a8b9"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "20464765",
+        "doi": "10.1002/14651858.CD008508",
+        "title": "Caffeine for the prevention of injuries and errors in shift workers.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2010",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Sleepiness leads to a deterioration in performance and attention, and is associated with an increased risk of injury. Jet lag and shift work disorder are circadian rhythm sleep disorders which result in sleepiness and can elevate injury risk. They create a need for individuals to operate",
+        "abstractChars": 3497,
+        "abstractSha256": "fdc4fed472d18b03daf6e8746d97aae30efb393473f5e2aa66c1e0c0c62a98af"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "25113164",
+        "doi": "10.1002/14651858.CD009776.pub2",
+        "title": "Pharmacological interventions for sleepiness and sleep disturbances caused by shift work.",
+        "journal": "The Cochrane database of systematic reviews",
+        "year": "2014",
+        "pubTypes": [
+          "Journal Article",
+          "Meta-Analysis",
+          "Research Support, Non-U.S. Gov't",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "BACKGROUND: Shift work results in sleep-wake disturbances, which cause sleepiness during night shifts and reduce sleep length and quality in daytime sleep after the night shift. In its serious form it is also called shift work sleep disorder. Various pharmacological products are used to ameliorate s",
+        "abstractChars": 4440,
+        "abstractSha256": "29f6cf540c3a15792b5234410a1f390a6e71e0e2cd13462451d1c3d926b6d4c5"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1080/01421599881237",
+        "title": "Learning about clinical trials: the Western multicentre,randomized,double-blind, placebo-controlled clinical trial on the effect of caffeine on alertness and cardiovascular parameters",
+        "journal": "Medical Teacher",
+        "year": "1998",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.70534/rjha8503",
+        "title": "Placebo Response Model for Alopecia Areata: A Model-based Meta-analysis of Randomized Controlled Trials",
+        "journal": "Placebo Response Model for Alopecia Areata: A Model-based Meta-analysis of Randomized Controlled Trials",
+        "year": "2024",
+        "pubTypes": [
+          "proceedings-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1016/0003-6870(90)90226-n",
+        "title": "A new self-rating vigilance scale: The ratio alertness scale (Une Nouvelle Echelle de Vigilance Auto-Estimee: The Ratio Alertness Scale)",
+        "journal": "Applied Ergonomics",
+        "year": "1990",
+        "pubTypes": [
+          "journal-article"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  },
+  {
+    "claimId": "s5:caffeine-attention-rct",
+    "libraryClaim": "Caffeine — Alertness & focus (Grade A at fe0441d): Strong evidence for improved alertness, reaction time, and vigilance.",
+    "illustrativeDetails": "S5, U4 ruling R16 (owner queries verbatim, 2026-09-24)",
+    "queries": {
+      "pubmed": "caffeine sustained attention reaction time healthy adults randomized",
+      "pubmedFilter": "(meta-analysis[pt] OR systematic review[pt] OR randomized controlled trial[pt])",
+      "pubmedScope": "filtered",
+      "crossref": "caffeine sustained attention reaction time healthy adults randomized"
+    },
+    "files": [
+      {
+        "path": "s5_caffeine-attention-rct/crossref.json",
+        "committed": true,
+        "sha256": "922e00272e02fdceddda4f15e9d10159c61783c4dca04c98db38c93a93620b2d"
+      },
+      {
+        "path": "s5_caffeine-attention-rct/esearch.json",
+        "committed": true,
+        "sha256": "eb6825ad515aa6d53e66f26cf048d39c23760d87791dfeb4b7224e1a76cb4e06"
+      },
+      {
+        "path": "local/s5_caffeine-attention-rct/efetch.xml",
+        "committed": false,
+        "sha256": "1c0604de7e040d4253c3c00e301d3d4759d1f8c5df3c9ec721cad3450d1b4298"
+      }
+    ],
+    "pubmed": [
+      {
+        "source": "pubmed-eutils",
+        "pmid": "28969341",
+        "doi": "10.1093/nutrit/nux007",
+        "title": "Caffeine to optimize cognitive function for military mission-readiness: a systematic review and recommendations for the field.",
+        "journal": "Nutrition reviews",
+        "year": "2017",
+        "pubTypes": [
+          "Journal Article",
+          "Systematic Review"
+        ],
+        "abstractExcerpt": "CONTEXT: In 2001 the Institute of Medicine (IOM) released a report on the use of caffeine during sustained military operations in which recommendations for research and practice were made. OBJECTIVE: This systematic review serves as an update on the current quality of the evidence and addresses gaps",
+        "abstractChars": 1510,
+        "abstractSha256": "3f2313822f2a6b661cfbff51ee6a20c0509fad74cbf7f1202cd5d05b5f3786ff"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "20521321",
+        "doi": "10.1002/hup.1115",
+        "title": "Effects of caffeine and glucose, alone and combined, on cognitive performance.",
+        "journal": "Human psychopharmacology",
+        "year": "2010",
+        "pubTypes": [
+          "Comparative Study",
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "OBJECTIVE: To study the effects of consuming caffeine and glucose, alone and combined, on cognitive performance. METHODS: Seventy-two healthy subjects (36 women; age range 18-25) were tested early in the morning, having fasted overnight. Using a double-blind, randomised design, subjects received one",
+        "abstractChars": 1353,
+        "abstractSha256": "3b749905ee0dfe10fdec6591f74a6fe877efcf7d28785d898dbe0bd7b005a28a"
+      },
+      {
+        "source": "pubmed-eutils",
+        "pmid": "35684105",
+        "doi": "10.3390/nu14112305",
+        "title": "The Matrix Matters: Beverage Carbonation Impacts the Timing of Caffeine Effects on Sustained Attention.",
+        "journal": "Nutrients",
+        "year": "2022",
+        "pubTypes": [
+          "Journal Article",
+          "Randomized Controlled Trial"
+        ],
+        "abstractExcerpt": "Both caffeine and the perception of refreshment delivered by cooling, tingling, and mouth-watering flavors have individually been shown to positively impact cognitive performance and mood, though presently there is limited evidence on their possible combined effects. This study explored the contribu",
+        "abstractChars": 1477,
+        "abstractSha256": "6802299c06b89aaf9d806680c00b3f2fe9474f44d46c6bdf02c6f589bc9c5fa9"
+      }
+    ],
+    "crossref": [
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1039/d6fo02338j/v2/review2",
+        "title": "Review for \"Acute dietary nitrate supplementation attenuates caffeine-induced increase in arterial stiffness in healthy adults: a randomized controlled trial\"",
+        "journal": null,
+        "year": "2026",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1039/d6fo02338j/v1/review1",
+        "title": "Review for \"Acute dietary nitrate supplementation attenuates caffeine-induced increase in arterial stiffness in healthy adults: a randomized controlled trial\"",
+        "journal": null,
+        "year": "2026",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      },
+      {
+        "source": "crossref",
+        "pmid": null,
+        "doi": "10.1039/d6fo02338j/v1/review2",
+        "title": "Review for \"Acute dietary nitrate supplementation attenuates caffeine-induced increase in arterial stiffness in healthy adults: a randomized controlled trial\"",
+        "journal": null,
+        "year": "2026",
+        "pubTypes": [
+          "peer-review"
+        ],
+        "abstractExcerpt": null,
+        "abstractChars": 0,
+        "abstractSha256": null
+      }
+    ]
+  }
+]

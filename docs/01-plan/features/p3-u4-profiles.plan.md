@@ -82,9 +82,12 @@ phrase planted in one rationale, then the file restored.
 | B1 | `feat(content): U4 B1 — …` | `5b55d5b` | `35927219723` success | 4 Grade A profiles, the S4 files and B12's two new papers. Appendices [B1](p3-u4-profiles.b1.md) and [S4](p3-u4-profiles.s4.md) |
 | B2 | `feat(content): U4 B2 — …` | `c403f37` | `35927722448` success | 5 profiles: magnesium-stress C → D, fish-oil-mood C → B, three unchanged at C. Appendix [B2](p3-u4-profiles.b2.md) |
 | B3 + R14 | `feat(content): U4 B3 — …` and `feat(content): U4 — confidence follows the grade (R14)` | `7dd4cf1`, `fbe7c09`, `bfa7602` | `35928707862` **failure** (E2E, see below) → `35929657659` success | l-theanine-stress B → D, glycine-sleep B → D, ashwagandha-sleep C → B; confidence mapped for 4 effects; G5 exact. Appendix [B3](p3-u4-profiles.b3.md) |
-| B4 | `feat(content): U4 B4 — …` | (this landing) | — | zinc-immune B → C, nac-antioxidant C → D, protein-powder-recovery B → D; **allowlist empty, 27/27 profiled**. Appendix [B4](p3-u4-profiles.b4.md) |
+| B4 | `feat(content): U4 B4 — …` | `cee04b9` | `35930104077` success | zinc-immune B → C, nac-antioxidant C → D, protein-powder-recovery B → D; **allowlist empty, 27/27 profiled**. Appendix [B4](p3-u4-profiles.b4.md) |
+| B5 row 1 | `feat(content): U4 B5 — melatonin summary … ([P3-X5] demonstration)` | `e653b91` | `35969390588` success | the `[P3-X5]` demonstration and the P-12 test (below) |
+| B5 | `feat(content): U4 B5 — 13 summaries …` | `98be995` | `35969815576` success | 13 summaries, 2 re-judged dimensions, G6 (R5) and G7 (AC-3). Appendix [B5](p3-u4-profiles.b5.md) |
+| B6 | `feat(content): U4 B6 — …` | (this landing) | — | the original 8 re-drafted (R15): magnesium-sleep B → D, vitamin-d-deficiency A → B, fish-oil-cardiovascular B → A, melatonin-sleep A → B, caffeine-focus A → B; 6 summaries; 18 `relevantPopulation` values; S5 files plus 5 new papers. Appendices [S5](p3-u4-profiles.s5.md), [B6](p3-u4-profiles.b6.md) |
 
-**Live calls under U4 (R7, R11):** S4 search **12**, plus S2 resolve **8** (`s2d`, `s2e` and `s2f` refused B-2; `s2g` wrote both). All 20 returned 200, $0. The dated record is `docs/05-qa/2026-09-23-p3-u6-verification-record.md`.
+**Live calls under U4 (R7, R11):** S4 search **12**, plus S2 resolve **8** (`s2d`, `s2e` and `s2f` refused B-2; `s2g` wrote both). All 20 returned 200, $0. **R16:** S5 search **12**, then S2 resolve **5** (`s2h`, no refusals). **U4 total: 37 calls, all 200, $0; running total 199.** The dated record is `docs/05-qa/2026-09-23-p3-u6-verification-record.md`.
 
 **R14: confidence follows the grade** (A `high` · B `moderate` · C/D `low`), enforced exactly by G5 (`seed-integrity.test.ts`). **Every confidence change in U4, against anchor `fe0441d`:**
 
@@ -98,6 +101,11 @@ phrase planted in one rationale, then the file restored.
 | ashwagandha-sleep | C → B | low → **moderate** (R14) |
 | zinc-immune | B → C | moderate → **low** (B4, R14) |
 | protein-powder-recovery | B → D | moderate → **low** (B4, R14) |
+| magnesium-sleep | B → D | moderate → **low** (B6) |
+| vitamin-d-deficiency | A → B | high → **moderate** (B6) |
+| fish-oil-cardiovascular | B → A | moderate → **high** (B6) |
+| melatonin-sleep | A → B | high → **moderate** (B6) |
+| caffeine-focus | A → B | high → **moderate** (B6) |
 
 **Red proofs for G5 under R14:** (i) the tightened guard failed on exactly the four R14 rows before their confidence was set. (ii) Once green, a planted `creatine-strength` A/`moderate` failed it. The file was restored from backup (shasum equal), after which 17/17 passed.
 
@@ -125,6 +133,9 @@ src/data/seed-effects.ts (regenerated)
 - [B2 — five profiles](p3-u4-profiles.b2.md)
 - [B3 — five profiles](p3-u4-profiles.b3.md)
 - [B4 — the last five; allowlist empty](p3-u4-profiles.b4.md)
+- [B5 — summaries, re-judged dimensions, the R12/R13 check of the original 8](p3-u4-profiles.b5.md)
+- [S5 — candidate table for vitamin-d-deficiency and caffeine-focus](p3-u4-profiles.s5.md)
+- [B6 — the original 8 re-drafted; summaries; relevantPopulation for all 27](p3-u4-profiles.b6.md)
 
 ## 5. Findings (raised by U4; open unless marked)
 

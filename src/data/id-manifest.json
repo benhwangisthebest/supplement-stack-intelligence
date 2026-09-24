@@ -208,7 +208,12 @@
         "p-vitamin-d-respiratory-update",
         "p-ashwagandha-sleep",
         "p-b12-oral-routes",
-        "p-b12-oral-vs-im"
+        "p-b12-oral-vs-im",
+        "p-vitamin-d-prediabetes-rct",
+        "p-vitamin-d-weekly-daily",
+        "p-caffeine-shift-work",
+        "p-caffeine-military",
+        "p-caffeine-glucose"
       ],
       "tombstones": []
     },

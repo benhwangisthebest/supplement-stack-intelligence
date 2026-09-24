@@ -145,8 +145,8 @@ describe("ruleDoseFit", () => {
 
 describe("ruleEvidenceFit", () => {
   it("does not flag a strong (A/B) fit for the intent", () => {
-    // magnesium has a grade B sleep effect
-    const items = [makeItem({ supplementId: "magnesium", dose: 300 })];
+    // melatonin has a grade B sleep effect (magnesium's is D since U4 B6)
+    const items = [makeItem({ supplementId: "melatonin", dose: 1 })];
     expect(ruleEvidenceFit(ctx({ items }))).toHaveLength(0);
   });
 

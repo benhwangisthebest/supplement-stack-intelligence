@@ -1,0 +1,47 @@
+[
+  {
+    "paperId": "p-vitamin-d-prediabetes-rct",
+    "kind": "pmid",
+    "id": "34473295",
+    "expectedTitle": "Effects of Vitamin D Supplementation on Insulin Sensitivity and Secretion in Prediabetes.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-24",
+    "approvalRef": "owner, chat 2026-09-24, U4 S5 decision V-1"
+  },
+  {
+    "paperId": "p-vitamin-d-weekly-daily",
+    "kind": "pmid",
+    "id": "39396907",
+    "expectedTitle": "Efficacy of weekly versus daily cholecalciferol for repleting serum vitamin D (25(OH)D) deficiency: A systematic review and meta-analysis of randomized controlled trials.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-24",
+    "approvalRef": "owner, chat 2026-09-24, U4 S5 decision V-3"
+  },
+  {
+    "paperId": "p-caffeine-shift-work",
+    "kind": "pmid",
+    "id": "20464765",
+    "expectedTitle": "Caffeine for the prevention of injuries and errors in shift workers.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-24",
+    "approvalRef": "owner, chat 2026-09-24, U4 S5 decision C-1"
+  },
+  {
+    "paperId": "p-caffeine-military",
+    "kind": "pmid",
+    "id": "28969341",
+    "expectedTitle": "Caffeine to optimize cognitive function for military mission-readiness: a systematic review and recommendations for the field.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-24",
+    "approvalRef": "owner, chat 2026-09-24, U4 S5 decision C-2"
+  },
+  {
+    "paperId": "p-caffeine-glucose",
+    "kind": "pmid",
+    "id": "20521321",
+    "expectedTitle": "Effects of caffeine and glucose, alone and combined, on cognitive performance.",
+    "approvedBy": "owner",
+    "approvedOn": "2026-09-24",
+    "approvalRef": "owner, chat 2026-09-24, U4 S5 decision C-4"
+  }
+]
