@@ -5,12 +5,11 @@
 // note / side-effect field that is DISPLAY-ONLY (never consumed by any engine) and
 // carries a non-medical disclaimer. Idempotent: re-saving updates today's row.
 import { useState } from "react";
-import { checkinCopy } from "@/lib/safety";
-import { sideEffectLabel } from "@/lib/side-effects/vocab";
 import type { DailyCheckin, GoalRating } from "@/types/checkin";
 import type { CanonicalSideEffect, ReportedSideEffect } from "@/types/side-effect";
 import { SIDE_EFFECT_VOCAB } from "@/types/side-effect";
 import type { OutcomeCategory } from "@/types";
+import type { CheckinFormCopy } from "./checkin-props";
 
 interface TodayItem {
   supplementId: string;
@@ -26,13 +25,19 @@ export function DailyCheckinForm({
   goals,
   initial,
   initialSideEffects = [],
+  copy,
 }: {
   date: string;
   items: TodayItem[];
   goals: OutcomeCategory[];
   initial: DailyCheckin | null;
   initialSideEffects?: ReportedSideEffect[];
+  /** Disclaimer + side-effect labels, built by the server page (U9, rule 7). */
+  copy: CheckinFormCopy;
 }) {
+  // Same fallback the lib's sideEffectLabel applies: an unmapped effect shows its raw label.
+  const sideEffectLabel = (effect: CanonicalSideEffect): string =>
+    (Object.hasOwn(copy.sideEffectLabels, effect) ? copy.sideEffectLabels[effect] : undefined) ?? effect;
   const [taken, setTaken] = useState<Set<string>>(new Set(initial?.taken ?? []));
   const [ratings, setRatings] = useState<Partial<Record<OutcomeCategory, GoalRating>>>(
     initial?.ratings ?? {},
@@ -186,7 +191,7 @@ export function DailyCheckinForm({
           className="mt-2 w-full rounded-lg border border-hairline bg-white p-2 text-sm"
           placeholder="Side effect to note (optional)"
         />
-        <p className="mt-1 text-xs text-muted">{checkinCopy.sideEffectDisclaimer}</p>
+        <p className="mt-1 text-xs text-muted">{copy.sideEffectDisclaimer}</p>
       </div>
 
       {/* side-effect-engine v11 — structured, canonical side-effect capture. */}

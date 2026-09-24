@@ -151,3 +151,85 @@ bundle"*), and rule 7 as written forbids a client component to call it.
 server-side), so the latency condition does not apply. No new API route is needed for #1–#10.
 
 **Owner decision needed before (b)** — see the register's U9 entry.
+
+---
+
+## 6. Owner ruling on (b) — 2026-09-24: OPTION A
+
+1. **One named exemption**: `AdvisorPanel.tsx → @/lib/api/error-text`, reason (verbatim, in the guard): *"errorText
+   is a pure envelope-to-text mapper built by Phase 2 U19 for client use; it carries no data or business logic,
+   and moving it would break ui-error-text.test.ts's pinned import."* Tested to still exist, and the list to hold
+   exactly ONE entry. B and C declined — C would also have admitted `markerCatalogEntry`, a seed-data lookup,
+   which is what rule 7 and U8's bundle budget exist to stop.
+2. **(b)**: the other 10 edges move to props from server parents; no `src/lib` change, no new route; the
+   allowlist ends **empty**.
+
+## 7. Landing (b) — Do
+
+**Pattern.** Each page builds what its client tree used to compute in the browser, through a small server-side
+props builder beside the components; the client components import **only its types** (`import type`). A
+runtime import of a builder from client code would pull its `@/lib` imports into the bundle — the guard reddens
+on it, because the walk is transitive.
+
+| Edge (from `ALLOWLIST_ORIGIN`) | Now | Built by |
+|---|---|---|
+| `StackWorkspace → @/lib/safety` | `copy: StackLabCopy` prop | `stack-lab-props.ts` `stackLabCopy()` ← `stack-lab/[stackId]/page.tsx` |
+| `StackItemRow → product-matcher` | `productLabels` prop, own-property lookup | `attachedProductLabels()` — `getProductById` over every seed product (its default catalog), so an unknown id still renders nothing |
+| `DailyCheckinForm → @/lib/safety`, `→ side-effects/vocab` | `copy: CheckinFormCopy` prop | `checkin-props.ts` `checkinFormCopy()` ← `stack-lab/page.tsx`; labels total over `SIDE_EFFECT_VOCAB`, same `?? effect` fallback |
+| `ProfileForm → medication-names` | `medicationSuggestions` prop | `profile-props.ts` ← `profile/page.tsx` |
+| `LabMarkerTable → marker-catalog` | `catalog: MarkerCatalog` prop + `lookupMarkerCatalog` | `markerCatalog()`: `markerCatalogEntry(key)` for every key it can return non-null for |
+| `LabMarkerModal → @/lib/biomarkers` | `biomarkerIds` prop, via `LabTimeline` | `biomarkerIdsByMarker(markers)` over the same rows the page passes |
+| `Disclaimer → @/lib/safety` | `text: DisclaimerText` prop — the type admits only a `DISCLAIMERS` value, so "never inline it" is now compile-enforced | callers pass `DISCLAIMERS.<variant>`: 3 pages, `SiteFooter`, and (via props) `StackLabClient`, `LabUpload → LabReviewConfirm` |
+| `ProvenanceChips → citation-href`, `→ @/lib/evidence` | `index: CitationIndex` prop, via `AdvisorPanel → AdvisorMessageBubble` | `citation-index.ts` `buildCitationIndex()` ← `advisor/page.tsx`: the lib's own answers for every id that can resolve |
+
+Every lookup keyed by user- or DB-supplied text is an **own-property** read, so an id such as `constructor`
+cannot resolve to `Object.prototype` (M3 below proves it mattered for product labels).
+
+**Guard.** `NAMED_EXEMPTIONS` (1 entry) added; the working allowlist is **empty**; **R7h** pins it empty; R7c
+still binds it to `ALLOWLIST_ORIGIN`. Guard run: `15 → 16 passed`, the only crossing the exempt edge.
+
+## 8. Landing (b) — Check
+
+**Named-exemption red proofs** (file-copy backups, restored, `cmp` identical):
+
+| Mutation | Result |
+|---|---|
+| second entry planted in `NAMED_EXEMPTIONS` | **red** R7f — `the named-exemption list cannot grow: a second entry needs an owner ruling: expected [ …(2) ] to have a length of 1 but got 2` |
+| `AdvisorPanel`'s import turned into `import type { errorText }` (exempt edge gone) | **red** R7g — `an exemption that outlives its import must be deleted, not kept as an amnesty` · `+ "src/components/advisor/AdvisorPanel.tsx -> @/lib/api/error-text"` |
+
+**Behaviour unchanged — one jsdom test file per moved component**, each comparing the rendered output with
+the lib call the component used to make, over the whole dataset plus unknown and prototype-named ids:
+`Disclaimer.test.tsx`, `StackLabClient.test.tsx` (StackWorkspace + StackItemRow), `DailyCheckinForm.test.tsx`,
+`ProfileForm.test.tsx`, `LabMarkerTable.test.tsx`, `LabMarkerModal.test.tsx`, and a new exhaustive block in
+`ProvenanceChips.test.tsx` (its 9 existing tests kept, now handed the index). `CoverageLimit.test.tsx`'s
+StackWorkspace harness passes the new props; its completeness check is unchanged and green.
+
+**Mutation check of those tests** (`CLAUDE.md` §5 rule 2; each file restored and compared):
+
+| # | Mutation | Result |
+|---|---|---|
+| M1 | `Disclaimer` renders `text.toUpperCase()` | RED — 7 failed |
+| M2 | `interactionDisclaimer: DISCLAIMERS.general` | RED |
+| M3 | product lookup without `Object.hasOwn` | RED — "renders no badge for an id … prototype names included" |
+| M4 | product label `name: p.brand` | RED |
+| M5 | side-effect labels = raw vocab | RED — 2 failed |
+| M6 | marker lookup not trimmed | RED — 2 failed |
+| M7 | catalog omits canonical names | RED |
+| M8 | biomarker ids all `null` | RED — 13 failed |
+| M9 | modal filters on the raw name | RED — 13 failed |
+| M10 | effect hrefs resolved as papers | RED |
+| M11 | unverified paper titles shown | RED |
+| M12 | medication suggestions truncated | RED |
+
+**Bundle observation** (after only — the pre-refactor tree was not rebuilt for comparison): `grep -rl` over
+`.next/static` finds **0** files containing `calcidiol`, `hydroxyvitamin` (seed biomarker aliases) or
+`Magnesium Glycinate 300` (a seed product name).
+
+**Gate:** `tsc` clean · lint 399/399, 0 errors · vitest **130 files / 1611 tests** (119 node, 11 jsdom) with
+coverage thresholds · `next build` · `verify:rendering` OK · E2E non-live **70 passed / 30 skipped** · null-byte
+check clean.
+
+**Judgment call, recorded:** the four props builders (`stack-lab-props.ts`, `checkin-props.ts`,
+`profile-props.ts`, `citation-index.ts`) are **new files under `src/components/`**, not `src/lib` (which the
+brief closes to change). They are server-side adapters that call existing lib functions — "moving a call site"
+— and are imported at runtime only by `src/app` pages.

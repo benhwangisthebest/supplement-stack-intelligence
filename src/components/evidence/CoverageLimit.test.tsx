@@ -30,6 +30,7 @@ import { InteractionSection } from "@/components/library/InteractionSection";
 import { SupplementDetail } from "@/components/library/SupplementDetail";
 import { WhatToWatch } from "@/components/library/WhatToWatch";
 import { StackWorkspace } from "@/components/stack/StackWorkspace";
+import { attachedProductLabels, stackLabCopy } from "@/components/stack/stack-lab-props";
 
 afterEach(() => {
   cleanup();
@@ -146,7 +147,15 @@ async function evaluateClean(items: StackItem[], flags: EvaluationFlag[] = []) {
   function Harness() {
     const [xs, setXs] = useState(items);
     return (
-      <StackWorkspace stack={stack} items={xs} setItems={setXs} initialFlags={[]} supplements={[]} />
+      <StackWorkspace
+        stack={stack}
+        items={xs}
+        setItems={setXs}
+        initialFlags={[]}
+        supplements={[]}
+        copy={stackLabCopy()}
+        productLabels={attachedProductLabels()}
+      />
     );
   }
   render(<Harness />);

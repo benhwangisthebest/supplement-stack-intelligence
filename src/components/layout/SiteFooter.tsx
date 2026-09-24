@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DISCLAIMERS } from "@/lib/safety";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 
 // Dark footer — the only dark surface on every page. The light-to-dark
@@ -71,7 +72,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-12 border-t border-white/10 pt-8">
-          <Disclaimer variant="general" className="!text-on-dark-soft" />
+          <Disclaimer text={DISCLAIMERS.general} className="!text-on-dark-soft" />
           <p className="mt-4 text-xs text-on-dark-soft/70">
             © {new Date().getFullYear()} Supplement Stack Intelligence.
             Educational and decision-support only — not medical advice.

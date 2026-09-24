@@ -12,7 +12,13 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { LabMarkerTable } from "@/components/profile/LabMarkerTable";
 import { LabUpload } from "@/components/profile/LabUpload";
 import { LabTimeline } from "@/components/profile/LabTimeline";
+import {
+  biomarkerIdsByMarker,
+  markerCatalog,
+  medicationSuggestions,
+} from "@/components/profile/profile-props";
 import { SideEffectTimeline } from "@/components/profile/SideEffectTimeline";
+import { DISCLAIMERS } from "@/lib/safety";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
@@ -42,14 +48,14 @@ export default async function ProfilePage() {
         lead="Your living health context. Add as much or as little as you like — it improves over time."
       />
 
-      <Disclaimer variant="profile" className="mt-4" />
+      <Disclaimer text={DISCLAIMERS.profile} className="mt-4" />
 
       <section className="mt-8">
         <IdentityCard card={identity} />
       </section>
 
       <section className="mt-8">
-        <ProfileForm initial={profile} />
+        <ProfileForm initial={profile} medicationSuggestions={medicationSuggestions()} />
       </section>
 
       <section className="mt-12">
@@ -60,7 +66,7 @@ export default async function ProfilePage() {
         </p>
 
         <div className="mt-4">
-          <LabUpload />
+          <LabUpload labsDisclaimer={DISCLAIMERS.labs} />
         </div>
 
         <div className="mt-6">
@@ -70,7 +76,12 @@ export default async function ProfilePage() {
             and reading history.
           </p>
           <div className="mt-2">
-            <LabTimeline trends={trends} points={points} markers={markers} />
+            <LabTimeline
+              trends={trends}
+              points={points}
+              markers={markers}
+              biomarkerIds={biomarkerIdsByMarker(markers)}
+            />
           </div>
         </div>
 
@@ -81,10 +92,10 @@ export default async function ProfilePage() {
             readings are archived under “+N earlier”.
           </p>
           <div className="mt-2">
-            <LabMarkerTable initial={markers} />
+            <LabMarkerTable initial={markers} catalog={markerCatalog()} />
           </div>
         </div>
-        <Disclaimer variant="labs" className="mt-4" />
+        <Disclaimer text={DISCLAIMERS.labs} className="mt-4" />
       </section>
 
       {/* side-effect-engine v11 — reported side-effects over time. */}

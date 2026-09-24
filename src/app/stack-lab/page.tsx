@@ -11,8 +11,10 @@ import type { StackArchetype } from "@/types/identity";
 import { NewStackForm } from "@/components/stack/NewStackForm";
 import { StackList } from "@/components/stack/StackList";
 import { DailyCheckinForm } from "@/components/checkin/DailyCheckinForm";
+import { checkinFormCopy } from "@/components/checkin/checkin-props";
 import { ConsistencyHeatmap } from "@/components/checkin/ConsistencyHeatmap";
 import { InsightCards } from "@/components/checkin/InsightCards";
+import { DISCLAIMERS } from "@/lib/safety";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
@@ -77,6 +79,7 @@ export default async function StackLabPage() {
           goals={identityCtx.profile?.goals ?? []}
           initial={todayCheckin}
           initialSideEffects={todayReports}
+          copy={checkinFormCopy()}
         />
         <ConsistencyHeatmap
           dates={checkins.map((c) => c.date)}
@@ -86,7 +89,7 @@ export default async function StackLabPage() {
         <InsightCards insights={analysis.insights} />
       </section>
 
-      <Disclaimer variant="evaluation" className="mt-10" />
+      <Disclaimer text={DISCLAIMERS.evaluation} className="mt-10" />
     </main>
   );
 }

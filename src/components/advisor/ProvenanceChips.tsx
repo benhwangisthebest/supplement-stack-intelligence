@@ -2,11 +2,26 @@
 // Each chip traces one claim to the engine output behind it (Plan SC8). Library-
 // linkable kinds (effect-grade / paper) deep-link to the source screen via the pure
 // citationHref resolver; others render as inert tags (no dead link).
+//
+// Phase 3 U9 (b), CLAUDE.md §4 rule 7: every lib answer this component used to
+// compute in the browser (citationHref, the current grade, the verified paper title)
+// now arrives precomputed in `index`, built on the server by `buildCitationIndex()`.
 import Link from "next/link";
 import { IllustrativeDatasetNotice } from "@/components/evidence/IllustrativeDatasetNotice";
-import { citationHref } from "@/lib/advisor/citation-href";
-import { defaultLibrary, getPaperById } from "@/lib/evidence";
 import type { Citation } from "@/types/advisor";
+import type { CitationIndex } from "./citation-index";
+
+/** Own-property read: a refId like "constructor" must not resolve to Object.prototype. */
+function own<T>(record: Readonly<Record<string, T>>, key: string): T | undefined {
+  return Object.hasOwn(record, key) ? record[key] : undefined;
+}
+
+/** What `citationHref(c)` returns, read from the index. */
+function hrefFor(c: Citation, index: CitationIndex): string | null {
+  if (c.kind === "effect-grade") return own(index.effects, c.refId)?.href ?? null;
+  if (c.kind === "paper") return own(index.papers, c.refId)?.href ?? null;
+  return null;
+}
 
 // Phase 3 U6 (a0), N-84: kinds whose chip text comes from the seed evidence corpus
 // (a paper's title, an effect's grade). Any of them in the list mounts the sources
@@ -30,17 +45,20 @@ const EVIDENCE_DATASET_KINDS: ReadonlySet<Citation["kind"]> = new Set(["paper", 
 // refId, falls back to what was stored.
 const STORED_GRADE = /Grade ([ABCD])$/;
 
-function displayed(c: Citation): { label: string; detail?: string; gradeUpdated?: boolean } {
+function displayed(
+  c: Citation,
+  index: CitationIndex,
+): { label: string; detail?: string; gradeUpdated?: boolean } {
   if (c.kind === "effect-grade") {
     const stored = STORED_GRADE.exec(c.label)?.[1];
-    const current = defaultLibrary.effects.find((e) => e.id === c.refId)?.grade;
+    const current = own(index.effects, c.refId)?.grade;
     if (!stored || !current || stored === current) return { label: c.label, detail: c.detail };
     return { label: c.label.replace(STORED_GRADE, `Grade ${current}`), detail: c.detail, gradeUpdated: true };
   }
   if (c.kind !== "paper") return { label: c.label, detail: c.detail };
-  const paper = getPaperById(c.refId);
-  if (!paper || !(paper.doi || paper.pmid)) return { label: c.label, detail: c.detail };
-  return { label: paper.title };
+  const verifiedTitle = own(index.papers, c.refId)?.verifiedTitle;
+  if (verifiedTitle == null) return { label: c.label, detail: c.detail };
+  return { label: verifiedTitle };
 }
 
 const KIND_LABEL: Record<Citation["kind"], string> = {
@@ -53,15 +71,21 @@ const KIND_LABEL: Record<Citation["kind"], string> = {
   "side-effect": "Side-effect",
 };
 
-export function ProvenanceChips({ citations }: { citations: Citation[] }) {
+export function ProvenanceChips({
+  citations,
+  index,
+}: {
+  citations: Citation[];
+  index: CitationIndex;
+}) {
   if (citations.length === 0) return null;
   const citesEvidenceDataset = citations.some((c) => EVIDENCE_DATASET_KINDS.has(c.kind));
   return (
     <>
       <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Sources">
         {citations.map((c) => {
-          const href = citationHref(c);
-          const shown = displayed(c);
+          const href = hrefFor(c, index);
+          const shown = displayed(c, index);
           const body = (
             <>
               <span className="font-medium text-muted">{KIND_LABEL[c.kind]}</span>

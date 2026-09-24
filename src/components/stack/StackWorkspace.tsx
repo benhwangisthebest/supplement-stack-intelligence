@@ -8,13 +8,13 @@ import type {
   Stack,
   StackItem,
 } from "@/types";
-import { COVERAGE, DISCLAIMERS } from "@/lib/safety";
 import { CoverageLimit } from "@/components/evidence/CoverageLimit";
 import { CollapseToggle } from "@/components/ui/CollapseToggle";
 import { AddItemForm, type SupplementOption } from "./AddItemForm";
 import { FlagCard } from "./FlagCard";
 import { CompareView } from "./CompareView";
 import { StackItemRow } from "./StackItemRow";
+import type { AttachedProductLabels, StackLabCopy } from "./stack-lab-props";
 
 // Interaction categories produced by the v2 engine (medication-interactions).
 const INTERACTION_CATEGORIES = new Set(["medication-caution", "interaction-risk"]);
@@ -27,6 +27,8 @@ export function StackWorkspace({
   setItems,
   initialFlags,
   supplements,
+  copy,
+  productLabels,
 }: {
   stack: Stack;
   // Items state is lifted to the parent so sibling panels (e.g. Suggested
@@ -35,6 +37,9 @@ export function StackWorkspace({
   setItems: Dispatch<SetStateAction<StackItem[]>>;
   initialFlags: EvaluationFlag[];
   supplements: SupplementOption[];
+  // U9 (b), rule 7: the safety copy and product labels come from the server page.
+  copy: StackLabCopy;
+  productLabels: AttachedProductLabels;
 }) {
   const [flags, setFlags] = useState<EvaluationFlag[]>(initialFlags);
   const [summary, setSummary] = useState<EvaluationSummary | null>(
@@ -116,6 +121,7 @@ export function StackWorkspace({
                 item={item}
                 label={itemLabel(item)}
                 stackId={stack.id}
+                productLabels={productLabels}
                 onUpdated={(updated) =>
                   setItems((xs) => xs.map((x) => (x.id === updated.id ? updated : x)))
                 }
@@ -190,7 +196,7 @@ export function StackWorkspace({
         )}
 
         {hasAnyInteraction && (
-          <p className="mt-3 text-xs text-muted-soft">{DISCLAIMERS.interaction}</p>
+          <p className="mt-3 text-xs text-muted-soft">{copy.interactionDisclaimer}</p>
         )}
 
         {/* Phase 3 U7 — a clean run used to show "0 critical · 0 warning · 0 info"
@@ -198,9 +204,9 @@ export function StackWorkspace({
             interaction WAS found, so absence read as safety (CLAUDE.md §2.2 rule 10). */}
         {summary && (
           <>
-            <CoverageLimit copy={COVERAGE.stackEvaluationLimit} className="mt-3" />
+            <CoverageLimit copy={copy.stackEvaluationLimit} className="mt-3" />
             {hasCustomItem && (
-              <CoverageLimit copy={COVERAGE.stackCustomItems} className="mt-1" />
+              <CoverageLimit copy={copy.stackCustomItems} className="mt-1" />
             )}
           </>
         )}

@@ -3,13 +3,20 @@
 import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LabMarker } from "@/types";
-import {
-  markerCatalogEntry,
-  markerSuggestions,
-} from "@/lib/biomarkers/marker-catalog";
+import type { MarkerCatalogEntry } from "@/lib/biomarkers/marker-catalog";
+import type { MarkerCatalog } from "./profile-props";
 
-// biomarker-intelligence v3 — autocomplete options computed once.
-const MARKER_SUGGESTIONS = markerSuggestions();
+/**
+ * biomarker-intelligence v3 — the recognized-marker lookup. U9 (b), rule 7: the
+ * table is built on the server (`markerCatalog()`); this is the key the lib's
+ * `markerCatalogEntry` matches on (trimmed, lowercased), read as an own property so
+ * a typed "constructor" cannot resolve to Object.prototype.
+ */
+export function lookupMarkerCatalog(catalog: MarkerCatalog, name: string): MarkerCatalogEntry | null {
+  const key = name.trim().toLowerCase();
+  if (!key) return null;
+  return Object.hasOwn(catalog.entries, key) ? catalog.entries[key] : null;
+}
 
 interface MarkerGroup {
   name: string;
@@ -58,7 +65,14 @@ function fmtDate(iso: string | null): string {
 // mutation calls router.refresh() so the table, timeline, chart and history modal
 // all reflect the same data. Per-reading remove/edit lives in the history modal;
 // here, Remove deletes the WHOLE marker block (all its readings).
-export function LabMarkerTable({ initial }: { initial: LabMarker[] }) {
+export function LabMarkerTable({
+  initial,
+  catalog,
+}: {
+  initial: LabMarker[];
+  /** Marker suggestions + unit/range auto-fill table, from the server page (U9, rule 7). */
+  catalog: MarkerCatalog;
+}) {
   const router = useRouter();
   const [marker, setMarker] = useState("");
   const [value, setValue] = useState("");
@@ -74,7 +88,7 @@ export function LabMarkerTable({ initial }: { initial: LabMarker[] }) {
   // On a recognized marker, auto-fill canonical unit + reference range (overridable).
   function onMarkerChange(name: string) {
     setMarker(name);
-    const entry = markerCatalogEntry(name);
+    const entry = lookupMarkerCatalog(catalog, name);
     if (!entry) return;
     if (!unit.trim()) setUnit(entry.unit);
     if (refLow === "" && entry.refLow !== null) setRefLow(String(entry.refLow));
@@ -206,7 +220,7 @@ export function LabMarkerTable({ initial }: { initial: LabMarker[] }) {
           className="col-span-2 rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         />
         <datalist id={markerListId}>
-          {MARKER_SUGGESTIONS.map((m) => (
+          {catalog.suggestions.map((m) => (
             <option key={m} value={m} />
           ))}
         </datalist>

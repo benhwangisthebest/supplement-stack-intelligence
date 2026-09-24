@@ -15,6 +15,7 @@ interface Props {
   trends: TrendSignal[];
   points: LabMarkerTimelinePoint[];
   markers: LabMarker[]; // raw rows (with ids) so the history modal can edit/remove
+  biomarkerIds: Readonly<Record<string, string | null>>; // row id → canonical biomarker (server-computed, U9)
 }
 
 const ARROW: Record<TrendSignal["direction"], string> = {
@@ -34,7 +35,7 @@ function seriesFor(
     .map((p) => p.canonicalValue);
 }
 
-export function LabTimeline({ trends, points, markers }: Props) {
+export function LabTimeline({ trends, points, markers, biomarkerIds }: Props) {
   const [selected, setSelected] = useState<TrendSignal | null>(null);
 
   if (trends.length === 0) {
@@ -107,6 +108,7 @@ export function LabTimeline({ trends, points, markers }: Props) {
           trend={selected}
           points={points}
           markers={markers}
+          biomarkerIds={biomarkerIds}
           onClose={() => setSelected(null)}
         />
       )}

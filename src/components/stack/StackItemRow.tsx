@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { getProductById } from "@/lib/product-matcher";
 import type { ItemFrequency, ItemTiming, StackItem } from "@/types";
+import type { AttachedProductLabel, AttachedProductLabels } from "./stack-lab-props";
 
 const TIMINGS: ItemTiming[] = [
   "morning",
@@ -20,12 +20,15 @@ export function StackItemRow({
   item,
   label,
   stackId,
+  productLabels,
   onUpdated,
   onRemoved,
 }: {
   item: StackItem;
   label: string;
   stackId: string;
+  /** Seed-product labels from the server page (U9, rule 7). */
+  productLabels: AttachedProductLabels;
   onUpdated: (item: StackItem) => void;
   onRemoved: (id: string) => void;
 }) {
@@ -88,7 +91,9 @@ export function StackItemRow({
           </p>
           {/* v8 advisor-experience: surface the matched product the advisor attached
               (migration 0004 product_id). Absent → no badge (no empty box). */}
-          {item.productId ? <AttachedProduct productId={item.productId} /> : null}
+          {item.productId ? (
+            <AttachedProduct product={productLabelFor(productLabels, item.productId)} />
+          ) : null}
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -184,10 +189,14 @@ export function StackItemRow({
   );
 }
 
+/** Own-property lookup: an id like "constructor" must not resolve to Object.prototype. */
+function productLabelFor(labels: AttachedProductLabels, id: string): AttachedProductLabel | null {
+  return Object.hasOwn(labels, id) ? labels[id] : null;
+}
+
 /** A small badge for the product the advisor matched to this item (Design §5.1).
- *  Resolves the seeded product purely; an unknown id renders nothing (graceful). */
-function AttachedProduct({ productId }: { productId: string }) {
-  const product = getProductById(productId);
+ *  The label is resolved on the server; an unknown id renders nothing (graceful). */
+function AttachedProduct({ product }: { product: AttachedProductLabel | null }) {
   if (!product) return null;
   return (
     <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface-soft px-2 py-0.5 text-xs text-muted">

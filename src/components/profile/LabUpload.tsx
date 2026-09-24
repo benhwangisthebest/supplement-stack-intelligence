@@ -7,8 +7,10 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLabImport } from "./useLabImport";
 import { LabReviewConfirm } from "./LabReviewConfirm";
+import type { DisclaimerText } from "@/components/ui/Disclaimer";
 
-export function LabUpload() {
+// U9 (b): the review gate's disclaimer arrives as a prop from the profile page.
+export function LabUpload({ labsDisclaimer }: { labsDisclaimer: DisclaimerText }) {
   const router = useRouter();
   const imp = useLabImport(() => router.refresh());
   const fileRef = useRef<HTMLInputElement>(null);
@@ -25,6 +27,7 @@ export function LabUpload() {
         onSetRow={imp.setRow}
         onConfirm={imp.commit}
         onCancel={imp.reset}
+        labsDisclaimer={labsDisclaimer}
       />
     );
   }

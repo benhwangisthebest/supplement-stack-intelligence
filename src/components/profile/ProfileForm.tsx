@@ -12,15 +12,18 @@ import {
 } from "@/types";
 import { MultiSelect } from "@/components/ui/MultiSelect";
 import { TagInput } from "@/components/ui/TagInput";
-import { knownMedicationNames } from "@/lib/interactions/medication-names";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-// Computed once: medication autocomplete options (medication-interactions v2).
-const MEDICATION_SUGGESTIONS = knownMedicationNames();
-
 // Design §5.4 — Profile core fields. Persists via PUT /api/profile.
-export function ProfileForm({ initial }: { initial: UserProfile | null }) {
+export function ProfileForm({
+  initial,
+  medicationSuggestions,
+}: {
+  initial: UserProfile | null;
+  /** Medication autocomplete options (medication-interactions v2), from the server page (U9, rule 7). */
+  medicationSuggestions: string[];
+}) {
   const [goals, setGoals] = useState<OutcomeCategory[]>(initial?.goals ?? []);
   const [diet, setDiet] = useState(initial?.diet ?? "");
   const [riskTolerance, setRiskTolerance] = useState<RiskTolerance | "">(
@@ -147,7 +150,7 @@ export function ProfileForm({ initial }: { initial: UserProfile | null }) {
         values={medications}
         onChange={setMedications}
         placeholder="Type and press Enter (e.g. warfarin, metformin)"
-        suggestions={MEDICATION_SUGGESTIONS}
+        suggestions={medicationSuggestions}
       />
       <TagInput
         label="Avoided ingredients"

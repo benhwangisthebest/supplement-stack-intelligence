@@ -34,7 +34,7 @@
 // component cannot quietly gain a second @/lib import. It may only shrink: every
 // entry must be in ALLOWLIST_ORIGIN (the U3 pattern, seed-integrity.test.ts G4d),
 // and every entry must still exist (a fixed import must leave the list — the
-// DOMAIN_IS_PURE ratchet). U9 (b) empties it; the closeout asserts it empty.
+// DOMAIN_IS_PURE ratchet). Empty since U9 (b); the one remaining edge is NAMED_EXEMPTIONS.
 //
 // Why a separate parser from boundaries.test.ts's `extractEdges`: that one does
 // not record whether an edge is type-only, and importing one test file from
@@ -229,20 +229,25 @@ const ALLOWLIST_ORIGIN: ReadonlySet<string> = new Set([
   "src/components/ui/Disclaimer.tsx -> @/lib/safety",
 ]);
 
-/** Today's tolerated violations. U9 (b) shrinks this to empty. */
-const CLIENT_LIB_IMPORT_ALLOWLIST: readonly string[] = [
-  "src/components/advisor/AdvisorPanel.tsx -> @/lib/api/error-text",
-  "src/components/advisor/ProvenanceChips.tsx -> @/lib/advisor/citation-href",
-  "src/components/advisor/ProvenanceChips.tsx -> @/lib/evidence",
-  "src/components/checkin/DailyCheckinForm.tsx -> @/lib/safety",
-  "src/components/checkin/DailyCheckinForm.tsx -> @/lib/side-effects/vocab",
-  "src/components/profile/LabMarkerModal.tsx -> @/lib/biomarkers",
-  "src/components/profile/LabMarkerTable.tsx -> @/lib/biomarkers/marker-catalog",
-  "src/components/profile/ProfileForm.tsx -> @/lib/interactions/medication-names",
-  "src/components/stack/StackItemRow.tsx -> @/lib/product-matcher",
-  "src/components/stack/StackWorkspace.tsx -> @/lib/safety",
-  "src/components/ui/Disclaimer.tsx -> @/lib/safety",
-];
+/**
+ * NAMED EXEMPTIONS — owner ruling 2026-09-24 (U9, option A). Not an allowlist:
+ * an allowlist is a debt waiting to be paid, and this is a decision with a
+ * reason. Exactly ONE entry (R7f), and it must still exist (R7g), following
+ * DOMAIN_IS_PURE's allowlisted orchestration files. Options declined: moving
+ * `errorText` out of src/lib (B), and loosening rule 7 for pure lib helpers (C),
+ * which would also have admitted `markerCatalogEntry`, a seed-data lookup.
+ */
+const NAMED_EXEMPTIONS: Readonly<Record<string, string>> = {
+  "src/components/advisor/AdvisorPanel.tsx -> @/lib/api/error-text":
+    "errorText is a pure envelope-to-text mapper built by Phase 2 U19 for client use; it carries no data or business logic, and moving it would break ui-error-text.test.ts's pinned import.",
+};
+
+/**
+ * Tolerated violations: EMPTY since U9 (b). Rule 7 now holds with no debt; the only
+ * remaining edge is the one NAMED_EXEMPTIONS entry. R7c still binds this list to
+ * ALLOWLIST_ORIGIN, so nothing can be added back that was not there at ae567fd.
+ */
+const CLIENT_LIB_IMPORT_ALLOWLIST: readonly string[] = [];
 
 const REAL = clientGraph(trackedSourceTree());
 
@@ -261,7 +266,7 @@ describe("CLIENT_TAKES_PROPS — client components do not import src/lib or src/
   });
 
   it("R7b every runtime @/lib or @/data import in the client graph is allowlisted", () => {
-    const allowed = new Set(CLIENT_LIB_IMPORT_ALLOWLIST);
+    const allowed = new Set([...CLIENT_LIB_IMPORT_ALLOWLIST, ...Object.keys(NAMED_EXEMPTIONS)]);
     const offenders = REAL.crossings.filter((c) => !allowed.has(edgeKey(c)));
     expect(
       offenders.map(describeCrossing),
@@ -283,6 +288,27 @@ describe("CLIENT_TAKES_PROPS — client components do not import src/lib or src/
     expect(
       CLIENT_LIB_IMPORT_ALLOWLIST.filter((k) => !live.has(k)),
       "fixed imports must leave the allowlist in the same commit",
+    ).toEqual([]);
+  });
+
+  it("R7h the allowlist is empty (U9 closeout: 0 violators, 1 named exemption)", () => {
+    expect(CLIENT_LIB_IMPORT_ALLOWLIST).toEqual([]);
+  });
+
+  it("R7f the named exemptions are exactly ONE, with a written reason, and not also allowlisted", () => {
+    const keys = Object.keys(NAMED_EXEMPTIONS);
+    expect(keys, "the named-exemption list cannot grow: a second entry needs an owner ruling").toHaveLength(1);
+    for (const [key, reason] of Object.entries(NAMED_EXEMPTIONS)) {
+      expect(reason.length, `${key}: reason is too thin`).toBeGreaterThan(40);
+      expect(CLIENT_LIB_IMPORT_ALLOWLIST).not.toContain(key);
+    }
+  });
+
+  it("R7g no stale exemption: every exempt import still exists", () => {
+    const live = new Set(REAL.crossings.map(edgeKey));
+    expect(
+      Object.keys(NAMED_EXEMPTIONS).filter((k) => !live.has(k)),
+      "an exemption that outlives its import must be deleted, not kept as an amnesty",
     ).toEqual([]);
   });
 });

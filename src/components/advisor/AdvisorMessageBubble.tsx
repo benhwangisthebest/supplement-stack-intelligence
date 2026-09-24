@@ -5,6 +5,7 @@ import type { Citation } from "@/types/advisor";
 import type { ActionProposal } from "@/types/advisor-action";
 import type { DraftFlag } from "@/types/evaluation";
 import { ProvenanceChips } from "./ProvenanceChips";
+import type { CitationIndex } from "./citation-index";
 
 export interface ChatMessageView {
   role: "user" | "assistant";
@@ -25,7 +26,13 @@ export interface ChatMessageView {
   rejected?: boolean;
 }
 
-export function AdvisorMessageBubble({ message }: { message: ChatMessageView }) {
+export function AdvisorMessageBubble({
+  message,
+  citationIndex,
+}: {
+  message: ChatMessageView;
+  citationIndex: CitationIndex;
+}) {
   const isUser = message.role === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -51,7 +58,7 @@ export function AdvisorMessageBubble({ message }: { message: ChatMessageView }) 
             )}
           </p>
         )}
-        {!isUser && <ProvenanceChips citations={message.citations} />}
+        {!isUser && <ProvenanceChips citations={message.citations} index={citationIndex} />}
       </div>
     </div>
   );

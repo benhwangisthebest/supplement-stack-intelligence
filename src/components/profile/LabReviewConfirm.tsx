@@ -4,7 +4,7 @@
 // user edits/approves each. Commit is disabled until ≥1 marker is approved.
 // Nothing here writes to the DB until the user clicks Confirm & save.
 import { useState } from "react";
-import { Disclaimer } from "@/components/ui/Disclaimer";
+import { Disclaimer, type DisclaimerText } from "@/components/ui/Disclaimer";
 import type { ReviewRow } from "./useLabImport";
 
 interface Props {
@@ -15,6 +15,8 @@ interface Props {
   onSetRow: (i: number, patch: Partial<ReviewRow>) => void;
   onConfirm: (collectedAt: string) => void;
   onCancel: () => void;
+  /** `DISCLAIMERS.labs`, from the server page (U9, rule 7). */
+  labsDisclaimer: DisclaimerText;
 }
 
 function today(): string {
@@ -29,6 +31,7 @@ export function LabReviewConfirm({
   onSetRow,
   onConfirm,
   onCancel,
+  labsDisclaimer,
 }: Props) {
   const [collectedAt, setCollectedAt] = useState(today());
 
@@ -90,7 +93,7 @@ export function LabReviewConfirm({
 
       {error && <p className="mt-2 text-xs text-error">{error}</p>}
 
-      <Disclaimer variant="labs" className="mt-3" />
+      <Disclaimer text={labsDisclaimer} className="mt-3" />
 
       <div className="mt-3 flex items-center gap-3">
         <button

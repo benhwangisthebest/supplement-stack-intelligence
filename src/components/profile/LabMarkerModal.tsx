@@ -7,7 +7,6 @@
 // All copy is descriptive movement only — never diagnostic.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { normalizeMarker } from "@/lib/biomarkers";
 import type { LabMarker } from "@/types";
 import type { LabMarkerTimelinePoint, TrendSignal } from "@/types/lab";
 
@@ -15,6 +14,8 @@ interface Props {
   trend: TrendSignal;
   points: LabMarkerTimelinePoint[];
   markers: LabMarker[];
+  /** Row id → `normalizeMarker(row.marker)`, computed by the server page (U9, rule 7). */
+  biomarkerIds: Readonly<Record<string, string | null>>;
   onClose: () => void;
 }
 
@@ -44,7 +45,7 @@ function toDraft(m: LabMarker): Draft {
   };
 }
 
-export function LabMarkerModal({ trend, points, markers, onClose }: Props) {
+export function LabMarkerModal({ trend, points, markers, biomarkerIds, onClose }: Props) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -75,7 +76,7 @@ export function LabMarkerModal({ trend, points, markers, onClose }: Props) {
 
   // Raw rows (with ids) for this biomarker — newest first — power the history list.
   const readings = markers
-    .filter((m) => normalizeMarker(m.marker) === trend.biomarkerId)
+    .filter((m) => (Object.hasOwn(biomarkerIds, m.id) ? biomarkerIds[m.id] : null) === trend.biomarkerId)
     .slice()
     .sort((a, b) => {
       if (a.date && b.date && a.date !== b.date) return a.date < b.date ? 1 : -1;

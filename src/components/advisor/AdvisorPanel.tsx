@@ -14,6 +14,7 @@ import { AdvisorMessageBubble, type ChatMessageView } from "./AdvisorMessageBubb
 import { ActionProposalCard, type ConfirmResult } from "./ActionProposalCard";
 import { UndoToast } from "./UndoToast";
 import { ConversationRail } from "./ConversationRail";
+import type { CitationIndex } from "./citation-index";
 
 interface ApiMessage {
   role: "user" | "assistant";
@@ -23,8 +24,11 @@ interface ApiMessage {
 
 export function AdvisorPanel({
   initialConversations,
+  citationIndex,
 }: {
   initialConversations: AdvisorConversation[];
+  /** Resolves source chips without the evidence library in the browser (U9, rule 7). */
+  citationIndex: CitationIndex;
 }) {
   const [conversations, setConversations] = useState(initialConversations);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -167,7 +171,7 @@ export function AdvisorPanel({
           ) : (
             messages.map((m, i) => (
               <div key={i}>
-                <AdvisorMessageBubble message={m} />
+                <AdvisorMessageBubble message={m} citationIndex={citationIndex} />
                 {m.proposals && m.proposals.length > 0 && !m.applied && !m.rejected && (
                   <ActionProposalCard
                     proposals={m.proposals}

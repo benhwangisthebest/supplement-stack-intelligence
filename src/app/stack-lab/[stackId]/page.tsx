@@ -6,6 +6,7 @@ import { getStackDetail } from "@/services/evaluation";
 import { getAllSupplements } from "@/lib/evidence";
 import { StackLabClient } from "@/components/stack/StackLabClient";
 import type { SupplementOption } from "@/components/stack/AddItemForm";
+import { attachedProductLabels, stackLabCopy } from "@/components/stack/stack-lab-props";
 
 export const metadata = { title: "Stack — Supplement Stack Intelligence" };
 export const dynamic = "force-dynamic"; // reads auth session + user data per request
@@ -46,6 +47,8 @@ export default async function StackDetailPage({
         initialItems={detail.items}
         initialFlags={detail.flags}
         supplements={supplements}
+        copy={stackLabCopy()}
+        productLabels={attachedProductLabels()}
       />
     </main>
   );

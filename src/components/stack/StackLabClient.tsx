@@ -7,6 +7,7 @@ import { StackWorkspace } from "./StackWorkspace";
 import { ProtocolPanel } from "./ProtocolPanel";
 import { ProductMatchPanel } from "./ProductMatchPanel";
 import type { SupplementOption } from "./AddItemForm";
+import type { AttachedProductLabels, StackLabCopy } from "./stack-lab-props";
 
 // Owns the stack's items state so sibling panels stay in sync. Accepting a
 // Suggested Protocol item now updates the Items list immediately (no reload).
@@ -15,11 +16,16 @@ export function StackLabClient({
   initialItems,
   initialFlags,
   supplements,
+  copy,
+  productLabels,
 }: {
   stack: Stack;
   initialItems: StackItem[];
   initialFlags: EvaluationFlag[];
   supplements: SupplementOption[];
+  /** Safety copy and product labels, built by the server page (U9, rule 7). */
+  copy: StackLabCopy;
+  productLabels: AttachedProductLabels;
 }) {
   const [items, setItems] = useState<StackItem[]>(initialItems);
 
@@ -37,6 +43,8 @@ export function StackLabClient({
           setItems={setItems}
           initialFlags={initialFlags}
           supplements={supplements}
+          copy={copy}
+          productLabels={productLabels}
         />
       </div>
 
@@ -48,7 +56,7 @@ export function StackLabClient({
         <ProductMatchPanel stackId={stack.id} />
       </div>
 
-      <Disclaimer variant="evaluation" className="mt-10" />
+      <Disclaimer text={copy.evaluationDisclaimer} className="mt-10" />
     </>
   );
 }

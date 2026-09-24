@@ -5,6 +5,8 @@ import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { listConversations } from "@/lib/advisor/repo";
 import { AdvisorPanel } from "@/components/advisor/AdvisorPanel";
+import { buildCitationIndex } from "@/components/advisor/citation-index";
+import { DISCLAIMERS } from "@/lib/safety";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
@@ -23,10 +25,10 @@ export default async function AdvisorPage() {
         lead="Ask in plain language. The advisor answers only from the platform's evidence base, your profile, your stack, and your labs — with sources, and it says so when it doesn't have the data."
       />
 
-      <Disclaimer variant="general" className="mt-4" />
+      <Disclaimer text={DISCLAIMERS.general} className="mt-4" />
 
       <section className="mt-8">
-        <AdvisorPanel initialConversations={conversations} />
+        <AdvisorPanel initialConversations={conversations} citationIndex={buildCitationIndex()} />
       </section>
     </main>
   );
