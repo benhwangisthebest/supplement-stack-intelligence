@@ -5,7 +5,7 @@
 > U4 list under **U6** (items 1–16). Where the two disagree, the register wins.
 >
 > **Feature**: `p3-u4-profiles` · **Anchor**: `fe0441d` · **Date**: 2026-09-23 · **Type**: deterministic,
-> except the owner-ruled live addenda R7/R11 (20 calls to NCBI and Crossref, $0; §3). No OpenAI, no deployed DB.
+> except the owner-ruled live addenda R7/R11/R16 (37 calls to NCBI and Crossref, $0; §3). No OpenAI, no deployed DB.
 
 ---
 
@@ -85,7 +85,9 @@ phrase planted in one rationale, then the file restored.
 | B4 | `feat(content): U4 B4 — …` | `cee04b9` | `35930104077` success | zinc-immune B → C, nac-antioxidant C → D, protein-powder-recovery B → D; **allowlist empty, 27/27 profiled**. Appendix [B4](p3-u4-profiles.b4.md) |
 | B5 row 1 | `feat(content): U4 B5 — melatonin summary … ([P3-X5] demonstration)` | `e653b91` | `35969390588` success | the `[P3-X5]` demonstration and the P-12 test (below) |
 | B5 | `feat(content): U4 B5 — 13 summaries …` | `98be995` | `35969815576` success | 13 summaries, 2 re-judged dimensions, G6 (R5) and G7 (AC-3). Appendix [B5](p3-u4-profiles.b5.md) |
-| B6 | `feat(content): U4 B6 — …` | (this landing) | — | the original 8 re-drafted (R15): magnesium-sleep B → D, vitamin-d-deficiency A → B, fish-oil-cardiovascular B → A, melatonin-sleep A → B, caffeine-focus A → B; 6 summaries; 18 `relevantPopulation` values; S5 files plus 5 new papers. Appendices [S5](p3-u4-profiles.s5.md), [B6](p3-u4-profiles.b6.md) |
+| B6 | `feat(content): U4 B6 — …` | `bd98bd3` | `36049582256` success | the original 8 re-drafted (R15): magnesium-sleep B → D, vitamin-d-deficiency A → B, fish-oil-cardiovascular B → A, melatonin-sleep A → B, caffeine-focus A → B; 6 summaries; 18 `relevantPopulation` values; S5 files plus 5 new papers. Appendices [S5](p3-u4-profiles.s5.md), [B6](p3-u4-profiles.b6.md) |
+| G8 | `feat(content): U4 — G8: …` | `e39255c` | `36054882746` success | a dimension cites only its own effect's papers (AC-6); red-proved below |
+| Closeout | `docs(plan): U4 closeout — …` | (this landing) | — | ticks `[P3-X1]` and `[P3-X5]`; [closeout record](p3-u4-profiles.closeout.md) |
 
 **Live calls under U4 (R7, R11):** S4 search **12**, plus S2 resolve **8** (`s2d`, `s2e` and `s2f` refused B-2; `s2g` wrote both). All 20 returned 200, $0. **R16:** S5 search **12**, then S2 resolve **5** (`s2h`, no refusals). **U4 total: 37 calls, all 200, $0; running total 199.** The dated record is `docs/05-qa/2026-09-23-p3-u6-verification-record.md`.
 
@@ -138,6 +140,7 @@ src/data/seed-effects.ts (regenerated)
 - [B5 — summaries, re-judged dimensions, the R12/R13 check of the original 8](p3-u4-profiles.b5.md)
 - [S5 — candidate table for vitamin-d-deficiency and caffeine-focus](p3-u4-profiles.s5.md)
 - [B6 — the original 8 re-drafted; summaries; relevantPopulation for all 27](p3-u4-profiles.b6.md)
+- [Closeout — AC-1…AC-7, every grade change (AC-4), rulings R1–R16, follow-ups, U7 notes, spend, U7/U8/U9](p3-u4-profiles.closeout.md)
 
 ## 5. Findings (raised by U4; open unless marked)
 
@@ -146,3 +149,7 @@ src/data/seed-effects.ts (regenerated)
 **F-1 — CLOSED by `478ccf7`** (owner-approved scoped exception, `fix(grading)`). The composite is rounded to 1e-9. Mismatches against exact arithmetic went from 26/1024 profiles to 0/1024, and no seed grade flipped.
 
 **F-2 — B-2 (PMID 29543316) was refused by S2 three times. The first diagnosis was WRONG, and its fix is WITHDRAWN.** I first attributed the refusal to inline markup: `efetch`'s title carries `B<sub>12</sub>`, and `normaliseTitle` turned a tag into a space. A fix, *strip tags with no space*, was approved and committed as `26c396f` on a branch, and CI passed. **But its re-run (`s2e`) still refused B-2.** On the owner's ruling, that branch was deleted unmerged and not amended. The resolve step was made to save its response bodies (`b5d1b62`), and a third run (`s2f`) captured the body. **Verified cause, quoted from `captures/2026-09-23-s2f/p-b12-oral-vs-im/esummary.json`:** `"title":"Oral vitamin B(12) versus intramuscular vitamin B(12) for vitamin B(12) deficiency."`. PubMed's `esummary` renders the subscript as **parentheses**, which `normaliseTitle` turns into a space (`b 12`), while the approved title, taken from `efetch` with its markup stripped, read `b12`. **It was neither tag markup nor HTML entities**, so the tag fix addressed nothing a resolver returns and was **dropped without landing**. **Resolution (owner, option i):** approve PubMed's `esummary` title verbatim as B-2's title. No title-check code changes. An offline replay of the saved bodies through `runResolve` → `applyResolved` → `checkPapers` gave 0 refusals and P4 clean. The displayed title reads *"B(12)"*, which is PubMed's own rendering.
+
+## 6. Closeout (2026-09-24)
+
+**All seven acceptance criteria are MET** ([closeout record](p3-u4-profiles.closeout.md) §1). **`[P3-X1]` and `[P3-X5]` are ticked** in the register, each with its evidence. X1 was red-proved again at closeout: removing one profile fails G4c, and the allowlist is empty. X5 holds for corrections that add no id, per the register's caveat, which B1 and B6 exercised. **15 grade changes** are listed in record §2 with their engine consequences and pins, and **37 live calls at $0**. Rulings R1–R16, FU-61/62/63 and the four U7 notes are in record §3–§5. **Next is U7, then U9 and U8** (record §7, which quotes their PLAN blocks verbatim).
