@@ -132,6 +132,7 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 | **U7** Coverage honesty across the four surfaces — **DONE 2026-09-24** (`841893e`, `8c01a61`; cycle record `p3-u7-coverage-honesty.plan.md`) | deterministic | `[P3-X4]` — **unblocked by D-1a; needs U0** |
 | **U8** Injection seam + bundle-size assertion | deterministic | roadmap item 5 |
 | **U9** `CLAUDE.md` §4 rule 7: guard, then refactor *(new — D-7)* | deterministic | `[P3-X9]` |
+| **U10** Rule-8 component tests *(new — FU-64 ruling, 2026-09-24)* | deterministic | **FU-64**, **U-DEFER-4** (in full) |
 
 **`[P3-X7]` is deliberately absent from the Closes column**: it binds **U0, U1, U2, U3, U4, U5, U7, U8 and U9** — every unit shipping a guard — so listing it nine times would read as nine obligations rather than one. **U6 is the sole exclusion**, and not an oversight: its red proof exercises *U5's* guard rather than shipping one of its own. *(U0 and U9 joined the set at (d), on D-1a and D-7.)*
 
@@ -329,6 +330,19 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 **Red proof:** the guard is red against all **8** before any component moves, and the failure output is recorded — `[P3-X7]`.
 **Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured) · `npx next build` — plus the red proof, recorded.
 
+**U10 — rule-8 component tests *(new, appended 2026-09-24 on the owner's FU-64 ruling, a rank-2 instruction)*.** Owner text, verbatim: *"U10 — rule-8 component tests. Confirm the list of components that render a safety flag, evidence grade or citation without a component test, then write one per component, each red-proved. Closes FU-64 and U-DEFER-4 in full."*
+- **Order:** after U9 and U8, before the phase closeout.
+- **Type:** deterministic. There is no network, DB or OpenAI call, and every component test runs on U0's jsdom project.
+- **Starting point:** the heuristic list in FU-64 (register §7), 12 components by keyword scan at `f262437`. The first deliverable is the **confirmed** list, stating the predicate used, because the scan both over- and under-matches.
+- **Red proof:** each test is red against the specific rendering it guards, recorded per component (`[P3-X7]` binds U10 as it binds every unit that ships a guard).
+- **Unit count:** U10 is the **eleventh** unit. §8's *"ten units (U0…U9)"* predates it and is left as written (append-only).
+
+**Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured) · `npx next build` · full non-live E2E — plus the red proofs, recorded.
+
+> **For the phase closeout** *(owner, 2026-09-24; recorded here, deliberately not edited now)*:
+> 1. `CLAUDE.md` §5's measured baseline still says *"27 executable architecture specs"*. It is stale: `git ls-files 'src/architecture/*.test.ts' | wc -l` → **28** at `f262437`, and U9 adds one more. The phase closeout re-derives it by that command and corrects the line. It is not one of `SPEC_COUNT`'s four bound sites, which is why nothing reddened.
+> 2. `docs/01-plan/features/p3-u4-profiles.closeout.md` §5 (*Notes for U7*) still reads as open. The phase closeout adds a dated pointer: its notes 1, 2 and 4 were closed at `8c01a61`, and note 3 (FU-59) was closed in part at `841893e`, with products remaining open (see the U7 cycle artifact §7).
+
 ---
 
 ## 5. Exit criteria
@@ -457,7 +471,7 @@ Derived from the Phase 2 report §9–§11 (lines 223–367). **The source set i
 | **FU-58** *(new, U6)* | **OPEN.** `src/types/paper.ts` header comment is stale (*"ILLUSTRATIVE … not a citable study"*). |
 | **FU-59** *(new, U6)* | **[2026-09-24] CLOSED IN PART by U7 (a), `841893e`** *(owner ruling)*. **Interactions:** `InteractionSection.tsx:41`, `:70`. **Food pairings:** `FoodPairingSection.tsx:48`, `:75`. Both route through `CoverageLimit` with their reviewed wording. **Remainder OPEN: products.** `ProductMatchPanel.tsx:30` says *"No matched products in the current catalog."* with no limit statement. A product catalog is not a safety absence, and a fix is new Stack Lab copy. ~~OPEN — candidate U7.~~ |
 | **FU-60** *(new, U6)* | **OPEN.** The account export emits stored pre-U6 paper labels. The chip resolves them at render, but the export does not. |
-| **FU-64** *(new, U7 closeout)* | **OPEN — owner to assign.** U-DEFER-4 is **still RE-SCOPED, not closed**. The register made *"whether every deferred `.tsx` test is then written"* U7's question, and the answer is **no**. U7 wrote the coverage tests. A keyword scan (grade, flag, severity, citation, `DISCLAIMERS`) for `CLAUDE.md` §5 rule 8 components still finds **12 with no component test**, e.g. `stack/FlagCard.tsx`, `evidence/EffectGradeBadge.tsx`, `stack/SuggestionCard.tsx` and `library/BiomarkerRelevanceSection.tsx`. The scan is heuristic, so the first step is to confirm the list. |
+| **FU-64** *(new, U7 closeout)* | **[2026-09-24] ASSIGNED to U10** *(owner ruling)*. U10 closes it, and U-DEFER-4, in full. ~~OPEN — owner to assign.~~ U-DEFER-4 is **still RE-SCOPED, not closed**. The register made *"whether every deferred `.tsx` test is then written"* U7's question, and the answer is **no**. U7 wrote the coverage tests. A keyword scan (grade, flag, severity, citation, `DISCLAIMERS`) for `CLAUDE.md` §5 rule 8 components still finds **12 with no component test**, e.g. `stack/FlagCard.tsx`, `evidence/EffectGradeBadge.tsx`, `stack/SuggestionCard.tsx` and `library/BiomarkerRelevanceSection.tsx`. The scan is heuristic, so the first step is to confirm the list. |
 
 **What this section claims, precisely** *(restated at (c); the draft's "No item from the source set is omitted" was false twice over — P-03)*. **Id set:** all **38** ids the source names are dispositioned above; `comm -23` over the two extracted sorted sets is **empty**. **Item set:** the source also carries **2 unnumbered residues**, both now dispositioned — the class the Phase 2 (d3) certifier rejected an earlier follow-up set for omitting, which the draft reproduced because its extraction keyed on `FU-/N-/OP-` ids. **Status claims:** where a row reads *closed* or *discharged* that is a statement about the register at `52e00d9`, **verified cell by cell at (c)** — which is how N-71, N-79 and FU-1 were found mis-stated.
 
@@ -540,5 +554,6 @@ Verdict **REVISE**. Every item is **ADDRESSED** at the plan section given, or **
 | U7 | deterministic | **deterministic** | unchanged |
 | U8 | deterministic | **deterministic** | gained the route-table check-in, a committed artifact |
 | **U9** *(new at (d))* | — | **deterministic** | a guard plus a refactor of 8 components; no network, no DB |
+| **U10** *(new 2026-09-24, FU-64 ruling)* | — | **deterministic** | component tests only; no network, no DB |
 
 **No unit changed type at (c) or (d).** At (c) one — **U6** — changed **spend class**, which is the finding the corrected liveness test produced. At (d) **D-6 raised U6's spend volume** and **D-3 made it one-time** (fixtures are captured once, then verified offline), while **D-4 kept a second live unit out of the phase**.

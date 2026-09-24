@@ -548,7 +548,10 @@ tracked test file to run exactly once, in its own project. One smoke test exists
 component tests are U7's (U-DEFER-4 RE-SCOPED). **[2026-09-24, Phase 3 U7]** U7 (`841893e`, `8c01a61`)
 added the coverage-honesty component guard (`src/components/evidence/CoverageLimit.test.tsx`: 6 surfaces,
 filesystem-derived completeness), closing `[P3-X4]`. **U-DEFER-4 is still not closed:** about 12
-`CLAUDE.md` §5 rule 8 components still have no component test (**FU-64**, register §7). Plus two
+`CLAUDE.md` §5 rule 8 components still have no component test (**FU-64**, register §7).
+**[2026-09-24, owner ruling]** FU-64 is assigned to a new unit, **U10** (rule-8 component tests). U10 first
+confirms the list, then writes one red-proved test per component, closing FU-64 and U-DEFER-4 in full. It
+runs after U9 and U8 and before the Phase 3 closeout. Plus two
 content/process issues:
 
 1. **Content debt compounds fastest** — every feature built on ungrounded grades enlarges the surface a
