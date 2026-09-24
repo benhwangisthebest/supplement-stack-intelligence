@@ -307,3 +307,29 @@ describe("G7 — no seed summary or rationale uses banned language", () => {
     expect(texts.filter((t) => containsBannedLanguage(t.text)).map((t) => `${t.at}: ${t.text}`)).toEqual([]);
   });
 });
+
+// G8 — a dimension cites only papers on its own effect's list (Phase 3 U4, AC-6).
+// G3 proves each id resolves to *some* paper and P7 that each cited paper is
+// fixture-verified, but neither stops a rationale borrowing another effect's
+// paper: the dimension would render a citation the effect never lists. U4's
+// drafting scripts refused this; nothing in the build did. Red proof: a paper
+// from another effect planted in one dimension failed G8b and was restored from
+// backup (docs/01-plan/features/p3-u4-profiles.plan.md).
+describe("G8 — every dimension cites only its effect's papers (AC-6)", () => {
+  const effects = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, "content/seed/seed-effects.json"), "utf8"),
+  ) as { id: string; paperIds: string[]; evidenceProfile?: EvidenceProfile }[];
+  const cites = effects.flatMap((e) =>
+    Object.entries(e.evidenceProfile?.dimensions ?? {}).flatMap(([k, d]) =>
+      d.paperIds.map((id) => ({ at: `${e.id}/${k}`, id, allowed: e.paperIds })),
+    ),
+  );
+
+  it("G8a reads every dimension citation (anti-vacuity)", () => {
+    expect(cites.length).toBeGreaterThan(100);
+  });
+
+  it("G8b no dimension cites a paper outside its effect's paperIds", () => {
+    expect(cites.filter((c) => !c.allowed.includes(c.id)).map((c) => `${c.at}: ${c.id}`)).toEqual([]);
+  });
+});

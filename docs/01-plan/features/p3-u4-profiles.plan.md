@@ -126,6 +126,8 @@ src/data/seed-effects.ts (regenerated)
 
 **B5 (the rest), red proofs.** **G6** (R5, *score > 0 requires a cited paper*) failed at B5's base on exactly `magnesium-sleep/populationRelevance` (2) and `melatonin-sleep/populationRelevance` (3). Both were re-judged from their own papers (1 each, cited), with no grade change: magnesium-sleep 0.617 → 0.583 B, melatonin-sleep 0.883 → 0.817 A. **G7** (AC-3 seed safety sweep, 27 summaries plus 135 rationales, `containsBannedLanguage`, unchanged list) failed on a *"this cures"* planted in a rationale and on a *"you should take"* planted in a summary. After each, the file was restored from backup (shasum `1296a726` before and after), and 21/21 passed.
 
+**G8 (AC-6), landed before the closeout.** G3 proves each id resolves, and P7 proves each cited paper is verified. Neither stopped a dimension citing a paper its own effect does not list, and only U4's drafting scripts refused that. G8 (`seed-integrity.test.ts`) makes the build refuse it. **Red proof:** `p-caffeine-training` planted in `magnesium-sleep/humanEvidence` failed exactly G8b, naming that one citation, and every other guard in the file stayed green, G3 and P7 included. The file was restored from backup (shasum `2ef918e4` before and after), and 23/23 passed.
+
 ## 4. Appendices
 
 - [B1 — the four Grade A effects](p3-u4-profiles.b1.md)
