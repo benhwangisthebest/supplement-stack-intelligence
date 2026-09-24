@@ -545,7 +545,10 @@ list; only the count aged · **[2026-09-22, Phase 2 closeout] BOUND BY `SPEC_COU
 added a `jsdom` vitest project for `src/**/*.test.tsx` (`vitest.workspace.ts`). It also retired
 `HARNESS_GAP` for `TEST_COLLECTION` (`src/architecture/boundaries.test.ts:570`), which requires every
 tracked test file to run exactly once, in its own project. One smoke test exists; the deferred
-component tests are U7's (U-DEFER-4 RE-SCOPED). Plus two
+component tests are U7's (U-DEFER-4 RE-SCOPED). **[2026-09-24, Phase 3 U7]** U7 (`841893e`, `8c01a61`)
+added the coverage-honesty component guard (`src/components/evidence/CoverageLimit.test.tsx`: 6 surfaces,
+filesystem-derived completeness), closing `[P3-X4]`. **U-DEFER-4 is still not closed:** about 12
+`CLAUDE.md` §5 rule 8 components still have no component test (**FU-64**, register §7). Plus two
 content/process issues:
 
 1. **Content debt compounds fastest** — every feature built on ungrounded grades enlarges the surface a

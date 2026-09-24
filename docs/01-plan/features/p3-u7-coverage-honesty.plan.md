@@ -229,3 +229,54 @@ and all five dimensions read *"not assessed"*.
 therefore shows that line, then D2, and then (expanded) D2 again in the breakdown header. The advisor text
 is the summary followed by D2. Both are true, but repetitive. A content change to those two summaries
 would remove the overlap. That is the owner's call, and it needs a content-review table.
+
+## 7. Closeout
+
+**Landings on `main`:** (a) `841893e` (CI `36060540213`, success) and (b2) `8c01a61` (CI
+`36061164098`, success). Both were fast-forwarded and the branch deleted.
+
+**`[P3-X4]` ticked** in the register §5, with the per-surface test list as its evidence.
+
+**The four U4 closeout notes** (`p3-u4-profiles.closeout.md` §5), each closed at the line that does it:
+
+| Note | Disposition | Where |
+|---|---|---|
+| 1. Grade D wording | **CLOSED** (b2). D1 or D2 by the effect's own `paperIds` (owner ruling), shown on the card and in the breakdown header | `src/lib/safety/index.ts:111` (D1), `:116` (D2), `:130` (`gradeDCoverage`); `src/components/library/SupplementDetail.tsx:178` (card), `:184` (breakdown); `src/components/evidence/EvidenceBreakdown.tsx:52` (header) |
+| 2. "Not assessed" vs "none" | **CLOSED** (b2). Display only; `RATING_LABELS` untouched | `src/components/evidence/EvidenceBreakdown.tsx:17`, `:60` |
+| 3. FU-59 | **CLOSED IN PART** (a), owner ruling. Interactions and food pairings closed; **products remain open** | `src/components/library/InteractionSection.tsx:41`, `:70`; `src/components/library/FoodPairingSection.tsx:48`, `:75`; the remainder is at `src/components/stack/ProductMatchPanel.tsx:30` |
+| 4. Uncited effects | **CLOSED** (b2). See below | `src/lib/advisor/tools.ts:80`; the card and breakdown lines as in note 1 |
+
+**Note 4 in detail.**
+- **nac-antioxidant, protein-powder-recovery:** D2 on the card, D2 in the breakdown header, and D2 appended
+  to the effect's summary in `searchLibrary` and `getSupplement`.
+- **glycine-sleep:** D1, because its one paper is verified but title-only.
+- **The six `relevantPopulation` values:** these read *"not described by a verified paper in this library"*
+  (4) and *"not further described"* (2). They render verbatim, and each states an absence of verification,
+  not an absence of effect, so **no change was needed**. They were checked on `/library/nac` in the
+  running app.
+
+**Rule 7, re-derived at closeout** (the same predicate as `CLAUDE.md` §4's table): **8 of 31**. This is
+**unchanged** from `43215aa`. `StackWorkspace.tsx` is still in the set, because U7 kept its
+`@/lib/safety` import. `CoverageLimit.tsx` is not `"use client"` and imports a **type** only.
+
+**`SPEC_COUNT`, re-derived:** `git ls-files 'src/architecture/*.test.ts' | wc -l` → **28**. U7 added no
+architecture spec: its guard lives in `src/components/evidence/`. The four bound sites still read 28, and
+`spec-count.test.ts` is green.
+- **Stale figure, not in `SPEC_COUNT`'s bound set:** `CLAUDE.md` §5's measured baseline still says
+  *"27 executable architecture specs"*. That is the FU-32 class. It is flagged here and not edited, because
+  `CLAUDE.md` is outside U7's *May touch*.
+
+**Opened by U7:**
+- **FU-64:** U-DEFER-4 is **not** closed. The `CLAUDE.md` §5 rule 8 component-test residue is 12
+  components by heuristic scan (register §7).
+- **Observation:** the two uncited effects' seed summary repeats the D2 sentence's sense. This is an owner
+  content call (§6).
+
+**U9 (PLAN block).** Quoted verbatim from the register §4:
+
+> **U9 — `CLAUDE.md` §4 rule 7: the guard first, then the refactor *(new at (d), on D-7)*.** **8 of 31** client components import `@/lib` or `@/data` (one type-only); §2 prints the command. **The owner's ruling is guard-then-refactor, in that order and in one unit** — so rule 7 stops being a paragraph and becomes mechanical, which is `CLAUDE.md` §3 principle 5 applied to the rule that has gone unenforced longest. **The order is the whole point:** a guard written after the refactor is green on arrival and proves nothing. **Two costs U9 must carry, named here so they are not discovered later:** the new spec adds one to the architecture-spec count, and `SPEC_COUNT` binds that number at **four** documented sites plus its own pin (`spec-count.test.ts:97`), all of which U9 updates. ~~27 → 28~~ **[2026-09-23]** U1 (b) already took it to **28**, so U9 **re-derives the count when it lands** (`git ls-files 'src/architecture/*.test.ts' | wc -l`) rather than carrying a number from this paragraph; and the refactor spans `advisor/`, `auth/`, `checkin/`, `profile/` and `stack/`, not only the Library surface U7 touches. **`auth/AuthForm.tsx` is type-only** and U9 states whether a type-only import is a violation before it counts as one.
+> **Red proof:** the guard is red against all **8** before any component moves, and the failure output is recorded — `[P3-X7]`.
+> **Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured) · `npx next build` — plus the red proof, recorded.
+
+U9's count, re-derived above, is **28** today, so U9's new spec will take it to **29** at all four
+sites plus the pin.
