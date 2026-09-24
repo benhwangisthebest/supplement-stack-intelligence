@@ -106,7 +106,34 @@ export const COVERAGE = {
     state: "limit",
     text: "Custom items that are not in the Library are not checked for interactions, dose, allergens or evidence.",
   },
+  // U7 (b2), owner wording 2026-09-24 (U4 closeout note 1). Grade D, split by
+  // whether the effect itself cites any paper: see gradeDCoverage.
+  gradeDLimited: {
+    dataset: "effects",
+    state: "limit",
+    text: "Very limited evidence: the verified studies in this library are too few or too weak to support this effect. That is not evidence that it doesn't work.",
+  },
+  gradeDUncited: {
+    dataset: "effects",
+    state: "none",
+    text: "No verified evidence in this library for this effect. That is not the same as evidence that it doesn't work.",
+  },
 } as const satisfies Record<string, CoverageCopy>;
+
+/**
+ * U7 (b2) — the Grade D statement for an effect, or null when the grade is not D.
+ * D1 (`gradeDLimited`) when the effect cites at least one paper; D2
+ * (`gradeDUncited`) when it cites none. Decided by the EFFECT's `paperIds`, not
+ * its dimensions' (owner, 2026-09-24): glycine-sleep cites one verified,
+ * title-only paper, so it is D1, and "no verified evidence" would be false there.
+ */
+export function gradeDCoverage(effect: {
+  grade: string;
+  paperIds: readonly string[];
+}): CoverageCopy | null {
+  if (effect.grade !== "D") return null;
+  return effect.paperIds.length > 0 ? COVERAGE.gradeDLimited : COVERAGE.gradeDUncited;
+}
 
 /**
  * Affirmative directive/diagnostic claims the product must never produce.

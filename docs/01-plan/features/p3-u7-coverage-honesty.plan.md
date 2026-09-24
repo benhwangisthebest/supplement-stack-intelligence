@@ -156,3 +156,76 @@ The rule-7 figure was re-derived after the change: still **8 of 31**.
 **Seen in the running app** (`next dev`, `/library/taurine`): all four none states and the safety-list
 limit render, and the Effects tab shows `effects/limit`. There were no console errors. Stack Lab needs
 sign-in, so S7 is verified by the component test only.
+
+## 5. Landing (a): outcome
+
+`841893e`, CI run `36060540213`: **success**. Owner copy review (2026-09-24): rows 1–9 approved as
+written, including the contraindication and side-effect-list rows (§2.2 rule 10 covers them whatever the
+roadmap's four datasets are) and the advisor `sideEffectWatch` string.
+
+## 6. Landing (b2): the U4 closeout notes
+
+**Brief (owner, 2026-09-24).** It covers the notes U4 recorded for U7 at `43215aa`
+(`p3-u4-profiles.closeout.md` §5):
+1. A dimension scoring 0 **and** citing no paper renders its rating as *"not assessed"*. *"none"* is kept for
+   a 0 that cites papers. Display only.
+2. Grade D wording in two cases, **D1** (the effect cites ≥ 1 paper) and **D2** (the effect cites none),
+   shown on the Library effect card and in the evidence breakdown header.
+3. An advisor tool returning an effect that cites no paper includes the D2 sentence. Wording only.
+
+**Rulings taken during (b2) (owner, 2026-09-24).**
+- **The effect's own `paperIds` decides D1 vs D2**, not its dimensions'. The brief named glycine-sleep as
+  the D2 case. It cites `p-glycine-sleep`, which is DOI-verified but title-only, so under the stated rule it
+  is **D1**, and *"no verified evidence in this library"* would be false for it. The D2 case is
+  nac-antioxidant.
+- **FU-59 closes in part** (§7).
+
+**Measured at `841893e`:** **0** dimensions score 0 while citing a paper. All **26** zero-scored dimensions
+cite none, so after (b2) every 0 in the corpus renders *"not assessed"*, and the *"none"* branch is
+exercised only by a made-up fixture. Grade D by case: D1 is magnesium-sleep, magnesium-stress,
+l-theanine-stress and glycine-sleep. D2 is nac-antioxidant and protein-powder-recovery.
+
+**What changed.**
+- `COVERAGE.gradeDLimited` / `gradeDUncited` and `gradeDCoverage(effect)` in `src/lib/safety/index.ts`.
+- `EvidenceBreakdown` gains a `gradeNote` prop, rendered under its `<summary>`, plus the *"not assessed"*
+  label. `RATING_LABELS`, scores and grades are untouched.
+- `SupplementDetail` renders the D statement on the card and passes it to the breakdown.
+- `effectView` in `src/lib/advisor/tools.ts` appends the D2 sentence to an uncited effect's `summary`. The
+  fields and citations are unchanged.
+- `EvidenceBreakdown` joins `SURFACES`.
+
+**Red proof 1: tests before the fix.** With the two `COVERAGE` entries present and nothing wired: **8
+failed, 35 passed** across `CoverageLimit.test.tsx` and `tools.test.ts`. That is the not-assessed case,
+the breakdown-header case, the three D1/D2 card cases, the `<CoverageLimit` completeness check for the newly
+registered `EvidenceBreakdown`, and both advisor cases. The advisor red showed the seed text: *expected 'No
+verified evidence in this library:…' to contain 'No verified evidence in this library …'*.
+
+**Red proof 2: each mechanism, after the fix.** Restores used file-copy backups, each confirmed identical
+with `cmp`:
+
+| # | Mutation | Red (and nothing else) |
+|---|---|---|
+| B1a | the label always `RATING_LABELS` (no *"not assessed"*) | the not-assessed/none case (1 of 43) |
+| B1b | every 0 reads *"not assessed"* (*"none"* lost) | the same case, on its *"none"* assertion (1 of 43) |
+| B2a | the card-level D statement removed | magnesium-sleep, glycine-sleep, nac-antioxidant (3 of 43) |
+| B2b | `gradeNote` not passed to the breakdown | magnesium-sleep, nac-antioxidant (2 of 43) |
+| B2c | `gradeDCoverage` predicate `> 0` → `>= 0` (every D reads D1) | nac-antioxidant (1 of 43) |
+| B3 | `effectView.summary` back to `e.summary` | both advisor cases (2 of 43) |
+
+**Banned-phrase check.** Both new strings go through the `COVERAGE` sweep, which passes.
+
+**Gate:**
+- `npx tsc --noEmit`: clean
+- `npm run lint`: **388 of 388**, 0 errors
+- `npx vitest run`: **1560 / 1560** tests across **123** files
+- `npx next build`: compiled successfully
+- `npx playwright test`: **70 passed / 30 `[LIVE]` skipped**
+
+**Seen in the running app** (`/library/nac`, Effects tab): the card and the breakdown header each show D2,
+and all five dimensions read *"not assessed"*.
+
+**Observation, not changed (outside (b2)'s *wording only* scope).** The two uncited effects' seed
+`summary` is already *"No verified evidence in this library: this effect cites no paper."* The card
+therefore shows that line, then D2, and then (expanded) D2 again in the breakdown header. The advisor text
+is the summary followed by D2. Both are true, but repetitive. A content change to those two summaries
+would remove the overlap. That is the owner's call, and it needs a content-review table.

@@ -20,6 +20,7 @@ import {
   sideEffectWatch,
   toolByName,
 } from "./tools";
+import { COVERAGE } from "@/lib/safety";
 import { makeContext } from "./mock-adapter";
 
 const ctx = makeContext();
@@ -148,6 +149,30 @@ describe("sideEffectWatch", () => {
     expect(r.ok).toBe(false);
     expect(r.emptyReason).toMatch(/dataset is limited/i);
     expect(r.emptyReason).toMatch(/does not mean/i);
+  });
+});
+
+// Phase 3 U7 (b2) — an effect citing no paper (nac-antioxidant, protein-powder-
+// recovery after U4) must reach the model as an absence of verified evidence,
+// never as evidence of no effect. Wording only: the summary field carries the
+// D2 sentence; the tool's shape and citations are unchanged.
+describe("uncited effects carry the D2 sentence", () => {
+  const d2 = COVERAGE.gradeDUncited.text;
+
+  it("getSupplement: the uncited effect's text includes it; a cited one's does not", () => {
+    const r = getSupplement.handler({ slug: "nac" }, ctx);
+    const nac = r.data!.effects.find((e) => e.effectId === "nac-antioxidant")!;
+    expect(getEffectsForSupplement("nac").find((e) => e.id === "nac-antioxidant")!.paperIds).toEqual([]);
+    expect(nac.summary).toContain(d2);
+
+    const creatine = getSupplement.handler({ slug: "creatine" }, ctx);
+    for (const e of creatine.data!.effects) expect(e.summary).not.toContain(d2);
+  });
+
+  it("searchLibrary: the same effect's text includes it", () => {
+    const r = searchLibrary.handler({ query: "protein" }, ctx);
+    const e = r.data!.flatMap((h) => h.effects).find((x) => x.effectId === "protein-powder-recovery")!;
+    expect(e.summary).toContain(d2);
   });
 });
 

@@ -14,14 +14,17 @@
 //   3. COPY — every COVERAGE text passes the banned-language sweep.
 import fs from "node:fs";
 import path from "node:path";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SEED_SUPPLEMENTS } from "@/data/seed-supplements";
 import { foodPairingsForSupplement, interactionsForSupplement } from "@/lib/interactions";
+import { getEffectsForSupplement, getPapersForEffect } from "@/lib/evidence";
 import { COVERAGE, containsBannedLanguage, type CoverageCopy } from "@/lib/safety";
 import { profileForSupplement } from "@/lib/side-effects";
-import type { Effect, EvaluationFlag, Stack, StackItem, Supplement } from "@/types";
+import type { Effect, EvaluationFlag, Paper, Stack, StackItem, Supplement } from "@/types";
+import type { EvidenceProfile } from "@/types/evidence-grading";
+import { EvidenceBreakdown } from "@/components/evidence/EvidenceBreakdown";
 import { FoodPairingSection } from "@/components/library/FoodPairingSection";
 import { InteractionSection } from "@/components/library/InteractionSection";
 import { SupplementDetail } from "@/components/library/SupplementDetail";
@@ -45,6 +48,8 @@ const SURFACES: Record<string, string> = {
     "effects, and the Supplement's sideEffects / contraindications lists (props, not an accessor import)",
   "src/components/stack/StackWorkspace.tsx":
     "stack evaluation over the curated datasets (API result, not an accessor import)",
+  "src/components/evidence/EvidenceBreakdown.tsx":
+    "per-dimension evidence: a dimension citing no paper, and the Grade D statement (U7 b2)",
 };
 
 /** Modules whose import makes a component a surface. `vocab` and
@@ -97,8 +102,8 @@ const madeUpEffect: Effect = {
   paperIds: [],
 };
 
-function renderDetail(supplement: Supplement, effects: Effect[], tab?: string) {
-  render(<SupplementDetail supplement={supplement} effects={effects} papers={[]} related={[]} />);
+function renderDetail(supplement: Supplement, effects: Effect[], tab?: string, papers: Paper[] = []) {
+  render(<SupplementDetail supplement={supplement} effects={effects} papers={papers} related={[]} />);
   if (tab) fireEvent.click(screen.getByRole("tab", { name: tab }));
 }
 
@@ -149,8 +154,75 @@ async function evaluateClean(items: StackItem[], flags: EvaluationFlag[] = []) {
   await screen.findByText(/0 critical/);
 }
 
+/** A seed supplement page exactly as /library/[slug] assembles it, Effects tab open. */
+function renderSeedEffects(supplementId: string) {
+  const supplement = SEED_SUPPLEMENTS.find((x) => x.id === supplementId)!;
+  const effects = getEffectsForSupplement(supplementId);
+  const papers = [
+    ...new Map(effects.flatMap((e) => getPapersForEffect(e)).map((p) => [p.id, p])).values(),
+  ];
+  renderDetail(supplement, effects, "Effects", papers);
+}
+
+/** The Grade D statement on an effect card, split into card-level and breakdown-level. */
+function gradeDStatements(effectId: string) {
+  const card = document.getElementById(`effect-${effectId}`)!;
+  const all = within(card).queryAllByTestId("coverage-limit");
+  const texts = (inBreakdown: boolean) =>
+    all.filter((el) => !!el.closest("details") === inBreakdown).map((el) => el.textContent);
+  return { card: texts(false), breakdown: texts(true) };
+}
+
+const dim = (score: 0 | 1 | 2 | 3, paperIds: string[]) => ({
+  score,
+  rationale: "Made-up rationale.",
+  paperIds,
+});
+const madeUpPaper = { id: "p-made-up", title: "Made-up paper" } as Paper;
+
 /** RENDER cases, keyed by the SURFACES file each one exercises. */
 const RENDER_CASES: Record<string, { name: string; run: () => void | Promise<void> }[]> = {
+  "src/components/evidence/EvidenceBreakdown.tsx": [
+    {
+      name: "a dimension scoring 0 with no paper reads 'not assessed'; 0 with a paper reads 'none'",
+      run: () => {
+        const profile: EvidenceProfile = {
+          dimensions: {
+            humanEvidence: dim(0, []),
+            studyQuality: dim(0, [madeUpPaper.id]),
+            consistency: dim(2, [madeUpPaper.id]),
+            effectSize: dim(1, [madeUpPaper.id]),
+            populationRelevance: dim(3, [madeUpPaper.id]),
+          },
+        };
+        render(<EvidenceBreakdown profile={profile} papers={[madeUpPaper]} />);
+        const rating = (label: string) =>
+          screen.getByText(label).parentElement!.querySelector("span.text-xs")!.textContent;
+        expect(rating("Human evidence")).toBe("not assessed");
+        expect(rating("Study quality")).toBe("none");
+        expect(rating("Consistency")).toBe("moderate");
+      },
+    },
+    {
+      name: "the header renders the Grade D statement it is given, and none without one",
+      run: () => {
+        const profile: EvidenceProfile = {
+          dimensions: {
+            humanEvidence: dim(0, []),
+            studyQuality: dim(0, []),
+            consistency: dim(0, []),
+            effectSize: dim(0, []),
+            populationRelevance: dim(0, []),
+          },
+        };
+        render(<EvidenceBreakdown profile={profile} papers={[]} gradeNote={COVERAGE.gradeDUncited} />);
+        expectCoverage(COVERAGE.gradeDUncited);
+        cleanup();
+        render(<EvidenceBreakdown profile={profile} papers={[]} />);
+        expect(screen.queryAllByTestId("coverage-limit")).toEqual([]);
+      },
+    },
+  ],
   "src/components/library/InteractionSection.tsx": [
     {
       name: "none: a supplement with no interaction rules",
@@ -246,6 +318,41 @@ const RENDER_CASES: Record<string, { name: string; run: () => void | Promise<voi
       run: () => {
         renderDetail(madeUpSupplement(), [], "Effects");
         expectCoverage(COVERAGE.effectsNone);
+      },
+    },
+    {
+      name: "D1: magnesium-sleep (Grade D, cites a paper) — card and breakdown header",
+      run: () => {
+        renderSeedEffects("magnesium");
+        const d = gradeDStatements("magnesium-sleep");
+        expect(d.card).toEqual([COVERAGE.gradeDLimited.text]);
+        expect(d.breakdown).toEqual([COVERAGE.gradeDLimited.text]);
+      },
+    },
+    {
+      name: "D1: glycine-sleep (one verified, title-only paper) is D1, not D2",
+      run: () => {
+        renderSeedEffects("glycine");
+        const d = gradeDStatements("glycine-sleep");
+        expect(d.card).toEqual([COVERAGE.gradeDLimited.text]);
+        expect(d.card).not.toContain(COVERAGE.gradeDUncited.text);
+      },
+    },
+    {
+      name: "D2: nac-antioxidant (Grade D, cites no paper) — card and breakdown header",
+      run: () => {
+        renderSeedEffects("nac");
+        const d = gradeDStatements("nac-antioxidant");
+        expect(d.card).toEqual([COVERAGE.gradeDUncited.text]);
+        expect(d.breakdown).toEqual([COVERAGE.gradeDUncited.text]);
+      },
+    },
+    {
+      name: "binding: a non-D effect carries no Grade D statement",
+      run: () => {
+        renderSeedEffects("magnesium");
+        const d = gradeDStatements("magnesium-metabolic");
+        expect([...d.card, ...d.breakdown]).toEqual([]);
       },
     },
     {
