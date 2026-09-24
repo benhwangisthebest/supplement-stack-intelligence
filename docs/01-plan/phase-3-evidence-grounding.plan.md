@@ -326,6 +326,26 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 **U8 — injection seam and bundle budget.** `getBiomarker` takes a catalog parameter, finishing the seam. **Sized honestly (P-16): `getBiomarker` has ZERO call sites** — `grep -rn getBiomarker` over `*.ts|*.tsx|*.mjs` outside `node_modules` and `graphify-out` returns exactly one hit, the definition at `src/lib/biomarkers/index.ts:151`, and no barrel re-exports it. **The refactor is therefore unobservable and `CLAUDE.md` §5 rule 3 (reachability) cannot be satisfied for it as written.** What would make the seam observable: a caller — the Library biomarker surface U7 touches is the candidate — or U8 drops the refactor and ships the bundle assertion alone. **First deliverable: check §2's route table in** (P-17) — **D-5 ruled percentage headroom over that recorded baseline**, so the budget is meaningless until the baseline is an artifact rather than a build nobody reruns. **The percentage is not ruled: U8 chooses it and justifies the choice.** **Red proof:** the bundle assertion must fail against a deliberately inflated route.
 **Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured) · `npx next build` — plus the red proof, recorded.
 
+> **[2026-09-24] U8 status: (a) LANDED.** Cycle artifact: `docs/01-plan/features/p3-u8-bundle-budget.plan.md`
+> (bkit `p3-u8-bundle-budget`).
+> - **Owner rulings (2026-09-24), recorded first:**
+>   - **R1: the seam is dropped.** `getBiomarker` still has zero call sites (re-checked at `6a8e0d1`), so a
+>     catalog parameter cannot be observed (§5 rule 3), and no caller is added to justify one.
+>   - **R2: fresh baseline.** It is measured at HEAD, and the delta against §2 is reported as a finding.
+> - **(a):** `scripts/bundle-sizes.mjs` re-derives Next 15.1.3's *First Load JS* from
+>   `.next/app-build-manifest.json` (gzip level 9, per `…/page` key). It equals the table `next build`
+>   prints on all 10 page routes and the shared row. `npm run bundle:baseline` writes
+>   `docs/05-qa/bundle-baseline.json`, which covers every page route, not §2's three.
+>   - **AC-1:** two clean builds are byte-identical.
+>   - **AC-5 / N-82:** a second checkout path moves routes by **≤ 3 B**. The cause is now verified:
+>     webpack's deterministic module ids hash an absolute-path identifier. **N-82 is CLOSED** on that
+>     measurement.
+> - **Finding U8-F1:** §2's rows are unchanged at HEAD because they were the Library routes, which seed
+>   data never reached. Between `52e00d9` and `080d3ce`, `/advisor` grew **+8.9%** and
+>   `/stack-lab/[stackId]` **+9.0%**, and no recorded figure moved. U9 (b) then took them 14–16% below that.
+> - **H = 1%** is chosen in the artifact §3. At that H, every route U9 moved would be caught if the move
+>   were reversed. At 2%, `/stack-lab` would be hidden (1.45%).
+
 **U9 — `CLAUDE.md` §4 rule 7: the guard first, then the refactor *(new at (d), on D-7)*.** **8 of 31** client components import `@/lib` or `@/data` (one type-only); §2 prints the command. **The owner's ruling is guard-then-refactor, in that order and in one unit** — so rule 7 stops being a paragraph and becomes mechanical, which is `CLAUDE.md` §3 principle 5 applied to the rule that has gone unenforced longest. **The order is the whole point:** a guard written after the refactor is green on arrival and proves nothing. **Two costs U9 must carry, named here so they are not discovered later:** the new spec adds one to the architecture-spec count, and `SPEC_COUNT` binds that number at **four** documented sites plus its own pin (`spec-count.test.ts:97`), all of which U9 updates. ~~27 → 28~~ **[2026-09-23]** U1 (b) already took it to **28**, so U9 **re-derives the count when it lands** (`git ls-files 'src/architecture/*.test.ts' | wc -l`) rather than carrying a number from this paragraph; and the refactor spans `advisor/`, `auth/`, `checkin/`, `profile/` and `stack/`, not only the Library surface U7 touches. **`auth/AuthForm.tsx` is type-only** and U9 states whether a type-only import is a violation before it counts as one.
 **Red proof:** the guard is red against all **8** before any component moves, and the failure output is recorded — `[P3-X7]`.
 **Gate:** `npx tsc --noEmit` · `npm run lint` · `npx vitest run` (count re-measured) · `npx next build` — plus the red proof, recorded.
