@@ -372,3 +372,65 @@ FOLLOW-UP.**
 - The Check did **not** raise N-85, so the owner's stop condition for N-85 did not fire.
 
 **Stopped here for the owner (brief): the Check's items are shown before any remediation.**
+
+---
+
+## 8. Remediation (e1): verification hardening (P3-5, P3-6)
+
+**Owner ruling (2026-09-25).** Scoped exception: `content/verification/**`, the provenance guard in
+`src/data`, and the fixture's link and date fields. Every fixture entry must reference its saved resolver
+response, and the guard re-parses that response.
+
+**What changed.**
+- `provenance.mjs`: `ENTRY_KEYS` gains `response` (`{ path, sha256 }`, a `crossref-work.json` or
+  `esummary.json` under `RESPONSE_ROOT`). It adds `parseResponse(kind, text)`, which requires exactly one
+  uid, and `checkResponses(fixture, { isTracked, read, sha256 })`, which sorts defects into separate
+  buckets: missing, uncommitted, hash, unparseable, identity and title.
+- **P8a–d** in `provenance-record.test.ts`, which judges "committed" by `git ls-files`.
+- `capture.mjs resolve` now writes `response` on every new entry.
+- The fixture: 37 entries linked to their (d) bodies. Each digest was re-hashed from the file and checked
+  against (d)'s `results.json`. `verifiedOn` was set to 2026-09-24 (32 changed, 5 already had that date).
+  **No other field changed**, as a field-by-field diff shows: `{ verifiedOn: 32, response: 37 }`.
+- Callers of the fixture shape were enumerated with
+  `git grep provenance-fixture -- ':!docs'`. Only `capture.mjs` and this guard read it; the rest are
+  comments.
+
+**Red proofs.** Each case was planted in the main tree and restored from backup, and `cmp` confirmed the
+restore. The planted body was `git add`-ed so the guard would treat it as committed, then removed with
+`git rm --cached`.
+
+```
+=== E1-R0 (before, at cd3cb1b): hand-written entry, invented DOI 10.5555/closeout.planted.0001, no body
+ Test Files  2 passed (2)      Tests  35 passed (35)          ← the Check's P3-5 probe, reproduced
+=== E1-R1a: same entry, NO response field
+   × P1 — … every entry has exactly the recorded fields …
+   × P8 — … P8a every entry names a committed response
+      Tests  2 failed | 15 passed (17)
+=== E1-R1b: response names a body that does not exist
+   × P8 — … P8a every entry names a committed response
+      Tests  1 failed | 16 passed (17)
+=== E1-R2: planted, COMMITTED body; the entry's sha256 does not match it
+   × P8 — … P8b every named response hashes to its recorded sha256
+      Tests  1 failed | 16 passed (17)
+=== E1-R2b (limit, recorded): the same planted committed body, with the entry's sha256 CORRECT
+      Tests  17 passed (17)
+=== E1-R3: a real entry pointed at ANOTHER paper's committed body (correct hash)
+   × P8 — … P8c every response parses, and is the record for the entry's identifier
+      Tests  1 failed | 16 passed (17)
+=== E1-R4: the entry's resolvedTitle AND the paper's title both changed (P4 stays green)
+   × P8 — … P8d every entry's resolvedTitle is the title in its response
+      Tests  1 failed | 16 passed (17)
+=== restore: all green        Tests  17 passed (17)
+```
+
+**E1-R2b is the residual, stated rather than hidden.** An offline build cannot tell a real resolver body
+from a hand-written, resolver-shaped one with a correct digest. What (e1) changes is the cost of a forgery:
+it now needs a committed body in the diff, where before an unreviewable six-field entry was enough. The
+phase-closeout live re-resolution, now the amended refresh policy's trigger (2), would fail an invented
+identifier. **So "no known bypass" would overstate it.** The accurate wording is: *no bypass without
+committing a forged resolver response, which review and the next closeout re-verification each catch.*
+
+**P3-6:** the refresh policy (register §4 U5) is amended so that re-verification refreshes `verifiedOn`.
+The U6 dated record notes the date change and that no call was made.
+
+**Gate (e1):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / **1554** (+5, P8) · jsdom 24 / 130 · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 55 staged paths clean, with the control detected.

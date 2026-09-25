@@ -4,16 +4,24 @@
     "kind": "doi",
     "resolvedTitle": "Glycine ingestion improves subjective sleep quality in human volunteers, correlating with polysomnographic changes",
     "source": "crossref",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-glycine-sleep/crossref-work.json",
+      "sha256": "a0ff097d0b654e8c66935b199c6d73f89b14b1158a0b338b2f31898ae9d624b8"
+    }
   },
   "pmid:16930802": {
     "id": "16930802",
     "kind": "pmid",
     "resolvedTitle": "L-Theanine reduces psychological and physiological stress responses.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-ltheanine-stress/esummary.json",
+      "sha256": "39e4ed999154a7252d2c18a94f0b639f6d74ff945ad747ed37c282b4721bd2bc"
+    }
   },
   "pmid:20464765": {
     "id": "20464765",
@@ -21,7 +29,11 @@
     "resolvedTitle": "Caffeine for the prevention of injuries and errors in shift workers.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-24",
-    "verifiedBy": "owner"
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-caffeine-shift-work/esummary.json",
+      "sha256": "8d89dea30d29fa059380f92914e5dad8311b0b5d6970051e7ba574d76b430f64"
+    }
   },
   "pmid:20521321": {
     "id": "20521321",
@@ -29,71 +41,107 @@
     "resolvedTitle": "Effects of caffeine and glucose, alone and combined, on cognitive performance.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-24",
-    "verifiedBy": "owner"
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-caffeine-glucose/esummary.json",
+      "sha256": "e6d600d0d9c0ba27c0e9a982ab5170746865f1e0f5ecabb419f5049c5bdbf9af"
+    }
   },
   "pmid:21118604": {
     "id": "21118604",
     "kind": "pmid",
     "resolvedTitle": "The influence of creatine supplementation on the cognitive functioning of vegetarians and omnivores.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-creatine-vegetarian-cognition/esummary.json",
+      "sha256": "67e51750c79042689bcec4c07a2108a64e2ca17828f99e5ad601ab835f815d9a"
+    }
   },
   "pmid:22552031": {
     "id": "22552031",
     "kind": "pmid",
     "resolvedTitle": "Comparison of vitamin D2 and vitamin D3 supplementation in raising serum 25-hydroxyvitamin D status: a systematic review and meta-analysis.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-vitamin-d-deficiency/esummary.json",
+      "sha256": "18705935e91a22c79ef43158e6206db5e85aa28b6a0bb93aaad7dd991840a65e"
+    }
   },
   "pmid:23108937": {
     "id": "23108937",
     "kind": "pmid",
     "resolvedTitle": "Faster but not smarter: effects of caffeine and caffeine withdrawal on alertness and performance.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-caffeine-tolerance/esummary.json",
+      "sha256": "92e08904709e3c0fbfaf7062f3082c5c9b617b72ff2dc608a4b738110fff91ab"
+    }
   },
   "pmid:23244547": {
     "id": "23244547",
     "kind": "pmid",
     "resolvedTitle": "The relationship between zinc intake and serum/plasma zinc concentration in adults: a systematic review and dose-response meta-analysis by the EURRECA Network.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-zinc-deficiency/esummary.json",
+      "sha256": "59a92b093bf9b2726a3032588d931c8cea1748180e4b160155d599c423ef6c55"
+    }
   },
   "pmid:23691095": {
     "id": "23691095",
     "kind": "pmid",
     "resolvedTitle": "Meta-analysis: melatonin for the treatment of primary sleep disorders.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-melatonin-sleep/esummary.json",
+      "sha256": "966cbf17d773c0b8b9bc3010170de38537c9174c1b72c4c2efabb7eb3e6c41a4"
+    }
   },
   "pmid:25527035": {
     "id": "25527035",
     "kind": "pmid",
     "resolvedTitle": "Caffeine improves reaction time, vigilance and logical reasoning during extended periods with restricted opportunities for sleep.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-caffeine-focus/esummary.json",
+      "sha256": "2207a6b80ce13922a01f82e699a9b17af2052e44692fffd36f12411ef99a037b"
+    }
   },
   "pmid:28202713": {
     "id": "28202713",
     "kind": "pmid",
     "resolvedTitle": "Vitamin D supplementation to prevent acute respiratory tract infections: systematic review and meta-analysis of individual participant data.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-vitamin-d-respiratory-ipd/esummary.json",
+      "sha256": "9e1bb6d9155c0cf9f487ae0ce39605e8f328f7ffc21931f47fc45c8778c9590c"
+    }
   },
   "pmid:28698222": {
     "id": "28698222",
     "kind": "pmid",
     "resolvedTitle": "A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-protein-mps/esummary.json",
+      "sha256": "b39532edcd121395fda233b615faa510daa1df790d754d792959d351ec02adc1"
+    }
   },
   "pmid:28969341": {
     "id": "28969341",
@@ -101,71 +149,107 @@
     "resolvedTitle": "Caffeine to optimize cognitive function for military mission-readiness: a systematic review and recommendations for the field.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-24",
-    "verifiedBy": "owner"
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-caffeine-military/esummary.json",
+      "sha256": "705efaa7b908bcd9d6284e235b5a44c6f9d75be42c8bd8fa29d8c0a259f57779"
+    }
   },
   "pmid:29543316": {
     "id": "29543316",
     "kind": "pmid",
     "resolvedTitle": "Oral vitamin B(12) versus intramuscular vitamin B(12) for vitamin B(12) deficiency.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-b12-oral-vs-im/esummary.json",
+      "sha256": "fb9b7c8d6b2f21a32c766131c9e8d9b0b23634a8c35657e1bad2922f6b57827a"
+    }
   },
   "pmid:29546641": {
     "id": "29546641",
     "kind": "pmid",
     "resolvedTitle": "The Effects of an Oral Taurine Dose and Supplementation Period on Endurance Exercise Performance in Humans: A Meta-Analysis.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-taurine-training/esummary.json",
+      "sha256": "ef8faa22ed9c41b7a82f3f21213a2a85b724186082243e73f71a16292a172d89"
+    }
   },
   "pmid:29704637": {
     "id": "29704637",
     "kind": "pmid",
     "resolvedTitle": "Effects of creatine supplementation on cognitive function of healthy individuals: A systematic review of randomized controlled trials.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-creatine-cognition/esummary.json",
+      "sha256": "fbaa8d0e82ddd504d6f842c4259e8998a71408f25b7be477fd93e4d011c02548"
+    }
   },
   "pmid:31383846": {
     "id": "31383846",
     "kind": "pmid",
     "resolvedTitle": "Efficacy of omega-3 PUFAs in depression: A meta-analysis.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-fish-oil-mood/esummary.json",
+      "sha256": "45fb7feea317f5e925ec995c90119bda74c62b0d3b6ba67b3e51bf644d0618d7"
+    }
   },
   "pmid:32114706": {
     "id": "32114706",
     "kind": "pmid",
     "resolvedTitle": "Omega-3 fatty acids for the primary and secondary prevention of cardiovascular disease.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-fish-oil-longevity/esummary.json",
+      "sha256": "5fac2707c84168fd14786cc7199bc0d9ae5794572fd6fd6ed2102980236a4b53"
+    }
   },
   "pmid:33864354": {
     "id": "33864354",
     "kind": "pmid",
     "resolvedTitle": "Effect of magnesium and vitamin B6 supplementation on mental health and quality of life in stressed healthy adults: Post-hoc analysis of a randomised controlled trial.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-magnesium-stress/esummary.json",
+      "sha256": "15267475e246da2ed9f3b382eaabc9d2f40e48d0c72cd79f8e07f28f1b100dda"
+    }
   },
   "pmid:33865376": {
     "id": "33865376",
     "kind": "pmid",
     "resolvedTitle": "Oral magnesium supplementation for insomnia in older adults: a Systematic Review & Meta-Analysis.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-magnesium-sleep/esummary.json",
+      "sha256": "e18d0ea1f78115e24a14361fbd0bc74d9040bd28c9a459ae095093785183ee98"
+    }
   },
   "pmid:34472118": {
     "id": "34472118",
     "kind": "pmid",
     "resolvedTitle": "Creatine supplementation effect on recovery following exercise-induced muscle damage: A systematic review and meta-analysis of randomized controlled trials.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-creatine-recovery/esummary.json",
+      "sha256": "eaadb6d1fc9a6dc06118c3bb8cf45294f92ceea8d2ce56f89dfbc050b2ed13aa"
+    }
   },
   "pmid:34473295": {
     "id": "34473295",
@@ -173,87 +257,131 @@
     "resolvedTitle": "Effects of Vitamin D Supplementation on Insulin Sensitivity and Secretion in Prediabetes.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-24",
-    "verifiedBy": "owner"
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-vitamin-d-prediabetes-rct/esummary.json",
+      "sha256": "37f281608a4961b95790c49a298c095ec0690d2595642fb7126daa6f3b7cddb4"
+    }
   },
   "pmid:34559859": {
     "id": "34559859",
     "kind": "pmid",
     "resolvedTitle": "Effect of Ashwagandha (Withania somnifera) extract on sleep: A systematic review and meta-analysis.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-ashwagandha-sleep/esummary.json",
+      "sha256": "ab601a70e2c5890ef2eb5039532d60af6ad71dd2f20a4c36e24154907ac63bf8"
+    }
   },
   "pmid:34836329": {
     "id": "34836329",
     "kind": "pmid",
     "resolvedTitle": "Oral Magnesium Supplementation for Treating Glucose Metabolism Parameters in People with or at Risk of Diabetes: A Systematic Review and Meta-Analysis of Double-Blind Randomized Controlled Trials.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-magnesium-glucose/esummary.json",
+      "sha256": "081514ec8f87a91f9a10ba23cc8143e1b28b5757623b2b97980fa6644e56b036"
+    }
   },
   "pmid:34956436": {
     "id": "34956436",
     "kind": "pmid",
     "resolvedTitle": "The Effect of Berberine on Metabolic Profiles in Type 2 Diabetic Patients: A Systematic Review and Meta-Analysis of Randomized Controlled Trials.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-berberine-metabolic/esummary.json",
+      "sha256": "5c8719f4740298f85e669c363c0d9bd3135b188e90670180ed02153dc0a19331"
+    }
   },
   "pmid:36017529": {
     "id": "36017529",
     "kind": "pmid",
     "resolvedTitle": "Does Ashwagandha supplementation have a beneficial effect on the management of anxiety and stress? A systematic review and meta-analysis of randomized controlled trials.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-ashwagandha-stress-anxiety/esummary.json",
+      "sha256": "dd09d1ffc397fb612ddad17ad062833a5202fd03b0a391183599736070be3597"
+    }
   },
   "pmid:36615805": {
     "id": "36615805",
     "kind": "pmid",
     "resolvedTitle": "Effects of Caffeine Intake on Endurance Running Performance and Time to Exhaustion: A Systematic Review and Meta-Analysis.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-caffeine-training/esummary.json",
+      "sha256": "8c543ac15a419e7294661c6a28e81066d9efe15e8f1518d2a11e6f731cb02563"
+    }
   },
   "pmid:37264945": {
     "id": "37264945",
     "kind": "pmid",
     "resolvedTitle": "Association Between Omega-3 Fatty Acid Intake and Dyslipidemia: A Continuous Dose-Response Meta-Analysis of Randomized Controlled Trials.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-fish-oil-cv/esummary.json",
+      "sha256": "4aa24a62ef7370e8cbec7e1f4f695a6c848be0da1edb6060ea705c2c07d35c25"
+    }
   },
   "pmid:37832082": {
     "id": "37832082",
     "kind": "pmid",
     "resolvedTitle": "A standardized Ashwagandha root extract alleviates stress, anxiety, and improves quality of life in healthy adults by modulating stress hormones: Results from a randomized, double-blind, placebo-controlled study.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-ashwagandha-stress/esummary.json",
+      "sha256": "dab7ae55d979c7ca67e246dae8c4cfa76d1b73b2aa4f97926c258db33888e311"
+    }
   },
   "pmid:38719213": {
     "id": "38719213",
     "kind": "pmid",
     "resolvedTitle": "Zinc for prevention and treatment of the common cold.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-zinc-immune/esummary.json",
+      "sha256": "9bcd502d9c056ce2b1ad5a6a8f8c28e560a43563c9ef9da4376fba4472df405b"
+    }
   },
   "pmid:39163858": {
     "id": "39163858",
     "kind": "pmid",
     "resolvedTitle": "Impact of omega-3 fatty acids on hypertriglyceridemia, lipidomics, and gut microbiome in patients with type 2 diabetes.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-fish-oil-triglycerides-t2d/esummary.json",
+      "sha256": "87666e1605b28ade4043e85e96547d564b91533356beba09d7ab720d6d98e0a3"
+    }
   },
   "pmid:39373282": {
     "id": "39373282",
     "kind": "pmid",
     "resolvedTitle": "A systematic review and meta-analysis of functional vitamin B12 status among adult vegans.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-b12-deficiency/esummary.json",
+      "sha256": "db40aa929fe5428e64176c9bf93ef5c17512f0fb8a863e50c251d08b3136dcae"
+    }
   },
   "pmid:39396907": {
     "id": "39396907",
@@ -261,38 +389,58 @@
     "resolvedTitle": "Efficacy of weekly versus daily cholecalciferol for repleting serum vitamin D (25(OH)D) deficiency: A systematic review and meta-analysis of randomized controlled trials.",
     "source": "pubmed-eutils",
     "verifiedOn": "2026-09-24",
-    "verifiedBy": "owner"
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-vitamin-d-weekly-daily/esummary.json",
+      "sha256": "cee1d4856d30a923fff3bfd1a44d19b5adaf8e2ce67070b923c0cdbeb1e06c87"
+    }
   },
   "pmid:39519498": {
     "id": "39519498",
     "kind": "pmid",
     "resolvedTitle": "Effects of Creatine Supplementation and Resistance Training on Muscle Strength Gains in Adults <50 Years of Age: A Systematic Review and Meta-Analysis.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-creatine-strength/esummary.json",
+      "sha256": "50958517b28aa06f6a45151fa850745ac015c8546f2f7a466027ec34b90062ec"
+    }
   },
   "pmid:39993397": {
     "id": "39993397",
     "kind": "pmid",
     "resolvedTitle": "Vitamin D supplementation to prevent acute respiratory infections: systematic review and meta-analysis of stratified aggregate data.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-vitamin-d-respiratory-update/esummary.json",
+      "sha256": "0dd91ce6012f3b652064ea07d43b188f9b6c880189fac9b9d77b5eb4bb9f9d46"
+    }
   },
   "pmid:40314930": {
     "id": "40314930",
     "kind": "pmid",
     "resolvedTitle": "Effects of Tea (Camellia sinensis) or its Bioactive Compounds l-Theanine or l-Theanine plus Caffeine on Cognition, Sleep, and Mood in Healthy Participants: A Systematic Review and Meta-Analysis of Randomized Controlled Trials.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-ltheanine-focus/esummary.json",
+      "sha256": "267cc133659f30b2a03e24671b67c91e9dace3ee920399a2ca8fd7b29a860cf4"
+    }
   },
   "pmid:41487531": {
     "id": "41487531",
     "kind": "pmid",
     "resolvedTitle": "Efficacy of sublingual and oral vitamin B12 versus intramuscular administration: insights from a systematic review and meta-analysis.",
     "source": "pubmed-eutils",
-    "verifiedOn": "2026-09-23",
-    "verifiedBy": "owner"
+    "verifiedOn": "2026-09-24",
+    "verifiedBy": "owner",
+    "response": {
+      "path": "content/verification/captures/2026-09-24-rv/p-b12-oral-routes/esummary.json",
+      "sha256": "02f82d9311344c6021fd0a6312b1b9778bb7ee96ffc9bf8ba5c5f1685120aae0"
+    }
   }
 }

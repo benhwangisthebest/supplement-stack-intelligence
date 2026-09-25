@@ -1,10 +1,14 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   DO_NOT_CITE,
   KINDS,
+  RESPONSE_ROOT,
   checkPapers,
+  checkResponses,
   fixtureKey,
   isWellFormed,
   validateFixture,
@@ -22,9 +26,11 @@ import {
 // makes the generated src/data/ modules byte-equal to it. Offline: the rules
 // live in content/verification/provenance.mjs and no resolver is ever called.
 //
-// Stated limit: the fixture ships empty, so P1 checks nothing until U6 adds
-// entries. Its redness was proved at U5's landing by planted entries
-// (docs/01-plan/features/p3-u5-provenance-record.plan.md §6).
+// P1's redness was proved at U5's landing by planted entries
+// (docs/01-plan/features/p3-u5-provenance-record.plan.md §6). P8 (below) ties each
+// entry to its committed resolver body. Stated limit: offline, a hand-written body with
+// a correct digest cannot be told from a real one; the phase-closeout live
+// re-verification is what catches that (U5 refresh policy, as amended at (e1)).
 
 const REPO_ROOT = path.resolve(__dirname, "../..");
 const readJson = (rel: string): unknown =>
@@ -116,5 +122,52 @@ describe("P7 — every cited paper carries a doi or pmid ([P3-X2])", () => {
       return !p || (p.doi === undefined && p.pmid === undefined);
     });
     expect(bare.map((c) => `${c.where} → ${c.id}`)).toEqual([]);
+  });
+});
+
+// P8 — Phase 3 closeout (e1), independent Check finding P3-5. Until now an entry was
+// an attestation: a hand-written entry for an invented DOI, titled to match its paper,
+// passed P1–P7 (the Check planted one: 35/35 green). Each entry now names the
+// COMMITTED resolver body it was read from ({ path, sha256 }), and this test re-reads
+// that body: it must be tracked by git (not merely on disk), hash to the recorded
+// digest, parse as the entry's kind, and carry the entry's identifier and title.
+// Red proof (closeout artifact): an entry with no body, an uncommitted body, a body
+// whose hash does not match, and another paper's body each fail in their own bucket.
+describe("P8 — every fixture entry is backed by its committed resolver response (P3-5)", () => {
+  const tracked = new Set(
+    execFileSync("git", ["ls-files", "-z", "--", RESPONSE_ROOT], { cwd: REPO_ROOT })
+      .toString("utf8")
+      .split("\0")
+      .filter(Boolean),
+  );
+  const responses = checkResponses(fixture, {
+    isTracked: (rel: string) => tracked.has(rel),
+    read: (rel: string) => {
+      const abs = path.join(REPO_ROOT, rel);
+      return existsSync(abs) ? readFileSync(abs) : null;
+    },
+    sha256: (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex"),
+  });
+
+  it("checks every entry, and the captures directory is tracked (anti-vacuity)", () => {
+    expect(responses.checked).toBe(Object.keys(fixture).length);
+    expect(responses.checked).toBeGreaterThan(0);
+    expect(tracked.size).toBeGreaterThan(0);
+  });
+
+  it("P8a every entry names a committed response", () => {
+    expect([...responses.missing, ...responses.uncommitted]).toEqual([]);
+  });
+
+  it("P8b every named response hashes to its recorded sha256", () => {
+    expect(responses.hash).toEqual([]);
+  });
+
+  it("P8c every response parses, and is the record for the entry's identifier", () => {
+    expect([...responses.unparseable, ...responses.identity]).toEqual([]);
+  });
+
+  it("P8d every entry's resolvedTitle is the title in its response", () => {
+    expect(responses.title).toEqual([]);
   });
 });

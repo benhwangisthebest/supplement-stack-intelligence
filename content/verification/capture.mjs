@@ -354,7 +354,17 @@ export async function runResolve(approvals, client, today, outDir) {
       kind: a.kind,
       value: a.id,
       key: fixtureKey(a.kind, a.id),
-      entry: { id, kind: a.kind, resolvedTitle: title, source, verifiedOn: today, verifiedBy: a.approvedBy },
+      // Phase 3 closeout (e1), P3-5: the entry names the committed body it was read
+      // from, so the build can re-parse it (provenance.mjs checkResponses).
+      entry: {
+        id,
+        kind: a.kind,
+        resolvedTitle: title,
+        source,
+        verifiedOn: today,
+        verifiedBy: a.approvedBy,
+        response: { path: path.relative(REPO, saved).split(path.sep).join("/"), sha256: sha256(body) },
+      },
     });
   }
   return { entries, refusals };

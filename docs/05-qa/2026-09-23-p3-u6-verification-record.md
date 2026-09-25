@@ -189,3 +189,9 @@ re-checked. **Stated limit:** `esummary`'s `pubtype` is the mark PubMed puts on 
 **$0. No OpenAI, no paid API, deployed database untouched.**
 
 **Running total: 236 calls** (U6 162 · S4 12 · S2 13 · S5 12 · RV 37), $0.
+
+**[2026-09-25, Phase 3 closeout (e1)]** On the owner's ruling on Check findings P3-5 and P3-6, **every
+fixture entry's `verifiedOn` was set to 2026-09-24**, the RV date. The RV calls ran at 04:29Z on UTC
+2026-09-25, which was 2026-09-24 locally, and the RV directory and this section use 2026-09-24. 32 entries
+changed and 5 already carried that date. Each entry also gained `response: { path, sha256 }`, pointing at
+its RV body above. **No new call was made: $0, running total unchanged at 236.**
