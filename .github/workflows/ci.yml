@@ -126,10 +126,19 @@ jobs:
       # The repository declares no Node version (no engines field, no .nvmrc,
       # no .node-version), so CI pins one explicitly. 20 LTS is the Phase 0
       # approved choice and is fully supported by Next 15.
+      #
+      # Phase 3 U8 - EXACT version, closing FU-52. `"20"` let setup-node pick
+      # whichever 20.x was newest on the day. That already forced jsdom onto
+      # its 26 line (27+ declares ^20.19.0), and U8's bundle budget makes it a
+      # flake source too: gzip bytes depend on the zlib build Node ships, and
+      # the budget allows 1%. 20.20.2 is what `"20"` resolved to in run
+      # 36072088329 (e591da5), the last passing run before this pin, so the
+      # pin changes nothing that run did not already use. Moving it is now a
+      # visible diff, not a silent upgrade.
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.20.2"
           cache: npm
           cache-dependency-path: package-lock.json
 
@@ -229,6 +238,24 @@ jobs:
       # than joining verify:middleware in the developer-run pile.
       - name: Rendering determinism
         run: npm run verify:rendering
+
+      # Phase 3 U8 - roadmap item 5, ruling D-5 (GATE D1: CLAUDE.md §5's
+      # declared chain is updated in the SAME commit as this step).
+      #
+      # Fails any page route whose first-load JS grows more than H = 1% over
+      # its committed baseline (docs/05-qa/bundle-baseline.json). The figure is
+      # Next's own "First Load JS", recomputed in bytes from
+      # .next/app-build-manifest.json rather than scraped from the build log.
+      #
+      # Like the step above, it reads this build and costs no rebuild. It never
+      # writes the baseline: accepting growth means `npm run bundle:baseline`
+      # plus a reviewed diff. The log prints every route's measured size,
+      # baseline and limit, plus both zlib versions. The baseline is measured
+      # on a developer machine and gzip bytes depend on the zlib build, so this
+      # log is also the cross-environment measurement. Why 1%: U8 cycle
+      # artifact §3.
+      - name: Bundle budget
+        run: npm run verify:bundle
       # -----------------------------------------------------------------
       # Phase 2 U14 - E2E, discharging N-29 (GATE D1: CLAUDE.md §5's declared
       # chain is updated in the SAME commit as these two steps).

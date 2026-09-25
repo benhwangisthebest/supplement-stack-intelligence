@@ -227,7 +227,7 @@ Measured baseline (re-measured **2026-09-22 at the Phase 2 closeout's (d2) landi
 114 files** · **lint 369 of 369 tracked source files, 0 errors** · **27 executable architecture specs**
 (bound by `SPEC_COUNT`, derived from `git ls-files`) · **E2E non-live 70 passed / 30 `[LIVE]`-gated
 skipped** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck → **lint** →
-`vitest run` → **coverage thresholds** → **migration coherence** → `next build` → **rendering determinism** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on
+`vitest run` → **coverage thresholds** → **migration coherence** → `next build` → **rendering determinism** → **bundle budget** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on
 `workflow_dispatch`). The coverage step was added by Phase 1 U13, between `vitest run` and `next build`; the other four are unchanged.
 **The lint step was added by Phase 2 U18** (roadmap item 9), between typecheck and `vitest run`. Before it,
 `npm run lint` was `next lint` with **no eslint dependency and no config** — and five `eslint-disable`

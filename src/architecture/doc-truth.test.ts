@@ -184,6 +184,8 @@ const DECLARED_STEP_COMMANDS: Record<string, string> = {
   "next build": "npm run build",
   // Phase 2 U28 — the build-output guard that discharges N-38.
   "rendering determinism": "npm run verify:rendering",
+  // Phase 3 U8 — the bundle budget (roadmap item 5, D-5). Reads the same build.
+  "bundle budget": "npm run verify:bundle",
   // Phase 2 U14 — the E2E stage that discharges N-29. Two labels because the
   // workflow needs two `run:` steps and this binding is an ordered EQUALITY:
   // folding them into one `run: |` block would make this parser read the
@@ -412,6 +414,8 @@ describe("DOC_TRUTH — CLAUDE.md §5's CI claim vs the workflow", () => {
     // U28: §5 says "rendering determinism"; CI runs an npm script. Bind it to
     // the real file so the label cannot point at a renamed or gutted script.
     expect(pkg.scripts["verify:rendering"]).toContain("verify-rendering");
+    // U8: §5 says "bundle budget"; bind it to the real file for the same reason.
+    expect(pkg.scripts["verify:bundle"]).toContain("verify-bundle");
     // U15: §5 says "migration coherence"; CI runs an npm script. Same binding,
     // same reason — the label must not survive the script being renamed away.
     expect(pkg.scripts["verify:migrations"]).toContain("verify-migrations");
