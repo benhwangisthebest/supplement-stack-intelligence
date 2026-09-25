@@ -124,3 +124,41 @@ Every gate ran in a clean worktree (`../ssi-gate`, with no `.env.local` and `nod
 
 *(The landing (2) line was written after that gate ran. The only later change is the text of this line, in a
 file no guard reads.)*
+
+---
+
+## (b) Independent plan review — 2026-09-25
+
+**Anchor** `6355a5d`, verified at session open. **Output:** `docs/reviews/phase-4-plan-review.md`. **The plan
+is not edited in (b)**, and D-1…D-12 stay unanswered.
+
+**Independence.** The review ran as a separate subagent. Its inputs were the plan, `docs/roadmap.md`,
+`CLAUDE.md`, the Phase 3 report and closeout Check, and the repository at HEAD. It was **denied this
+artifact** and the authoring session's record. It disclosed two incidental exposures, and neither read any
+content of this file: an id-ceiling grep printed bare numbers, and `git show --stat` printed this file's
+name. It re-derived AC-3 (66 ids, `comm` empty) without this file.
+
+**Verdict: REVISE.** CRITICAL 0 · MAJOR 11 · MINOR 8 · OBSERVATION 1 (P-01…P-20). The headline items:
+- **P-01:** §3's source set misses 13 open Phase 2 register rows, several triggered by Phase 4 units.
+- **P-02:** D-4's options describe shipped behaviour.
+- **P-03:** U3's "no `src/` path" proof is unsatisfiable, because generated modules are committed.
+- **P-04:** U4 targets FU-31's scan scope; the fault is its taint model.
+- **P-05:** D-1's runner is under-specified, and G's `next build` is itself a network call.
+- **P-06:** the context-adjusted-evidence copy needs a fuller §2.1/§2.2 check.
+- **P-08:** D-12 extends a Phase 1 exception that was never recorded.
+
+**Clerk verification (brief AC-3).** Every load-bearing claim was re-run against the tree before recording
+(the review's Disclosure 4). **Five figures or line references were corrected**, each item's substance
+standing: P-02 has 15 404 sites, not 14; P-07's roadmap line is `:606`; P-08's quote is at `:265`; P-10's
+callers are at `safety.test.ts:36,38,39`; P-18 has 17 coverage floors, not 14.
+
+**Author's note, recorded rather than argued.** The review found real defects in this session's own draft.
+P-01 repeats the exact boundary failure the Phase 3 report §9 had already named for FU-25. The draft
+checked completeness only against a source set it had chosen itself. P-02 and P-04 describe code the draft
+did not read. None is disputed here. Revision is the next landing's job, under a new brief.
+
+**Length.** The review was first written at 305 lines and was condensed to 197 to meet the 250-line cap.
+No item, evidence reference or action was dropped. A per-item field check was run after condensing, and
+it added the Location lines missing from P-14, P-15, P-19 and P-20.
+
+**Gate (b):** see the landing commit. `npx vitest run src/architecture` is AC-4.
