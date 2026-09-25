@@ -94,7 +94,7 @@ describe("SPEC_COUNT — the architecture-spec count, bound to the directory", (
     expect(specs.length).toBeGreaterThan(0);
     expect(specs.every((f) => f.startsWith("src/architecture/"))).toBe(true);
     // Pinned. A guard whose own inventory can silently empty is not a guard.
-    expect(N).toBe(29);
+    expect(N).toBe(30);
   });
 
   it("finds a stated count at every site it claims to govern", () => {

@@ -267,9 +267,10 @@ npm test                                              # includes all seven execu
                                                       #  `npm test` runs the directory, so the command
                                                       #  is right and only the count aged.
                                                       #  [2026-09-22, Phase 2 closeout] BOUND BY
-                                                      #  SPEC_COUNT at 29 — the two guards that landing
+                                                      #  SPEC_COUNT at 30 — the two guards that landing
                                                       #  added are themselves architecture specs; 27
-                                                      #  at (d1), 28 at Phase 3 U1 (b), 29 at U9 (a).
+                                                      #  at (d1), 28 at Phase 3 U1 (b), 29 at U9 (a),
+                                                      #  30 at U10 (c).
                                                       #  Derived from git ls-files and asserted against
                                                       #  this site. Last hand-written value; do not
                                                       #  restack.]

@@ -300,6 +300,73 @@ B, C and D go red.)
   `CoverageLimit.test.tsx`. But the guard (c) checks that a test *exists*, not what it asserts. Owner to
   assign. Editing existing tests was outside U10's *May touch*.
 
+## 3. Landing (c) — the guard (R2)
+
+**New spec `src/architecture/rule8-component-tests.test.ts` (`RULE8_COMPONENT_TESTS`).** It builds one
+TypeScript checker program over the tracked scope (`git ls-files`, never the filesystem) plus the anchor
+files, and applies §1.1's predicate. A member fails **R8b** unless a **tracked sibling `<Name>.test.tsx`**
+exists and imports the component at runtime, spelled `./<Name>` or `@/components/…/<Name>`. There is **no
+allowlist**. No component is named anywhere in the predicate. **R8a** is anti-vacuity: the anchors all
+resolve, and one sentinel member per noun (FU-64's named examples). **R8d:** every anchor carries a
+written reason naming its rule-8 noun. The predicate self-test (8 `it` blocks; 11 tests in all with R8a, R8b, R8d) runs on **in-memory programs**:
+DOM text, a prop handed to a child, a grade reached through a property with no type named, a flag's
+text, a flag array, a union with a grade, a citation array, strings only, logic outside JSX, a
+`Record<EvidenceGrade, string>` lookup, a same-named **local** `EvidenceGrade`, and the sibling-test rule.
+
+**Three refinements over the (a) script, each found while writing the guard, none changing the set:**
+
+1. **Literal unions.** The checker flattens `EvidenceGrade | "n/a"` into five literal types with no alias
+   left to see. The self-test caught it (the union case was red). The guard now also reads the value's
+   **declared** type annotation, following a destructured binding to its property. That is what §1.1's
+   "a union … containing one" always said.
+2. **Only the shapes §1.1 names.** The first cut of (1) walked every type argument, so
+   `GRADE_STYLES: Record<EvidenceGrade, string>` counted as rendering a grade. The walk is now limited to
+   union, intersection, array (`T[]`, `Array<T>`), tuple, parenthesised and `readonly`, and pinned by a
+   self-test case.
+3. **Import spelling.** The first cut accepted only `./<Name>`, so a real test importing
+   `@/components/stack/FlagCard` read as missing. Both spellings are now accepted, with a self-test case
+   for each.
+
+**AC-1, re-checked against the guard itself** (a temporary dump line, restored and `cmp`-verified): the
+guard's 17 members, and the first-hit evidence for each, are **identical** to §1.3's output (`diff` empty
+on both). Every member now reads `yes`.
+
+### 3.1 Red evidence (AC-3, `[P3-X7]`)
+
+Each plant goes through the index (`git add`) because the guard reads `git ls-files`. Each is removed
+with `git rm --cached` and the tree re-checked. The staged diff against `HEAD` is empty afterwards.
+
+**Red 1: a planted, tracked `src/components/evidence/PlantedGrade.tsx` that renders an `EvidenceGrade`,
+with no test:**
+
+```
+   × RULE8_COMPONENT_TESTS — components rendering a flag, grade or citation have a test (CLAUDE.md §5 rule 8) > R8b every member has a tracked sibling .test.tsx that imports it 17ms
+AssertionError: rule 8: 1 component(s) render a safety flag, evidence grade or citation with no component test:
+  src/components/evidence/PlantedGrade.tsx  — renders EvidenceGrade @ src/components/evidence/PlantedGrade.tsx:4 `grade`
+      Tests  1 failed | 10 passed (11)
+```
+
+Removed → `Tests  11 passed (11)`.
+
+**Red 2: an existing member's test untracked** (`git rm --cached src/components/stack/FlagCard.test.tsx`):
+
+```
+AssertionError: rule 8: 1 component(s) render a safety flag, evidence grade or citation with no component test:
+  src/components/stack/FlagCard.tsx  — renders FlagSeverity @ src/components/stack/FlagCard.tsx:18 `flag.severity`
+      Tests  1 failed | 10 passed (11)
+```
+
+**Red 3: the sibling test exists but imports a different component** (`./SuggestionCard`): the same
+`FlagCard.tsx` failure line. **Green 3b:** the same test importing `@/components/stack/FlagCard` →
+`Tests  11 passed (11)`. Restored from backup, `cmp` identical.
+
+### 3.2 `SPEC_COUNT` (AC-5)
+
+`git ls-files 'src/architecture/*.test.ts' | wc -l` → **30** with the guard tracked. All four bound
+sites moved in the same commit: `README.md` ×1, `docs/project-status.md` ×2,
+`docs/02-design/architecture-boundaries.md` ×1. So did the pin, `spec-count.test.ts` (`expect(N).toBe(30)`).
+Restoring the old pin goes red: `→ expected 30 to be 29`. With the new pin, `spec-count.test.ts` is green.
+
 ---
 
 ## A. The (a) command — `rule8-derive.mjs`, verbatim
