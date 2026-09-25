@@ -468,7 +468,7 @@ test" part does not.
 | UI | **B** |
 | Testing infrastructure | **B** |
 | Evidence content / knowledge base | ~~**X**~~ **P** *(2026-09-25, Phase 3 closeout; §2.1)* |
-| Content delivery (authoring format) | **X** |
+| Content delivery (authoring format) | ~~**X**~~ **B** *(2026-09-25, owner ruling; see below)* |
 | Observability | **B** |
 | Release/integration process | **B** |
 | `db/seed.ts` shared demo fixture | **X** |
@@ -492,7 +492,13 @@ than left to the table's single letter.**
 |---|---|---|---|
 | **Evidence content / knowledge base** | X | **P** | §2.1. Every grade is derived from a profile scored only from verified abstracts (27/27), and every citation is bound to a committed resolver response (37/37): no bypass without committing a forged resolver response, which review and the closeout re-verification each catch. Residuals FU-61, FU-62, FU-68 and FU-71 are rubric and content work, owned for Phase 4. |
 
-*(The row "Content delivery (authoring format)" still reads X, although the authoring format is now JSON with byte-identical codegen (U1, U2). The owner ruled only on the evidence-content row, so that row is left as it is and flagged for the owner, not changed.)*
+*(~~The row "Content delivery (authoring format)" still reads X, although the authoring format is now JSON with byte-identical codegen (U1, U2). The owner ruled only on the evidence-content row, so that row is left as it is and flagged for the owner, not changed.~~ **Superseded by the owner ruling of 2026-09-25 below.**)*
+
+**[2026-09-25, owner ruling after the Phase 3 declaration] One row moved:**
+
+| Row | Was | Now | Why |
+|---|---|---|---|
+| **Content delivery (authoring format)** | X | **B** | Authored as JSON with byte-identical codegen, guarded by CONTENT_FIDELITY; a correction that adds or renames an id still requires a hand edit to src/data/id-manifest.json ([P3-X5] caveat), so the format is not yet fully src-free. **Registered as a Phase 4 candidate:** move the id manifest out of `src/` so that an id-adding correction is src-free. The Phase 4 plan's §3 dispositions it. |
 
 **Why the reasons are dated and the letters are not.** A classification letter with no date is the
 counts-written-once class (**FU-32**) wearing a single character: it was true when written and says nothing
