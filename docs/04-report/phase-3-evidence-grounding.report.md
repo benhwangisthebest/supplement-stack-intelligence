@@ -126,6 +126,7 @@ guard first (→ U9).
 | U9 | `import type` is not a violation · **option A**: one named exemption (`AdvisorPanel → errorText`) |
 | U8 | **R1** seam dropped (zero call sites) · **R2** fresh baseline at HEAD · (c) option 1, CI step added |
 | U10 | **R1** the build's font fetch is permitted (FU-66) · **R2** rule 8 becomes a derived guard, or STOP |
+| Closeout, R17 | **the studyQuality convention, WRITTEN AFTER THE FACT (2026-09-25).** U4 scored under a convention nobody had written down. The Check found every Grade A resting on it (P3-8). The owner derived it from the dimension's type definition (*"RCT / blinding / size / risk-of-bias"*), not from outcomes, and it was applied as written to all 27 effects. Two scores moved 1 → 2 (magnesium-stress, l-theanine-stress); **no grade and no confidence moved**. The 27-row table is in the register (§4, before U5). The size clause's reliance on authors' flags is FU-71 |
 | Closeout | CLAUDE.md "go + lint" (lint 369 → 415 counted in correction 3) · plain-text guard name accepted because of N-85 · **N-85 → Phase 4** · (d) pre-approved |
 
 ---
@@ -341,6 +342,8 @@ that fails to redden"*, caught this time by reading the output rather than the e
 (FU-67). `CANONICAL_LAYOUT` proves layout, not content. `DOC_TRUTH` binds names, and only some kinds of
 name (N-85). In each case the guard's header or its ruling says so, and the report repeats it so that no
 reader takes the name for the property.
+
+**A scoring convention written after the scoring (R17).** U4 applied a studyQuality convention consistently to 9 effects, but never wrote it down. It became visible only when the independent Check noticed that every Grade A sat on it. Written from the type definition, it disagreed with 2 scores, both conformed and neither grade moved. **The lesson is the order: a rubric convention is written before content is scored against it, or its consistency is an accident nobody can check.** FU-71 records the part the written form still leaves subjective.
 
 **Stop conditions fired and were honoured:** U1 (unsatisfiable brief), U4 R5 (uncited-dimension score
 undefined), U9 (b) (the `errorText` edge), S2's three refusals, U8 R1 (an unobservable seam). **None was

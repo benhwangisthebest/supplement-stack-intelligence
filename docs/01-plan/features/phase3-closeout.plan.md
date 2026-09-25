@@ -501,3 +501,43 @@ The diff is exactly as drafted and shown to the owner: the §4 header (~~measure
 2026-09-25, pointing at DOC_TRUTH and N-85), §5 rule 10 (`npm run verify:bundle` after the build), and §12's
 document map (7 rows: the Phase 2 plan, report and Check; the Phase 3 plan, plan review, report and Check).
 DOC_TRUTH: 22/22.
+
+---
+
+## 11. Remediation (e2b): the studyQuality convention, R17 (P3-8), owner rulings 2026-09-25
+
+**The first ruling** (*"a randomised design with no reported RoB rating = 2"*) did not fit creatine-strength
+or creatine-cognition, and it was held (§9). **The second ruling** derived the convention from
+`src/types/evidence-grading.ts:10`: controlled (randomised OR placebo-controlled) → 2, minus 1 when the
+abstract itself flags small samples or high risk of bias; uncontrolled or mixed-observational → 1. It
+applies only where the abstract reports no risk-of-bias rating.
+
+**The scan.** A driver parsed every local `efetch.xml` and keyed each abstract by PMID. For the papers that
+each studyQuality dimension cites, falling back to the effect's own papers, it looked for design words
+(randomised / placebo / observational), a rating (risk of bias, GRADE, certainty, quality) and a flag (small
+sample, larger sample, high risk of bias). Every ambiguous hit was then read in context. The false positives
+it caught: *"sample size of 72 598"* is a count, and protein-mps reads *"only randomised controlled trials"*.
+It found **2 disagreements**, magnesium-stress and l-theanine-stress, both convention 2 against a current 1.
+**The third ruling:** apply the convention as written, with no exceptions.
+
+**What changed:** both scores 1 → 2. The rationales use the abstracts' own words and keep the limits
+visible. *"Post-hoc"* is not in the magnesium abstract, which says *"previously unreported secondary
+analysis"*, so that is the wording used. Re-derived: **magnesium-stress D (0.2167 → 0.3000), l-theanine-stress D
+(0.2500 → 0.3333); confidence `low` for both; all 27 stored grades equal `deriveGrade`.** The R10 tier pins
+(D → experimental) needed no change. **New R17 pins** in `grade-changes.test.ts`:
+
+```
+=== E2b-M: magnesium-stress score back to 1 (JSON + regenerate)
+   × R17 studyQuality convention … > 'magnesium-stress' → studyQuality 2, Grade 'D', confidence 'low'
+      Tests  1 failed | 62 passed (63)
+=== E2b-M: l-theanine-stress score back to 1 (JSON + regenerate)
+   × R17 studyQuality convention … > 'l-theanine-stress' → studyQuality 2, Grade 'D', confidence 'low'
+      Tests  1 failed | 62 passed (63)
+=== restore        Tests  63 passed (63)
+```
+
+**Registered:** **R17** in the register (§4, before U5), with the 27-row table. **FU-71**: the size clause
+relies on the authors' flag; an objective threshold is proposed; Phase 4, grouped with FU-61. **FU-72**:
+scheduled live re-verification between closeouts; Phase 4.
+
+**Gate (e2b):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / **1562** (+2) · jsdom 24 / 130 · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 67 paths clean, with the control detected. **Gate (e3):** as for (e2), with DOC_TRUTH 22/22.

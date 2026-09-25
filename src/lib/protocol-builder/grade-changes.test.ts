@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { SEED_EFFECTS } from "@/data/seed-effects";
+import { deriveGrade } from "@/lib/evidence-grading";
 import type { OutcomeCategory, UserProfile } from "@/types";
 import { generateProtocol } from "./index";
 
@@ -70,5 +72,24 @@ describe("U4 grade changes: the protocol tier each changed effect now produces (
     expect(s?.effectId).toBe(effect);
     expect(s?.grade).toBe(grade);
     expect(s?.tier).toBe(tier);
+  });
+});
+
+// Phase 3 closeout (e2b), owner ruling R17 (2026-09-25): the studyQuality convention
+// applied as written re-scored two effects 1 → 2. Neither letter moves, so the R10
+// tier pins above stay green. These rows pin the scores, the derived grade and the
+// unchanged confidence, so undoing the convention for either effect fails here.
+// Red proof: each score back to 1 fails its row (closeout artifact §11).
+
+describe("R17 studyQuality convention: the two re-scored effects (closeout e2b)", () => {
+  it.each([
+    { effect: "magnesium-stress", studyQuality: 2, grade: "D", confidence: "low" },
+    { effect: "l-theanine-stress", studyQuality: 2, grade: "D", confidence: "low" },
+  ])("$effect → studyQuality $studyQuality, Grade $grade, confidence $confidence", ({ effect, studyQuality, grade, confidence }) => {
+    const e = SEED_EFFECTS.find((x) => x.id === effect)!;
+    expect(e.evidenceProfile!.dimensions.studyQuality.score).toBe(studyQuality);
+    expect(deriveGrade(e.evidenceProfile!)).toBe(grade);
+    expect(e.grade).toBe(grade);
+    expect(e.confidence).toBe(confidence);
   });
 });

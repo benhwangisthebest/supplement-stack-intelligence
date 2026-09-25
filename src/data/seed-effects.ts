@@ -75,8 +75,8 @@ export const SEED_EFFECTS: Effect[] = [
           paperIds: ["p-magnesium-stress"],
         },
         studyQuality: {
-          score: 1,
-          rationale: "Post-hoc secondary analysis with no placebo arm.",
+          score: 2,
+          rationale: "Randomised controlled trial of magnesium with vitamin B6 against magnesium alone, so no placebo arm; a previously unreported secondary analysis; no risk-of-bias rating reported.",
           paperIds: ["p-magnesium-stress"],
         },
         consistency: {
@@ -581,8 +581,8 @@ export const SEED_EFFECTS: Effect[] = [
           paperIds: ["p-ltheanine-stress"],
         },
         studyQuality: {
-          score: 1,
-          rationale: "Double-blind, placebo-controlled and counterbalanced, but only 12 participants.",
+          score: 2,
+          rationale: "Double-blind, placebo-controlled and counterbalanced; 12 participants; no risk-of-bias rating reported.",
           paperIds: ["p-ltheanine-stress"],
         },
         consistency: {
