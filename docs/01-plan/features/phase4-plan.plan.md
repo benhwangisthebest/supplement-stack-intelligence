@@ -162,3 +162,58 @@ No item, evidence reference or action was dropped. A per-item field check was ru
 it added the Location lines missing from P-14, P-15, P-19 and P-20.
 
 **Gate (b):** see the landing commit. `npx vitest run src/architecture` is AC-4.
+
+---
+
+## (c) Revision against the review — 2026-09-25
+
+**Anchor** `e7e249c`, verified at session open. **Brief:** revise the draft against P-01…P-20, with no ruling. The brief was copied verbatim into the scratchpad resume notes as the first action. **Touched:** the plan and this section only. The review stays as recorded, and the plan stays **DRAFT**.
+
+**What changed:** §3's source is now every issued id (**164**), not three sections. It gives 73 open, 91 closed and N-86 issued, and adds 13 open Phase 2 N rows, 2 partial ones (N-33, N-37), 15 open Phase 1 FU rows and F7. §4 gains *Size* and *May touch* columns, and a corrected owner-batch column. U3 and U4 are respecified. D-1 gets the runner specification. D-2, D-4, D-6, D-7, D-9 and D-12 are corrected. **D-13…D-16 are new** (P-03, P-12, P-18, and P-10's U9 decision). §7 carries the typing matrix. §9 dispositions P-01…P-20. **Nothing is answered.**
+
+**AC evidence** (plan at the working tree):
+
+```
+AC-1  grep -c '^| P-[0-9][0-9] | \(ADDRESSED\|DECLINED\)' <plan>                                  → 20
+AC-2  { seq -f 'N-%g' 1 85; seq -f 'FU-%g' 1 72; seq -f 'OP-%g' 1 7; } | sort > src-ids.txt      # 164
+      awk '/^## 3\./{f=1;next} /^## 4\./{f=0} f && /^\| /' <plan> | cut -d'|' -f2 \
+        | grep -oE '\b(N|FU|OP)-[0-9]+' | sort -u > table-ids.txt
+      comm -23 src-ids.txt table-ids.txt → (empty)      comm -13 … → N-86
+      open (rows without CLOSED) 73 + N-86 · closed (CLOSED rows, arrow targets stripped) 91 · overlap (empty)
+AC-3  grep -c RULED <plan> → 0; decisions flagged "needed" → D-13 (P-03), D-14 (P-12), D-15 (P-18), D-16 (P-10 U9)
+AC-4  wc -l <plan> → 354 (≤ 400) · this section ≤ 60
+AC-5  npx vitest run src/architecture → 30 files / 443 tests passed
+```
+
+**Figures re-derived by command** (brief item 11): 15 `notFound` sites (`git grep -ho 'notFound("[^"]*")' … | uniq -c`: Stack 8 · Stack item 4 · Conversation 2 · Action 1). 17 coverage floors over 23 `src/lib` directories (`node -e` over `vitest.config.ts` against `readdirSync`). The roadmap line references were re-read with `sed -n`: `:606` for item 2, `:265` for ruling 3, `:14-15` and `:650-651` for the ordering rule. **One stale line reference in the review itself:** *"Size them at start"* is at `roadmap.md:649`, not `:647`. The plan's §8 records it; the review is not edited.
+
+**Status method, and its limit.** "Open" was settled per id from the register cells, and from Phase 2 §4.3's prose for Phase 1's rows. A keyword scan could not do it: it marked N-30 and N-36 closed on the word "CLOSED" inside "OPEN as decisions, CLOSED as omissions". **The `comm` proves every issued id has a row. It does not prove each open/closed call is right.** Each CLOSED row names its record, so a reader can check any single call.
+
+**Delta check (AC-6).** A fresh subagent was given **only** the review and the revised plan; `src/` was readable only to verify a cited line. **Run 1:** 16 CONFIRMED and 4 NOT. P-05: "sweep narrowing" was missing from the weakening definition. P-10: U15 × D-7 (d) was missing from D-1 (c). P-11: U8 × D-6 (d) had no size. P-13: (c) and (d)'s chip effects were ambiguous. All four were fixed in place. **Run 2, a fresh agent on the fixed plan:**
+
+| Finding | Verdict | Plan line(s) |
+|---|---|---|
+| P-01 | CONFIRMED addressed | 49-112 |
+| P-02 | CONFIRMED addressed | 210-214, 134 |
+| P-03 | CONFIRMED addressed | 75-76, 126, 156, 257-261 |
+| P-04 | CONFIRMED addressed | 72, 127 |
+| P-05 | CONFIRMED addressed | 8, 118, 164-177 |
+| P-06 | CONFIRMED addressed | 137, 189-191 |
+| P-07 | CONFIRMED addressed | 136, 192, 293 |
+| P-08 | CONFIRMED addressed | 106, 249-255 |
+| P-09 | CONFIRMED addressed | 128-131, 137, 282-302 |
+| P-10 | CONFIRMED addressed | 125-137, 167, 275-278 |
+| P-11 | CONFIRMED addressed | 122-141, 195-208 |
+| P-12 | CONFIRMED addressed | 133, 263-267 |
+| P-13 | CONFIRMED addressed | 180-184 |
+| P-14 | CONFIRMED addressed | 219-223 |
+| P-15 | CONFIRMED addressed | 225-230 |
+| P-16 | CONFIRMED addressed | 63, 112, 193 |
+| P-17 | CONFIRMED addressed | 91 |
+| P-18 | CONFIRMED addressed | 40-41, 151, 269-273 |
+| P-19 | CONFIRMED addressed | 18, 153 |
+| P-20 | CONFIRMED addressed | 36, 59, 140, 237 |
+
+**0 NOT addressed.** Cross-checks X-a (no decision answered; `RULED` 0), X-b (every flagged decision has a D-n) and X-c (`comm` empty; N-86 only) passed. **Run 2 also reported consistency defects. All were fixed after it, in place, with no line added,** so §9's references stand. **May touch:** it now implicitly covers the tests beside listed files, the unit's own record, and the `SPEC_COUNT`-bound sites. It also names the paths it missed: `stack-item-repo.ts` for U10, `stack/ProductMatchPanel.tsx` for U13, `redact.ts` for U15, and `repo.test.ts` for U2. **D-1 (c)** now excludes U17 (b)/(c) and U11 × D-4 (a), with reasons. **U16 (a)** now has its own red proof. **References:** `:320-322` for ruling 5, and `:58` added to N-86's stale text. The N ceiling notes it prints 86 once N-86 is issued. The fixes were not re-reviewed by a third agent. Each was applied by an exact-match replace that fails if its target is absent.
+
+**Gate (c)**, in a clean worktree (`../ssi-gate`, no `.env.local`, `node_modules` symlinked): tsc 0 · lint 415 of 415, 0 errors · node 1563/120 · jsdom 130/24 · build 0 · rendering OK · bundle OK (within 1%) · E2E 70 passed / 30 skipped. After the last plan edit: node 1563/120, `src/architecture` 30/443. CI: see the landing branch run.
