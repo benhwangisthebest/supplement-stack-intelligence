@@ -610,7 +610,7 @@ export const SEED_EFFECTS: Effect[] = [
     outcomeCategory: "sleep",
     grade: "D",
     confidence: "low",
-    summary: "No verified evidence in this library: the one cited paper has no abstract to summarise.",
+    summary: "This library's only cited paper has a title but no abstract, so it supports no scored evidence.",
     relevantPopulation: "not described by a verified paper in this library",
     studiedDose: {
       min: 3,

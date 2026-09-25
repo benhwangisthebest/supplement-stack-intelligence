@@ -228,11 +228,11 @@ passing, a clean typecheck, and a successful build.
     *(Phase 2 (d1b), `src/app/api/advisor/actions/route.ts`. Filed beside rule 11 because both are cases
     where the instrument that looks like it is doing the job is not doing the job.)*
 
-Measured baseline. The **spec count, test counts and lint figure were re-measured 2026-09-24 at the Phase 3 closeout
-(a)**, against that tree. The other figures date from **2026-09-22 at the Phase 2 closeout's (d2)
+Measured baseline. The **test counts were re-measured 2026-09-25 at the Phase 3 closeout declaration**, against
+that tree. The spec count and lint figure were re-measured 2026-09-24 at closeout (a), and still hold at the declaration. The other figures date from **2026-09-22 at the Phase 2 closeout's (d2)
 landing** — ~~2026-08-06 at Phase 1 close, 859/859 across 73 files~~. Typecheck clean · ~~1446/1446 unit
-tests across 114 files~~ **1679/1679 unit tests across 144 files**: `node` project 1549 across 120,
-`jsdom` project 130 across 24 · ~~lint 369 of 369~~ **lint 415 of 415 tracked source files, 0 errors** ·
+tests across 114 files~~ ~~1679/1679 across 144 files~~ **1693/1693 unit tests across 144 files**: `node`
+project 1563 across 120, `jsdom` project 130 across 24 · ~~lint 369 of 369~~ **lint 415 of 415 tracked source files, 0 errors** ·
 ~~27~~ **30 executable architecture specs** (bound by `SPEC_COUNT`, derived from `git ls-files`) ·
 **E2E non-live 70 passed / 30 `[LIVE]`-gated skipped** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck → **lint** →
 `vitest run` → **coverage thresholds** → **migration coherence** → `next build` → **rendering determinism** → **bundle budget** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on

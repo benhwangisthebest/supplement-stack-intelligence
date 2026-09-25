@@ -558,3 +558,16 @@ scheduled live re-verification between closeouts; Phase 4.
 ## 13. Landing (f): delta check
 
 The addendum is §8 of `docs/reviews/phase-3-closeout-check.md`, recorded verbatim. It ran against `8913605` with only the review, the register and the repo as inputs. **Result: 7 ADDRESSED · 4 CARRIED-WITH-OWNER · 0 NOT ADDRESSED; no finding blocks the declaration.** It ran 7 mutations of its own (M-A…M-G), and vitest gave 144 / 1692. It raised five items: D-1 (MINOR, the roadmap migration note omits products from `stack_items`), D-2 (TRIVIAL, a stale comment), D-3 (MINOR, the X5 decision is unrecorded), D-4 (TRIVIAL, redundant glycine copy) and D-5 (INFO, the `CLAUDE.md` baseline 1679 vs 1692). **They are held for the owner at the declaration.**
+
+---
+
+## 14. The declaration landing (owner GO, 2026-09-25)
+
+- **Roadmap:** Phase 3 → **COMPLETE WITH FOLLOW-UP**, with "with follow-up" named item by item. **D-1:** products also persist in `stack_items`. **D-3:** the X5 wording is kept and the caveat recorded instead (owner ruling at P3-11).
+- **project-status.md:** §2.1 and its summary row go **X → P**, with the accepted line verbatim. The "Content delivery (authoring format)" row still reads X; it is stale but was not ruled on, so it is flagged, not changed.
+- **D-2:** the stale D1/D2 comment in `src/lib/safety/index.ts` is fixed (comment only).
+- **D-4:** glycine-sleep's summary is now *"This library's only cited paper has a title but no abstract, so it supports no scored evidence."*, via JSON → `content:generate`. The banned-phrase check (`containsBannedLanguage`) gives false, and G7 is green. No test pinned the old text, so a new exact pin (`tools.test.ts`, "glycine-sleep: the full text, exactly (D-4)") was added and red-proved: restoring the old summary fails it (1 failed / 22 passed); after restore, 23/23 pass.
+- **D-5:** the `CLAUDE.md` baseline test counts were re-measured by command at this landing's final tree: `npx vitest run` → **144 files / 1693 tests**; `--project node` → 120 / 1563; `--project jsdom` → 24 / 130. Specs 30 and lint 415/415 are unchanged.
+- **Register** header: PHASE 3 COMPLETE WITH FOLLOW-UP. **Report:** the verdict paragraph and the close figures.
+
+**Gate (declaration):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / 1563 · jsdom 24 / 130 (**1693**; this reproduces the D-5 figure in a clean worktree) · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 74 paths clean, with the control detected.

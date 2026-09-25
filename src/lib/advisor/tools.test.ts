@@ -186,6 +186,16 @@ describe("uncited effects carry the D2 sentence", () => {
     expect(g.summary).toContain(d2);
   });
 
+  // Phase 3 closeout (declaration), owner ruling on delta-check item D-4: the
+  // summary no longer restates D2's sense, so the model reads each once, as row 14 below.
+  it("glycine-sleep: the full text, exactly (D-4)", () => {
+    const r = getSupplement.handler({ slug: "glycine" }, ctx);
+    const g = r.data!.effects.find((e) => e.effectId === "glycine-sleep")!;
+    expect(g.summary).toBe(
+      "This library's only cited paper has a title but no abstract, so it supports no scored evidence. " + d2,
+    );
+  });
+
   // Copy table row 14, pinned verbatim (U7 follow-up, owner 2026-09-24): the seed
   // summary no longer repeats D2's sense, so the model reads each once.
   it("row 14: the uncited effect's full text, exactly", () => {

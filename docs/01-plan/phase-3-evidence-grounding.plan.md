@@ -1,5 +1,7 @@
 # Phase 3 — Evidence grounding (the trust layer)
 
+> **PHASE 3: COMPLETE WITH FOLLOW-UP — declared 2026-09-25 on the owner's go.** All units U0–U10 are DONE, and `[P3-X1]`…`[P3-X9]` are ticked. The independent Check (`docs/reviews/phase-3-closeout-check.md`) returned COMPLETE WITH FOLLOW-UP, and its delta check (§8 of that file) found 7 ADDRESSED, 4 CARRIED-WITH-OWNER and 0 NOT ADDRESSED. Outcome: `docs/04-report/phase-3-evidence-grounding.report.md`. Every open row in §7 has an owner.
+>
 > **STATUS: APPROVED — 2026-09-22, by the repository owner** (unit **PHASE3-PLAN-PUB**, landing (d)). This plan is now **rank 5** under `CLAUDE.md` §6 and **authorises the units in §4** — and nothing beyond them.
 > ~~**STATUS: DRAFT — AWAITING OWNER APPROVAL.** **A Draft outranks nothing** (`CLAUDE.md` §6: rank 5 is *an approved* plan). **Nothing here authorises work.** No unit may start and no guard may be written or relaxed until this file carries an APPROVED status line.~~ *(Struck, not deleted, per §7: the draft status is the condition every landing before (d) operated under, and the record of that is the point.)*
 > **Still not authorised by this approval:** any work not named in §4, any guard change outside a unit, and any commit/push/merge — which need owner approval each time (§10 rule 5).

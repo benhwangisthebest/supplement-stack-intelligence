@@ -1,11 +1,14 @@
 # Phase 3 — Evidence grounding (the trust layer): closeout report
 
-**Date:** 2026-09-24 · **Plan:** `docs/01-plan/phase-3-evidence-grounding.plan.md` (APPROVED 2026-09-22, rank 5)
+**Date:** 2026-09-24 · **declared closed 2026-09-25** · **Plan:** `docs/01-plan/phase-3-evidence-grounding.plan.md` (APPROVED 2026-09-22, rank 5)
 **At Phase 2 close:** 1420 tests / 113 files · 26 architecture specs · lint 368 of 368
-**At Phase 3 close:** **1679 tests / 144 files** (node 1549 / 120 · jsdom 130 / 24) · **30 architecture
+**At Phase 3 close:** **1693 tests / 144 files** (node 1563 / 120 · jsdom 130 / 24; re-measured at the declaration landing) · **30 architecture
 specs** · lint **415 of 415**, 0 errors · E2E non-live 70 passed / 30 `[LIVE]` skipped
-**Verdict: pending the independent Check** (`docs/reviews/phase-3-closeout-check.md`, landing (c)). This
-report does not grade itself.
+
+**Verdict: COMPLETE WITH FOLLOW-UP** (declared 2026-09-25 on the owner's go). All nine exit criteria, `[P3-X1]`…`[P3-X9]`, are met and were re-run at HEAD. 27 of 27 effect grades are derived from profiles scored only from verified abstracts. 37 of 37 cited papers are bound to their committed resolver responses and were re-resolved live at the closeout, with no title drift and no retraction. The independent Check (P3-1…P3-11) found four closeout-bookkeeping gaps and one real guard weakness: a hand-written fixture entry passed. Each was remediated or carried with an owner, and its delta check found none unaddressed. The phase made 236 live calls for $0, with no OpenAI call. **OP-5 is OPEN and unchanged.** Every carried item is owned for Phase 4: rubric work (FU-61, FU-71), sourcing (FU-62), the fish-oil surrogate question (FU-68) and live re-verification between closeouts (FU-72).
+
+~~**Verdict: pending the independent Check** (`docs/reviews/phase-3-closeout-check.md`, landing (c)). This
+report does not grade itself.~~ *(As written at (b). The verdict above is the Check's, confirmed by the owner's declaration.)*
 
 > **What is re-run here and what is compiled.** **§3's exit criteria were re-run at HEAD by command**, and
 > their outputs are pasted in §3 (AC-1). **§5's red evidence is compiled**: it cites the red proofs each

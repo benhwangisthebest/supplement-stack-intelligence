@@ -109,7 +109,8 @@ export const COVERAGE = {
     text: "Custom items that are not in the Library are not checked for interactions, dose, allergens or evidence.",
   },
   // U7 (b2), owner wording 2026-09-24 (U4 closeout note 1). Grade D, split by
-  // whether the effect itself cites any paper: see gradeDCoverage.
+  // whether the effect cites a paper that can SUPPORT it (R6: a title-only paper
+  // cannot; Phase 3 closeout (e2), P3-7): see gradeDCoverage.
   gradeDLimited: {
     dataset: "effects",
     state: "limit",

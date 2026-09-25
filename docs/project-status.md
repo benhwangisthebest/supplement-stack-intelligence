@@ -136,7 +136,7 @@ The real risks are different and sharper:
 
 Key — **P** = production-suitable · **B** = bounded refactor required · **X** = prototype-only.
 
-### 2.1 Knowledge base / evidence content — **X** *(reclassification PROPOSED at the Phase 3 closeout: see the end of this section)*
+### 2.1 Knowledge base / evidence content — ~~**X**~~ **P** *(reclassified 2026-09-25 at the Phase 3 closeout, on the owner's go)*
 
 > **[2026-09-25, Phase 3 closeout (e4); Check finding P3-2] Re-derived at HEAD by command.** The bullets below the rule are the 2026-07-30 assessment, kept per `CLAUDE.md` §7.
 > - **Implementation:** 15 supplements · 27 effects · **38 papers** · 20 interaction rules · 10 food pairings · 13 biomarkers · 15 biomarker-relevance rules · 12 side-effect entries · 21 products. The count is each `content/seed/*.json` array's length, as the arrays are authored. **The source of truth is JSON in `content/seed/`**: 9 files, rendered byte-for-byte into the committed `src/data/SEED_*` modules by `npm run content:generate` and bound by `CONTENT_FIDELITY`.
@@ -146,7 +146,7 @@ Key — **P** = production-suitable · **B** = bounded refactor required · **X*
 > - **Persistence:** unchanged. Content ships in the code bundle (seed-as-code, §5), and a correction is JSON → `content:generate` → deploy (`[P3-X5]`, no id change).
 > - **Residuals, all owned for Phase 4:** FU-61 and FU-71 (rubric), FU-62 (sourcing), FU-63 (type), FU-68 (fish-oil name vs surrogate outcome), FU-72 (live re-verification between closeouts), FU-57 (uncited row tombstone), FU-59 (products coverage).
 >
-> **PROPOSED classification (pending the owner's go at the phase-closed declaration): X → P.** *Every grade is derived from a profile scored only from verified abstracts (27/27), and every citation is bound to a committed resolver response (37/37): no bypass without committing a forged resolver response, which review and the closeout re-verification each catch. Residuals FU-61, FU-62, FU-68 and FU-71 are rubric and content work, owned for Phase 4.*
+> **Classification: ~~X~~ → P (owner's go, 2026-09-25, Phase 3 closeout declaration).** *Every grade is derived from a profile scored only from verified abstracts (27/27), and every citation is bound to a committed resolver response (37/37): no bypass without committing a forged resolver response, which review and the closeout re-verification each catch. Residuals FU-61, FU-62, FU-68 and FU-71 are rubric and content work, owned for Phase 4.*
 
 ---
 
@@ -467,7 +467,7 @@ test" part does not.
 | API layer | **P** |
 | UI | **B** |
 | Testing infrastructure | **B** |
-| Evidence content / knowledge base | **X** |
+| Evidence content / knowledge base | ~~**X**~~ **P** *(2026-09-25, Phase 3 closeout; §2.1)* |
 | Content delivery (authoring format) | **X** |
 | Observability | **B** |
 | Release/integration process | **B** |
@@ -485,6 +485,14 @@ than left to the table's single letter.**
 | **Migration schema + RLS design** | B | **stays B** | Tooling and CI coherence are delivered (`db:migrate`, `verify:migrations` against a real Postgres). **Production application is still owner-run against dated records. P when it is not** — the condition is written so the next reader knows what would move it. **FU-40** records the boundary CI's catalog check owns and `RLS_COVERAGE` does not |
 | **AI advisor write path** | B | **B on FU-34** | U26 binds the owner in four functions, U29 checks ownership before spend, U34 reports partial-failure state honestly. **B *because* FU-34 is open**: nothing renders `PARTIALLY_APPLIED`, so the user is still never told part of their batch may have been applied |
 | **Testing infrastructure** | B | **B** | Unchanged as a classification. The **figures** moved: §2.9 now reads **1446/114**, re-measured at (d2) |
+
+**[2026-09-25, Phase 3 closeout declaration] One row moved:**
+
+| Row | Was | Now | Why |
+|---|---|---|---|
+| **Evidence content / knowledge base** | X | **P** | §2.1. Every grade is derived from a profile scored only from verified abstracts (27/27), and every citation is bound to a committed resolver response (37/37): no bypass without committing a forged resolver response, which review and the closeout re-verification each catch. Residuals FU-61, FU-62, FU-68 and FU-71 are rubric and content work, owned for Phase 4. |
+
+*(The row "Content delivery (authoring format)" still reads X, although the authoring format is now JSON with byte-identical codegen (U1, U2). The owner ruled only on the evidence-content row, so that row is left as it is and flagged for the owner, not changed.)*
 
 **Why the reasons are dated and the letters are not.** A classification letter with no date is the
 counts-written-once class (**FU-32**) wearing a single character: it was true when written and says nothing
