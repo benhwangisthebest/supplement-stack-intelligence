@@ -45,6 +45,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { stripComments } from "./__testing__/strip";
 
 import { DECLARED_OPERATIONAL_STATES, fail, INTERNAL_ERROR_MESSAGE } from "@/lib/api/respond";
 
@@ -190,16 +191,12 @@ describe("FIVE_XX_IS_LOGGED — every 5xx carries a correlated record", () => {
     const routes = SOURCE.filter((f) => /^src\/app\/api\/.*\/route\.ts$/.test(f));
     expect(routes.length, "found no API routes to check").toBeGreaterThan(20);
 
-    // [2026-09-22, N-79] SAME STATED LIMITATION AS `codeOf` BELOW, and it was
-    // undisclosed here while `codeOf` — added in the same landing, in this same
-    // file — carried the disclosure. One blind spot, one file, one written down
-    // and one walked past. The strip is not lexer-aware: an unanchored `//`
-    // inside a string or URL literal blanks the rest of that line, which here
-    // could hide a `handle(` and misreport a wrapped route as unwrapped. No
-    // tracked route contains such a line today; checked at (d4). FU-47 is the
-    // shared anchored stripper that removes the class.
+    // [2026-09-22, N-79 → closed by Phase 4 U1] This strip used to be unanchored,
+    // so a `//` inside a URL literal could blank a `handle(` beside it. It is now
+    // the shared `stripComments` (FU-47), which strips only comments that start
+    // outside a literal; its limits are in `./__testing__/strip.ts`.
     const unwrapped = routes.filter((f) => {
-      const text = readFileSync(path.join(ROOT, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+      const text = stripComments(readFileSync(path.join(ROOT, f), "utf8"));
       return !/\bhandle[(<]/.test(text);
     });
 
@@ -264,18 +261,13 @@ describe("FIVE_XX_IS_LOGGED — every 5xx carries a correlated record", () => {
     // Positional, because the defect was positional: a route may call
     // `getUser()` wherever it likes, but not before it has somewhere for a
     // throw to land.
-    // STATED LIMITATION (`ecc:code-reviewer`, (d1b)): this strips comments with
-    // two regexes and is NOT lexer-aware. A `//` inside a string or template
-    // literal — a URL, say — would blind the rest of that line, hiding a real
-    // `try {` or `getUser(` from the scan. Neither scanned file contains one
-    // today, checked; it is recorded because a guard's blind spot belongs beside
-    // the guard, not in a review nobody reads again. An AST scan is the fix if
-    // this ever governs more than two hand-read files — the same trade U33's
-    // `readsIdentifier` eventually had to make, for the same reason.
-    const codeOf = (f: string) =>
-      readFileSync(path.join(ROOT, f), "utf8")
-        .replace(/\/\*[\s\S]*?\*\//g, " ")
-        .replace(/\/\/[^\n]*/g, " ");
+    // STATED LIMITATION (`ecc:code-reviewer`, (d1b)), NARROWED by Phase 4 U1: the
+    // strip is the shared `stripComments` (FU-47), so a `//` inside a URL literal
+    // no longer blinds the rest of the line. It is still not a full lexer (limits
+    // in `./__testing__/strip.ts`), and it preserves line structure, which this
+    // positional check needs. An AST scan remains the fix if this ever governs
+    // more than two hand-read files, as U33's `readsIdentifier` had to.
+    const codeOf = (f: string) => stripComments(readFileSync(path.join(ROOT, f), "utf8"));
 
     // ANTI-VACUITY FIRST. The positional check below is a no-op for a route that
     // does not call `getUser` at all, so a rename would silence it rather than
@@ -331,5 +323,55 @@ describe("FIVE_XX_IS_LOGGED — every 5xx carries a correlated record", () => {
       `these construct a 5xx response without going through fail(), so the logging rule inside fail() ` +
         `cannot govern them:\n  ${raw.join("\n  ")}`,
     ).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FU-47 / N-79 — self-tests for the shared stripper this file's two scans use.
+// Driven against synthetic input with a known answer (the Phase 0 N3 pattern):
+// a stripper that silently kept or dropped the wrong text would otherwise
+// report "no drift" on real files. The first case is N-79's red proof: the
+// pre-U1 regex is kept here verbatim as `PRE_U1`, so the contrast stays executable.
+// ---------------------------------------------------------------------------
+describe("STRIP_COMMENTS — the shared comment-stripper (FU-47, N-79)", () => {
+  const PRE_U1 = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+
+  it("STRIP_COMMENTS: a `//` inside a URL literal is code, not a comment — the pre-U1 regex blanked it", () => {
+    const src = 'const docs = "https://example.com/x"; return handle(async () => ok());';
+    expect(PRE_U1(src)).not.toContain("handle(");
+    expect(stripComments(src)).toContain("handle(");
+  });
+
+  it("STRIP_COMMENTS: trailing and whole-line comments are both removed", () => {
+    const out = stripComments("run(); // handle( in a comment\n  // handle( again\nnext();");
+    expect(out).not.toContain("handle(");
+    expect(out).toContain("run();");
+    expect(out).toContain("next();");
+  });
+
+  it("STRIP_COMMENTS: block comments are removed; line comments are removed without removing newlines", () => {
+    expect(stripComments("a(); /* handle( */ b();")).not.toContain("handle(");
+    const src = "a(); // x\n  // y\nb(); // c\n'x' // d";
+    expect(stripComments(src).split("\n")).toHaveLength(src.split("\n").length);
+  });
+
+  it("STRIP_COMMENTS: a regex literal with escaped slashes is not a comment", () => {
+    expect(stripComments("expect(s).not.toMatch(/postgres:\\/\\//i); handle(x);")).toContain("handle(x)");
+  });
+
+  it("STRIP_COMMENTS: the reviewer's adversarial cases never KEEP a comment (U1 review, MAJOR 2)", () => {
+    const cases = [
+      "return /'/.test(s); // handle(",
+      "const r = a++ / 2; // handle(",
+      "const r = a\n  / b; // handle(",
+      "if (x) return /`/.test(s); // handle(\nnext();",
+      "<p>Don't do that</p>; // handle(",
+    ];
+    for (const src of cases) expect(stripComments(src), src).not.toContain("handle(");
+    expect(stripComments("if (x) return /`/.test(s); // c\nnext();")).toContain("next();");
+    // Second review (U1): a regex right after `=>`, and a `//` with no space before it.
+    const more = ["xs.filter((l) => /`/.test(l)); // handle(\nnext(); // handle(", "<p>Don't</p>;// handle("];
+    for (const src of more) expect(stripComments(src), src).not.toContain("handle(");
+    expect(stripComments('<a>Don\'t "https://x.test/y"</a>;')).toContain("https://x.test/y");
   });
 });

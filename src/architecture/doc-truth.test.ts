@@ -48,6 +48,7 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { stripLineComments } from "./__testing__/strip";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), "utf8");
@@ -131,9 +132,29 @@ export function testIdsIn(source: string): string[] {
  */
 export function guardTokensIn(source: string): string[] {
   const titles = [...source.matchAll(/it\(\s*"([A-Z][A-Z0-9_]{3,}):/g)].map((m) => m[1]);
+  // N-85 (ii), Phase 4 U1: a guard named by its `describe` title is a guard too.
+  // `CLIENT_TAKES_PROPS` lives only as `describe("CLIENT_TAKES_PROPS — …")`, so
+  // before U1 a backticked citation of it in §4 was red (D2) and the row had to
+  // name its own guard in plain text to pass.
+  const described = [...source.matchAll(/describe\(\s*["'`]([A-Z][A-Z0-9_]{3,})\b/g)].map((m) => m[1]);
   const declared = [...source.matchAll(/(?:^|\n)\s*(?:export\s+)?(?:const|let|function|class|type|interface)\s+([A-Z][A-Z0-9_]{3,})\b/g)].map((m) => m[1]);
-  return [...new Set([...titles, ...declared])];
+  return [...new Set([...titles, ...described, ...declared])];
 }
+
+/**
+ * Every `it(`/`test(`/`describe(` title in a spec, whatever its quote style.
+ * N-85 (i), Phase 4 U1: the unenforced-marker check read `it(` titles in
+ * `boundaries.test.ts` only, so rule 7's guard (a `describe` in
+ * `client-props.test.ts`) was invisible to it and §4 could call rule 7
+ * "Not enforced" while it was enforced (D1).
+ */
+export function titlesIn(source: string): string[] {
+  return [...source.matchAll(/\b(?:it|test|describe)\(\s*["'`]([^"'`\n]+)/g)].map((m) => m[1]);
+}
+
+/** A title belongs to a guard token when it opens with that token as a whole word. */
+export const titleNamesGuard = (title: string, token: string): boolean =>
+  new RegExp(`^${token}\\b`).test(title);
 
 /**
  * The step chain §5 declares, e.g. "`npm ci` → typecheck → `vitest run` →
@@ -204,9 +225,21 @@ const TABLE = readRuleTable(SECTION_4);
  */
 const UNENFORCED_MARKERS: Record<number, string> = {
   5: "DOMAIN_IS_PURE",
-  7: "CLIENT_PROPS",
+  // N-85: was "CLIENT_PROPS", a name no guard ever carried. Rule 7's guard is
+  // CLIENT_TAKES_PROPS (Phase 3 U9). The rule below now also fails any marker
+  // that names no existing guard, so a rename cannot silently blind it again.
+  7: "CLIENT_TAKES_PROPS",
   9: "PAID_API_BUDGET",
 };
+
+/** Titles across every spec in src/architecture/ — the marker check's universe. */
+const ALL_SPEC_TITLES: string[] = fs
+  .readdirSync(path.join(REPO_ROOT, "src/architecture"))
+  .filter((f) => f.endsWith(".test.ts"))
+  // Comments stripped first (U1 review, MAJOR 1): this file mentions real guard
+  // names in its own comments, and a mention must not satisfy the check. The
+  // self-test fixtures below use fictitious names for the same reason.
+  .flatMap((f) => titlesIn(stripLineComments(read(`src/architecture/${f}`))));
 
 describe("DOC_TRUTH — CLAUDE.md §4's enforcement table", () => {
   it("finds a non-empty rule table to check", () => {
@@ -267,7 +300,10 @@ describe("DOC_TRUTH — CLAUDE.md §4's enforcement table", () => {
       .filter((f) => f.endsWith(".test.ts"));
     const universe = new Set<string>();
     for (const f of specs) {
-      for (const t of guardTokensIn(read(`src/architecture/${f}`))) universe.add(t);
+      // Line comments stripped first (U1 review, MAJOR 1): a guard named only in
+      // a comment is not a guard. NOT the block-comment regex: spec sources hold
+      // globs like "src/**/*.ts", where that regex would swallow real titles (N-88).
+      for (const t of guardTokensIn(stripLineComments(read(`src/architecture/${f}`)))) universe.add(t);
     }
     expect(universe.size, "resolved no guard tokens at all from src/architecture").toBeGreaterThan(5);
 
@@ -313,14 +349,28 @@ describe("DOC_TRUTH — CLAUDE.md §4's enforcement table", () => {
     ).toEqual([]);
   });
 
+  it("every unenforced-marker names a guard that exists — N-85 (i), Phase 4 U1", () => {
+    // The marker map is hand-written, and it rotted once: rule 7's marker named a
+    // guard that never existed, so the check below could never fire for rule 7.
+    // A marker must resolve to a real it()/describe() title somewhere in
+    // src/architecture/, or this is red.
+    expect(ALL_SPEC_TITLES.length, "read no spec titles at all").toBeGreaterThan(100);
+    const dangling = Object.entries(UNENFORCED_MARKERS)
+      .filter(([, marker]) => !ALL_SPEC_TITLES.some((t) => titleNamesGuard(t, marker)))
+      .map(([rule, marker]) => `rule ${rule}: ${marker}`);
+    expect(dangling, `marker(s) naming no existing guard title: ${dangling.join(", ")}`).toEqual([]);
+  });
+
   it("claims no enforcement for the rules it lists as unenforced", () => {
-    const titles = [...BOUNDARIES.matchAll(/it\(\s*"([^"]+)/g)].map((m) => m[1]);
+    // N-85 (i): titles from EVERY spec, it() and describe() alike — not only
+    // boundaries.test.ts's it() titles, which is where rule 7's guard was not.
+    const titles = ALL_SPEC_TITLES;
     const contradictions: string[] = [];
     for (const row of TABLE) {
       if (row.enforced) continue;
       for (const rule of row.rules) {
         const marker = UNENFORCED_MARKERS[rule];
-        if (marker && titles.some((t) => t.startsWith(`${marker}:`))) {
+        if (marker && titles.some((t) => titleNamesGuard(t, marker))) {
           contradictions.push(`rule ${rule}: §4 says not enforced, but ${marker}: exists`);
         }
       }
@@ -426,6 +476,93 @@ describe("DOC_TRUTH — CLAUDE.md §5's CI claim vs the workflow", () => {
 });
 
 // ---------------------------------------------------------------------------
+// REGISTER_ROW_SHAPE — FU-46, Phase 4 U1 (owner clarification C-4, 2026-09-25).
+//
+// The register used four row shapes, and every instrument built to read it
+// inferred a different one (FU-46: three wrong answers from one section-bounded
+// parse). From the Phase 4 plan onward, a phase plan's register rows live in ONE
+// declared section, "**Registered during execution.**", in ONE declared shape.
+// Earlier plans are read tolerantly and never rewritten (C-4), so this reads only
+// plans numbered 4 and above. Ids issued elsewhere before the shape existed (the
+// Phase 4 plan's N-86, issued in its §3 table at landing (a)) are outside it.
+// ---------------------------------------------------------------------------
+export const REGISTER_ANCHOR = "**Registered during execution.**";
+export const REGISTER_HEADER = "| Id | Finding | Corrected |";
+/** `| **N-87** *(provenance)* | finding | disposition |`: a bold id, optional italic provenance, three cells. */
+export const REGISTER_ROW = /^\| \*\*(N|FU|OP)-(\d+)\*\*(?: \*\([^|]*\)\*)? \| [^|]*\S[^|]* \| [^|]*\S[^|]* \|$/;
+
+export interface RegisterRead {
+  header: string | null;
+  rows: string[];
+  /** Lines in the section that carry a register id outside a conforming row. */
+  malformed: string[];
+  ids: { prefix: string; n: number }[];
+}
+
+/** Read the declared register section out of a plan. Throws when the anchor is absent. */
+export function readRegister(plan: string, rel: string): RegisterRead {
+  const lines = plan.split("\n");
+  const start = lines.findIndex((l) => l.trim() === REGISTER_ANCHOR);
+  if (start < 0) {
+    throw new Error(`REGISTER_ROW_SHAPE: ${rel} has no "${REGISTER_ANCHOR}" section. A phase plan from Phase 4 on declares its register there.`);
+  }
+  const out: RegisterRead = { header: null, rows: [], malformed: [], ids: [] };
+  for (const line of lines.slice(start + 1)) {
+    if (line.trim() === "---" || line.startsWith("#")) break;
+    if (!line.startsWith("|")) {
+      // Any register id on a non-row line: a dated inline heading, a bullet, a
+      // blockquoted heading. Each is one of the shapes FU-46 found parses disagreeing over.
+      if (/\b(?:N|FU|OP)-\d+\b/.test(line)) out.malformed.push(line.trim());
+      continue;
+    }
+    if (out.header === null) { out.header = line.trim(); continue; }
+    if (/^\|[-\s|]+\|$/.test(line)) continue;
+    const m = REGISTER_ROW.exec(line.trim());
+    if (!m) { out.malformed.push(line.trim()); continue; }
+    out.rows.push(line.trim());
+    out.ids.push({ prefix: m[1], n: Number(m[2]) });
+  }
+  return out;
+}
+
+const PHASE_PLANS_FROM_4 = fs
+  .readdirSync(path.join(REPO_ROOT, "docs/01-plan"))
+  .filter((f) => { const m = /^phase-(\d+)-.*\.plan\.md$/.exec(f); return m !== null && Number(m[1]) >= 4; })
+  .map((f) => `docs/01-plan/${f}`);
+
+describe("REGISTER_ROW_SHAPE — one declared register row shape, Phase 4 plan onward (FU-46)", () => {
+  it("REGISTER_ROW_SHAPE: finds the Phase 4 plan, and every plan from Phase 4 on has the declared section", () => {
+    expect(PHASE_PLANS_FROM_4, "found no phase plan numbered 4 or above").toContain("docs/01-plan/phase-4-product-completion.plan.md");
+    for (const rel of PHASE_PLANS_FROM_4) expect(() => readRegister(read(rel), rel)).not.toThrow();
+  });
+
+  it("REGISTER_ROW_SHAPE: every register row matches the declared shape, under the declared header", () => {
+    for (const rel of PHASE_PLANS_FROM_4) {
+      const reg = readRegister(read(rel), rel);
+      expect(reg.header, `${rel}: the register's header must be exactly ${REGISTER_HEADER}`).toBe(REGISTER_HEADER);
+      expect(reg.rows.length, `${rel}: the register section holds no rows`).toBeGreaterThan(0);
+      expect(
+        reg.malformed,
+        `${rel}: register line(s) outside the declared shape (${REGISTER_ROW}). A prose or fourth shape is what FU-46 found three parses disagreeing over:\n  ${reg.malformed.join("\n  ")}`,
+      ).toEqual([]);
+    }
+  });
+
+  it("REGISTER_ROW_SHAPE: ids are unique and contiguous per prefix", () => {
+    for (const rel of PHASE_PLANS_FROM_4) {
+      const { ids } = readRegister(read(rel), rel);
+      for (const prefix of ["N", "FU", "OP"]) {
+        const ns = ids.filter((i) => i.prefix === prefix).map((i) => i.n);
+        expect(ns.length, `${rel}: ${prefix}- id defined twice`).toBe(new Set(ns).size);
+        const sorted = [...ns].sort((a, b) => a - b);
+        const gaps = sorted.filter((n, i) => i > 0 && n !== sorted[i - 1] + 1);
+        expect(gaps, `${rel}: ${prefix}- ids are not contiguous (${sorted.join(", ")})`).toEqual([]);
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // ANTI-ROT SELF-TESTS (the Phase 0 N3 pattern)
 //
 // The rules above pass because the document and the code agree. That cannot tell
@@ -517,5 +654,31 @@ describe("DOC_TRUTH — parser self-tests", () => {
     );
     expect(declared.every((d) => actual.includes(d))).toBe(true); // old rule: green
     expect(actual).not.toEqual(declared); // total rule: red
+  });
+
+  // --- N-85 and FU-46 (Phase 4 U1) ------------------------------------------
+
+  it("resolves a guard named only by its describe title — N-85 (ii)", () => {
+    expect(guardTokensIn('describe("FIXTURE_GUARD — a guard named by its describe", () => {});')).toContain("FIXTURE_GUARD");
+    expect(guardTokensIn("describe(`FIXTURE_TEMPLATE — ${n} modules`, () => {});")).toContain("FIXTURE_TEMPLATE");
+  });
+
+  it("matches a marker as a whole title word, not a prefix of a longer name", () => {
+    expect(titleNamesGuard("FIXTURE_GUARD — x", "FIXTURE_GUARD")).toBe(true);
+    expect(titleNamesGuard("FIXTURE_GUARD: x", "FIXTURE_GUARD")).toBe(true);
+    expect(titleNamesGuard("FIXTURE_GUARD_V2 — x", "FIXTURE_GUARD")).toBe(false);
+  });
+
+  it("reads a declared register and reports a fourth shape as malformed — FU-46", () => {
+    const plan = [
+      "prose", REGISTER_ANCHOR, "", REGISTER_HEADER, "|---|---|---|",
+      "| **N-87** *(U0, 2026-09-25)* | a finding | corrected |",
+      "| N-88 | not bold | x |",
+      "> **[2026-09-26] FU-73 — a dated inline heading**", "", "---", "| **N-99** | after the section | x |",
+    ].join("\n");
+    const reg = readRegister(plan, "fixture");
+    expect(reg.ids).toEqual([{ prefix: "N", n: 87 }]);
+    expect(reg.malformed).toHaveLength(2);
+    expect(() => readRegister("no register here", "fixture")).toThrow(/has no/);
   });
 });

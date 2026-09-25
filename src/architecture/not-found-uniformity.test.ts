@@ -42,6 +42,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { stripComments } from "./__testing__/strip";
 
 const REPO_ROOT = join(__dirname, "..", "..");
 
@@ -65,19 +66,10 @@ export function trackedRoutes(pathspec = "src/app/api"): string[] {
   return files;
 }
 
-/**
- * Block and line comments removed — N-14's class: a guard must not match a mention
- * in a comment.
- *
- * [2026-09-22, N-79] STATED LIMITATION: this strip is NOT lexer-aware — the
-   * `//` pattern is unanchored, so a `//` inside a string or template literal (a
-   * URL, say) blanks the REST OF THAT LINE, hiding whatever else it holds from the
-   * scan. Seven sibling specs use the anchored `/^\s*\/\/.*$/gm` and are immune;
-   * converging on one shared anchored stripper is FU-47.
- */
-export function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
-}
+// Block and line comments are removed by the shared `stripComments` (FU-47,
+// Phase 4 U1): N-14's class, a guard must not match a mention in a comment. The
+// N-79 blind spot (an unanchored `//` inside a URL literal blanking the rest of
+// the line) closed with it; the helper's own limits are in its header.
 
 /** One 404 call site: either a resolved message, or an argument the scan cannot resolve. */
 export interface NotFoundSite {

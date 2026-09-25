@@ -42,6 +42,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
+import { stripComments } from "./__testing__/strip";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -1274,22 +1275,12 @@ describe("architecture boundaries — the real source tree", () => {
     return found;
   };
 
-  /**
-   * Still a text strip, and still only used for the model-ID LITERAL scan.
-   *
-   * [2026-09-22, N-79] STATED LIMITATION: this strip is NOT lexer-aware — the
-   * `//` pattern is unanchored, so a `//` inside a string or template literal (a
-   * URL, say) blanks the REST OF THAT LINE, hiding whatever else it holds from the
-   * scan. Seven sibling specs use the anchored `/^\s*\/\/.*$/gm` and are immune;
-   * converging on one shared anchored stripper is FU-47.
-   *
-   * Empirically blind today on a line such as
-   * `docs: "https://example.com/models", fallback: "some-model-id"` — everything
-   * from `https:` onward is blanked and the literal beside it is never seen. No
-   * such line exists in tracked source now; checked at (d4).
-   */
-  const stripComments = (src: string): string =>
-    src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+  // Still a text strip, and still only used for the model-ID LITERAL scan. The
+  // strip is the shared `stripComments` (`./__testing__/strip`, FU-47, Phase 4 U1):
+  // a `//` inside a string or URL literal is code and stays, so the line
+  // `docs: "https://example.com/models", fallback: "some-model-id"` that N-79
+  // named (blind until U1) now shows the literal beside the URL. Its own limits
+  // are stated in that module's header.
 
   // ---- U25: SOLE_PAID_CLIENT ----------------------------------------------
   //
