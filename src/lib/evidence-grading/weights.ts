@@ -2,6 +2,11 @@
 // SAFETY/TRUST: every seed grade is DERIVED from its profile by these weights and
 // thresholds (G4, src/data/seed-integrity.test.ts). The letters follow the rubric,
 // not the reverse. Changing a weight or threshold is a grading change for every effect.
+// [2026-09-25, Phase 4 U5; FU-71, a DOCUMENTED LIMIT, kept by ruling D-2] studyQuality is scored
+// under owner ruling R17 (docs/01-plan/phase-3-evidence-grounding.plan.md:248). Its size clause
+// subtracts 1 only when the abstract itself flags a small sample, so it follows the authors'
+// wording, not a participant count: an unflagged small study keeps 2 (l-theanine-stress, 12
+// participants), a flagged one scores 1 (creatine-cognition). No objective threshold exists.
 import type { EvidenceDimension, DimensionRating } from "@/types/evidence-grading";
 import type { EvidenceGrade } from "@/types";
 
