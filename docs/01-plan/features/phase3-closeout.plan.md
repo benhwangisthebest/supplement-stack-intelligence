@@ -22,7 +22,8 @@
 |---|---|---|---|
 | (a) | carry list: three `CLAUDE.md` corrections (lint included, owner "go + lint"), register residue, U4 pointer, FU-67 fixed, N-85 registered | `78277b6` | 36094543027 success |
 | (d) | fixture re-verification: 37/37, 37 calls, $0, 0 drift, 0 retractions | `2969b89` | 36094964293 success |
-| (b) | the phase report; FU-50 and FU-25 §7 rows (late-registered) | *this landing* | — |
+| (b) | the phase report; FU-50 and FU-25 §7 rows (late-registered) | `c20db92` | 36095361219 success |
+| (c) | independent Check, recorded verbatim: **COMPLETE WITH FOLLOW-UP**, P3-1…P3-11 | *this landing* | — |
 
 ---
 
@@ -354,3 +355,20 @@ while compiling it,** and both got §7 rows in this landing, dated as late-regis
 **One roadmap gap:** *"the next operational phase"*, which the register uses for 12 deferrals, is not a
 phase in `docs/roadmap.md`. The report assigns those items to **Phase 4 (assigned at closeout)** for the
 owner to confirm. **The verdict is left to (c).**
+
+---
+
+## 7. Landing (c): the independent Check
+
+`docs/reviews/phase-3-closeout-check.md`, recorded verbatim under a clerk's note. **Verdict: COMPLETE WITH
+FOLLOW-UP.**
+- **Inputs:** the register, the roadmap, `CLAUDE.md` and the repository at `c20db92` only. The report and
+  the cycle artifacts were not read, and the review's header says so.
+- **The reviewer's own work:** 16 mutation replays over 11 guards, 6 effects traced end to end, 36/36
+  abstracts re-hashed and 37/37 fixture entries cross-checked against the (d) bodies.
+- **Must be resolved before the phase is marked complete:** P3-1 (roadmap status), P3-2 (`project-status.md`
+  §2.1), P3-3 (X6/X7 unticked), P3-4 (open items with no row or owner).
+- **Carried, each needing an owner:** P3-5…P3-11.
+- The Check did **not** raise N-85, so the owner's stop condition for N-85 did not fire.
+
+**Stopped here for the owner (brief): the Check's items are shown before any remediation.**
