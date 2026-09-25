@@ -552,3 +552,9 @@ scheduled live re-verification between closeouts; Phase 4.
 - **Report:** the deferral table gains FU-68, FU-71 and FU-72, and the FU-62 and criteria-parity rows are updated.
 
 **Gate (e4):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / 1562 · jsdom 24 / 130 · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 70 paths clean, with the control detected.
+
+---
+
+## 13. Landing (f): delta check
+
+The addendum is §8 of `docs/reviews/phase-3-closeout-check.md`, recorded verbatim. It ran against `8913605` with only the review, the register and the repo as inputs. **Result: 7 ADDRESSED · 4 CARRIED-WITH-OWNER · 0 NOT ADDRESSED; no finding blocks the declaration.** It ran 7 mutations of its own (M-A…M-G), and vitest gave 144 / 1692. It raised five items: D-1 (MINOR, the roadmap migration note omits products from `stack_items`), D-2 (TRIVIAL, a stale comment), D-3 (MINOR, the X5 decision is unrecorded), D-4 (TRIVIAL, redundant glycine copy) and D-5 (INFO, the `CLAUDE.md` baseline 1679 vs 1692). **They are held for the owner at the declaration.**

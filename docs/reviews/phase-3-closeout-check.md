@@ -211,3 +211,85 @@ All of these are closeout bookkeeping, not defects in what was delivered, and th
 Cleanup: the worktrees `/Users/mac/Developer/ssi-check`, `ssi-check-u2` and `ssi-check-u9` are removed. `git worktree list` shows `main` plus a pre-existing `/Users/mac/Developer/ssi-gate` at `2969b89`, which I did not create or touch. In the main tree, `git status --short` → `?? .claude/launch.json` only, and HEAD is `c20db92`.
 
 # PHASE 3 COMPLETE WITH FOLLOW-UP
+
+---
+
+> **Clerk's note (main session), not part of the addendum.** §8 below is an independent delta-check subagent's report, recorded **verbatim**. The subagent was fresh: it did no Phase 3 work and wrote none of the remediations. It ran on 2026-09-25 against `8913605`, with only the inputs its header states: this review, the register, and the repository at HEAD. The main session did not edit its statuses, evidence or D-items. The only changes are removing the harness's per-line indentation and the trailing tool-usage lines. D-1…D-5 are dispositioned by the owner at the phase-closed declaration, not in this file.
+
+## 8. Delta check addendum (2026-09-25)
+
+| | |
+|---|---|
+| **HEAD checked** | `89136055f6dba34142074014d1d63c03698535c3` (`git rev-parse HEAD` on `main`; worktree `/Users/mac/Developer/ssi-delta` created with `git worktree add --detach … HEAD`) |
+| **Inputs used** | **Only** this review (§1–§7), the register `docs/01-plan/phase-3-evidence-grounding.plan.md`, and the repository at HEAD (code, tests, `content/`, `docs/roadmap.md`, `docs/project-status.md`, `CLAUDE.md`, git history), plus, read-only, one gitignored local abstract (`captures/2026-09-23-s3/local/effect_magnesium-stress/efetch.xml`). **Not read:** `docs/04-report/phase-3-evidence-grounding.report.md` and every cycle artifact (`docs/01-plan/features/p3-*`, `phase3-*`). For `[P3-X7]`'s pointers I checked only that each target file is tracked (`git ls-files --error-unmatch`), not what it says. Commit messages were treated as claims and checked against the tree. |
+| **Reviewer** | Independent subagent; did no Phase 3 work and wrote none of the remediations |
+| **Constraints kept** | No network. No edits to the main tree. Every mutation ran in my own worktree with `cp` backups, and each restore was confirmed by `cmp` and `git diff \| wc -l` = 0. The worktree is removed. Nothing was committed, pushed or branched. |
+
+### 8.1 Status per finding
+
+| Finding | Sev | Status | Evidence (file:line, commands) | Notes (per part) |
+|---|---|---|---|---|
+| **P3-1** | MAJOR | **ADDRESSED** | `docs/roadmap.md:42` and `:500`: the old status is struck and replaced with "all eleven units (U0–U10) DONE … phase-closed declaration pending the owner's go". `:563-569`: all five exit boxes are `[x]`, each with a `[P3-Xn]` pointer. `:541`: item 5 records the bundle half DONE and the seam half UNMET, carried as FU-65. `:569`: the X5 caveat. | **(a)** `:42`/`:500` updated: ADDRESSED. **(b)** Five boxes ticked or dispositioned: ADDRESSED. The X1 box states the "fails the build = vitest" caveat and FU-63, and the X4 box names FU-59. **(c)** Item 5's seam half UNMET → FU-65: ADDRESSED. **(d)** Owner decision on the X5 wording: the caveat is recorded "in its place", which is ADDRESSED in substance. The text still calls the amendment "the owner's decision" rather than saying it was decided (**D-3**). |
+| **P3-2** | MAJOR | **CARRIED-WITH-OWNER** (the re-classification part only) | `docs/project-status.md:141-148` is re-derived. I re-derived it independently. `node` over `content/seed/*.json` gives 15 · 27 · 38 · 20 · 10 · 13 · 15 · 12 · 21. A scratch script gives the distribution `{A:4,B:9,C:8,D:6}`, profiled 27, dims 135, uncited dims 26, uncited effects `[nac-antioxidant, protein-powder-recovery]`, papers 38, cited 37, cited without id `[]`. `npx tsx figs.ts` gives `grade!=derive []`. Risk #1 is restated at `docs/project-status.md:583`. | **(a)** Re-derive §2.1: ADDRESSED, all figures match HEAD. **(b)** Risk #1: ADDRESSED. **(c)** Re-classify: **CARRIED-WITH-OWNER**. The heading at `:139` is still **X**; `:150` reads "PROPOSED X → P (pending the owner's go at the phase-closed declaration)", which names the owner and the condition. The Check left the classification to the owner, so this does **not** block closure, but the declaration must apply or reject it. |
+| **P3-3** | MAJOR | **ADDRESSED** | Register `:466`: `[P3-X6]` is `[x]` "met trivially", with the future-tombstone obligation moved to FU-57, whose row (`:569`) now holds it. Register `:467`: `[P3-X7]` is `[x]` with a pointer for each guard, and all 13 pointer targets are tracked (`git ls-files --error-unmatch`). | X6: ADDRESSED. X7: ADDRESSED as "pointers per guard". I did not read the pointer contents (input rule). The Check's §4 replays and my §8.2 replays corroborate G1, G3, G4b/c, G6, G7, P2, P3, P5/P7, P8, CONTENT_FIDELITY, CLIENT_TAKES_PROPS, RULE8_COMPONENT_TESTS, the R17 pins and the new D1/D2 tests. |
+| **P3-4** | MAJOR | **ADDRESSED** | New §7 rows: FU-61 `:576`, FU-62 `:577`, FU-63 `:578`, each with an owner and Phase 4. Owners and phases added: FU-57 `:569`, FU-58 `:570`, FU-59 products `:571` (tied to roadmap Phase 4 item 2), FU-60 `:572`, FU-66 `:575`. FU-49's glycine residue → FU-62 (`:564`, `:577`); `content/notes.json:7` now reads "owner: ~~U4/U6~~ FU-62, Phase 4". | Every named part of "To resolve" is ADDRESSED. I scanned every open §7 row from `:540` on, and each Phase 3 id carries an owner plus a phase or trigger. **Not acted on, and not required by "To resolve":** the Check's minor sub-bullet about closed ids with no row (N-83, FU-51, FU-52, FU-55, U8-F1). `grep "^| \*\*<id>\*\*"` still finds no row for any of them. Phase 2-carried deferral rows without an owner (e.g. N-11 cluster, FU-30…FU-38) predate this phase and are outside P3-4. |
+| **P3-5** | MAJOR | **ADDRESSED** | Guard **P8**, `src/data/provenance-record.test.ts:136` (P8a–d), backed by `checkResponses` and `parseResponse` at `content/verification/provenance.mjs:165` and `:188`. `validateFixture` now requires `response {path, sha256}`. My check: 37 of 37 entries are tracked, each hashes to its digest, and all point into `captures/2026-09-24-rv/`, which was committed at `2969b89`, before the Check. `git diff --stat cd3cb1b HEAD -- content/verification/captures` is empty, so (e1) wrote no new bodies. Mutations are in §8.2. | The Check's own probe is now red (§8.2 M-A). The register states the remaining limit at `:279` (E1-R2b), and I confirmed it: a forged body that is **staged or committed** with a correct digest passes (§8.2 M-D). That limit is owned as **FU-72** (`:586`, owner, Phase 4), and the phase-closeout live re-verification covers it. |
+| **P3-6** | MINOR | **ADDRESSED** | Grouping the fixture by `verifiedOn|source|verifiedBy` gives `2026-09-24|pubmed-eutils|owner: 36` and `2026-09-24|crossref|owner: 1`. The policy is amended at register `:279`: re-verification sets `verifiedOn` to the re-verification date. | Both options were taken: the dates are refreshed, and the policy is made precise. |
+| **P3-7** | MINOR | **ADDRESSED** | Owner ruling: D1/D2 follows R6. `hasSupportingPaper` and `isTitleOnly` are at `src/lib/safety/index.ts:143`. `gradeDCoverage(effect, papers)` at `:166-171` uses them, and so does the advisor at `src/lib/advisor/tools.ts:81-83`. Callers, enumerated by `git grep gradeDCoverage\|hasSupportingPaper`: `SupplementDetail.tsx:178,184` and `tools.ts:81`. Tests: `CoverageLimit.test.tsx:345` (glycine-sleep is D2 on the card and the breakdown), `safety.test.ts:63`, `tools.test.ts:180`. | glycine-sleep now shows D2, which agrees with its summary, so the contradiction is gone. Two residues: the card now says "No verified evidence in this library" twice (**D-4**), and one comment is stale (**D-2**). |
+| **P3-8** | MINOR | **CARRIED-WITH-OWNER** | R17 is at register `:246-27x`. Scores at HEAD: `magnesium-stress:2` and `l-theanine-stress:2`, and the other 25 match R17's table. Composites: magnesium-stress 0.3000 D, l-theanine-stress 0.3333 D, and the four A grades at 0.7667 ×3 and 0.7500. `grade!=derive []`. Pins: `grade-changes.test.ts:84`. The magnesium-stress abstract (PMID 33864354, local efetch) contains "randomised controlled" and "secondary analysis", and neither "post-hoc" nor "placebo", which supports the rewritten rationale. | **Bullet 1** (every A at the threshold): ADDRESSED as a flag. R17 names it, and the A grades hold under the written convention. The weight question stays with FU-61. **Bullet 2** (the unrecorded convention): ADDRESSED. R17 is written and applied; 2 scores moved and no grade moved. Its size-clause weakness is FU-71 (`:585`, Phase 4). **Bullet 3** (fish-oil surrogate): **CARRIED** as FU-68 (`:582`, owner, Phase 4). **Bullet 4** (caffeine-training population): ADDRESSED. `content/seed/seed-effects.json:1364` now reads "recreational and trained runners, mostly men". |
+| **P3-9** | MINOR | **CARRIED-WITH-OWNER** | `src/data/seed-effects.ts:4-6` (generated from `content/modules.json`) now says every grade is derived from its profile; FU-69 is closed (`:583`). `src/lib/evidence-grading/weights.ts:2-4` now says "The letters follow the rubric, not the reverse"; FU-70 is closed (`:584`). `src/types/evidence-grading.ts:33-36` now points to FU-63. `content:generate --check` → "checked 9 modules, 0 stale". | All three named comments are fixed. FU-58 (`src/types/paper.ts:3` still reads "ILLUSTRATIVE … not a citable") is carried with an owner and Phase 4 (`:570`). |
+| **P3-10** | MINOR | **ADDRESSED** | `CLAUDE.md:161`: the header reads "~~measured 2026-08-02~~ re-checked 2026-09-25". `CLAUDE.md:211`: rule 10 now includes `npm run verify:bundle`, which exists at `package.json:20` and runs at `.github/workflows/ci.yml:258`. `CLAUDE.md:439-445`: seven new map rows, all tracked. | All three parts are ADDRESSED. The baseline figure two paragraphs below was not re-measured (**D-5**). |
+| **P3-11** | MINOR | **CARRIED-WITH-OWNER** | X5 caveat: `docs/roadmap.md:569`. Migration table: `docs/roadmap.md:553`. Parity: register `:474`, "Carried to Phase 4, grouped with N-85"; N-85's row (`:587`) has an owner and Phase 4. | **(1)** X5 wording: ADDRESSED as a caveat in place (see D-3). **(2)** Migration clause: ADDRESSED for papers and effects, which the manifest confirms (`papers`/`effects.persistedAt` = `advisor_messages.citations[].refId`), but the new note introduces a false claim (**D-1**). **(3)** Criteria parity: **CARRIED** to Phase 4 with N-85. `grep -c "P3-X" docs/roadmap.md` is still 0, as expected. |
+
+**Register §5 exit criteria:** at HEAD, `[P3-X1]`…`[P3-X9]` are all `[x]` (register `:451-469`). `grep -n '^- \[ \]'` over the register returns nothing, so no criterion is left unticked.
+
+**Gate, in the worktree at HEAD:**
+- `npx tsc --noEmit` → exit 0.
+- `npm run lint` → "lints 415 of 415 tracked source files … reported 0 errors", exit 0.
+- `npx vitest run` → **144 files passed, 1692 tests passed**, exit 0. That is +13 over the Check's 1679: P8a–d, the D1/D2 rows and the R17 pins.
+- **Not run:** `next build`, `verify:bundle` and E2E. The build fetches Google Fonts (FU-66), and this check ran without network.
+
+### 8.2 Mutation / test evidence I ran
+
+All mutations ran in `/Users/mac/Developer/ssi-delta` at `8913605`. Each followed the same steps: `cp` backup → edit → `npx vitest run <specs>` → `cp` restore → `cmp` → `git status --porcelain | wc -l` = 0 → the spec is green again.
+
+| # | Target | Mutation | Result | Restore |
+|---|---|---|---|---|
+| M-A | P3-5, the Check's probe replayed | invented DOI `10.5555/review.planted.0002` on `p-nac-antioxidant`, plus a hand-written six-field fixture entry (`verifiedBy: "owner"`, title matching) | **RED, 2 failed / 38 passed:** `× P1 … exactly the recorded fields`, `× P8a every entry names a committed response`. At the Check's HEAD this probe was 35/35 green. | cmp identical, 40/40 |
+| M-B | P8c | the same DOI and entry, with `response` pointing at another paper's committed body (`p-glycine-sleep/crossref-work.json`) under its **correct** sha256 | **RED, 1 failed:** `× P8c … is the record for the entry's identifier` | cmp identical |
+| M-C | P8a | the same, with a well-formed forged Crossref body written to disk (untracked) and a correct digest | **RED, 1 failed:** `× P8a` (uncommitted) | cmp identical, file removed |
+| M-D | P8's stated limit (a control, expected green) | M-C with the forged body `git add`-ed | **GREEN, 40/40.** This confirms the register's stated limit (E1-R2b, `:279`), owned as FU-72 | `git rm --cached`, file removed, porcelain 0 |
+| M-E | P3-7, the engine | `gradeDCoverage` back to `effect.paperIds.length > 0` | **RED, 2 failed / 50 passed:** `× gradeDCoverage … all cited papers title-only → D2`, `× SupplementDetail — D2: glycine-sleep … card and breakdown header` | cmp identical, diff 0 |
+| M-F | P3-7, the advisor | `tools.ts`'s summary predicate back to `e.paperIds.length > 0` | **RED, 1 failed / 21 passed:** `× getSupplement: an effect whose cited papers are all title-only carries it too` | cmp identical, diff 0 |
+| M-G | P3-8, the R17 pin | `magnesium-stress` studyQuality 2 → 1 in `src/data/seed-effects.ts` | **RED, 1 failed / 16 passed:** `× R17 … 'magnesium-stress' → studyQuality 2, Grade 'D', confidence 'low'` | cmp identical, diff 0 |
+
+**Also checked:**
+- Fixture vs tracked bodies, by a node script over the fixture and `git ls-files`: 37 entries, 0 untracked, 0 hash mismatches.
+- `call-log.jsonl` in `2026-09-24-rv` has 37 lines. The register's running total of 199 plus those 37 gives 236, which matches the roadmap's "236 calls in all" (`:500`).
+
+### 8.3 New items introduced by the remediations
+
+- **D-1 — MINOR.** `docs/roadmap.md:553`, added at `8913605`, says "Only supplement ids persist in `stack_items`." HEAD contradicts it: `src/data/id-manifest.json` gives `products.persistedAt` as `"stack_items.product_id (0004, text, no FK)"`. The note corrects one wrong table and introduces a second error. Fix: "supplement **and product** ids persist in `stack_items`".
+- **D-2 — TRIVIAL.** The comment above `gradeDLimited`/`gradeDUncited` at `src/lib/safety/index.ts:111-112` still says the split is "by whether the effect itself cites any paper". Since `97e35cf`, `gradeDCoverage` (`:156-171`) splits on whether the effect cites a *supporting* paper (R6).
+- **D-3 — MINOR.** `docs/roadmap.md:569` records the X5 caveat, but says "Amending this criterion's wording is the owner's decision" without recording that the owner decided "caveat, not amendment". P3-1(d) asked for the decision to be recorded. That a decision was made can only be inferred, from "in its place" and from the `8913605` commit message ("Owner rulings on the independent Check"). One dated clause would remove the ambiguity.
+- **D-4 — TRIVIAL.** Since the P3-7 fix, glycine-sleep's card renders its summary ("No verified evidence in this library: the one cited paper has no abstract to summarise.") followed by D2 ("No verified evidence in this library for this effect…"). The two are redundant, not contradictory. The advisor gets both in one string (`tools.ts:81-83`), which works against the "row 14" intent in `tools.test.ts`: that the model reads each sense once. This is a copy decision for the owner.
+- **D-5 — INFO.** The `CLAUDE.md:230-234` baseline reads "1679/1679 unit tests across 144 files", dated "re-measured 2026-09-24". HEAD measures **1692 / 144**. The line is a dated snapshot, so it is not false as written. However, (e3) edited §5 after (e1) and (e2) had added tests, and did not re-measure. This is FU-32's class. The phase-closed declaration should re-measure.
+
+**How I established that there is nothing further:**
+- re-derived every figure in `project-status.md` §2.1 by command;
+- checked R17's table cell by cell against the studyQuality scores at HEAD;
+- compared roadmap `:553` against `id-manifest.json`;
+- enumerated the callers of the changed `gradeDCoverage` signature;
+- checked that the 7 new `CLAUDE.md` map paths are tracked;
+- cross-checked the 236-call claim;
+- ran the full gate (tsc, lint, vitest) and `content:generate --check`.
+
+### 8.4 Summary
+
+- **ADDRESSED: 7** — P3-1, P3-3, P3-4, P3-5, P3-6, P3-7, P3-10.
+- **CARRIED-WITH-OWNER: 4** — P3-2 (re-classification, pending the owner's go at the declaration), P3-8 (FU-68), P3-9 (FU-58), P3-11 (parity, with N-85).
+- **NOT ADDRESSED: 0.**
+
+The four must-resolve findings (P3-1…P3-4) are resolved. P3-2's one open part, the classification, is left to the owner by the Check itself and is scheduled for the declaration. **No finding blocks the phase-closed declaration.** D-1 and D-3 are minor and should be corrected at or before the declaration. D-2, D-4 and D-5 are trivial or informational.
+
+**Cleanup.** `/Users/mac/Developer/ssi-delta` is removed (`git worktree remove`). `git worktree list` shows `main` at `8913605` plus a pre-existing `/Users/mac/Developer/ssi-gate` at `66c6cf7`, which I did not create or touch. In the main tree, `git status --short` → `?? .claude/launch.json` only.
