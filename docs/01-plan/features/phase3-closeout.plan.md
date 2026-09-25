@@ -492,3 +492,12 @@ through `content/modules.json`. `weights.ts:2` now states the derivation directi
 now points at FU-63. The two that were unregistered are **FU-69** and **FU-70**, both registered as closed.
 
 **Gate (e2):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / **1560** (+6) · jsdom 24 / 130 · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 72 paths clean, with the control detected.
+
+---
+
+## 10. Remediation (e3): three `CLAUDE.md` corrections (P3-10), owner GO 2026-09-25
+
+The diff is exactly as drafted and shown to the owner: the §4 header (~~measured 2026-08-02~~ re-checked
+2026-09-25, pointing at DOC_TRUTH and N-85), §5 rule 10 (`npm run verify:bundle` after the build), and §12's
+document map (7 rows: the Phase 2 plan, report and Check; the Phase 3 plan, plan review, report and Check).
+DOC_TRUTH: 22/22.

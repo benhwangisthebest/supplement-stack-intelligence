@@ -158,7 +158,7 @@ Layering: `src/types` → pure engines in `src/lib` → `src/services` / `src/li
 9. **Any endpoint calling a paid external API** needs an atomic per-user budget reservation and a request
    rate limit.
 
-**Enforcement status, measured 2026-08-02 against `src/architecture/`:**
+**Enforcement status, ~~measured 2026-08-02~~ re-checked 2026-09-25 against `src/architecture/`:** *(Phase 3 closeout (e3), Check finding P3-10. The rows are bound by DOC_TRUTH, which caught nothing stale; the rule-7 row was corrected at closeout (a). DOC_TRUTH's own blind spot is N-85, owner Phase 4.)*
 
 | Rule | Status | Enforced by |
 |---|---|---|
@@ -208,7 +208,7 @@ passing, a clean typecheck, and a successful build.
    `playwright.config.ts` (`workers: 1`, `fullyParallel: false` when `E2E_LIVE=1`), because the authed
    specs share one seeded demo account. That serialisation is **not** guarded by anything — removing it
    breaks no test. Tracked as FU-25, whose real fix is per-worker user isolation.
-10. Before declaring work done: `npx tsc --noEmit`, **`npm run lint`**, `npx vitest run`, and `npx next build` must all pass. *(`npm run lint` added by Phase 2 U18, in the same commit as the CI
+10. Before declaring work done: `npx tsc --noEmit`, **`npm run lint`**, `npx vitest run`, `npx next build` and, after the build, **`npm run verify:bundle`** must all pass. *(`verify:bundle` added at the Phase 3 closeout (e3), Check finding P3-10. CI has run it since Phase 3 U8 (c), so the list had omitted a check CI runs.)* *(`npm run lint` added by Phase 2 U18, in the same commit as the CI
     step. A verification list that omits a check CI runs is N-29's asymmetry in miniature — the gate
     exists, and the person about to declare done is not told to run it.)*
 11. **Verify a change by `git diff`, never by a message asserting one.** A claim that a file changed,
@@ -436,6 +436,13 @@ If the directory is absent after a fresh clone, that is expected: run `graphify 
 | `docs/reviews/phase-0-closeout-check.md` | The 2026-08-01 independent Phase 0 closeout review (C-1…C-13), with its 2026-08-02 resolution addendum |
 | `docs/reviews/phase-1-closeout-check.md` | The 2026-08-06 independent Phase 1 closeout Check (P1-1…P1-9) — verdict **COMPLETE WITH FOLLOW-UP** |
 | `docs/04-report/phase-1-verification-integrity.report.md` | Phase 1 outcome, incl. the full red-evidence record (exit criterion 8) |
+| `docs/01-plan/phase-2-operational-dependability.plan.md` | The approved Phase 2 plan and register (N-/FU-/OP- rows, §8 exit criteria, §10 closeout) |
+| `docs/04-report/phase-2-operational-dependability.report.md` | Phase 2 outcome: units, red-evidence record, guard inventory, deferrals |
+| `docs/reviews/phase-2-closeout-check.md` | The 2026-09-22 independent Phase 2 closeout Check (P2-1…P2-13) — verdict **COMPLETE WITH FOLLOW-UP**, with its resolution addendum |
+| `docs/01-plan/phase-3-evidence-grounding.plan.md` | The approved Phase 3 plan and register (D-1…D-7, units U0–U10, `[P3-X1]`…`[P3-X9]`, §7 dispositions) |
+| `docs/reviews/phase-3-plan-review.md` | The independent review of the Phase 3 plan draft (P-01…P-17, verdict REVISE) |
+| `docs/04-report/phase-3-evidence-grounding.report.md` | Phase 3 outcome: exit criteria re-run at HEAD, rulings, guard inventory, grade changes, deferrals |
+| `docs/reviews/phase-3-closeout-check.md` | The 2026-09-24 independent Phase 3 closeout Check (P3-1…P3-11) — verdict **COMPLETE WITH FOLLOW-UP** |
 | `docs/05-qa/phase-1-live-e2e-baseline.md` | The dated non-live E2E baseline; the live half is BLOCKED(env) |
 | `docs/02-design/architecture-boundaries.md` | Layer specification behind §4 |
 | `docs/archive/original-mvp-instructions.md` | Retired MVP constraints + why each existed (reference only) |
