@@ -20,7 +20,8 @@
 
 | | Landing | SHA | CI |
 |---|---|---|---|
-| (a) | carry list: three `CLAUDE.md` corrections, register residue, U4 pointer, FU-67 fixed | *this landing* | — |
+| (a) | carry list: three `CLAUDE.md` corrections (lint included, owner "go + lint"), register residue, U4 pointer, FU-67 fixed, N-85 registered | `78277b6` | 36094543027 success |
+| (d) | fixture re-verification: 37/37, 37 calls, $0, 0 drift, 0 retractions | *this landing* | — |
 
 ---
 
@@ -163,6 +164,7 @@ The gate ran in a `git worktree` with no `.env.local`, with (a)'s files staged t
 | Landing | tsc | lint | vitest (node / jsdom) | build | rendering | bundle | E2E non-live | null bytes |
 |---|---|---|---|---|---|---|---|---|
 | (a) | 0 | 415/415, 0 errors | **144 / 1679** (120 / 1549 · 24 / 130) | 0 | OK | OK, every route +14–15 B (N-82 path effect; no component source changed) | **70 passed / 30 skipped** | 6 changed files clean; the control file with a null byte was detected |
+| (d) | 0 | 415/415, 0 errors | 144 / 1679 (120 / 1549 · 24 / 130) | 0 | OK | OK | **70 passed / 30 skipped** | 41 staged paths (37 bodies, `call-log.jsonl`, `results.json`, 2 `.md`) clean; control detected |
 
 **About the null-byte check:** the first attempt used `grep -P`, which macOS grep does not support, and
 `2>/dev/null` hid the error, so the check passed without checking anything. It was redone with Node's
@@ -174,3 +176,165 @@ artifact. `vitest` (144 / 1679, DOC_TRUTH included), lint (415, 0 errors), `tsc`
 were re-run on the final tree. The build, rendering, bundle and E2E rows above ran on a tree that differs
 from the committed one **only in those `.md` files**. No `.md` file is a build input:
 `git grep -l "\.md['\"]" -- src 'next.config.*' 'playwright.config.*'` finds only 8 `src/architecture/*.test.ts` specs, which read docs by design and which `vitest` re-ran above.
+
+---
+
+## 5. Landing (d): fixture re-verification [LIVE, owner pre-approved]
+
+**Scenario (owner):** re-resolve every fixture entry, **≤ 45 calls, $0**, dry run first. Pre-approved on
+2026-09-24 to run live if the dry run's count and hosts matched. **Result: 37/37 entries re-verified; 0 title
+drift, 0 retractions, 0 identity mismatches, 0 refusals.** 37 calls, all 200, $0. The full record is in
+`docs/05-qa/2026-09-23-p3-u6-verification-record.md` § *RV*, and the bodies are in
+`content/verification/captures/2026-09-24-rv/`.
+
+**Entry count, re-derived rather than taken from the brief:** `Object.keys(provenance-fixture.json).length`
+→ **37** (36 PMID, 1 DOI). That equals the number of papers carrying an identifier, which is 37 of 38. The
+exception is `p-nac-antioxidant`, uncited, FU-57.
+
+**Order:** (d) ran before (b), so that the report's live-call total is final. The Check reads neither
+document, so the order does not affect it.
+
+**Why a driver rather than `capture.mjs resolve`:** `resolve` requires owner approval rows per mapping, and
+it is built to *write*. `capture.mjs` is outside the closeout's *May touch*, so no `RV` scenario could be
+added to it. The driver imports its `createClient` unchanged, so every control is the same. It is not
+committed as a `.mjs`, because a tracked `content/**/*.mjs` would enter the lint set and G1's walk. Its
+source, verbatim:
+
+```js
+// Phase 3 closeout (d): re-verify every provenance-fixture entry against its resolver.
+// Owner-run driver (U5 refresh policy, trigger 2: re-verify at every phase closeout).
+// Reads the fixture and the paper corpus; WRITES NOTHING to either. One lookup per
+// entry through capture.mjs's own client, so the host allowlist, the rate limit, the
+// --max-calls cap, dry run and the call log are the same controls every U6 scenario
+// used. Every response body is saved under --out/<paperId>/.
+//
+// Checks per entry:
+//   title     normaliseTitle(resolved) must equal normaliseTitle(fixture.resolvedTitle)
+//             AND normaliseTitle(Paper.title) — drift on either is a STOP
+//   retraction PubMed: any esummary `pubtype` matching /retract/i ("Retracted
+//             Publication", "Retraction of Publication") — STOP.
+//             Crossref: any `update-to` / `updated-by` / `relation` entry whose type
+//             matches /retract|withdraw/i — STOP.
+//   identity  the record returned is the one asked for (uid / DOI) — else STOP
+// Usage: node reverify.mjs --repo DIR --out DIR --max-calls N [--dry-run]
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const args = Object.fromEntries(
+  process.argv.slice(2).reduce((acc, a, i, all) => {
+    if (a === "--dry-run") acc.push(["dry-run", true]);
+    else if (a.startsWith("--")) acc.push([a.slice(2), all[i + 1]]);
+    return acc;
+  }, []),
+);
+const REPO = path.resolve(args.repo);
+const OUT = path.resolve(REPO, args.out);
+const MAX = Number(args["max-calls"]);
+const DRY = Boolean(args["dry-run"]);
+if (!Number.isInteger(MAX) || MAX < 1) throw new Error("--max-calls N is required");
+
+const cap = await import(pathToFileURL(path.join(REPO, "content/verification/capture.mjs")));
+const prov = await import(pathToFileURL(path.join(REPO, "content/verification/provenance.mjs")));
+const fixture = JSON.parse(readFileSync(path.join(REPO, "content/verification/provenance-fixture.json"), "utf8"));
+const papers = JSON.parse(readFileSync(path.join(REPO, "content/seed/seed-papers.json"), "utf8"));
+
+const byKey = new Map();
+for (const p of papers) {
+  for (const kind of prov.KINDS) if (p[kind]) byKey.set(prov.fixtureKey(kind, p[kind]), p);
+}
+
+mkdirSync(OUT, { recursive: true });
+const client = cap.createClient({
+  dryRun: DRY,
+  maxCalls: MAX,
+  scenario: "RV",
+  mailto: null, // U6 R3: no contact email
+  logFile: path.join(OUT, "call-log.jsonl"),
+});
+
+const rows = [];
+const stops = [];
+try {
+  for (const key of Object.keys(fixture).sort()) {
+    const e = fixture[key];
+    const paper = byKey.get(key);
+    if (!paper) {
+      stops.push(`${key}: no paper carries this identifier`);
+      continue;
+    }
+    const url =
+      e.kind === "doi"
+        ? client.withContact(`https://api.crossref.org/works/${encodeURIComponent(e.id)}`, "crossref")
+        : client.withContact(
+            `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=${e.id}`,
+            "ncbi",
+          );
+    const body = await client.get(url);
+    if (body === null) continue; // dry run
+    const file = path.join(OUT, paper.id, e.kind === "doi" ? "crossref-work.json" : "esummary.json");
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, body);
+    const json = JSON.parse(body);
+    let title, returnedId, retraction, pubtypes;
+    if (e.kind === "doi") {
+      const m = json?.message ?? {};
+      title = m.title?.[0];
+      returnedId = String(m.DOI ?? "").toLowerCase();
+      const links = [
+        ...(m["update-to"] ?? []),
+        ...(m["updated-by"] ?? []),
+        ...Object.entries(m.relation ?? {}).flatMap(([t, v]) => (v ?? []).map((x) => ({ ...x, type: t }))),
+      ];
+      retraction = links.filter((l) => /retract|withdraw/i.test(String(l.type ?? "")));
+      pubtypes = [m.type];
+    } else {
+      const r = json?.result?.[e.id] ?? {};
+      title = r.title;
+      returnedId = String(r.uid ?? "");
+      pubtypes = r.pubtype ?? [];
+      retraction = pubtypes.filter((t) => /retract/i.test(t));
+    }
+    const titleOk =
+      typeof title === "string" &&
+      prov.normaliseTitle(title) === prov.normaliseTitle(e.resolvedTitle) &&
+      prov.normaliseTitle(title) === prov.normaliseTitle(paper.title);
+    const idOk = returnedId === String(e.id).toLowerCase();
+    const row = {
+      key,
+      paperId: paper.id,
+      kind: e.kind,
+      verifiedOn: e.verifiedOn,
+      titleMatches: titleOk,
+      identityMatches: idOk,
+      pubtypes,
+      retraction,
+      bodySha256: cap.sha256(body),
+    };
+    rows.push(row);
+    if (!titleOk) stops.push(`${key} (${paper.id}): TITLE DRIFT — resolver now says ${JSON.stringify(title)}`);
+    if (!idOk) stops.push(`${key} (${paper.id}): returned record ${JSON.stringify(returnedId)} is not the one asked for`);
+    if (retraction.length) stops.push(`${key} (${paper.id}): RETRACTION signal ${JSON.stringify(retraction)}`);
+  }
+} catch (err) {
+  stops.push(`ERROR: ${err.message}`);
+} finally {
+  console.log(`${DRY ? "[dry-run] " : ""}entries: ${Object.keys(fixture).length} · calls made: ${client.state.made}${DRY ? ` · planned: ${client.state.planned}` : ""}`);
+}
+if (!DRY) {
+  writeFileSync(
+    path.join(OUT, "results.json"),
+    JSON.stringify({ entries: Object.keys(fixture).length, callsMade: client.state.made, stops, rows }, null, 2) + "\n",
+  );
+}
+for (const s of stops) console.error(`STOP ${s}`);
+console.log(stops.length ? `STOP: ${stops.length} condition(s)` : "OK: no title drift, no retraction, no identity mismatch");
+process.exit(stops.length ? 2 : 0);
+```
+
+**Commands:**
+```
+node reverify.mjs --repo . --out <scratchpad>/rv-dry --max-calls 45 --dry-run   → planned 37, made 0
+node reverify.mjs --repo . --out content/verification/captures/2026-09-24-rv --max-calls 45
+                                                     → calls made: 37 · OK: no title drift, no retraction, no identity mismatch
+```

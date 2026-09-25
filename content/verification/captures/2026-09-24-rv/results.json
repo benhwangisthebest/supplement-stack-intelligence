@@ -1,0 +1,566 @@
+{
+  "entries": 37,
+  "callsMade": 37,
+  "stops": [],
+  "rows": [
+    {
+      "key": "doi:10.1111/j.1479-8425.2007.00262.x",
+      "paperId": "p-glycine-sleep",
+      "kind": "doi",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "journal-article"
+      ],
+      "retraction": [],
+      "bodySha256": "a0ff097d0b654e8c66935b199c6d73f89b14b1158a0b338b2f31898ae9d624b8"
+    },
+    {
+      "key": "pmid:16930802",
+      "paperId": "p-ltheanine-stress",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Randomized Controlled Trial"
+      ],
+      "retraction": [],
+      "bodySha256": "39e4ed999154a7252d2c18a94f0b639f6d74ff945ad747ed37c282b4721bd2bc"
+    },
+    {
+      "key": "pmid:20464765",
+      "paperId": "p-caffeine-shift-work",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-24",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "8d89dea30d29fa059380f92914e5dad8311b0b5d6970051e7ba574d76b430f64"
+    },
+    {
+      "key": "pmid:20521321",
+      "paperId": "p-caffeine-glucose",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-24",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Comparative Study",
+        "Journal Article",
+        "Randomized Controlled Trial"
+      ],
+      "retraction": [],
+      "bodySha256": "e6d600d0d9c0ba27c0e9a982ab5170746865f1e0f5ecabb419f5049c5bdbf9af"
+    },
+    {
+      "key": "pmid:21118604",
+      "paperId": "p-creatine-vegetarian-cognition",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Randomized Controlled Trial"
+      ],
+      "retraction": [],
+      "bodySha256": "67e51750c79042689bcec4c07a2108a64e2ca17828f99e5ad601ab835f815d9a"
+    },
+    {
+      "key": "pmid:22552031",
+      "paperId": "p-vitamin-d-deficiency",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Comparative Study",
+        "Journal Article",
+        "Meta-Analysis",
+        "Research Support, Non-U.S. Gov't",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "18705935e91a22c79ef43158e6206db5e85aa28b6a0bb93aaad7dd991840a65e"
+    },
+    {
+      "key": "pmid:23108937",
+      "paperId": "p-caffeine-tolerance",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Randomized Controlled Trial",
+        "Research Support, Non-U.S. Gov't"
+      ],
+      "retraction": [],
+      "bodySha256": "92e08904709e3c0fbfaf7062f3082c5c9b617b72ff2dc608a4b738110fff91ab"
+    },
+    {
+      "key": "pmid:23244547",
+      "paperId": "p-zinc-deficiency",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Research Support, Non-U.S. Gov't",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "59a92b093bf9b2726a3032588d931c8cea1748180e4b160155d599c423ef6c55"
+    },
+    {
+      "key": "pmid:23691095",
+      "paperId": "p-melatonin-sleep",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Research Support, N.I.H., Extramural",
+        "Research Support, Non-U.S. Gov't"
+      ],
+      "retraction": [],
+      "bodySha256": "966cbf17d773c0b8b9bc3010170de38537c9174c1b72c4c2efabb7eb3e6c41a4"
+    },
+    {
+      "key": "pmid:25527035",
+      "paperId": "p-caffeine-focus",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Randomized Controlled Trial",
+        "Research Support, Non-U.S. Gov't",
+        "Research Support, U.S. Gov't, Non-P.H.S."
+      ],
+      "retraction": [],
+      "bodySha256": "2207a6b80ce13922a01f82e699a9b17af2052e44692fffd36f12411ef99a037b"
+    },
+    {
+      "key": "pmid:28202713",
+      "paperId": "p-vitamin-d-respiratory-ipd",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "9e1bb6d9155c0cf9f487ae0ce39605e8f328f7ffc21931f47fc45c8778c9590c"
+    },
+    {
+      "key": "pmid:28698222",
+      "paperId": "p-protein-mps",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "b39532edcd121395fda233b615faa510daa1df790d754d792959d351ec02adc1"
+    },
+    {
+      "key": "pmid:28969341",
+      "paperId": "p-caffeine-military",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-24",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "705efaa7b908bcd9d6284e235b5a44c6f9d75be42c8bd8fa29d8c0a259f57779"
+    },
+    {
+      "key": "pmid:29543316",
+      "paperId": "p-b12-oral-vs-im",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Research Support, Non-U.S. Gov't",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "fb9b7c8d6b2f21a32c766131c9e8d9b0b23634a8c35657e1bad2922f6b57827a"
+    },
+    {
+      "key": "pmid:29546641",
+      "paperId": "p-taurine-training",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Review"
+      ],
+      "retraction": [],
+      "bodySha256": "ef8faa22ed9c41b7a82f3f21213a2a85b724186082243e73f71a16292a172d89"
+    },
+    {
+      "key": "pmid:29704637",
+      "paperId": "p-creatine-cognition",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "fbaa8d0e82ddd504d6f842c4259e8998a71408f25b7be477fd93e4d011c02548"
+    },
+    {
+      "key": "pmid:31383846",
+      "paperId": "p-fish-oil-mood",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Research Support, Non-U.S. Gov't",
+        "Review"
+      ],
+      "retraction": [],
+      "bodySha256": "45fb7feea317f5e925ec995c90119bda74c62b0d3b6ba67b3e51bf644d0618d7"
+    },
+    {
+      "key": "pmid:32114706",
+      "paperId": "p-fish-oil-longevity",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Research Support, Non-U.S. Gov't",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "5fac2707c84168fd14786cc7199bc0d9ae5794572fd6fd6ed2102980236a4b53"
+    },
+    {
+      "key": "pmid:33864354",
+      "paperId": "p-magnesium-stress",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Randomized Controlled Trial"
+      ],
+      "retraction": [],
+      "bodySha256": "15267475e246da2ed9f3b382eaabc9d2f40e48d0c72cd79f8e07f28f1b100dda"
+    },
+    {
+      "key": "pmid:33865376",
+      "paperId": "p-magnesium-sleep",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "e18d0ea1f78115e24a14361fbd0bc74d9040bd28c9a459ae095093785183ee98"
+    },
+    {
+      "key": "pmid:34472118",
+      "paperId": "p-creatine-recovery",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "eaadb6d1fc9a6dc06118c3bb8cf45294f92ceea8d2ce56f89dfbc050b2ed13aa"
+    },
+    {
+      "key": "pmid:34473295",
+      "paperId": "p-vitamin-d-prediabetes-rct",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-24",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Multicenter Study",
+        "Randomized Controlled Trial",
+        "Research Support, N.I.H., Extramural",
+        "Research Support, Non-U.S. Gov't"
+      ],
+      "retraction": [],
+      "bodySha256": "37f281608a4961b95790c49a298c095ec0690d2595642fb7126daa6f3b7cddb4"
+    },
+    {
+      "key": "pmid:34559859",
+      "paperId": "p-ashwagandha-sleep",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "ab601a70e2c5890ef2eb5039532d60af6ad71dd2f20a4c36e24154907ac63bf8"
+    },
+    {
+      "key": "pmid:34836329",
+      "paperId": "p-magnesium-glucose",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "081514ec8f87a91f9a10ba23cc8143e1b28b5757623b2b97980fa6644e56b036"
+    },
+    {
+      "key": "pmid:34956436",
+      "paperId": "p-berberine-metabolic",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "5c8719f4740298f85e669c363c0d9bd3135b188e90670180ed02153dc0a19331"
+    },
+    {
+      "key": "pmid:36017529",
+      "paperId": "p-ashwagandha-stress-anxiety",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Meta-Analysis",
+        "Systematic Review",
+        "Journal Article"
+      ],
+      "retraction": [],
+      "bodySha256": "dd09d1ffc397fb612ddad17ad062833a5202fd03b0a391183599736070be3597"
+    },
+    {
+      "key": "pmid:36615805",
+      "paperId": "p-caffeine-training",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Meta-Analysis",
+        "Systematic Review",
+        "Journal Article"
+      ],
+      "retraction": [],
+      "bodySha256": "8c543ac15a419e7294661c6a28e81066d9efe15e8f1518d2a11e6f731cb02563"
+    },
+    {
+      "key": "pmid:37264945",
+      "paperId": "p-fish-oil-cv",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Meta-Analysis",
+        "Journal Article",
+        "Research Support, Non-U.S. Gov't"
+      ],
+      "retraction": [],
+      "bodySha256": "4aa24a62ef7370e8cbec7e1f4f695a6c848be0da1edb6060ea705c2c07d35c25"
+    },
+    {
+      "key": "pmid:37832082",
+      "paperId": "p-ashwagandha-stress",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Randomized Controlled Trial",
+        "Journal Article"
+      ],
+      "retraction": [],
+      "bodySha256": "dab7ae55d979c7ca67e246dae8c4cfa76d1b73b2aa4f97926c258db33888e311"
+    },
+    {
+      "key": "pmid:38719213",
+      "paperId": "p-zinc-immune",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Research Support, Non-U.S. Gov't",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "9bcd502d9c056ce2b1ad5a6a8f8c28e560a43563c9ef9da4376fba4472df405b"
+    },
+    {
+      "key": "pmid:39163858",
+      "paperId": "p-fish-oil-triglycerides-t2d",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Clinical Trial, Phase IV",
+        "Journal Article",
+        "Multicenter Study",
+        "Randomized Controlled Trial",
+        "Research Support, Non-U.S. Gov't"
+      ],
+      "retraction": [],
+      "bodySha256": "87666e1605b28ade4043e85e96547d564b91533356beba09d7ab720d6d98e0a3"
+    },
+    {
+      "key": "pmid:39373282",
+      "paperId": "p-b12-deficiency",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Systematic Review",
+        "Meta-Analysis",
+        "Research Support, Non-U.S. Gov't"
+      ],
+      "retraction": [],
+      "bodySha256": "db40aa929fe5428e64176c9bf93ef5c17512f0fb8a863e50c251d08b3136dcae"
+    },
+    {
+      "key": "pmid:39396907",
+      "paperId": "p-vitamin-d-weekly-daily",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-24",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Comparative Study",
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "cee1d4856d30a923fff3bfd1a44d19b5adaf8e2ce67070b923c0cdbeb1e06c87"
+    },
+    {
+      "key": "pmid:39519498",
+      "paperId": "p-creatine-strength",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "50958517b28aa06f6a45151fa850745ac015c8546f2f7a466027ec34b90062ec"
+    },
+    {
+      "key": "pmid:39993397",
+      "paperId": "p-vitamin-d-respiratory-update",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Systematic Review",
+        "Meta-Analysis"
+      ],
+      "retraction": [],
+      "bodySha256": "0dd91ce6012f3b652064ea07d43b188f9b6c880189fac9b9d77b5eb4bb9f9d46"
+    },
+    {
+      "key": "pmid:40314930",
+      "paperId": "p-ltheanine-focus",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Systematic Review",
+        "Meta-Analysis"
+      ],
+      "retraction": [],
+      "bodySha256": "267cc133659f30b2a03e24671b67c91e9dace3ee920399a2ca8fd7b29a860cf4"
+    },
+    {
+      "key": "pmid:41487531",
+      "paperId": "p-b12-oral-routes",
+      "kind": "pmid",
+      "verifiedOn": "2026-09-23",
+      "titleMatches": true,
+      "identityMatches": true,
+      "pubtypes": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "retraction": [],
+      "bodySha256": "02f82d9311344c6021fd0a6312b1b9778bb7ee96ffc9bf8ba5c5f1685120aae0"
+    }
+  ]
+}

@@ -143,3 +143,49 @@ Four owner queries, taken verbatim (`content/verification/u6-claims-s5.json`), t
 **Running total: 194 calls** (U6 162 · S4 12 · S2 8 · S5 12), $0.
 
 **S2 for S5's approvals** (`2026-09-24-s2h`, owner decision 2026-09-24: V-1, V-3, C-1, C-2, C-4; approvals `content/verification/u6-approvals-s5.json`). Dry run first (0 calls, 5 planned). **Live: 5 calls** (NCBI `esummary`), **all 200**, every response body saved. **All 5 titles matched; no refusals.** 5 fixture entries written (`pmid:34473295`, `pmid:39396907`, `pmid:20464765`, `pmid:28969341`, `pmid:20521321`), so the fixture holds 37 entries. The 5 corpus rows (`p-vitamin-d-prediabetes-rct`, `p-vitamin-d-weekly-daily`, `p-caffeine-shift-work`, `p-caffeine-military`, `p-caffeine-glucose`) are manifest adds whose card fields were written only from their S5-captured abstracts (SHA-256 matched). **U4 live total: 37 calls** (S4 12 · S2 13 · S5 12). **Running total: 199 calls, $0.**
+
+## RV — Phase 3 closeout (d): every fixture entry re-verified — 2026-09-24
+
+**Why:** U5's refresh policy, trigger (2), says every entry is re-resolved at each phase closeout. The build
+is offline, so a retraction or a title change after `verifiedOn` becomes visible only here (register §4 U5,
+*Refresh policy*).
+
+**Pre-registered (owner brief, 2026-09-24):** re-resolve all fixture entries, **≤ 45 calls, $0**, dry run
+first. **Pre-approved (owner, 2026-09-24):** if the dry run's call count and hosts match, run live without
+waiting. **STOP** on title drift, a retraction, a refusal, or any call outside the scenario, and change
+nothing in that case. **The fixture's entries and `content/seed/` are read and compared only.**
+
+**Instrument:** a driver kept outside the repository. Its source is verbatim in the closeout artifact,
+`docs/01-plan/features/phase3-closeout.plan.md` §5. It imports `capture.mjs`'s own `createClient`, so the
+host allowlist, the 400 ms spacing, the `--max-calls` cap, dry run and the call log are the same controls
+S1–S5 used, and every line is stamped **`RV`**. It makes one lookup per entry: PubMed `esummary` for a PMID,
+Crossref `works/{doi}` for the DOI. No contact email is sent (R3).
+
+| Step | Calls | Hosts | Result |
+|---|---|---|---|
+| Dry run | **0 made, 37 planned** | `eutils.ncbi.nlm.nih.gov` 36 (`esummary`) · `api.crossref.org` 1 (`works`) | matches the scenario: 37 ≤ 45, and both hosts are in the U6 allowlist |
+| Live (`captures/2026-09-24-rv`) | **37** | NCBI 36 · Crossref 1 | **all 200**, all stamped `RV`, window 04:29:32–04:29:47Z (UTC 2026-09-25, local 2026-09-24) |
+
+**Outcome — 37 of 37 entries (36 PMID, 1 DOI):**
+- **Title:** 37/37. The resolved title still equals both the fixture's `resolvedTitle` and `Paper.title`
+  under `normaliseTitle`. **0 drift.**
+- **Retraction:** **0**. No PubMed record carries a `pubtype` matching `/retract/i` (*Retracted
+  Publication*, *Retraction of Publication*). All 36 records returned a non-empty `pubtype`, and the
+  predicate was checked against both planted values (true) and *Journal Article* (false). The Crossref
+  record for `10.1111/j.1479-8425.2007.00262.x` has no `update-to` or `updated-by` field and an empty
+  `relation`.
+- **Identity:** 37/37. Every returned `uid`/`DOI` is the one asked for.
+- **Refusals: 0. Calls outside the scenario: 0.**
+
+**Kept (committed):** `call-log.jsonl`, `results.json` (per-entry pubtypes and the response body's SHA-256),
+and each response body at `<paperId>/esummary.json` or `crossref-work.json`. 39 entries, 184 KB. No abstract
+is involved: `esummary` carries none.
+
+**What this does not do:** it does not refresh `verifiedOn`. The brief made the fixture read-only for (d),
+so every entry still carries its original date, and this record is the dated evidence that the entries were
+re-checked. **Stated limit:** `esummary`'s `pubtype` is the mark PubMed puts on a retracted article. An
+*Expression of Concern*, or a retraction PubMed has not yet indexed, would not show there.
+
+**$0. No OpenAI, no paid API, deployed database untouched.**
+
+**Running total: 236 calls** (U6 162 · S4 12 · S2 13 · S5 12 · RV 37), $0.
