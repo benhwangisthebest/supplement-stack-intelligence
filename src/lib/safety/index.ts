@@ -277,15 +277,6 @@ export const safetyCopy = {
     };
   },
 
-  medicationCaution(supplementName: string): FlagCopy {
-    return {
-      title: "Possible medication interaction",
-      explanation: `${supplementName} may interact with medications in some cases. The app cannot assess this from the available information.`,
-      recommendation:
-        "This may be worth discussing with a clinician or pharmacist before continuing.",
-    };
-  },
-
   goalMisalignment(supplementName: string): FlagCopy {
     return {
       title: "Not aligned with your stated goals",
@@ -407,9 +398,6 @@ export const safetyCopy = {
   },
   productReasonAdditives(): string {
     return "Contains additives or fillers you may prefer to avoid.";
-  },
-  productReasonValue(): string {
-    return "Good value by price per effective dose.";
   },
 
   // ---- Interaction copy (medication-interactions v2). Hedged, non-diagnostic. ----

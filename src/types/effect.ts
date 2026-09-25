@@ -20,7 +20,9 @@ export interface Effect {
   /** Mechanism tags used by the redundancy rule (Design §11.4) */
   mechanismTags: string[];
   paperIds: string[];
-  // evidence-grading v5 (Design §3.2): optional multi-dimensional profile.
-  // When present, lib/evidence derives `grade` from it; absent = legacy literal.
-  evidenceProfile?: EvidenceProfile;
+  // evidence-grading v5 (Design §3.2): the multi-dimensional profile that
+  // lib/evidence derives `grade` from. Required since Phase 4 U2 (FU-63): every
+  // seed effect has carried one since Phase 3 U4, so a profile-less effect is a
+  // type error rather than a legacy literal grade.
+  evidenceProfile: EvidenceProfile;
 }

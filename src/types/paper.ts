@@ -1,13 +1,17 @@
 // Design §3.1 — seed entity (read-only TS module)
 //
-// v13 (evidence-disclosure): this is an ILLUSTRATIVE EVIDENCE SUMMARY, not a citable
-// study. The provenance fields (authors/journal/year/link/studyType/sampleSize) are
-// deliberately ABSENT, not optional: `link: string` being REQUIRED is what compelled
-// 20 fabricated placeholder URLs in the first place. With no field to hold provenance,
-// fabricating it is a type error rather than a judgement call.
+// What a Paper holds today (header corrected by Phase 4 U2, FU-58). Since Phase 3 a
+// paper may carry ONE kind of provenance: a `doi` or `pmid`, and only behind an
+// entry in content/verification/provenance-fixture.json, which records the title
+// the resolver returned and the committed response it was read from
+// (content/verification/provenance.mjs). A paper with neither is still a valid
+// Paper; the type does not make every paper citable.
 //
-// Plan SC: SC-1 — provenance is unauthorable by construction.
-// Re-adding any of these fields requires real, verified DOI/PMID data. Never invent it.
+// Every other provenance field (authors/journal/year/link/studyType/sampleSize) is
+// deliberately ABSENT, not optional (v13, SC-1): with no field to hold it,
+// fabricating it is a type error rather than a judgement call. The fixture cannot
+// smuggle them in either; it accepts no such key. Re-adding any of these fields
+// requires real, verified data. Never invent it.
 export interface Paper {
   id: string;
   title: string;

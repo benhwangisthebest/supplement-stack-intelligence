@@ -190,28 +190,10 @@ export async function appendMessages(
 }
 
 // ---- Token budget ------------------------------------------------------------
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-}
-
-/** Remaining tokens this user may still spend today. Never negative. SC-8. */
-export async function getRemainingBudget(
-  supabase: SupabaseClient,
-  userId: string,
-  dailyBudget: number = ADVISOR_DAILY_TOKEN_BUDGET,
-): Promise<number> {
-  const { data, error } = await supabase
-    .from("advisor_usage")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("usage_date", today())
-    .maybeSingle();
-  if (error) throw error;
-  const row = data as UsageRow | null;
-  const used = row ? row.input_tokens + row.output_tokens : 0;
-  return Math.max(0, dailyBudget - used);
-}
+//
+// `getRemainingBudget` (a read-only "tokens left today") was deleted by Phase 4
+// U2 (N-12): it had had no non-test caller since Phase 2 U4 replaced it with
+// `reserveAdvisorTokens` below, and no Phase 4 candidate renders budget state.
 
 /**
  * An upper bound on what one advisor turn may spend, reserved BEFORE the model
@@ -296,9 +278,10 @@ export async function settleAdvisorUsage(
 /**
  * Every daily usage row for this user, oldest first.
  *
- * Added by Phase 2 U16 for the data export. `getRemainingBudget` above reads
- * the same table but returns a COMPUTED number for today, which an export
- * cannot use: the user's data is the rows, not a derived figure about one day.
+ * Added by Phase 2 U16 for the data export. The since-deleted
+ * `getRemainingBudget` read the same table but returned a COMPUTED number for
+ * today, which an export cannot use: the user's data is the rows, not a derived
+ * figure about one day.
  *
  * `advisor_usage` is one of the twelve user-owned tables. It is a counter, but
  * it is a counter ABOUT A PERSON — keyed `(user_id, usage_date)` with a NOT NULL

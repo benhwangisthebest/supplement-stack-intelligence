@@ -74,8 +74,12 @@ describe("lib/evidence lookups", () => {
 });
 
 describe("evidence-grading v5 — grade resolution", () => {
+  // Phase 4 U2 (FU-63): evidenceProfile is required on Effect. The legacy cases
+  // below (e2, e4) still build a profile-less effect, past the type with a cast,
+  // because lib/evidence keeps its no-profile branch until the owner rules on it.
   function effect(partial: Partial<Effect> & { id: string }): Effect {
-    return {
+    // Every field but the profile is type-checked; only its absence is cast.
+    const e: Omit<Effect, "evidenceProfile"> & Partial<Pick<Effect, "evidenceProfile">> = {
       supplementId: "x",
       name: "n",
       outcomeCategory: "focus",
@@ -88,6 +92,7 @@ describe("evidence-grading v5 — grade resolution", () => {
       paperIds: [],
       ...partial,
     };
+    return e as Effect;
   }
 
   const profileAllStrong = {

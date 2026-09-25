@@ -2,11 +2,12 @@
 // effect carries an evidenceProfile (G4), so the Library's no-profile fallback —
 // `e.evidenceProfile && <EvidenceBreakdown …/>` in SupplementDetail — can no longer
 // be reached from the seed, and the E2E spec that used l-theanine as its
-// "legacy (unprofiled)" example had to change. Effect.evidenceProfile is still
-// optional in src/types, so the fallback is guarded here with made-up effects
-// instead. Red proof: rendering the breakdown unconditionally fails the first test
-// (docs/01-plan/features/p3-u4-profiles.plan.md). Retire this test together with
-// the branch when evidenceProfile becomes required (FU-63).
+// "legacy (unprofiled)" example had to change. The fallback is guarded here with
+// made-up effects instead. Red proof: rendering the breakdown unconditionally fails
+// the first test (docs/01-plan/features/p3-u4-profiles.plan.md).
+// Phase 4 U2 made Effect.evidenceProfile REQUIRED (FU-63), so the unprofiled
+// effect below is built past the type with a cast. The branch and this test stay
+// until the owner rules on retiring them (U2 artifact).
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { SEED_SUPPLEMENTS } from "@/data/seed-supplements";
@@ -29,20 +30,23 @@ const profile: EvidenceProfile = {
   },
 };
 
-const effect = (id: string, name: string, evidenceProfile?: EvidenceProfile): Effect => ({
-  id,
-  supplementId: supplement.id,
-  name,
-  outcomeCategory: "focus",
-  grade: "B",
-  confidence: "moderate",
-  summary: "Made-up summary.",
-  relevantPopulation: "made-up population",
-  studiedDose: { min: 1, max: 2, unit: "mg" },
-  mechanismTags: [],
-  paperIds: [],
-  ...(evidenceProfile ? { evidenceProfile } : {}),
-});
+const effect = (id: string, name: string, evidenceProfile?: EvidenceProfile): Effect => {
+  // Every field but the profile is type-checked; only the unprofiled case is cast.
+  const base: Omit<Effect, "evidenceProfile"> = {
+    id,
+    supplementId: supplement.id,
+    name,
+    outcomeCategory: "focus",
+    grade: "B",
+    confidence: "moderate",
+    summary: "Made-up summary.",
+    relevantPopulation: "made-up population",
+    studiedDose: { min: 1, max: 2, unit: "mg" },
+    mechanismTags: [],
+    paperIds: [],
+  };
+  return evidenceProfile ? { ...base, evidenceProfile } : (base as Effect);
+};
 
 function renderEffects(effects: Effect[]) {
   render(<SupplementDetail supplement={supplement} effects={effects} papers={[]} related={[]} />);

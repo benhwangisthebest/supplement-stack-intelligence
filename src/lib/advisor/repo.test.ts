@@ -2,13 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ownerBinding, querySpy } from "@/lib/db/__testing__/query-spy";
 import {
-  ADVISOR_DAILY_TOKEN_BUDGET,
   appendMessages,
   conversationBelongsToUser,
   createConversation,
   deriveTitle,
   getMessages,
-  getRemainingBudget,
   listConversations,
   reserveAdvisorTokens,
   settleAdvisorUsage,
@@ -30,52 +28,9 @@ describe("deriveTitle", () => {
   });
 });
 
-// A minimal chainable Supabase stub for the budget queries (no DB).
-function fakeSupabase(usageRow: {
-  input_tokens: number;
-  output_tokens: number;
-} | null) {
-  const upserts: unknown[] = [];
-  const builder = {
-    select() {
-      return this;
-    },
-    eq() {
-      return this;
-    },
-    async maybeSingle() {
-      return { data: usageRow, error: null };
-    },
-    async upsert(payload: unknown) {
-      upserts.push(payload);
-      return { error: null };
-    },
-  };
-  const client = { from: () => builder } as unknown as SupabaseClient;
-  return { client, upserts };
-}
-
-describe("getRemainingBudget", () => {
-  it("returns the full budget when there is no usage row today", async () => {
-    const { client } = fakeSupabase(null);
-    expect(await getRemainingBudget(client, "u1", 1000)).toBe(1000);
-  });
-
-  it("subtracts today's accumulated tokens", async () => {
-    const { client } = fakeSupabase({ input_tokens: 300, output_tokens: 200 });
-    expect(await getRemainingBudget(client, "u1", 1000)).toBe(500);
-  });
-
-  it("never returns negative", async () => {
-    const { client } = fakeSupabase({ input_tokens: 900, output_tokens: 900 });
-    expect(await getRemainingBudget(client, "u1", 1000)).toBe(0);
-  });
-
-  it("defaults to ADVISOR_DAILY_TOKEN_BUDGET", async () => {
-    const { client } = fakeSupabase(null);
-    expect(await getRemainingBudget(client, "u1")).toBe(ADVISOR_DAILY_TOKEN_BUDGET);
-  });
-});
+// `getRemainingBudget`'s four tests, and the `fakeSupabase` stub only they used,
+// were deleted with the function itself by Phase 4 U2 (N-12). Its owner-filter
+// pin in the U9 block below went with them.
 
 // `recordUsage`'s two tests were deleted with the function itself by Phase 2
 // U15 (finding N-13). They were its ONLY callers — which is what established
@@ -329,20 +284,12 @@ describe("advisor repo — ownership pins (U9)", () => {
     await appendMessages(spy.client, "u1", "c1", []);
     expect(spy.tables).toEqual([]);
   });
-
-  it("getRemainingBudget filters by user_id and today's date", async () => {
-    const spy = querySpy({ data: { input_tokens: 100, output_tokens: 50 } });
-    await getRemainingBudget(spy.client, "u1", 1000);
-    expect(spy.tables).toEqual(["advisor_usage"]);
-    expect(spy.filters()).toContainEqual(["user_id", "u1"]);
-  });
 });
 
 describe("listUsageRows — the export reader (U16)", () => {
   /**
-   * A local fake, not the shared `fakeSupabase` above: that one exists for
-   * `maybeSingle` and has no `order`, and widening it would change a helper 22
-   * other assertions depend on (§9.4).
+   * A local fake. (The shared `fakeSupabase` this once sat beside, which had no
+   * `order`, went with `getRemainingBudget` in Phase 4 U2.)
    */
   function listClient(rows: unknown[]) {
     const builder: Record<string, unknown> = {
@@ -353,9 +300,9 @@ describe("listUsageRows — the export reader (U16)", () => {
   }
 
   it("returns every daily row for the user, mapped", async () => {
-    // getRemainingBudget reads the same table but returns a COMPUTED number for
-    // today. An export needs the rows: the user's data is what was recorded,
-    // not a derived figure about one day of it.
+    // The since-deleted getRemainingBudget read the same table but returned a
+    // COMPUTED number for today. An export needs the rows: the user's data is
+    // what was recorded, not a derived figure about one day of it.
     const rows = await listUsageRows(
       listClient([
         { user_id: "u1", usage_date: "2026-08-01", input_tokens: 10, output_tokens: 5 },

@@ -12,6 +12,19 @@ afterEach(cleanup);
 
 const supplement = SEED_SUPPLEMENTS.find((s) => s.id === "magnesium")!;
 
+// Phase 4 U2 (FU-63): the profile is required. The card reads only the literal
+// grade, never one derived from this profile (whose all-1 scores would derive a D).
+const dim = { score: 1 as const, rationale: "Made-up rationale.", paperIds: [] };
+const madeUpProfile: Effect["evidenceProfile"] = {
+  dimensions: {
+    humanEvidence: dim,
+    studyQuality: dim,
+    consistency: dim,
+    effectSize: dim,
+    populationRelevance: dim,
+  },
+};
+
 const effect = (over: Partial<Effect>): Effect => ({
   id: "made-up-effect",
   supplementId: supplement.id,
@@ -24,6 +37,7 @@ const effect = (over: Partial<Effect>): Effect => ({
   studiedDose: { min: 1, max: 2, unit: "mg" },
   mechanismTags: [],
   paperIds: [],
+  evidenceProfile: madeUpProfile,
   ...over,
 });
 

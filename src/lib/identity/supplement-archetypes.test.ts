@@ -8,6 +8,19 @@ import {
   supplementArchetypeFromEffects,
 } from "./supplement-archetypes";
 
+// Phase 4 U2 (FU-63): the profile is required. Archetypes read only the
+// literal grade, never one derived from this profile (whose all-1 scores would derive a D).
+const dim = { score: 1 as const, rationale: "Made-up rationale.", paperIds: [] };
+const madeUpProfile: Effect["evidenceProfile"] = {
+  dimensions: {
+    humanEvidence: dim,
+    studyQuality: dim,
+    consistency: dim,
+    effectSize: dim,
+    populationRelevance: dim,
+  },
+};
+
 let seq = 0;
 function eff(outcome: OutcomeCategory, grade: EvidenceGrade): Effect {
   seq += 1;
@@ -23,6 +36,7 @@ function eff(outcome: OutcomeCategory, grade: EvidenceGrade): Effect {
     studiedDose: { min: 1, max: 2, unit: "g" },
     mechanismTags: [],
     paperIds: [],
+    evidenceProfile: madeUpProfile,
   };
 }
 

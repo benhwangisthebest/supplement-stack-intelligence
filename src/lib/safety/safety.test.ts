@@ -33,7 +33,6 @@ describe("lib/safety phrasing", () => {
       safetyCopy.redundancy(["Magnesium", "Glycine"], "sleep"),
       safetyCopy.allergyConflict("Fish Oil", ["fish"]),
       safetyCopy.allergyCritical("Fish Oil", ["fish"]),
-      safetyCopy.medicationCaution("Berberine"),
       safetyCopy.goalMisalignment("Berberine"),
       safetyCopy.labSupported("Vitamin D3", "Vitamin D"),
       safetyCopy.labCaution("Zinc", "Zinc"),

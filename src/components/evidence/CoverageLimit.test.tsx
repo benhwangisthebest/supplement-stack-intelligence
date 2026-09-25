@@ -89,6 +89,10 @@ const madeUpSupplement = (over: Partial<Supplement> = {}): Supplement => ({
   ...over,
 });
 
+// Phase 4 U2 (FU-63): Effect.evidenceProfile is required, so the made-up effect
+// carries a made-up profile. SupplementDetail reads the literal grade (C here, so
+// no grade-D statement is in play); nothing in these tests resolves the grade from
+// the profile, whose all-1 scores would derive a D.
 const madeUpEffect: Effect = {
   id: "made-up-effect",
   supplementId: MADE_UP,
@@ -101,6 +105,15 @@ const madeUpEffect: Effect = {
   studiedDose: { min: 1, max: 2, unit: "mg" },
   mechanismTags: [],
   paperIds: [],
+  evidenceProfile: {
+    dimensions: {
+      humanEvidence: { score: 1, rationale: "Made-up rationale.", paperIds: [] },
+      studyQuality: { score: 1, rationale: "Made-up rationale.", paperIds: [] },
+      consistency: { score: 1, rationale: "Made-up rationale.", paperIds: [] },
+      effectSize: { score: 1, rationale: "Made-up rationale.", paperIds: [] },
+      populationRelevance: { score: 1, rationale: "Made-up rationale.", paperIds: [] },
+    },
+  },
 };
 
 function renderDetail(supplement: Supplement, effects: Effect[], tab?: string, papers: Paper[] = []) {
