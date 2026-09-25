@@ -276,3 +276,123 @@ table. `/stack-lab` is caught by 506 B. At H = 2% it would have passed.
 | M3 | `/advisor` deleted from the baseline | `✗ /advisor: in this build but has no baseline, so it has no budget.` exit 1 |
 | M4 | `/gone` added to the baseline | `✗ /gone: in the baseline but not in this build. The baseline is stale.` exit 1 |
 | M5 | Shared webpack runtime chunk inflated | 11 failures: shared-by-all (`107181 B … over its limit of 106366 B`) plus all 10 routes |
+
+**Landing (b) gate:**
+
+- tsc 0
+- lint 401 of 401, 0 errors
+- vitest 130 / 1611
+- `next build` 0
+- `verify:rendering` OK
+- `verify:bundle` OK (path B: +1 B everywhere, +3 B on `/stack-lab/[stackId]`, which is N-82 as measured)
+- E2E 70 / 30
+- null bytes 0
+
+**Commit `e591da5`**, CI `36072088329`: success.
+
+## 6. Landing (c) — the CI step (live)
+
+**It stopped at first, on a stop condition.** `DOC_TRUTH` (`src/architecture/doc-truth.test.ts`) binds
+`CLAUDE.md` §5's declared CI chain to `ci.yml`'s `run:` steps as an **ordered equality**. The `ci.yml`
+step on its own was shown red:
+
+```
+FAIL |node| src/architecture/doc-truth.test.ts > DOC_TRUTH — CLAUDE.md §5's CI claim vs the workflow
+  > binds the declared step chain to ci.yml's steps EXACTLY, in order
+  §5 declares: … → npm run build → npm run verify:rendering → npx playwright install --with-deps chromium → …
+  ci.yml runs: … → npm run build → npm run verify:rendering → npm run verify:bundle → npx playwright install --with-deps chromium → …
+```
+
+Going green needed a `CLAUDE.md` edit and a `src/` edit, and the brief put both off-limits. I reported this
+to the owner instead of absorbing it.
+
+**Owner ruling (2026-09-24): GO on option 1**, all in one commit:
+
+- the `ci.yml` step;
+- exactly one line of `CLAUDE.md` §5, the CI chain gaining `bundle budget`. This is a scoped exception:
+  the stale spec count and the rule-7 row stay for the phase closeout;
+- `DECLARED_STEP_COMMANDS["bundle budget"]` plus a check that `verify:bundle` runs `verify-bundle`;
+- **added by the owner:** pin CI's Node exactly, closing **FU-52**.
+
+**The pin.** `ci.yml` said `node-version: "20"`. The log of `36072088329`, the last passing run, shows
+`Acquiring 20.20.2 - x64` and `node: v20.20.2`. It is now `node-version: "20.20.2"`, so the pin changes
+nothing that run did not already use.
+
+**Gate before commit:**
+
+- tsc 0
+- lint 401 of 401
+- **DOC_TRUTH 22/22**
+- vitest 130 / 1611
+- `next build` 0
+- `verify:rendering` OK
+- `verify:bundle` OK
+- E2E **70 passed / 30 `[LIVE]` skipped**
+- null bytes 0
+- `CLAUDE.md` diff: exactly 1+/1−
+
+**Commit `b1f5bb8`**, CI **`36075630709`: success**. Every step passed, including `Bundle budget`.
+
+**AC-4 — the step's own CI log** (timestamps stripped):
+
+```
+verify:bundle — H = 1% · baseline zlib 1.3.1-e00f703 · this zlib 1.3.1-e00f703
+  shared by all                105315 / baseline   105313 (+2 B, 0.002%) · limit 106366
+  /                            109145 / baseline   109143 (+2 B, 0.002%) · limit 110234
+  /_not-found                  106294 / baseline   106292 (+2 B, 0.002%) · limit 107354
+  /advisor                     114606 / baseline   114604 (+2 B, 0.002%) · limit 115750
+  /auth/login                  109700 / baseline   109697 (+3 B, 0.003%) · limit 110793
+  /auth/signup                 109700 / baseline   109697 (+3 B, 0.003%) · limit 110793
+  /library                     110154 / baseline   110152 (+2 B, 0.002%) · limit 111253
+  /library/[slug]              110597 / baseline   110595 (+2 B, 0.002%) · limit 111700
+  /profile                     116856 / baseline   116853 (+3 B, 0.003%) · limit 118021
+  /stack-lab                   112222 / baseline   112219 (+3 B, 0.003%) · limit 113341
+  /stack-lab/[stackId]         115522 / baseline   115518 (+4 B, 0.003%) · limit 116673
+verify:bundle — OK. Every route is within 1% of its baseline.
+```
+
+**The cross-environment term §2 could not measure, now measured.** Node v20.20.2 on `ubuntu-latest` ships
+**the same zlib** (`1.3.1-e00f703`) as the Node 24 that measured the baseline, so the cross-zlib
+contribution is **0**. What remains is **+2 to +4 B** on every route: N-82's checkout-path effect at CI's
+third path (`/home/runner/work/…`). That is ≤ 0.003%, within 1 B of the ≤ 3 B measured locally, and more
+than 250 times below H. **No re-baseline was needed, and H was not widened.**
+
+## 7. Closeout — 2026-09-24
+
+| Landing | Commit | CI |
+|---|---|---|
+| (a) baseline | `4326811` | 36071597754 — success |
+| (b) `verify:bundle` | `e591da5` | 36072088329 — success |
+| (c) CI step + Node pin | `b1f5bb8` | 36075630709 — success |
+
+**Acceptance criteria:**
+
+- **AC-1:** two consecutive builds are identical. See §2.
+- **AC-2:** the baseline is committed, and the U9 delta against §2 is recorded as **U8-F1**. See §2.
+- **AC-3:** red, then green. See §5.
+- **AC-4:** CI `36075630709`, step `Bundle budget`: success. The log excerpt is in §6.
+- **AC-5:** the checkout-path spread is ≤ 3 B locally and ≤ 4 B in CI, both within H. See §2 and §6.
+
+**Roadmap item 5:**
+
+- **Bundle half: DONE.**
+- **Seam half: UNMET (R1).** `getBiomarker` has zero call sites. The follow-up is **FU-65**: the first
+  real caller brings the seam, together with a reachability test.
+
+**Closed or ruled:**
+
+- **FU-52: CLOSED** (`b1f5bb8`).
+- **N-82: CLOSED.** Measured and its cause verified in §2. The budget's H absorbs it by more than 250
+  times.
+- **U8-F1:** recorded, and accepted by the owner.
+- **H = 1%:** accepted by the owner.
+
+**Registered:** **FU-66**, the build-time Google Fonts fetch from `next/font/google`. It is an existing
+network dependency of every build. It was registered, not changed.
+
+**`[P3-X7]` (U8's share):** §5, covering AC-3, R-U9 and M1–M5. §6 adds the DOC_TRUTH red.
+
+**For the phase closeout** (not edited here): the §7 disposition row for **N-82** still reads *"OPEN for
+U8"*. The register's U8 entry now records it as closed.
+
+**Next:** U10.

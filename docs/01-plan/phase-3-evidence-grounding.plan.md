@@ -130,7 +130,7 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 | **U5** Provenance returns behind a verification record | deterministic | `[P3-X2]` (mechanism), **N-80**, **N-81** |
 | **U6** The corpus verified against real DOI/PMID | **live** | `[P3-X2]` (content), `[P3-X6]` |
 | **U7** Coverage honesty across the four surfaces — **DONE 2026-09-24** (`841893e`, `8c01a61`; cycle record `p3-u7-coverage-honesty.plan.md`) | deterministic | `[P3-X4]` — **unblocked by D-1a; needs U0** |
-| **U8** Injection seam + bundle-size assertion | deterministic | roadmap item 5 |
+| **U8** Injection seam + bundle-size assertion — **DONE 2026-09-24, bundle half only** (`4326811`, `e591da5`, `b1f5bb8`; cycle record `p3-u8-bundle-budget.plan.md`) | deterministic, **(c) live** | roadmap item 5 — **bundle half DONE; seam half UNMET (R1)**, **FU-52**, **N-82** |
 | **U9** `CLAUDE.md` §4 rule 7: guard, then refactor *(new — D-7)* | deterministic | `[P3-X9]` |
 | **U10** Rule-8 component tests *(new — FU-64 ruling, 2026-09-24)* | deterministic | **FU-64**, **U-DEFER-4** (in full) |
 
@@ -355,6 +355,25 @@ Phase 3 must change G2 from ***no provenance field*** to ***no provenance field 
 >     `/stack-lab` is caught by 506 B.
 >   - **M1–M5** (boundary, no build, missing and stale routes, shared chunk) are each red. The record is in
 >     artifact §5.
+> - **(b) landed** as `e591da5`, CI `36072088329` success.
+> - **(c) landed** as `b1f5bb8`, CI `36075630709` success, on the owner's go (2026-09-24, option 1).
+>   - The `Bundle budget` step runs directly after `Rendering determinism`. DOC_TRUTH's ordered equality
+>     made the same-commit edits necessary: one line of `CLAUDE.md` §5's CI chain (a scoped exception
+>     covering that line only) and `doc-truth.test.ts`'s step map. Adding the `ci.yml` step on its own was
+>     shown red first.
+>   - **AC-4:** in CI the step ran and passed on Node **v20.20.2**. Every route came in at **+2 to +4 B**
+>     (≤ 0.003%) over the baseline.
+>   - CI's zlib is **`1.3.1-e00f703`**, the same as the measuring machine's, so the cross-zlib term is
+>     **0**. The residue is N-82's checkout-path effect. No re-baseline was needed, and H was not widened.
+> - **FU-52 CLOSED** by `b1f5bb8`. `setup-node` is pinned to **20.20.2**, the version `"20"` resolved to
+>   in `36072088329`, the last passing run before the pin.
+> - **CLOSEOUT — roadmap item 5:**
+>   - **Bundle half: DONE.**
+>   - **Seam half: UNMET (R1).** `getBiomarker` has zero call sites, so the parameter could not be
+>     observed, and no caller was added to justify it. The follow-up is **FU-65**.
+>   - **Also registered:** **FU-66**, the build-time font fetch.
+>   - **`[P3-X7]` (U8's share):** recorded in the artifact §5.
+>   - **U-series findings:** **U8-F1**.
 
 **U9 — `CLAUDE.md` §4 rule 7: the guard first, then the refactor *(new at (d), on D-7)*.** **8 of 31** client components import `@/lib` or `@/data` (one type-only); §2 prints the command. **The owner's ruling is guard-then-refactor, in that order and in one unit** — so rule 7 stops being a paragraph and becomes mechanical, which is `CLAUDE.md` §3 principle 5 applied to the rule that has gone unenforced longest. **The order is the whole point:** a guard written after the refactor is green on arrival and proves nothing. **Two costs U9 must carry, named here so they are not discovered later:** the new spec adds one to the architecture-spec count, and `SPEC_COUNT` binds that number at **four** documented sites plus its own pin (`spec-count.test.ts:97`), all of which U9 updates. ~~27 → 28~~ **[2026-09-23]** U1 (b) already took it to **28**, so U9 **re-derives the count when it lands** (`git ls-files 'src/architecture/*.test.ts' | wc -l`) rather than carrying a number from this paragraph; and the refactor spans `advisor/`, `auth/`, `checkin/`, `profile/` and `stack/`, not only the Library surface U7 touches. **`auth/AuthForm.tsx` is type-only** and U9 states whether a type-only import is a violation before it counts as one.
 **Red proof:** the guard is red against all **8** before any component moves, and the failure output is recorded — `[P3-X7]`.
@@ -524,6 +543,8 @@ Derived from the Phase 2 report §9–§11 (lines 223–367). **The source set i
 | **FU-59** *(new, U6)* | **[2026-09-24] CLOSED IN PART by U7 (a), `841893e`** *(owner ruling)*. **Interactions:** `InteractionSection.tsx:41`, `:70`. **Food pairings:** `FoodPairingSection.tsx:48`, `:75`. Both route through `CoverageLimit` with their reviewed wording. **Remainder OPEN: products.** `ProductMatchPanel.tsx:30` says *"No matched products in the current catalog."* with no limit statement. A product catalog is not a safety absence, and a fix is new Stack Lab copy. ~~OPEN — candidate U7.~~ |
 | **FU-60** *(new, U6)* | **OPEN.** The account export emits stored pre-U6 paper labels. The chip resolves them at render, but the export does not. |
 | **FU-64** *(new, U7 closeout)* | **[2026-09-24] ASSIGNED to U10** *(owner ruling)*. U10 closes it, and U-DEFER-4, in full. ~~OPEN — owner to assign.~~ U-DEFER-4 is **still RE-SCOPED, not closed**. The register made *"whether every deferred `.tsx` test is then written"* U7's question, and the answer is **no**. U7 wrote the coverage tests. A keyword scan (grade, flag, severity, citation, `DISCLAIMERS`) for `CLAUDE.md` §5 rule 8 components still finds **12 with no component test**, e.g. `stack/FlagCard.tsx`, `evidence/EffectGradeBadge.tsx`, `stack/SuggestionCard.tsx` and `library/BiomarkerRelevanceSection.tsx`. The scan is heuristic, so the first step is to confirm the list. |
+| **FU-65** *(new, U8 closeout — R1)* | **OPEN — waiting on a real caller.** Roadmap item 5's seam half (`getBiomarker` takes a catalog parameter) is **UNMET**. `getBiomarker` has zero call sites (`src/lib/biomarkers/index.ts:151`, re-checked at `6a8e0d1`), so the parameter would be unobservable (`CLAUDE.md` §5 rule 3). The owner ruled against adding a caller to justify it. **Trigger:** the first real caller, most likely the Library biomarker surface. The unit that writes that caller writes the seam with it, together with a reachability test showing the catalog parameter reaches an observable output. |
+| **FU-66** *(new, U8 closeout)* | **OPEN — registered, not changed (owner, 2026-09-24).** `src/app/layout.tsx` imports `Inter` from `next/font/google`, so **every `next build` fetches from Google Fonts at build time**: locally, in CI, and in the E2E stage's second build. This network dependency already existed. It was noticed because U8's session ran under a no-network rule while the mandated gate still ran `next build`. A build that needs the network can fail for reasons that have nothing to do with the tree. **Options, not decided:** keep it, or self-host the font file with `next/font/local`. Deciding is not in U8's scope. |
 
 **What this section claims, precisely** *(restated at (c); the draft's "No item from the source set is omitted" was false twice over — P-03)*. **Id set:** all **38** ids the source names are dispositioned above; `comm -23` over the two extracted sorted sets is **empty**. **Item set:** the source also carries **2 unnumbered residues**, both now dispositioned — the class the Phase 2 (d3) certifier rejected an earlier follow-up set for omitting, which the draft reproduced because its extraction keyed on `FU-/N-/OP-` ids. **Status claims:** where a row reads *closed* or *discharged* that is a statement about the register at `52e00d9`, **verified cell by cell at (c)** — which is how N-71, N-79 and FU-1 were found mis-stated.
 
