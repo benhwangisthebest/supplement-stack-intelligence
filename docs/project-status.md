@@ -338,7 +338,7 @@ test" part does not.
 - **Works:** production build succeeds; Library is SSG across 15 pages; advisor output renders as plain
   text with no `dangerouslySetInnerHTML` anywhere — no XSS surface today. Design system documented in
   `.claude/DESIGN.md` (542 lines).
-- **Incomplete:** **zero component tests**, and `.tsx` tests cannot even run (see §2.9). 31 client
+- **Incomplete:** ~~**zero component tests**, and `.tsx` tests cannot even run (see §2.9).~~ **[2026-09-24, Phase 3 U10]** `.tsx` tests run on U0's jsdom project. `git ls-files 'src/**/*.test.tsx' | wc -l` → **24**, all under `src/components`. Every component that renders a safety flag, evidence grade or citation (**17**, derived) has one, and `RULE8_COMPONENT_TESTS` enforces `CLAUDE.md` §5 rule 8. 31 client
   components; ~~two~~ **[2026-08-06] seven** of them import from `@/lib` — **six as value imports that reach the browser bundle**, `AuthForm.tsx`'s being type-only and therefore erased at build. None imports `@/data` directly
   (`ProfileForm.tsx` → medication aliases; `StackItemRow.tsx` → `SEED_PRODUCTS` + matcher). Free at 15
   supplements; a bundle cliff at 1,000.
@@ -551,7 +551,11 @@ filesystem-derived completeness), closing `[P3-X4]`. **U-DEFER-4 is still not cl
 `CLAUDE.md` §5 rule 8 components still have no component test (**FU-64**, register §7).
 **[2026-09-24, owner ruling]** FU-64 is assigned to a new unit, **U10** (rule-8 component tests). U10 first
 confirms the list, then writes one red-proved test per component, closing FU-64 and U-DEFER-4 in full. It
-runs after U9 and U8 and before the Phase 3 closeout. Plus two
+runs after U9 and U8 and before the Phase 3 closeout. **[2026-09-24, U10 DONE]** The confirmed list is **13**
+(predicate: an anchor-typed value rendered in JSX, resolved by the TypeScript checker). Each has a red-proved
+test (24 mutations, `06de7ed`), and `src/architecture/rule8-component-tests.test.ts` (`158bb30`) fails any
+future member without one. **FU-64 and U-DEFER-4 are CLOSED** (U-DEFER-4 had been open since Phase 0). Two
+older member tests do not assert their own rule-8 rendering (**FU-67**, open). Plus two
 content/process issues:
 
 1. **Content debt compounds fastest** — every feature built on ungrounded grades enlarges the surface a

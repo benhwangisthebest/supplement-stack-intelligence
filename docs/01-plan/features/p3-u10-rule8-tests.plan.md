@@ -367,6 +367,92 @@ sites moved in the same commit: `README.md` ×1, `docs/project-status.md` ×2,
 `docs/02-design/architecture-boundaries.md` ×1. So did the pin, `spec-count.test.ts` (`expect(N).toBe(30)`).
 Restoring the old pin goes red: `→ expected 30 to be 29`. With the new pin, `spec-count.test.ts` is green.
 
+## 4. Closeout
+
+**Landings.** Each gate ran in a `git worktree` with no `.env.local`: tsc · lint · vitest (both projects) ·
+`next build` · `verify:rendering` · `verify:bundle` · full non-live E2E · null bytes. Each was
+fast-forwarded to `main` after branch CI passed on the same SHA.
+
+| Landing | Commit | Gate | CI |
+|---|---|---|---|
+| (a) confirmed list | `3975d76` | 130 files / 1611 tests (jsdom 11 / 73) · lint 401/401 · E2E 70 / 30 skipped | 36077750810 success |
+| (b) 13 tests | `06de7ed` | 143 / 1664 (jsdom 24 / 126) · lint 414/414 · E2E 70 / 30 | 36078462050 success |
+| (c) guard | `158bb30` | 144 / 1675 (jsdom 24 / 126) · lint 415/415 · E2E 70 / 30 | 36078985510 success |
+
+`verify:bundle` reported `/stack-lab/[stackId]` at +14 B (0.012%) on (b) and (c), with no component
+source changed. That is build variance, within the 1% limit.
+
+**Acceptance criteria.**
+
+| AC | Result | Evidence |
+|---|---|---|
+| AC-1 predicate stated; derived list = confirmed list | **met** | §1.1–§1.3; the guard's set and evidence `diff` against §1.3 are empty (§3) |
+| AC-2 every confirmed component tested, each red-proved | **met** | §2.1: 24 mutations, all red, all restores `cmp`-identical; jsdom 24 / 126 |
+| AC-3 guard fails a planted untested grade component | **met** | §3.1 red 1, plus reds 2 and 3 |
+| AC-4 no component source changed in (b) | **met** | `git diff --stat face009 -- src/components src/app` → 13 files, all `.test.tsx`, `837 insertions(+)`, 0 deletions |
+| AC-5 `SPEC_COUNT` consistent | **met** | §3.2 |
+
+**Closed:** FU-64. **U-DEFER-4, in full**, open since Phase 0 (`110715d`, 2026-07-30), 56 days.
+**Opened:** FU-67 (§2.2). **Stop conditions:** none fired. The predicate was stated precisely, the guard
+needs no hand-kept list, no component needed a change to be testable, and no network call was made
+beyond the build's font fetch (R1). The E2E `webServer` runs `next build` too, so that is the same fetch.
+
+### 4.1 What the phase closeout must carry, re-derived from the register at `158bb30`
+
+**Stale `CLAUDE.md` rows** (U10 could not touch `CLAUDE.md`):
+1. §5 measured baseline: *"27 executable architecture specs"*. `git ls-files 'src/architecture/*.test.ts' | wc -l`
+   → **30** now. The same paragraph's *"1446/1446 unit tests across 114 files"*, *"lint 369 of 369"* and
+   E2E figures are a 2026-09-22 snapshot. Re-measure them all at the closeout. (Register U10 entry,
+   *For the phase closeout* item 1.)
+2. §4 enforcement table, **rule 7** row: *"Not enforced — would fail today on 8 of 31"* → enforced by
+   `client-props.test.ts` (`CLIENT_TAKES_PROPS`), 1 named exemption, empty allowlist. (Item 3.)
+3. *(new, U10)* §5 **rule 8** carries no enforcement note. It is now enforced by
+   `rule8-component-tests.test.ts` (`RULE8_COMPONENT_TESTS`). Rule 9 already carries this kind of note, so
+   rule 8 should get one.
+
+**Register and pointer residue:**
+
+4. `docs/01-plan/features/p3-u4-profiles.closeout.md` §5 (*Notes for U7*) still reads as open. Add a dated
+   pointer: notes 1, 2 and 4 closed at `8c01a61`; note 3 (FU-59) closed in part at `841893e`, with products
+   still open. (Item 2.)
+5. **N-82 §7 row** still reads *"CORRECTED in §2; OPEN for U8"*, but the U8 closeout closed N-82 (register
+   U8 entry, AC-5: checkout-path module ids, ≤ 3 B). The §7 row needs its CLOSED stamp.
+6. **`[P3-X7]`**'s unit list reads *"(U0, U1, U2, U3, U4, U5, U7, U8, U9)"*. U10 ships guards, and its red
+   evidence is recorded (§2.1, §3.1). Add U10 before ticking.
+7. **FU-67** has no §7 row yet (a new §7 row was outside U10's *May touch*).
+8. §8's *"ten units (U0…U9)"* is left as written (append-only). U10 is the eleventh.
+
+**Every open FU, with its owner as the register records it:**
+
+| FU | Status | Owner / condition |
+|---|---|---|
+| FU-1 | open | **unowned**; `executeProposal`'s unlocked `attach_product` read; deferred, advisor path |
+| FU-29 | deferred | ruled out of Phase 3 (D-4): needs a deployed-database migration |
+| FU-30, FU-31 | deferred | none; dead `safetyCopy` helpers |
+| FU-32 | deferred, standing class | none; counts written once |
+| FU-33, FU-34 | deferred | none; FU-34 also holds **N-71**'s product half |
+| FU-35–FU-38 | deferred | next operational phase |
+| FU-40 | deferred | none; CI's catalog check is the control |
+| FU-41, FU-43, FU-44 (with N-11, N-40) | deferred | next operational phase, one logging sink |
+| FU-42 | deferred | constrains any `[~]` criterion |
+| FU-45, FU-46, FU-47 | deferred | next operational phase |
+| FU-50 | open | **owner call** (`@vitejs/plugin-react` devDependency) |
+| FU-57 | open | **owner** (`p-nac-antioxidant` tombstone plus migration, `[P3-X6]`) |
+| FU-58 | open | none named (`src/types/paper.ts` header comment stale) |
+| FU-59 | closed in part | products remain open (U7 artifact §7) |
+| FU-60 | open | none named (the export emits stored pre-U6 paper labels) |
+| FU-61 | open | post-Phase 3, **rubric-owner unit** |
+| FU-62 | open | post-Phase 3, **live unit** |
+| FU-63 | open | post-U4, none named (make `evidenceProfile` required) |
+| FU-65 | open | **waiting on a real caller** (roadmap item 5 seam half UNMET) |
+| FU-66 | open | **owner**: registered, not changed (build-time Google Fonts fetch) |
+| **FU-67** | **open (new)** | **owner to assign** (two older member tests do not assert their rule-8 rendering) |
+
+Other open ids the register carries: **N-22, N-25** (deferred) · **N-50** (Phase 4) · **N-69, N-70**
+(deferred, conditions intact) · **N-71** (not closed at the product; FU-34) · **N-79** (disclosed; FU-47) ·
+**OP-5** (owner-held) · `CLAUDE.md` §4 **rule 8** (trust boundaries; deferred, no mechanical form) · the
+unnumbered `replaceFlags` residue · **Live E2E BLOCKED(env)**.
+
 ---
 
 ## A. The (a) command — `rule8-derive.mjs`, verbatim
