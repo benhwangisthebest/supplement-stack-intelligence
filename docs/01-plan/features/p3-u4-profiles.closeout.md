@@ -85,6 +85,8 @@ Inherited and still open, not U4's: FU-57 (uncited `p-nac-antioxidant` row), FU-
 
 ## 5. Notes for U7
 
+> **[2026-09-24, Phase 3 closeout (a)] Pointer: these notes are no longer open.** Notes **1, 2 and 4 were CLOSED by U7 (b2), `8c01a61`**. Note **3 (FU-59) was CLOSED IN PART by U7 (a), `841893e`**: interactions and food pairings now state their limit, and **products remain open**. At `194ee08` that remainder sits at `src/components/stack/ProductMatchPanel.tsx:89` (*"No matched products in the current catalog."*, no `CoverageLimit`). The U7 artifact's `:30` predates U9's refactor. Per-note evidence: `p3-u7-coverage-honesty.plan.md` §7. The notes below are kept as written.
+
 1. **Grade D wording** (B3 ruling): a Grade D card must read *"no verified evidence in this library"*, **not** as evidence of no effect. Six effects are now D: magnesium-sleep, magnesium-stress, l-theanine-stress, glycine-sleep, nac-antioxidant and protein-powder-recovery.
 2. **"Not assessed" vs "none"** (B4 ruling): a dimension with an empty `paperIds` renders *"not assessed"*. *"None"* is reserved for evidence of no effect. **26 of 135 dimensions** are empty.
 3. **FU-59** (R4): the products, interactions and food-pairings datasets carry no coverage disclosure.

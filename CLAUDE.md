@@ -166,7 +166,7 @@ Layering: `src/types` → pure engines in `src/lib` → `src/services` / `src/li
 | **4** (`src/data` is a leaf) | **Enforced** | `boundaries.test.ts` — B4, B4b |
 | **5** (domain purity) | **Enforced** | `boundaries.test.ts` — `DOMAIN_IS_PURE`, as a **ratchet** (Phase 1 U18). Scope settled by ruling D-4: all of `src/lib` except `auth`, `api`, `supabase`, `db`, which are named exemptions carrying written reasons. **Three** orchestration files are individually allowlisted — `advisor/actions/execute.ts`, `advisor/context-loader.ts`, `identity/context.ts` — and a test asserts each still violates, so the list can only shrink. An un-allowlisted fourth fails. See `docs/02-design/architecture-boundaries.md` |
 | **6** (every top-level `src/*` registered) | **Enforced** | `boundaries.test.ts` — tree-partition, with a written-reason assertion |
-| 7 (client components take props) | Not enforced | Would fail today on **8 of 31** client components. **[2026-09-22, closeout finding P2-9]** ~~7 of 31~~ — re-derived at close and again at (d2). **Predicate, stated here because the figure rotted for want of one:** denominator = tracked files under `src/components/**` carrying `"use client"` (**31**); numerator = those also importing `@/lib/**` or `@/data/**` (**8**), of which `auth/AuthForm.tsx` is **type-only**. The row missing from the 2026-08-06 set is `profile/LabMarkerModal.tsx`. This is the counts-written-once class (**FU-32**); it is corrected rather than bound because rule 7's enforcement is itself deferred to Phase 3/4 — when a guard lands, it derives the figure and this cell stops being hand-written |
+| **7** (client components take props) | **Enforced** | `client-props.test.ts` — CLIENT_TAKES_PROPS (Phase 3 U9, `080d3ce`). It walks the **transitive client graph**: every module a `"use client"` file reaches by a runtime import, which is what Next bundles for the browser. It fails any edge from that graph into `src/lib` or `src/data`. `import type` is not a violation (owner ruling, 2026-09-24). **One named exemption**, in `NAMED_EXEMPTIONS`: `AdvisorPanel → @/lib/api/error-text`, Phase 2 U19's deliberately client-callable `errorText`. The allowlist `CLIENT_LIB_IMPORT_ALLOWLIST` is **empty** and shrink-only. The guard was red against **9 files / 11 edges** before the refactor `d8d3542` moved the other 10 to props. **[2026-09-24, Phase 3 closeout (a)]** Retired text, kept per §7: ~~Not enforced · Would fail today on **8 of 31** client components. **[2026-09-22, closeout finding P2-9]** (then struck: 7 of 31) — re-derived at close and again at (d2). **Predicate, stated here because the figure rotted for want of one:** denominator = tracked files under `src/components/**` carrying `"use client"` (**31**); numerator = those also importing `@/lib/**` or `@/data/**` (**8**), of which `auth/AuthForm.tsx` is **type-only**. The row missing from the 2026-08-06 set is `profile/LabMarkerModal.tsx`. This is the counts-written-once class (**FU-32**); it is corrected rather than bound because rule 7's enforcement is itself deferred to Phase 3/4 — when a guard lands, it derives the figure and this cell stops being hand-written~~ — the guard landed, derived the figure, and this cell stopped being hand-written |
 | 8 (trust boundaries in testable modules) | Not enforced generally | The API error boundary is enforced by `error-disclosure.test.ts`; there is no general mechanical rule |
 | **9** (budget + rate limit on paid APIs) | **Enforced** | `boundaries.test.ts` — `PAID_API_BUDGET`, as a **derived** set (Phase 2 U7): it walks the import graph from every tracked `src/app/api/**/route.ts` and governs those reaching a **paid marker**, so a new paid route is covered the day it is written rather than the day someone remembers to list it. Today exactly **2** — `/api/advisor` and `/api/lab-import/extract` — and the membership is itself pinned, so a third is a red build. Each must carry a rate limit **and** either a token reservation or a `maxDuration` ceiling. It found `/api/lab-import/extract` missing the second control on the day it was written. **[2026-08-10, U25]** The marker was ~~the package `@anthropic-ai/sdk`~~ alone; it is now a **union**, because two providers are live during the swap: the package (lab-import, still Anthropic) **and** the module `src/lib/omniroute/client.ts` (the advisor). A gateway reached over plain HTTP has no package to import, so the paid boundary is drawn by a named module instead — with `SOLE_PAID_CLIENT` beside it asserting nothing bypasses that module, since an inline `fetch` is invisible to an import graph. Each marker is pinned to its own route, so neither can rot behind the other. ~~The union collapses back to one marker when the lab-import half lands~~ **[2026-08-10] IT HAS.** The lab-import half landed on decision 7B's ruling, `pdf-adapter.ts` now reaches the gateway, `@anthropic-ai/sdk` is gone from `package.json`, and `PAID_PACKAGES` is **empty** — one module marker governs both routes. `RETIRED_PACKAGE` widened from `src/lib/advisor` to **all of `src/`** and gained a `package.json` clause, because an import with no dependency and a dependency with no import fail differently and neither implies the other. **[2026-09-14, U31]** The provider changed a second time — Omniroute → **OpenAI's first-party API** — and the marker did **not** change shape: it is still one module, now `src/lib/openai/client.ts`, because OpenAI is also reached over plain HTTP and decision 9 keeps the call on `fetch` rather than the `openai` package. `PAID_PACKAGES` stays **empty**. What this row's history is really recording is that the *marker kind* — package vs module — tracks how the provider is reached, not who the provider is |
 
@@ -195,6 +195,12 @@ passing, a clean typecheck, and a successful build.
 6. **New `src/lib/db` mapper functions** ship with a row-fixture test.
 7. **New engines** ship with a coverage threshold entry.
 8. **Components rendering a safety flag, evidence grade, or citation** ship with a component test.
+   **Enforced** by `src/architecture/rule8-component-tests.test.ts` (`RULE8_COMPONENT_TESTS`, Phase 3
+   U10). It derives the member set through the TypeScript checker: a tracked `src/components/**` file that
+   renders a value typed as one of rule 8's anchor types (grade, flag, interaction, biomarker relation,
+   citation, paper). It fails any member without a tracked sibling `.test.tsx` that imports the member. There is
+   no allowlist. It binds a test's **existence, not what the test asserts**: FU-67 was that gap for two
+   members, closed at the Phase 3 closeout.
 9. `E2E_LIVE`-gated Playwright blocks must be tagged `[LIVE]` in their title. Do not rely on the
    `L1/L2/L3` prefix to signal gating — it does not. **Enforced** by
    `src/architecture/e2e-live-tagging.test.ts` (`LIVE_TAGGING`), both ways: a gated block without the
@@ -222,11 +228,13 @@ passing, a clean typecheck, and a successful build.
     *(Phase 2 (d1b), `src/app/api/advisor/actions/route.ts`. Filed beside rule 11 because both are cases
     where the instrument that looks like it is doing the job is not doing the job.)*
 
-Measured baseline (re-measured **2026-09-22 at the Phase 2 closeout's (d2) landing**, against that tree —
-~~2026-08-06 at Phase 1 close, 859/859 across 73 files~~): typecheck clean · **1446/1446 unit tests across
-114 files** · **lint 369 of 369 tracked source files, 0 errors** · **27 executable architecture specs**
-(bound by `SPEC_COUNT`, derived from `git ls-files`) · **E2E non-live 70 passed / 30 `[LIVE]`-gated
-skipped** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck → **lint** →
+Measured baseline. The **spec count, test counts and lint figure were re-measured 2026-09-24 at the Phase 3 closeout
+(a)**, against that tree. The other figures date from **2026-09-22 at the Phase 2 closeout's (d2)
+landing** — ~~2026-08-06 at Phase 1 close, 859/859 across 73 files~~. Typecheck clean · ~~1446/1446 unit
+tests across 114 files~~ **1679/1679 unit tests across 144 files**: `node` project 1549 across 120,
+`jsdom` project 130 across 24 · ~~lint 369 of 369~~ **lint 415 of 415 tracked source files, 0 errors** ·
+~~27~~ **30 executable architecture specs** (bound by `SPEC_COUNT`, derived from `git ls-files`) ·
+**E2E non-live 70 passed / 30 `[LIVE]`-gated skipped** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck → **lint** →
 `vitest run` → **coverage thresholds** → **migration coherence** → `next build` → **rendering determinism** → **bundle budget** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on
 `workflow_dispatch`). The coverage step was added by Phase 1 U13, between `vitest run` and `next build`; the other four are unchanged.
 **The lint step was added by Phase 2 U18** (roadmap item 9), between typecheck and `vitest run`. Before it,
@@ -239,8 +247,8 @@ roadmap names *green over zero files* as the only unacceptable end state, and it
 this item carelessly, since a lint config with an over-broad `ignores` passes vacuously. Deriving the
 expectation from the config would make that mutation undetectable; deriving it from git makes narrowing
 what ESLint looks at reden the check instead. A tracked file that genuinely must not be linted goes in
-`EXEMPT_UNLINTED` with a written reason (today: **none**; ~~356 of 356~~ **369 of 369** tracked source
-files are linted, re-measured 2026-09-22 — the ratio is the claim, the absolute is FU-32's class and is
+`EXEMPT_UNLINTED` with a written reason (today: **none**; ~~356 of 356~~ ~~369 of 369~~ **415 of 415** tracked source
+files are linted, re-measured 2026-09-24 — the ratio is the claim, the absolute is FU-32's class and is
 re-derived rather than carried).
 `eslint-config-next` is deliberately **not** used — see the header of `eslint.config.mjs` for why, and for
 why the runner is pinned to ESLint 9.

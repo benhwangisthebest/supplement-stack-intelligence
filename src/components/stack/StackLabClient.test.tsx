@@ -5,7 +5,7 @@
 // `attachedProductLabels()`). Behaviour unchanged: the same copy renders in the same
 // places, and the attached-product badge shows exactly what `getProductById` returns
 // — nothing for an unknown id, including prototype names.
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { SEED_PRODUCTS } from "@/data/seed-products";
 import { getProductById } from "@/lib/product-matcher";
@@ -96,6 +96,62 @@ describe("StackItemRow — attached-product badge from server-built labels (U9)"
       ),
     );
     expect(badges()).toEqual([]);
+  });
+});
+
+// Phase 3 closeout (a), FU-67. StackLabClient is a rule-8 member because it hands
+// `initialFlags` (EvaluationFlag[]) down to StackWorkspace, yet no test here looked
+// at a flag: the U9 tests above assert disclaimers and badges. These assert that the
+// flags this component is given are the flags the page shows. Red proof: passing
+// `initialFlags={[]}`, or dropping a flag, fails the first test (closeout artifact).
+const flagOf = (id: string, over: Partial<EvaluationFlag>): EvaluationFlag => ({
+  ...interactionFlag,
+  id,
+  title: `Made-up flag ${id}`,
+  explanation: `Made-up explanation ${id}.`,
+  recommendation: `Made-up recommendation ${id}.`,
+  ...over,
+});
+
+describe("StackLabClient — the evaluation flags it is handed reach the page (rule 8, FU-67)", () => {
+  it("renders every flag's title, severity, category, explanation, suggestion and evidence grade, and counts them", () => {
+    renderLab(
+      [item({ id: "mg" })],
+      [
+        flagOf("info", { severity: "info", category: "timing-fit", evidenceLevel: "C" }),
+        flagOf("crit", { severity: "critical", category: "interaction-risk", evidenceLevel: "B" }),
+        flagOf("warn", { severity: "warning", category: "dose-fit" }),
+      ],
+    );
+    const cards = screen
+      .getAllByRole("heading", { level: 4 })
+      .filter((h) => h.textContent?.startsWith("Made-up flag "))
+      .map((h) => h.closest("article")!);
+    expect(cards.map((c) => within(c).getByRole("heading", { level: 4 }).textContent)).toEqual([
+      "Made-up flag crit",
+      "Made-up flag warn",
+      "Made-up flag info",
+    ]);
+    const [crit, warn, info] = cards;
+    expect(within(crit).getByText("Critical · interaction-risk")).toBeTruthy();
+    expect(within(crit).getByText("Made-up explanation crit.")).toBeTruthy();
+    expect(within(crit).getByText("Made-up recommendation crit.")).toBeTruthy();
+    expect(within(crit).getByText("Evidence grade: B")).toBeTruthy();
+    expect(within(warn).getByText("Warning · dose-fit")).toBeTruthy();
+    expect(within(warn).queryByText(/^Evidence grade:/)).toBeNull();
+    expect(within(info).getByText("Info · timing-fit")).toBeTruthy();
+    expect(within(info).getByText("Evidence grade: C")).toBeTruthy();
+    expect(screen.getByText("1 critical · 1 warning · 1 info")).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toContain("A potentially serious interaction was flagged");
+  });
+
+  it("renders no flag card and no count when it is handed no flags (anti-vacuity)", () => {
+    renderLab([item({ id: "mg" })], []);
+    expect(
+      screen.queryAllByRole("heading", { level: 4 }).filter((h) => h.textContent?.startsWith("Made-up flag ")),
+    ).toEqual([]);
+    expect(screen.queryByText(/critical · .* warning · .* info/)).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
 
