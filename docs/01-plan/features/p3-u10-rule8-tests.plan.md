@@ -125,7 +125,7 @@ members 17 · without a component test 13 · scope 56 files
 |---|---|---|
 | `advisor/ProvenanceChips.tsx` | `ProvenanceChips.test.tsx` | **yes**: paper titles and `Grade X` labels (`:37`, `:103`) |
 | `evidence/PaperSummaryCard.tsx` | `PaperSummaryCard.test.tsx` | **yes**: PMID and DOI links by role and name (`:29`, `:36`) |
-| `library/SupplementDetail.tsx` | `SupplementDetail.test.tsx` | **yes**: effect grade and breakdown (`:53`, `:60`) |
+| `library/SupplementDetail.tsx` | `SupplementDetail.test.tsx` | ~~**yes**: effect grade and breakdown (`:53`, `:60`)~~ **[corrected at (b)] partly.** `:53`'s title says *"shows its grade"*, but its assertions check only the effect name and the breakdown (`:56–57`). No assertion reads the letter. The Grade D wording **is** asserted, in `CoverageLimit.test.tsx:333–360`. The letter is drawn by `EffectGradeBadge`, which (b) tests directly. **Finding (FU-67), not fixed:** editing an existing test is outside *May touch*. |
 | `stack/StackLabClient.tsx` | `StackLabClient.test.tsx` (U9) | **no**: it asserts disclaimers, coverage limits and product badges. Its only rule-8 act is handing `initialFlags` to `StackWorkspace`, which (b) tests directly (#12). **Finding, not fixed:** editing an existing test is outside the brief's *May touch* ("new .test.tsx files"). |
 
 ### 1.5 Reconciliation against FU-64's 12
@@ -187,7 +187,118 @@ untested set would have been 14. It is 13 at `face009`.
   and the child is a member. That is deliberate: the test belongs where the rendering happens.
 - **Test existence, not test content.** The guard (c) requires a sibling `X.test.tsx` that imports `./X`. It
   cannot judge whether that test asserts the rule-8 rendering. (b)'s red proofs are the evidence for these
-  13. §1.4 records the one existing test (`StackLabClient`) that does not.
+  13. §1.4 records the one existing test (`StackLabClient`) that does not. *[(b): two. `SupplementDetail` is the second; see §1.4 and FU-67.]*
+
+## 2. Landing (b) — thirteen component tests, each red-proved
+
+**One `.test.tsx` per confirmed component, all on U0's jsdom project.** Every test goes through roles and
+text (`getByRole`, `getByTitle`, `getByText`, `within`). No component source changed (AC-4). Where a test
+needs data, it comes from the engine the component itself calls (`biomarkersForSupplement`,
+`foodPairingsForSupplement`, `interactionsForSupplement`, `citationHref`, `buildCitationIndex`), so the
+expected copy is bound to the computation (§5 rule 4). Each engine-derived fixture carries an anti-vacuity
+assertion: a caution row exists, grades differ, a severity above `info` exists.
+
+**No network (R1).** `StackWorkspace`, `AdvisorPanel` stub `fetch` with `vi.stubGlobal` and restore it
+after each test. `AdvisorPanel`'s stub returns a canned event stream, so no model is called.
+`ActionProposalCard`'s test never clicks Confirm.
+
+**Two test-environment gaps, handled in the test and not in the component:** jsdom implements no
+`Element.prototype.scrollTo`, which `AdvisorPanel` calls after each message. It is stubbed in the test and
+restored after each one. jsdom's `Blob` has no `.stream()`, so the canned stream is a string-bodied
+`Response`, whose `.body` is the same `ReadableStream` the panel reads. **No component could not be tested
+without a change. The stop condition did not fire.**
+
+**What each test guards** (the brief's list: flag severity and text, grade letter plus U7's Grade D /
+"not assessed" wording, citation link and title):
+
+| Component | Asserts |
+|---|---|
+| `EffectGradeBadge` | letter, word and tooltip for each of A–D; D never paired with a stronger word; confidence shown only when given |
+| `FlagCard` | each severity labelled with its own word, and no other; title as heading, explanation, suggestion; `Evidence grade: X`, absent for `n/a` |
+| `SupplementCard` | the top effect's own grade (A, C, D) and confidence; no grade without a top effect; Library link |
+| `SuggestionCard` | the suggestion's own grade (A, D); the clinician escalation for a medication caution, absent without one |
+| `BiomarkerRelevanceSection` | per marker: its own relation (`caution`/`support`), `evidence X`, rationale; the labs disclaimer; the empty state that does not imply nothing to review |
+| `FoodPairingSection` | each rule under its own group (`Best to space apart` for avoid) with its own grade; the other group absent |
+| `InteractionSection` | per rule, in engine order: its own severity chip, `evidence X`, mechanism, management |
+| `EvidenceBreakdown` | each dimension's own cited paper titles; nothing for an id with no paper, and no link at all; `not assessed` vs `none` (U7); the Grade D note only when given |
+| `IdentityCard` | a resolvable citation links to exactly `citationHref`'s target; an unresolvable or absent one is plain text; emerging cards show no trail; the disclaimer |
+| `AdvisorMessageBubble` | an assistant message lists each of its citations under Sources; a user message shows none, even if handed citations |
+| `ActionProposalCard` | each projected flag's title and recommendation; `⚠` only on critical; a critical flag disables Confirm and escalates to a clinician; a warning does not block |
+| `StackWorkspace` | critical → warning → info whatever the arrival order; honest counts; the clinician banner for a critical **interaction** only; an evaluation replaces flags, still ordered |
+| `AdvisorPanel` | streamed citations reach Sources; streamed safety flags reach the proposal card, and a critical one blocks Confirm |
+
+### 2.1 Red proofs (AC-2, `[P3-X7]`)
+
+Script: back up the component, apply **one** exact-string mutation to the rendering the test guards (the
+script refuses to run unless the string matches exactly once), run that component's test, restore from the
+backup, then `cmp`. **24 mutations over 13 components. Every one is red, and every restore is
+`cmp`-identical.** Output, verbatim:
+
+```
+evidence/EffectGradeBadge | letter | exit 1 | 3 failed | 3 passed (6) | failed: grade B renders its own letter, word and tooltip ; grade C renders its own letter, word and tooltip ; grade D renders its own letter, word and tooltip | restored cmp identical
+evidence/EffectGradeBadge | D word | exit 1 | 2 failed | 4 passed (6) | failed: grade D renders its own letter, word and tooltip ; Grade D is never shown with a stronger word | restored cmp identical
+stack/FlagCard | severity label | exit 1 | 2 failed | 3 passed (5) | failed: a critical flag is labelled with its own severity ; a warning flag is labelled with its own severity | restored cmp identical
+stack/FlagCard | grade line | exit 1 | 1 failed | 4 passed (5) | failed: shows the flag's evidence grade, and no grade line for 'n/a' | restored cmp identical
+library/SupplementCard | top-effect grade | exit 1 | 3 failed | 2 passed (5) | failed: shows the top effect's own grade A and its confidence ; shows the top effect's own grade C and its confidence ; shows the top effect's own grade D and its confidence | restored cmp identical
+stack/SuggestionCard | grade | exit 1 | 2 failed | 2 passed (4) | failed: shows the suggestion's own grade A (Strong) ; shows the suggestion's own grade D (Preliminary) | restored cmp identical
+stack/SuggestionCard | medication caution | exit 1 | 1 failed | 3 passed (4) | failed: escalates a medication caution to a clinician, and says nothing when there is none | restored cmp identical
+library/BiomarkerRelevanceSection | relation | exit 1 | 1 failed | 3 passed (4) | failed: each marker shows its own relation and its own evidence grade | restored cmp identical
+library/BiomarkerRelevanceSection | grade | exit 1 | 1 failed | 3 passed (4) | failed: each marker shows its own relation and its own evidence grade | restored cmp identical
+library/FoodPairingSection | grade | exit 1 | 2 failed | 1 passed (3) | failed: zinc: every avoid rule is under 'Best to space apart' with its own grade ; vitamin-d: every synergy rule is under 'Pairs well with' with its own grade | restored cmp identical
+library/FoodPairingSection | avoid group | exit 1 | 2 failed | 1 passed (3) | failed: zinc: every avoid rule is under 'Best to space apart' with its own grade ; vitamin-d: every synergy rule is under 'Pairs well with' with its own grade | restored cmp identical
+library/InteractionSection | severity chip | exit 1 | 3 failed | 1 passed (4) | failed: fish-oil: each row shows its own rule ; ashwagandha: each row shows its own rule ; magnesium: each row shows its own rule | restored cmp identical
+library/InteractionSection | grade | exit 1 | 3 failed | 1 passed (4) | failed: fish-oil: each row shows its own rule ; ashwagandha: each row shows its own rule ; magnesium: each row shows its own rule | restored cmp identical
+evidence/EvidenceBreakdown | cited paper title | exit 1 | 1 failed | 3 passed (4) | failed: tags each dimension with its own cited papers' titles | restored cmp identical
+evidence/EvidenceBreakdown | not assessed | exit 1 | 1 failed | 3 passed (4) | failed: a 0 citing no paper reads 'not assessed'; a 0 citing a paper reads 'none' (U7) | restored cmp identical
+identity/IdentityCard | citation deep link | exit 1 | 2 failed | 3 passed (5) | failed: deep-links a signal whose citation resolves, to exactly citationHref's target ; renders an unresolvable or absent citation as plain text, not a link | restored cmp identical
+advisor/AdvisorMessageBubble | citations to chips | exit 1 | 1 failed | 2 passed (3) | failed: an assistant message lists each of its citations under Sources | restored cmp identical
+advisor/AdvisorMessageBubble | user carries none | exit 1 | 1 failed | 2 passed (3) | failed: a user message shows no Sources, even if handed citations | restored cmp identical
+advisor/ActionProposalCard | critical mark | exit 1 | 1 failed | 3 passed (4) | failed: lists each flag with its title and recommendation; only a critical one is marked ⚠ | restored cmp identical
+advisor/ActionProposalCard | hard block | exit 1 | 1 failed | 3 passed (4) | failed: a critical flag disables Confirm and escalates to a clinician | restored cmp identical
+stack/StackWorkspace | severity order | exit 1 | 2 failed | 2 passed (4) | failed: orders flags critical → warning → info, whatever order they arrive in, and counts them ; an evaluation replaces the flags with the server's, in severity order | restored cmp identical
+stack/StackWorkspace | interaction banner | exit 1 | 1 failed | 3 passed (4) | failed: a critical flag that is not an interaction raises no banner; a warning interaction raises none either | restored cmp identical
+advisor/AdvisorPanel | flags to card | exit 1 | 1 failed | 1 passed (2) | failed: the proposal's safety flags appear on its card, and a critical one blocks Confirm | restored cmp identical
+advisor/AdvisorPanel | citations to message | exit 1 | 1 failed | 1 passed (2) | failed: the answer's citations appear under Sources | restored cmp identical
+```
+
+The mutations, as `from → to` on the component source:
+
+| Component | Rendering | From | To |
+|---|---|---|---|
+| EffectGradeBadge | letter | `{grade}` (the letter span) | `{"A"}` |
+| EffectGradeBadge | D word | `D: "Preliminary"` | `D: "Strong"` |
+| FlagCard | severity label | `SEVERITY_LABEL[flag.severity]` | `SEVERITY_LABEL.info` |
+| FlagCard | grade line | `Evidence grade: {flag.evidenceLevel}` | `… {"A"}` |
+| SupplementCard | top-effect grade | `grade={topEffect.grade}` | `grade="B"` |
+| SuggestionCard | grade | `grade={s.grade}` | `grade="B"` |
+| SuggestionCard | medication caution | `{s.medicationCaution && (` | `{false && (` |
+| BiomarkerRelevanceSection | relation | `{rule.relation}` (chip text) | `{"support"}` |
+| BiomarkerRelevanceSection / FoodPairingSection / InteractionSection | grade | `evidence {rule.evidenceGrade}` | `evidence {"A"}` |
+| FoodPairingSection | avoid group | `r.direction === "avoid"` | `… "synergy"` |
+| InteractionSection | severity chip | `{rule.severity}` (chip text) | `{"info"}` |
+| EvidenceBreakdown | cited paper title | `{paper.title}` | `{paper.id}` |
+| EvidenceBreakdown | not assessed | `r.score === 0 && r.paperIds.length === 0` | `r.score === 0` |
+| IdentityCard | citation deep link | `sig.citation ? citationHref(sig.citation) : null` | `null` |
+| AdvisorMessageBubble | citations to chips | `citations={message.citations}` | `citations={[]}` |
+| AdvisorMessageBubble | user carries none | `{!isUser && <ProvenanceChips` | `{<ProvenanceChips` |
+| ActionProposalCard | critical mark | `f.severity === "critical" ? "⚠ " : ""` | `""` |
+| ActionProposalCard | hard block | `busy \|\| hasCritical \|\| selectedCount === 0` | `busy \|\| selectedCount === 0` |
+| StackWorkspace | severity order | `["critical", "warning", "info"]` | `["info", "warning", "critical"]` |
+| StackWorkspace | interaction banner | `f.severity === "critical" && INTERACTION_CATEGORIES.has(f.category)` | `f.severity === "critical"` |
+| AdvisorPanel | flags to card | `safetyFlags={m.safetyFlags ?? []}` | `safetyFlags={[]}` |
+| AdvisorPanel | citations to message | `({ ...m, citations })` | `({ ...m })` |
+
+(`EffectGradeBadge`'s letter mutation leaves grade A green by construction, since `"A"` is A's own letter.
+B, C and D go red.)
+
+### 2.2 Findings from (b)
+
+- **FU-67 (new):** two of the four members that already had a test do not assert their own rule-8
+  rendering in that test. `StackLabClient.test.tsx` (U9) asserts disclaimers and badges, not flags.
+  `SupplementDetail.test.tsx:53` is titled *"shows its grade"* but asserts no letter. Neither is a
+  coverage hole today: the flags are asserted in `StackWorkspace.test.tsx` and the Grade D wording in
+  `CoverageLimit.test.tsx`. But the guard (c) checks that a test *exists*, not what it asserts. Owner to
+  assign. Editing existing tests was outside U10's *May touch*.
 
 ---
 
