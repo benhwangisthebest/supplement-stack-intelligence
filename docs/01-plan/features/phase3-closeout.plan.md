@@ -21,7 +21,8 @@
 | | Landing | SHA | CI |
 |---|---|---|---|
 | (a) | carry list: three `CLAUDE.md` corrections (lint included, owner "go + lint"), register residue, U4 pointer, FU-67 fixed, N-85 registered | `78277b6` | 36094543027 success |
-| (d) | fixture re-verification: 37/37, 37 calls, $0, 0 drift, 0 retractions | *this landing* | — |
+| (d) | fixture re-verification: 37/37, 37 calls, $0, 0 drift, 0 retractions | `2969b89` | 36094964293 success |
+| (b) | the phase report; FU-50 and FU-25 §7 rows (late-registered) | *this landing* | — |
 
 ---
 
@@ -165,6 +166,7 @@ The gate ran in a `git worktree` with no `.env.local`, with (a)'s files staged t
 |---|---|---|---|---|---|---|---|---|
 | (a) | 0 | 415/415, 0 errors | **144 / 1679** (120 / 1549 · 24 / 130) | 0 | OK | OK, every route +14–15 B (N-82 path effect; no component source changed) | **70 passed / 30 skipped** | 6 changed files clean; the control file with a null byte was detected |
 | (d) | 0 | 415/415, 0 errors | 144 / 1679 (120 / 1549 · 24 / 130) | 0 | OK | OK | **70 passed / 30 skipped** | 41 staged paths (37 bodies, `call-log.jsonl`, `results.json`, 2 `.md`) clean; control detected |
+| (b) | 0 | 415/415, 0 errors | 144 / 1679 (120 / 1549 · 24 / 130) | 0 | OK | OK | **70 passed / 30 skipped** | 3 changed `.md` clean (checked as part of the 46 paths since `78277b6`); control detected |
 
 **About the null-byte check:** the first attempt used `grep -P`, which macOS grep does not support, and
 `2>/dev/null` hid the error, so the check passed without checking anything. It was redone with Node's
@@ -338,3 +340,17 @@ node reverify.mjs --repo . --out <scratchpad>/rv-dry --max-calls 45 --dry-run   
 node reverify.mjs --repo . --out content/verification/captures/2026-09-24-rv --max-calls 45
                                                      → calls made: 37 · OK: no title drift, no retraction, no identity mismatch
 ```
+
+---
+
+## 6. Landing (b): the report
+
+`docs/04-report/phase-3-evidence-grounding.report.md`. The exit criteria were re-run at HEAD by command
+(its §3), and the red evidence is compiled from the units' records (§5). **Two register gaps were found
+while compiling it,** and both got §7 rows in this landing, dated as late-registered:
+- **FU-50**: open since U0, with no §7 row.
+- **FU-25**: never named in Phase 3, because §7's source set was line-bounded.
+
+**One roadmap gap:** *"the next operational phase"*, which the register uses for 12 deferrals, is not a
+phase in `docs/roadmap.md`. The report assigns those items to **Phase 4 (assigned at closeout)** for the
+owner to confirm. **The verdict is left to (c).**
