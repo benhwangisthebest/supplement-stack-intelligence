@@ -217,3 +217,48 @@ AC-5  npx vitest run src/architecture → 30 files / 443 tests passed
 **0 NOT addressed.** Cross-checks X-a (no decision answered; `RULED` 0), X-b (every flagged decision has a D-n) and X-c (`comm` empty; N-86 only) passed. **Run 2 also reported consistency defects. All were fixed after it, in place, with no line added,** so §9's references stand. **May touch:** it now implicitly covers the tests beside listed files, the unit's own record, and the `SPEC_COUNT`-bound sites. It also names the paths it missed: `stack-item-repo.ts` for U10, `stack/ProductMatchPanel.tsx` for U13, `redact.ts` for U15, and `repo.test.ts` for U2. **D-1 (c)** now excludes U17 (b)/(c) and U11 × D-4 (a), with reasons. **U16 (a)** now has its own red proof. **References:** `:320-322` for ruling 5, and `:58` added to N-86's stale text. The N ceiling notes it prints 86 once N-86 is issued. The fixes were not re-reviewed by a third agent. Each was applied by an exact-match replace that fails if its target is absent.
 
 **Gate (c)**, in a clean worktree (`../ssi-gate`, no `.env.local`, `node_modules` symlinked): tsc 0 · lint 415 of 415, 0 errors · node 1563/120 · jsdom 130/24 · build 0 · rendering OK · bundle OK (within 1%) · E2E 70 passed / 30 skipped. After the last plan edit: node 1563/120, `src/architecture` 30/443. CI: see the landing branch run.
+
+---
+
+## (d) Approval landing PHASE4-PLAN-PUB — 2026-09-25
+
+**Anchor** `62e6f2a`, verified at open. The tree was clean apart from untracked `.claude/launch.json`, and the plan was DRAFT with `RULED` ×0. **Touched:** the plan, `docs/roadmap.md`, and this section (appended; earlier sections byte-identical). **No `CLAUDE.md` edit.**
+
+**What landed.** Each D-n carries one `RULED 2026-09-25` line quoting the owner's ruling verbatim. The plan status is **APPROVED**. The roadmap now shows Phase 4 **IN PROGRESS**, with `[P4-X1]`…`[P4-X3]`, N-86's Phase 0 box ticked, a dated D-12 exception with its reason, and items 2–4 OUT to a new backlog that also takes FU-62's sourcing and the logging sink. §4 tags every unit RUNNER, SUPERVISED or OUT. A new U0 comes first.
+
+**Stopped and asked, twice; seven owner clarifications**, all recorded in plan §6 except Q4:
+- **Q1:** Shape A, plus U14a and the units other rulings shape (U5, U6, U15, U16), plus U13 as the statement only. OUT: U7, U8 (a closeout item), the U13 catalog, U14b, U14c.
+- **Q2:** U5's B-gate is report-only first, because `deriveGrade` is not in `generate.mjs` and G4b needs stored = derived.
+- **Q3:** a new U0 adds `test:coverage` to G and stops for the `CLAUDE.md` diff.
+- **Q4:** branch deletion is authorised for this landing. It concerns this landing only, so it is not in the plan.
+- **Q5:** the runner's standing approval is granted as drafted.
+- **Q6:** caps of 300 calls and 4 hours per RUNNER unit.
+- **Q7:** the D-12 exception's reason.
+
+**AC evidence**
+
+```
+AC-1  grep -c RULED <plan> → 16; grep -ci awaiting <plan> → 0; each quote = brief text (checker: exact string match)
+AC-2  plan :3 "STATUS: APPROVED — 2026-09-25"; roadmap :42 and :583 IN PROGRESS; :639-641 **[P4-X1]**…**[P4-X3]**
+AC-3  19 unit rows (U0–U18) each tagged RUNNER / SUPERVISED / OUT; §3 comm -23 → (empty), comm -13 → N-86
+AC-4  wc -l <plan> → 388 (≤ 400); this section ≤ 60
+AC-5  npx vitest run src/architecture → 30 files / 443 tests passed (DOC_TRUTH, CRITERIA_PARITY included)
+```
+
+**AC-6: independent checks.** Each checker got only the rulings (plus Q1–Q7), the plan and the diff `62e6f2a..`, and was asked to re-review (c)'s 12 post-check fixes.
+
+| Run | NOT | What it found → what changed |
+|---|---|---|
+| 1 | 11 | Rulings exact (16/16). Found: no runner authority or caps; roadmap exception with no reason; U2 still deleting the held helpers; §3 IN/"owner to confirm" cells stale; Closes columns naming OUT work; §7 spend and OpenAI text; this landing's roadmap insertions staled 5 plan refs; an unstated item-3 claim; N-86's Phase 3 text; fix 12 self-contradictory → cells fixed, refs re-derived, the claim removed, and **Q5–Q7 asked** |
+| 2 | — | Terminated by an API session limit before any output; re-launched fresh on your "Try again" |
+| 2′ | 5 | D-1 (c)'s option text had been rewritten (unstated) → **restored to `62e6f2a`**. U15 claimed N-11 → fixed. `:520` → `:528`, `:606` → `:616`. Fix 2 WRONG: U13's May touch missed the props flow, and its red proof could not go red → both corrected |
+| 3 | **0** | 16/16 exact · every hunk sourced · fixes 1–12 OK · `comm` clean · live line refs match · runner set = RUNNER tags |
+
+**Run 3 observations, not counted and not acted on, so the landed text is exactly what run 3 checked:**
+- **Stale Closes cells:** U7's (OUT) Closes still lists FU-62. U17 lists FU-25 isolation unconditionally, but D-9's (b) path would leave it open.
+- **U5 lists FU-61 as closed,** though the gate is report-only until the owner batch.
+- **U11 quotes "three" service 404s;** only `advisor-actions.ts:80` and `:95` echo the id.
+- **U16's FU-17 half may delete an `it(`,** which is a stop class. The runner would stop there.
+- **Leftover draft wording, not false:** §7 "This draft issues none"; X3's "D-15 decides who runs it".
+
+**Gate (d)** in a clean worktree (`../ssi-gate`, no `.env.local`, fresh `.next`), on these exact files: tsc 0 · lint 415 of 415, 0 errors · node 1563/120 · jsdom 130/24 · build 0 · rendering OK · bundle OK (within 1%) · E2E 70 passed / 30 skipped. *This line was written after the gate ran; it is the only later change, in a file no guard reads.* CI: see the landing branch run.

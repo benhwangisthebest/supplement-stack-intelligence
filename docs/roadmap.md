@@ -39,7 +39,7 @@ page returned HTTP 403); the **live E2E half stays BLOCKED(env)** by ruling 3; a
 FU-44 all wait on the same thing — a logging sink that does not exist.** Observability is classified **B**
 by ruling and was **measured X** on the sink alone; both readings are recorded in `project-status.md` §2.8.
 ~~Planning (2026-08-06): a DRAFT plan exists; it is not approved and authorises nothing.~~
-~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ ~~**[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.**~~ **[2026-09-25] Phase 3 — COMPLETE WITH FOLLOW-UP** (declared on the owner's go, 2026-09-25). All eleven units (U0–U10) are DONE. The independent closeout Check returned COMPLETE WITH FOLLOW-UP (P3-1…P3-11); its remediations have landed, and a delta check found 7 ADDRESSED, 4 CARRIED-WITH-OWNER and 0 NOT ADDRESSED. Every carried item has an owner, for Phase 4 (report §10). See the Phase 3 section for the full status. **Phase 4 — not started.**
+~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ ~~**[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.**~~ **[2026-09-25] Phase 3 — COMPLETE WITH FOLLOW-UP** (declared on the owner's go, 2026-09-25). All eleven units (U0–U10) are DONE. The independent closeout Check returned COMPLETE WITH FOLLOW-UP (P3-1…P3-11); its remediations have landed, and a delta check found 7 ADDRESSED, 4 CARRIED-WITH-OWNER and 0 NOT ADDRESSED. Every carried item has an owner, for Phase 4 (report §10). See the Phase 3 section for the full status. ~~**Phase 4 — not started.**~~ **[2026-09-25] Phase 4 — IN PROGRESS:** plan `docs/01-plan/phase-4-product-completion.plan.md` **APPROVED** with owner rulings D-1…D-16; no unit executed.
 
 **Two Phase 2 items were already delivered out of order** and the plan marks them so rather than
 scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` +
@@ -176,7 +176,7 @@ zero `.DS_Store` tracked.)*
       setting defends against the account that owns the settings.
 - [x] `boundaries.test.ts` scans ≥ 5 top-level layers (**5**: `src/types`, `src/components`, `src/lib`,
       `src/services`, `src/data`); each new rule verified red-then-green.
-- [ ] **Unmet — deliberately deferred (U-DEFER-4, closeout finding C-12).** A `.tsx` test placed anywhere
+- [x] ~~**Unmet — deliberately deferred (U-DEFER-4, closeout finding C-12).**~~ **[2026-09-25, N-86] MET:** met since Phase 3 U0 (the `jsdom` project in `vitest.workspace.ts` collects and runs `.test.tsx`), and closed in full by Phase 3 U10. This item's description, the notes below, and the U-DEFER-4 text at the top of this file, in the Phase 0 section and in the Phase 3 section are historical as of this date. A `.tsx` test placed anywhere
       under `src/` is collected and executed. `vitest.config.ts` collects only `src/**/*.test.ts`. Zero
       `.test.tsx` files exist today, so this is latent rather than active.
 
@@ -320,6 +320,14 @@ summary and must not disagree with it.
       Non-live half measured and dated; live half **BLOCKED(env)**. The "reproducible in CI" clause was
       **retired by ruling 5** — a CI E2E job is out of Phase 1's scope, so requiring it here would make
       the criterion unmeetable. It moves to whichever phase adds that job (blocked on FU-25).
+
+      > **[2026-09-25] Dated exception: Phase 4 opens with this criterion outstanding** (owner ruling D-12 (a),
+      > `docs/01-plan/phase-4-product-completion.plan.md`). This is the first recorded exception for this box. Phases 2 and 3 opened
+      > against it with no record. **It expires at Phase 4 closeout, which requires an owner-run live baseline**
+      > (a Phase 4 closeout exit condition).
+      > **Reason:** Phase 4's approved scope (carried correctness plus item 1's plan revision) does not depend on
+      > the live half. The live run is owner-run under ruling 3 and has not been scheduled, and a hold would stall
+      > deterministic work behind a scheduling constraint.
 - [x] Auth-coverage and RLS-coverage tests fail on a deliberately non-compliant new file. — U5 and U6,
       both proven **both ways** per §4.2: false green unstaged, red once `git add -N`'d.
 - [x] Coverage thresholds configured for every pure engine directory; enforced in CI. — U13, 14
@@ -572,6 +580,8 @@ offline — never a runtime fetch reachable from a request path.
 
 ## Phase 4 — Product completion
 
+**Status.** **IN PROGRESS — 2026-09-25.** The plan, `docs/01-plan/phase-4-product-completion.plan.md`, is **APPROVED** with owner rulings D-1…D-16. Scope (D-3): carried correctness (Shape A) plus item 1. Items 2, 3 and 4 are OUT, to the backlog below. **No unit has been executed.** Approval authorised the units the plan's §4 marks IN, and nothing beyond them.
+
 **Objective.** Complete the intended core product on a foundation that is now correct, verified,
 operable, and grounded.
 
@@ -603,10 +613,10 @@ operable, and grounded.
    >   Read the archived copy instead.
    >
    > `docs/product-direction.md:109` points at the plan path, which now resolves.
-2. **Real product catalog** replacing the seeded 21 products, with ranking independence still test-proven.
-3. **Component tests + accessibility** for every component rendering a safety flag, evidence grade, or citation.
-4. **Longitudinal intelligence** across labs, adherence, and outcomes.
-5. Deferred items from `docs/product-direction.md` §7, each requiring an explicit decision.
+2. **Real product catalog** replacing the seeded 21 products, with ranking independence still test-proven. **[2026-09-25] OUT of Phase 4 (D-3) → backlog below.**
+3. **Component tests + accessibility** for every component rendering a safety flag, evidence grade, or citation. **[2026-09-25] OUT of Phase 4 (D-3) → backlog below.**
+4. **Longitudinal intelligence** across labs, adherence, and outcomes. **[2026-09-25] OUT of Phase 4 (D-3) → backlog below.**
+5. Deferred items from `docs/product-direction.md` §7, each requiring an explicit decision. **[2026-09-25] IN only where item 1 depends on them (D-3).**
 
 **Excluded work.** Anything in `product-direction.md` §7 without an explicit approval decision. Community
 features, doctor portal, payments, and live commerce APIs stay out by default. No speculative scale architecture.
@@ -626,9 +636,16 @@ engine-derived, and a component test if it renders a safety-relevant value.
 paid-API endpoint inherits the Phase 2 rate-limit and budget requirements.
 
 **Exit criteria (measurable)**
-- [ ] Each shipped item meets its own plan's success criteria, with no "partial" left unexplained.
-- [ ] No subsystem classified prototype-only in an updated `docs/project-status.md`.
-- [ ] Coverage thresholds hold across all engines; CI green on `main` continuously.
+- [ ] **[P4-X1]** Each shipped item meets its own plan's success criteria, with no "partial" left unexplained.
+- [ ] **[P4-X2]** No subsystem classified prototype-only in an updated `docs/project-status.md`.
+- [ ] **[P4-X3]** Coverage thresholds hold across all engines; CI green on `main` continuously.
+
+**Backlog: deferred from Phase 4 by ruling (2026-09-25), not scheduled.** Each needs its own approval decision to enter a phase.
+- **Real product catalog** (item 2; D-3).
+- **The accessibility half of item 3** (D-3).
+- **Longitudinal intelligence** (item 4; D-3).
+- **FU-62's sourcing pass** for glycine-sleep and zinc-deficiency (the plan's U7; D-3).
+- **A logging sink** for N-11, FU-43 and FU-44 (D-7 (d): Phase 4 ships redaction with no sink).
 
 ---
 
