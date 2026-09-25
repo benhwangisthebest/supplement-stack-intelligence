@@ -39,7 +39,7 @@ page returned HTTP 403); the **live E2E half stays BLOCKED(env)** by ruling 3; a
 FU-44 all wait on the same thing — a logging sink that does not exist.** Observability is classified **B**
 by ruling and was **measured X** on the sink alone; both readings are recorded in `project-status.md` §2.8.
 ~~Planning (2026-08-06): a DRAFT plan exists; it is not approved and authorises nothing.~~
-~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ **[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.** See the Phase 3 section for the full status. **Phase 4 — not started.**
+~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ ~~**[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.**~~ **[2026-09-25] Phase 3 — all eleven units (U0–U10) DONE; the independent closeout Check returned COMPLETE WITH FOLLOW-UP (P3-1…P3-11), and its remediations have landed. The phase-closed declaration is pending the owner's go.** See the Phase 3 section for the full status. **Phase 4 — not started.**
 
 **Two Phase 2 items were already delivered out of order** and the plan marks them so rather than
 scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` +
@@ -497,7 +497,7 @@ the dev seed script.
 
 ## Phase 3 — Evidence grounding (the trust layer)
 
-**Status.** **STARTED — 2026-09-22.** Its plan, `docs/01-plan/phase-3-evidence-grounding.plan.md`, is **APPROVED** (rank 5 under `CLAUDE.md` §6) at landing (d), after an independent review (`docs/reviews/phase-3-plan-review.md`, verdict REVISE, P-01…P-17) and a revision answering it. **All seven owner decisions D-1…D-7 are ruled**, and the plan carries **ten units U0–U9**, of which **one (U6) is live**. **No unit has been executed.** Approval authorises the units in the plan's §4 and nothing beyond them.
+**Status.** ~~**STARTED — 2026-09-22.**~~ **[2026-09-25] ALL UNITS DONE; CLOSEOUT CHECK COMPLETE WITH FOLLOW-UP; the phase-closed declaration is pending the owner's go.** The plan, `docs/01-plan/phase-3-evidence-grounding.plan.md`, is **APPROVED** (rank 5 under `CLAUDE.md` §6) at landing (d), after an independent review (`docs/reviews/phase-3-plan-review.md`, verdict REVISE, P-01…P-17) and a revision answering it. **All seven owner decisions D-1…D-7 are ruled.** ~~The plan carries **ten units U0–U9**, of which **one (U6) is live**. **No unit has been executed.**~~ **It carries eleven units, U0–U10** (U10 was appended on the FU-64 ruling, 2026-09-24), and **all eleven are DONE**. U6 was the live unit; U4 and the closeout (d) also made scoped live lookups (236 calls in all, $0). Outcome: `docs/04-report/phase-3-evidence-grounding.report.md`. Independent closeout Check: `docs/reviews/phase-3-closeout-check.md` (P3-1…P3-11, **COMPLETE WITH FOLLOW-UP**). Approval authorised the units in the plan's §4 and nothing beyond them.
 
 **Objective.** Make the Library's central claim true. Today 19 of 27 effect grades are hand-typed letters
 with no derivation — **four** of them Grade A (there are eight Grade A in all; the other four already
@@ -538,6 +538,7 @@ exact fabrication class v13 removed.
    nothing" across effects, interactions, side effects, and food pairings. Absence must never read as safety.
 5. Finish the injection seam (`getBiomarker` takes a catalog parameter); add a bundle-size assertion so
    the client-bundle cost of seed growth becomes visible before it becomes a problem.
+   > **[2026-09-25, Phase 3 closeout (e4)]** **Bundle half: DONE** (U8: `npm run verify:bundle`, 1% headroom over a checked-in baseline, run in CI). **Seam half: UNMET** by owner ruling U8 R1. `getBiomarker` has zero call sites, so a catalog parameter could not be observed (`CLAUDE.md` §5 rule 3), and no caller was added to justify one. **Carried as FU-65**, which triggers on the first real caller.
 
 **Excluded work.** No live PubMed ingestion — a later capability, and doing it here would reintroduce
 fabrication risk. No context-adjusted evidence (Phase 4). No commerce. No new pillars.
@@ -549,6 +550,7 @@ IDs change, and CI must be enforcing guards before large content diffs land.
 provably output-identical: codegen must emit byte-identical constants for the current corpus *before* any
 content changes land on top of it. Any ID change requires a tombstone plus a data migration for existing
 `stack_items`.
+> **[2026-09-25, Phase 3 closeout (e4); Check finding P3-11] The table named above is wrong for the ids this phase touches.** `src/data/id-manifest.json` places paper and effect ids at **`advisor_messages.citations[].refId`** (`kind='paper'` / `kind='effect-grade'`, migration 0003), not at `stack_items`. Only supplement ids persist in `stack_items`. The phase register (§2, §4 U6) worked to the correct table. Phase 3 retired or renamed no id, so no migration was needed (`[P3-X6]`).
 
 **Testing requirements.** Retain and extend the v13 anti-fabrication guards (no placeholder domains, no
 provenance keys without verification). Add: every `paperIds` entry resolves; every grade has a profile
@@ -558,12 +560,13 @@ verified. Mutation-check each guard.
 **Security requirements.** No new attack surface expected. Any ingestion tooling must be build-time and
 offline — never a runtime fetch reachable from a request path.
 
-**Exit criteria (measurable)**
-- [ ] 27/27 effects have an `evidenceProfile`; a grade without one fails the build.
-- [ ] 100% of citations carry a verified DOI/PMID; guards fail red on a planted unverified citation.
-- [ ] Content source of truth is non-TypeScript; codegen output byte-identical for the pre-migration corpus.
-- [ ] Every surface that can show partial coverage states its coverage limit; test-verified.
-- [ ] A content correction can be reviewed and shipped without hand-editing `src/`.
+**Exit criteria (measurable)** — *ticked 2026-09-25 at the Phase 3 closeout (e4), each against the register's `[P3-Xn]` row, re-run at HEAD in the report §3, and re-derived independently by the Check (§3 of the review)*
+- [x] 27/27 effects have an `evidenceProfile`; a grade without one fails the build. — *`[P3-X1]`: 27/27 profiled, allowlist empty, G4c red on a removed profile. "Fails the build" means CI's vitest step; the type still marks the profile optional (FU-63).*
+- [x] 100% of citations carry a verified DOI/PMID; guards fail red on a planted unverified citation. — *`[P3-X2]`: 37/37 cited papers, each bound to its committed resolver response (P8, closeout (e1)); P3/P7/P8 red-proved; all 37 re-resolved live at closeout (d), with 0 drift and 0 retractions. 100% of what is cited is verified; 2 effects and 26 of 135 dimensions cite nothing, by owner ruling.*
+- [x] Content source of truth is non-TypeScript; codegen output byte-identical for the pre-migration corpus. — *`[P3-X3]`: U1 `f06be39`/`93e8e30`, U2 `0bbbf0a` (byte- and value-identical at migration); `CONTENT_FIDELITY` holds at HEAD.*
+- [x] Every surface that can show partial coverage states its coverage limit; test-verified. — *`[P3-X4]`: U7, `CoverageLimit.test.tsx` (filesystem-derived completeness). The products remainder is FU-59, owned for Phase 4.*
+- [x] A content correction can be reviewed and shipped without hand-editing `src/`. — *`[P3-X5]`: `e653b91` plus `CONTENT_EDIT_PROPAGATES`.*
+  > **[2026-09-25, Check finding P3-11] Caveat, as worded above:** this holds only for corrections that **add, remove or rename no id**. Such a change needs a hand edit to `src/data/id-manifest.json` by policy; Phase 3 hand-added 18 paper ids there. Amending this criterion's wording is the owner's decision; the caveat is recorded here in its place.
 
 ---
 

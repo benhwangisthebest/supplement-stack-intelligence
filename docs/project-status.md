@@ -136,7 +136,20 @@ The real risks are different and sharper:
 
 Key — **P** = production-suitable · **B** = bounded refactor required · **X** = prototype-only.
 
-### 2.1 Knowledge base / evidence content — **X**
+### 2.1 Knowledge base / evidence content — **X** *(reclassification PROPOSED at the Phase 3 closeout: see the end of this section)*
+
+> **[2026-09-25, Phase 3 closeout (e4); Check finding P3-2] Re-derived at HEAD by command.** The bullets below the rule are the 2026-07-30 assessment, kept per `CLAUDE.md` §7.
+> - **Implementation:** 15 supplements · 27 effects · **38 papers** · 20 interaction rules · 10 food pairings · 13 biomarkers · 15 biomarker-relevance rules · 12 side-effect entries · 21 products. The count is each `content/seed/*.json` array's length, as the arrays are authored. **The source of truth is JSON in `content/seed/`**: 9 files, rendered byte-for-byte into the committed `src/data/SEED_*` modules by `npm run content:generate` and bound by `CONTENT_FIDELITY`.
+> - **Grades:** **27 of 27** effects carry an `evidenceProfile`, and every grade is **derived** from it (G4b; allowlist empty). The distribution is **A 4 · B 9 · C 8 · D 6** (at the base `c4460c7`: A 8 · B 9 · C 10), and confidence follows grade exactly (G5). Every profile was drafted only from verified abstracts, and the owner approved each batch (U4 R1). studyQuality follows the written convention **R17** (applied after the fact).
+> - **Citations:** **37 of 37** cited papers carry a PMID or DOI, each bound to its **committed resolver response** (P8, closeout (e1)) and re-resolved live at the closeout (d): 0 drift, 0 retractions. Uncited by ruling: 2 effects (`nac-antioxidant`, `protein-powder-recovery`) and 26 of 135 dimensions, all scored 0 (R5).
+> - **Tests:** G1–G8, P1–P8, `CONTENT_FIDELITY` / `CONTENT_EDIT_PROPAGATES`, the R10 and R17 pins, and `CoverageLimit.test.tsx`. ~~No test can assert a grade is correct~~: a grade now has a derivation to be tested against, and **what a test still cannot assert is that a rationale is true of its abstract**. The owner's batch review and the phase Check covered that.
+> - **Persistence:** unchanged. Content ships in the code bundle (seed-as-code, §5), and a correction is JSON → `content:generate` → deploy (`[P3-X5]`, no id change).
+> - **Residuals, all owned for Phase 4:** FU-61 and FU-71 (rubric), FU-62 (sourcing), FU-63 (type), FU-68 (fish-oil name vs surrogate outcome), FU-72 (live re-verification between closeouts), FU-57 (uncited row tombstone), FU-59 (products coverage).
+>
+> **PROPOSED classification (pending the owner's go at the phase-closed declaration): X → P.** *Every grade is derived from a profile scored only from verified abstracts (27/27), and every citation is bound to a committed resolver response (37/37): no bypass without committing a forged resolver response, which review and the closeout re-verification each catch. Residuals FU-61, FU-62, FU-68 and FU-71 are rubric and content work, owned for Phase 4.*
+
+---
+
 - **Implementation:** 15 supplements, 27 effects, 20 papers, plus interactions/food-pairings/
   biomarkers/side-effects/products as static TypeScript arrays in `src/data/*.ts`.
 - **Works:** integrity tests validate internal referential consistency; Zod seed validation runs.
@@ -567,7 +580,7 @@ content/process issues:
 
 ## 7. Known risks, ranked
 
-1. **Evidence grades are ungrounded** (19/27 hand-typed) in a product whose Library is the declared trust layer.
+1. ~~**Evidence grades are ungrounded** (19/27 hand-typed) in a product whose Library is the declared trust layer.~~ **[2026-09-25, Phase 3 closeout (e4); Check finding P3-2]** **Grounded:** 27/27 derived from verified-abstract profiles, and 37/37 citations bound to committed resolver responses. **The residual risk is narrower and named:** the rubric can still grade a well-studied null effect B (FU-61), R17's size clause relies on authors' flags (FU-71), one Grade A rests on a surrogate outcome (FU-68), and the offline check cannot tell a forged committed response from a real one between closeouts (FU-72).
 2. ~~**Single-machine loss risk**~~ — **[2026-08-02] closed.** All guardrails are committed and pushed.
 3. ~~**`main` is a stale two-commit MVP**~~ — **[2026-08-02] closed.** `main` is the working tip.
 4. **Partial observability** — **[2026-08-02]** unexpected API errors are now logged with a correlation

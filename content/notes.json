@@ -4,6 +4,6 @@
     "anchorId": "gly-pure-powder",
     "note": "// ---- Glycine (target 3 g) ----",
     "origin": "b5aaab8:src/data/seed-products.ts:163, removed from the array by Phase 3 U1 landing (a)",
-    "status": "FU-49: NOT HELD by seed data. The note says 3 g; seed-supplements glycine generalDose is 3-5 g. Kept here, never emitted. Which dose is right is NOT decided by U2 (owner: U4/U6)."
+    "status": "FU-49: NOT HELD by seed data. The note says 3 g; seed-supplements glycine generalDose is 3-5 g. Kept here, never emitted. Which dose is right is NOT decided by U2 (owner: ~~U4/U6~~ FU-62, Phase 4 — moved at the Phase 3 closeout (e4); U4 and U6 closed without resolving it)."
   }
 ]

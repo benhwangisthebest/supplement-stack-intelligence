@@ -541,3 +541,14 @@ relies on the authors' flag; an objective threshold is proposed; Phase 4, groupe
 scheduled live re-verification between closeouts; Phase 4.
 
 **Gate (e2b):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / **1562** (+2) · jsdom 24 / 130 · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 67 paths clean, with the control detected. **Gate (e3):** as for (e2), with DOC_TRUTH 22/22.
+
+---
+
+## 12. Remediation (e4): P3-1…P3-4, P3-11, docs
+
+- **Roadmap:** the Phase 3 status line and section (all 11 units DONE; the Check is COMPLETE WITH FOLLOW-UP; the declaration is pending the owner). The five exit boxes are ticked, each pointing at its evidence. A dated note gives item 5's seam half as UNMET → FU-65 (P3-1). A dated note corrects the migration table to `advisor_messages.citations[].refId`, and the X5 caveat is written into the criterion's place (P3-11).
+- **Register:** `[P3-X6]` is ticked (met trivially; the tombstone obligation moves to FU-57) and `[P3-X7]` is ticked with per-guard pointers (P3-3). There are §7 rows for FU-61, FU-62 and FU-63; owners and phases for FU-57, FU-58, FU-59 (products), FU-60 and FU-66; FU-49's glycine residue → FU-62, and `content/notes.json` now says so; criteria parity → Phase 4 with N-85 (P3-4).
+- **`project-status.md`:** §2.1's figures were re-derived by command, and the old text is kept below. Risk #1 is restated. **The classification X → P is PROPOSED, not applied:** it is applied at the phase-closed declaration on the owner's go (P3-2).
+- **Report:** the deferral table gains FU-68, FU-71 and FU-72, and the FU-62 and criteria-parity rows are updated.
+
+**Gate (e4):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / 1562 · jsdom 24 / 130 · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 70 paths clean, with the control detected.

@@ -244,6 +244,8 @@ format only) · FU-51 (U0) · FU-52 (U8) · FU-53, FU-54 (U2) · FU-55 (U3) · F
 **Opened in Phase 3 and still open:** FU-50, FU-57, FU-58, FU-59 (products), FU-60, FU-61, FU-62, FU-63,
 FU-65, FU-66, N-85.
 
+**[2026-09-25, closeout (e4)]** After the Check (P3-4), FU-61, FU-62 and FU-63 got §7 rows, and FU-57, FU-58, FU-59 (products), FU-60 and FU-66 got owners and phases. `[P3-X6]` and `[P3-X7]` are ticked in the register. FU-68…FU-72 were opened or closed by the remediations (FU-69 and FU-70 closed at (e2)).
+
 **Two register gaps found while compiling this report:**
 - **FU-50 has no §7 row.** It is open, and it appears only in U0's status line and U0's artifact
   (`p3-u0-component-harness.plan.md:154`). That is the *"promise is not a record"* shape Phase 2 named. It
@@ -270,8 +272,11 @@ repository owner*, since every schedule in this project is set by that person.
 |---|---|---|---|
 | **N-85** | DOC_TRUTH blind to rule-7 enforcement; rejects `describe`-title guard names | repository owner (ruled) | **Phase 4** (ruled 2026-09-24) |
 | **N-50** | the uniform-404 product question | repository owner | **Phase 4** (roadmap item 0) |
-| **FU-61** | a well-studied null effect can reach Grade B (rubric weights) | a rubric-owner unit | Phase 4 (assigned at closeout; register: *post-Phase 3*) |
-| **FU-62** | sourcing pass for glycine-sleep and zinc-deficiency | a live sourcing unit | Phase 4 (assigned at closeout; register: *post-Phase 3*) |
+| **FU-61** | a well-studied null effect can reach Grade B (rubric weights) | a rubric-owner unit | Phase 4 (assigned at closeout; register: *post-Phase 3*); **§7 row added at (e4)** |
+| **FU-71** | R17's size clause relies on the authors flagging small samples; consider an objective threshold | a rubric-owner unit, with FU-61 | **Phase 4 (ruled 2026-09-25)** |
+| **FU-68** | fish-oil-cardiovascular is named *"Cardiovascular support"* at A on a triglyceride surrogate | repository owner | **Phase 4 (ruled 2026-09-25)** |
+| **FU-72** | a scheduled live re-verification of the fixture between phase closeouts (the E1-R2b window) | repository owner | **Phase 4 (ruled 2026-09-25)** |
+| **FU-62** | sourcing pass for glycine-sleep and zinc-deficiency; **also FU-49's glycine-dose residue (moved at (e4))** | a live sourcing unit | Phase 4 (assigned at closeout; register: *post-Phase 3*); **§7 row added at (e4)** |
 | **FU-63** | make `evidenceProfile` required; remove the no-profile branch | repository owner | Phase 4 (assigned at closeout; register: *post-U4*) |
 | **FU-65** | `getBiomarker` seam, waiting on a real caller | the unit that writes the first caller | Phase 4 (assigned at closeout; trigger-bound) |
 | **FU-66** | build-time Google Fonts fetch: keep, or self-host | repository owner | Phase 4 (assigned at closeout) |
@@ -297,7 +302,7 @@ repository owner*, since every schedule in this project is set by that person.
 | **OP-5** | three UNKNOWN provider-account facts | repository owner | before any deployment with user traffic (§8) |
 | `CLAUDE.md` §4 **rule 8** (trust boundaries) | no mechanical form exists | repository owner | standing |
 | `replaceFlags` residue (unnumbered) | three round trips, no transaction | repository owner | condition-bound: the next second writer to `evaluation_flags` |
-| **Criteria parity** (P-08, unnumbered) | `[P3-Xn]` absent from the roadmap; nothing binds X1–X5 | repository owner | Phase 4 (assigned at closeout) |
+| **Criteria parity** (P-08, unnumbered) | `[P3-Xn]` absent from the roadmap; nothing binds X1–X5 | repository owner | **Phase 4, grouped with N-85 (ruled 2026-09-25)** |
 | **`[P3-X5]` wording** (P-07) | false for id add/remove/rename as the roadmap words it | repository owner | amendment is the owner's; with the roadmap Phase 3 status edit |
 | **Roadmap item 5, seam half** | UNMET (U8 R1) | see FU-65 | see FU-65 |
 
