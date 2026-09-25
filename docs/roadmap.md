@@ -42,7 +42,7 @@ by ruling and was **measured X** on the sink alone; both readings are recorded i
 ~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ ~~**[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.**~~ **[2026-09-25] Phase 3 — COMPLETE WITH FOLLOW-UP** (declared on the owner's go, 2026-09-25). All eleven units (U0–U10) are DONE. The independent closeout Check returned COMPLETE WITH FOLLOW-UP (P3-1…P3-11); its remediations have landed, and a delta check found 7 ADDRESSED, 4 CARRIED-WITH-OWNER and 0 NOT ADDRESSED. Every carried item has an owner, for Phase 4 (report §10). See the Phase 3 section for the full status. ~~**Phase 4 — not started.**~~ **[2026-09-25] Phase 4 — IN PROGRESS:** plan `docs/01-plan/phase-4-product-completion.plan.md` **APPROVED** with owner rulings D-1…D-16; no unit executed.
 
 **Two Phase 2 items were already delivered out of order** and the plan marks them so rather than
-scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` +
+scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` (**[2026-09-25, Phase 4 U3]** moved to `content/id-manifest.json`) +
 `src/data/id-stability.test.ts`, delivered by Phase 0 U8 — its exit criterion is already met) and the
 `execute.ts` rollback-failure correlation-ID log named inside item 1's text (delivered by Phase 1 U20,
 `d08885c`). Items 1 and 2 are additionally **part-delivered**: correlation-ID logging exists but without
@@ -446,7 +446,7 @@ the dev seed script.
       > an induced insert failure* — is what is proved.
 - [x] **[P2-X6]** ID manifest exists; removing a published ID fails CI.
       > **[2026-09-22] TICKED AT THE PHASE 2 CLOSEOUT — met before this phase opened, by Phase 0 U8.**
-      > `src/data/id-manifest.json` (**328 lines**) is read from disk by `src/data/id-stability.test.ts`
+      > `src/data/id-manifest.json` (**[2026-09-25, Phase 4 U3]** moved to `content/id-manifest.json` by a pure rename) (**328 lines**) is read from disk by `src/data/id-stability.test.ts`
       > as an **independent checked-in ledger**, never derived from the arrays it validates; U20 closed the
       > header's false "eight namespaces" by **removing** the count (FU-32). This document's own
       > lines 35–37 have recorded the out-of-order delivery since 2026-08-08 — *"its exit criterion is
@@ -558,7 +558,7 @@ IDs change, and CI must be enforcing guards before large content diffs land.
 provably output-identical: codegen must emit byte-identical constants for the current corpus *before* any
 content changes land on top of it. Any ID change requires a tombstone plus a data migration for existing
 `stack_items`.
-> **[2026-09-25, Phase 3 closeout (e4); Check finding P3-11] The table named above is wrong for the ids this phase touches.** `src/data/id-manifest.json` places paper and effect ids at **`advisor_messages.citations[].refId`** (`kind='paper'` / `kind='effect-grade'`, migration 0003), not at `stack_items`. ~~Only supplement ids persist in `stack_items`.~~ **[2026-09-25, delta-check item D-1]** Supplement **and product** ids persist in `stack_items` (`stack_items.product_id`, migration 0004, per `id-manifest.json`). The phase register (§2, §4 U6) worked to the correct table. Phase 3 retired or renamed no id, so no migration was needed (`[P3-X6]`).
+> **[2026-09-25, Phase 3 closeout (e4); Check finding P3-11] The table named above is wrong for the ids this phase touches.** `src/data/id-manifest.json` (**[2026-09-25, Phase 4 U3]** moved to `content/id-manifest.json`) places paper and effect ids at **`advisor_messages.citations[].refId`** (`kind='paper'` / `kind='effect-grade'`, migration 0003), not at `stack_items`. ~~Only supplement ids persist in `stack_items`.~~ **[2026-09-25, delta-check item D-1]** Supplement **and product** ids persist in `stack_items` (`stack_items.product_id`, migration 0004, per `id-manifest.json`). The phase register (§2, §4 U6) worked to the correct table. Phase 3 retired or renamed no id, so no migration was needed (`[P3-X6]`).
 
 **Testing requirements.** Retain and extend the v13 anti-fabrication guards (no placeholder domains, no
 provenance keys without verification). Add: every `paperIds` entry resolves; every grade has a profile
@@ -574,7 +574,7 @@ offline — never a runtime fetch reachable from a request path.
 - [x] Content source of truth is non-TypeScript; codegen output byte-identical for the pre-migration corpus. — *`[P3-X3]`: U1 `f06be39`/`93e8e30`, U2 `0bbbf0a` (byte- and value-identical at migration); `CONTENT_FIDELITY` holds at HEAD.*
 - [x] Every surface that can show partial coverage states its coverage limit; test-verified. — *`[P3-X4]`: U7, `CoverageLimit.test.tsx` (filesystem-derived completeness). The products remainder is FU-59, owned for Phase 4.*
 - [x] A content correction can be reviewed and shipped without hand-editing `src/`. — *`[P3-X5]`: `e653b91` plus `CONTENT_EDIT_PROPAGATES`.*
-  > **[2026-09-25, Check finding P3-11] Caveat, as worded above:** this holds only for corrections that **add, remove or rename no id**. Such a change needs a hand edit to `src/data/id-manifest.json` by policy; Phase 3 hand-added 18 paper ids there. Amending this criterion's wording is the owner's decision; the caveat is recorded here in its place. **[2026-09-25, owner ruling at P3-11; delta-check item D-3] Decided: the wording is kept, and the no-id-change caveat is recorded instead of an amendment.**
+  > **[2026-09-25, Check finding P3-11] Caveat, as worded above:** this holds only for corrections that **add, remove or rename no id**. Such a change needs a hand edit to `src/data/id-manifest.json` by policy; Phase 3 hand-added 18 paper ids there. **[2026-09-25, Phase 4 U3]** moved to `content/id-manifest.json`; an id-*adding* correction now touches only `content/` and GENERATED modules, proven by `ID_CORRECTION_DIFF` (`src/architecture/canonical-layout.test.ts`). A removal or rename still needs a tombstone and a data migration (rule 16), which U3 did not test. Amending this criterion's wording is the owner's decision; the caveat is recorded here in its place. **[2026-09-25, owner ruling at P3-11; delta-check item D-3] Decided: the wording is kept, and the no-id-change caveat is recorded instead of an amendment.**
 
 ---
 

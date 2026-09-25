@@ -498,7 +498,7 @@ than left to the table's single letter.**
 
 | Row | Was | Now | Why |
 |---|---|---|---|
-| **Content delivery (authoring format)** | X | **B** | Authored as JSON with byte-identical codegen, guarded by CONTENT_FIDELITY; a correction that adds or renames an id still requires a hand edit to src/data/id-manifest.json ([P3-X5] caveat), so the format is not yet fully src-free. **Registered as a Phase 4 candidate:** move the id manifest out of `src/` so that an id-adding correction is src-free. The Phase 4 plan's §3 dispositions it. |
+| **Content delivery (authoring format)** | X | **B** | Authored as JSON with byte-identical codegen, guarded by CONTENT_FIDELITY; a correction that adds or renames an id still requires a hand edit to src/data/id-manifest.json ([P3-X5] caveat) (**[2026-09-25, Phase 4 U3]** moved to `content/id-manifest.json`; an id-*adding* correction now touches only `content/` and GENERATED modules, proven by `ID_CORRECTION_DIFF` (`src/architecture/canonical-layout.test.ts`). A removal or rename still needs a tombstone and a data migration (rule 16), which U3 did not test), so the format is not yet fully src-free. **Registered as a Phase 4 candidate:** move the id manifest out of `src/` so that an id-adding correction is src-free. The Phase 4 plan's §3 dispositions it. |
 
 **Why the reasons are dated and the letters are not.** A classification letter with no date is the
 counts-written-once class (**FU-32**) wearing a single character: it was true when written and says nothing

@@ -32,7 +32,7 @@
 // asserted non-empty, and is pinned. A test that compares zero files cannot pass.
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { emitModule } from "../../content/emit.mjs";
@@ -125,6 +125,94 @@ describe(`CONTENT_FIDELITY — ${rendered.length} generated modules compared byt
       ).toBe(true);
     },
   );
+});
+
+// ID_CORRECTION_DIFF — [P4-X8], Phase 4 U3 (D-13 (a); owner ruling R-1, 2026-09-25).
+// Cycle record: docs/01-plan/features/p4-u3-manifest-move.plan.md.
+//
+// A content correction that ADDS an id ships without a hand edit under src/. Its
+// name-only diff may touch content/** (the seed JSON and the id ledger,
+// content/id-manifest.json) plus src/ files whose line 1 is the GENERATED header,
+// and nothing else under src/. The header is only a claim; CONTENT_FIDELITY above
+// is what proves each headed file is generator output, so the headed set must
+// equal the set CONTENT_FIDELITY renders. A hand-written file that borrows the
+// header therefore fails here rather than escaping.
+//
+// Before U3 the ledger was src/data/id-manifest.json, so every id-adding
+// correction hand-edited src/ (the [P3-X5] caveat).
+
+const GENERATED_HEADER = /^\/\/ GENERATED from content\/seed\//;
+
+/** Tracked src/ files whose first line is the GENERATED header. */
+function generatedSrcFiles(): string[] {
+  const out = execFileSync("git", ["ls-files", "-z", "src"], { cwd: ROOT, encoding: "utf8" });
+  return out
+    .split("\0")
+    .filter((f) => f !== "" && existsSync(path.join(ROOT, f)))
+    .filter((f) => GENERATED_HEADER.test(readFileSync(path.join(ROOT, f), "utf8").split("\n", 1)[0]))
+    .sort();
+}
+
+/** Paths in a name-only diff that an id-adding correction may not touch. */
+function handEditedPaths(names: readonly string[], generated: ReadonlySet<string>): string[] {
+  return names.filter((f) => !f.startsWith("content/") && !generated.has(f));
+}
+
+describe("ID_CORRECTION_DIFF — an id-adding correction touches content/ and GENERATED src/ files only ([P4-X8])", () => {
+  const generated = generatedSrcFiles();
+  const allowed = new Set(generated);
+
+  it("the GENERATED-header set is exactly the set CONTENT_FIDELITY renders, never zero", () => {
+    expect(generated).toHaveLength(EXPECTED_MODULES);
+    expect(generated).toEqual(rendered.map((r) => r.target).sort());
+  });
+
+  it("the id ledger lives under content/, not src/", () => {
+    expect(existsSync(path.join(ROOT, "content/id-manifest.json"))).toBe(true);
+    expect(existsSync(path.join(ROOT, "src/data/id-manifest.json"))).toBe(false);
+  });
+
+  it("an in-memory id-adding correction produces a diff with no hand-edited src/ path", () => {
+    // Drive the real emitter: append one paper (a clone under a new id) to the
+    // authored JSON and to the ledger, and list every file whose bytes would change.
+    const specs = JSON.parse(readFileSync(path.join(ROOT, "content/modules.json"), "utf8")) as {
+      module: string;
+      exportName: string;
+      typeName: string;
+      preamble: string[];
+    }[];
+    const papers = JSON.parse(readFileSync(path.join(ROOT, "content/seed/seed-papers.json"), "utf8")) as {
+      id: string;
+    }[];
+    const added = { ...papers[0], id: "u3-probe-added-paper" };
+    const changed = ["content/seed/seed-papers.json", "content/id-manifest.json"];
+    for (const s of specs) {
+      const authored: unknown[] = JSON.parse(readFileSync(path.join(ROOT, "content/seed", `${s.module}.json`), "utf8"));
+      const value = s.module === "seed-papers" ? [...authored, added] : authored;
+      const text = emitModule({ preamble: s.preamble.join("\n"), exportName: s.exportName, typeName: s.typeName }, value);
+      const target = `src/data/${s.module}.ts`;
+      if (!Buffer.from(text, "utf8").equals(readFileSync(path.join(ROOT, target)))) changed.push(target);
+    }
+    // Non-vacuous: the correction does reach src/, through the generated module only.
+    expect(changed.filter((f) => f.startsWith("src/"))).toEqual(["src/data/seed-papers.ts"]);
+    expect(handEditedPaths(changed, allowed)).toEqual([]);
+  });
+
+  it("red on a planted diff that also hand-edits the id test or names the old ledger path", () => {
+    const planted = [
+      "content/seed/seed-papers.json",
+      "content/id-manifest.json",
+      "src/data/seed-papers.ts",
+      "src/data/id-stability.test.ts",
+      "src/data/id-manifest.json",
+    ];
+    expect(handEditedPaths(planted, allowed)).toEqual(["src/data/id-stability.test.ts", "src/data/id-manifest.json"]);
+  });
+
+  it("red on a planted diff with any other non-GENERATED src/ path", () => {
+    const planted = ["content/seed/seed-effects.json", "src/data/seed-effects.ts", "src/lib/evidence/index.ts"];
+    expect(handEditedPaths(planted, allowed)).toEqual(["src/lib/evidence/index.ts"]);
+  });
 });
 
 // FU-49 — editorial notes live in content/notes.json, a sidecar the generator

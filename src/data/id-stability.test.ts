@@ -2,7 +2,7 @@
 // Spec: docs/01-plan/phase-0-integration-enforcement.plan.md (U8)
 // Contract: CLAUDE.md §2.16 — reference-data IDs are an append-only PUBLIC contract.
 //
-// Why this exists: every namespace registered in `id-manifest.json` holds ids
+// Why this exists: every namespace registered in `content/id-manifest.json` holds ids
 // that reach a contract the type system cannot see — most are persisted in user
 // rows with NO foreign key. Postgres cannot refuse a rename, and `tsc` cannot see one — a
 // seed ID is a string literal, and the columns holding it are plain `text` (or
@@ -11,7 +11,7 @@
 //
 // Why the baseline is a JSON file and not a computed set: a test that derives
 // its expectation from the same array it validates cannot detect a rename — the
-// expectation renames with it. `id-manifest.json` is read from disk as an
+// expectation renames with it. `content/id-manifest.json` is read from disk as an
 // INDEPENDENT, checked-in ledger, so drift becomes a reviewable diff.
 //
 // Deliberately NOT enforced here: display labels, free text (notes, reasons,
@@ -65,7 +65,10 @@ interface Manifest {
   namespaces: Record<string, Namespace>;
 }
 
-const MANIFEST_PATH = path.join(__dirname, "id-manifest.json");
+// Phase 4 U3 (D-13 (a)): the ledger lives in content/, beside the JSON it governs, so an
+// id-adding correction touches no hand-written file under src/ (ID_CORRECTION_DIFF in
+// src/architecture/canonical-layout.test.ts). It moved by a pure rename; its bytes are unchanged.
+const MANIFEST_PATH = path.resolve(__dirname, "../../content/id-manifest.json");
 const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as Manifest;
 
 // -------------------------------------------------------------- live datasets --
@@ -189,6 +192,23 @@ describe("U8 — reference-data ID manifest integrity", () => {
     }
     expect(offenders).toEqual([]);
   });
+
+  it("N-47: declares the schema version this file's Namespace shape describes", () => {
+    // `version` is a human-facing schema number: U20 moved it 1 -> 2 when every
+    // namespace gained `publicSurfaces`. Pinned, so a shape change bumps it here
+    // and in the ledger together. No policy reads it.
+    expect(manifest.version, "content/id-manifest.json `version` changed: update this pin with the shape").toBe(2);
+  });
+
+  it("N-47: every namespace declares `dereferenced` as a boolean", () => {
+    // Whether live code resolves the stored id back to a record or a link
+    // (`dereferencedBy` says how). No policy reads it: the tombstone rule binds
+    // every namespace alike, `false` ones included.
+    const bad = Object.entries(manifest.namespaces)
+      .filter(([, ns]) => typeof (ns as Partial<Namespace>).dereferenced !== "boolean")
+      .map(([name]) => name);
+    expect(bad, `namespaces without a boolean \`dereferenced\`: ${bad.join(", ")}`).toEqual([]);
+  });
 });
 
 describe("U8 — canonical IDs are unique within each dataset", () => {
@@ -207,7 +227,7 @@ describe("U8 — persisted IDs cannot disappear silently", () => {
   for (const name of liveNames) {
     it(`${name}: every manifest id still resolves in live seed data`, () => {
       const ns = manifest.namespaces[name];
-      if (!ns) throw new Error(`namespace "${name}" is missing from id-manifest.json`);
+      if (!ns) throw new Error(`namespace "${name}" is missing from content/id-manifest.json`);
       const live = new Set(LIVE[name]);
 
       const missing = ns.ids.filter((id) => !live.has(id));
@@ -227,7 +247,7 @@ describe("U8 — persisted IDs cannot disappear silently", () => {
         missing,
         `${name}: ${missing.length} registered id(s) vanished from live data: ${missing.join(", ")}. ` +
           `This ${breaks.join("; and ")}. ` +
-          `If intentional, move each id into "tombstones" in src/data/id-manifest.json with a ` +
+          `If intentional, move each id into "tombstones" in content/id-manifest.json with a ` +
           `migration note — and set "supersededBy" if this is a RENAME, not a deletion.`,
       ).toEqual([]);
     });
@@ -238,14 +258,14 @@ describe("U8 — no unregistered canonical ID", () => {
   for (const name of liveNames) {
     it(`${name}: every live id is registered in the manifest`, () => {
       const ns = manifest.namespaces[name];
-      if (!ns) throw new Error(`namespace "${name}" is missing from id-manifest.json`);
+      if (!ns) throw new Error(`namespace "${name}" is missing from content/id-manifest.json`);
       const registered = new Set(ns.ids);
 
       const unregistered = LIVE[name].filter((id) => !registered.has(id));
       expect(
         unregistered,
         `${name}: ${unregistered.length} unregistered id(s): ${unregistered.join(", ")}. ` +
-          `Append each to namespaces.${name}.ids in src/data/id-manifest.json. ` +
+          `Append each to namespaces.${name}.ids in content/id-manifest.json. ` +
           `If one replaces a removed id, tombstone the old id with "supersededBy" instead.`,
       ).toEqual([]);
     });
