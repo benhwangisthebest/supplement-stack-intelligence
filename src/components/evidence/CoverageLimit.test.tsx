@@ -339,12 +339,16 @@ const RENDER_CASES: Record<string, { name: string; run: () => void | Promise<voi
       },
     },
     {
-      name: "D1: glycine-sleep (one verified, title-only paper) is D1, not D2",
+      // Phase 3 closeout (e2), owner ruling on Check finding P3-7: D1/D2 follows R6.
+      // glycine-sleep's only cited paper is title-only, so it is D2, which agrees with
+      // its own summary ("No verified evidence in this library"). It was D1 until now.
+      name: "D2: glycine-sleep (its only cited paper is title-only, R6) — card and breakdown header",
       run: () => {
         renderSeedEffects("glycine");
         const d = gradeDStatements("glycine-sleep");
-        expect(d.card).toEqual([COVERAGE.gradeDLimited.text]);
-        expect(d.card).not.toContain(COVERAGE.gradeDUncited.text);
+        expect(d.card).toEqual([COVERAGE.gradeDUncited.text]);
+        expect(d.breakdown).toEqual([COVERAGE.gradeDUncited.text]);
+        expect(d.card).not.toContain(COVERAGE.gradeDLimited.text);
       },
     },
     {

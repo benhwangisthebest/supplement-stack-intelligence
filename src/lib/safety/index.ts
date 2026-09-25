@@ -2,6 +2,8 @@
 // Design Ref: §1.1, §10.4 — centralize phrasing so no diagnostic language leaks into the UI.
 // Plan SC: "no diagnostic claims" — all evaluator strings flow through here.
 
+import type { Paper } from "@/types";
+
 export interface FlagCopy {
   title: string;
   explanation: string;
@@ -121,18 +123,52 @@ export const COVERAGE = {
 } as const satisfies Record<string, CoverageCopy>;
 
 /**
- * U7 (b2) — the Grade D statement for an effect, or null when the grade is not D.
- * D1 (`gradeDLimited`) when the effect cites at least one paper; D2
- * (`gradeDUncited`) when it cites none. Decided by the EFFECT's `paperIds`, not
- * its dimensions' (owner, 2026-09-24): glycine-sleep cites one verified,
- * title-only paper, so it is D1, and "no verified evidence" would be false there.
+ * U4 ruling R6 (owner, 2026-09-23): a title-only paper supports nothing. A paper is
+ * title-only when no abstract was captured for it, so every card field reads this
+ * literal (U6 (c): card fields come only from the abstract).
  */
-export function gradeDCoverage(effect: {
-  grade: string;
-  paperIds: readonly string[];
-}): CoverageCopy | null {
+export const NOT_IN_ABSTRACT = "Not reported in abstract";
+const CARD_FIELDS = ["population", "intervention", "dose", "duration", "outcomes", "limitations", "summary"] as const;
+
+export function isTitleOnly(paper: Pick<Paper, (typeof CARD_FIELDS)[number]>): boolean {
+  return CARD_FIELDS.every((f) => paper[f] === NOT_IN_ABSTRACT);
+}
+
+/**
+ * Does the effect cite at least one paper that can support it (R6)? A cited id
+ * missing from `papers` counts as supporting, so an incomplete list can never
+ * turn a cited effect into "no verified evidence"; callers pass the effect's own
+ * papers (`getPapersForEffect`) or a superset.
+ */
+export function hasSupportingPaper(
+  effect: { paperIds: readonly string[] },
+  papers: readonly Paper[],
+): boolean {
+  const byId = new Map(papers.map((p) => [p.id, p]));
+  return effect.paperIds.some((id) => {
+    const p = byId.get(id);
+    return p === undefined || !isTitleOnly(p);
+  });
+}
+
+/**
+ * U7 (b2) — the Grade D statement for an effect, or null when the grade is not D.
+ * D1 (`gradeDLimited`) when the effect cites at least one paper that can support
+ * it; D2 (`gradeDUncited`) otherwise. Decided by the EFFECT's `paperIds`, not its
+ * dimensions' (owner, 2026-09-24).
+ * Phase 3 closeout (e2), owner ruling on Check finding P3-7 (2026-09-25): D1/D2
+ * follows R6, so an effect whose cited papers are ALL title-only is D2. That is
+ * glycine-sleep, whose summary already says "No verified evidence in this library";
+ * D1 beside it contradicted it. ~~glycine-sleep cites one verified, title-only paper,
+ * so it is D1, and "no verified evidence" would be false there.~~ (Superseded: R6
+ * already said that paper supports nothing.)
+ */
+export function gradeDCoverage(
+  effect: { grade: string; paperIds: readonly string[] },
+  papers: readonly Paper[],
+): CoverageCopy | null {
   if (effect.grade !== "D") return null;
-  return effect.paperIds.length > 0 ? COVERAGE.gradeDLimited : COVERAGE.gradeDUncited;
+  return hasSupportingPaper(effect, papers) ? COVERAGE.gradeDLimited : COVERAGE.gradeDUncited;
 }
 
 /**

@@ -40,7 +40,8 @@
       "import type { Effect } from \"@/types\";",
       "",
       "// Design §3.1, §8.5 — effect-level grades (>=25 effects, >=1 per supplement).",
-      "// Grades reflect curated sample data for the MVP, not a formal evidence review.",
+      "// Every grade is derived from its evidenceProfile (G4), scored only from verified abstracts",
+      "// (Phase 3 U4). The rubric is this project's own, not a formal systematic review.",
       ""
     ]
   },

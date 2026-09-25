@@ -434,3 +434,61 @@ committing a forged resolver response, which review and the next closeout re-ver
 The U6 dated record notes the date change and that no call was made.
 
 **Gate (e1):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / **1554** (+5, P8) · jsdom 24 / 130 · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 55 staged paths clean, with the control detected.
+
+---
+
+## 9. Remediation (e2): content and copy (P3-7, P3-8 in part, P3-9)
+
+**P3-7: D1/D2 now follows R6.** `src/lib/safety`:
+- `NOT_IN_ABSTRACT` names the literal every card field reads when no abstract was captured.
+- `isTitleOnly(paper)` is true when all seven card fields are unreported.
+- `hasSupportingPaper(effect, papers)` counts a cited id missing from the list as supporting, so an
+  incomplete list can never produce "no verified evidence".
+- `gradeDCoverage(effect, papers)` now requires the papers, so the compiler enumerated its callers:
+  `SupplementDetail`'s card and breakdown.
+- The advisor's `effectView` uses the same predicate.
+
+**glycine-sleep is now D2** on the card, in the breakdown header and in the advisor, which agrees with its
+own summary. The seed case that pinned D1 was re-derived, and there are new unit tests for both R6 cases
+plus the edges.
+
+```
+=== P37-M1 gradeDCoverage back to the old predicate (cites any paper → D1)
+   × gradeDCoverage — D1/D2 follows R6 (P3-7) > all cited papers title-only → D2
+   × coverage honesty — render (U7, [P3-X4]) > SupplementDetail — D2: glycine-sleep (…) — card and breakdown header
+      Tests  2 failed | 52 passed (54)
+=== P37-M2 isTitleOnly always false
+   × … isTitleOnly … · × … all cited papers title-only → D2 · × … an effect whose cited papers are all title-only carries it too · × … D2: glycine-sleep …
+      Tests  4 failed | 50 passed (54)
+=== P37-M3 advisor back to its old uncited-only predicate
+   × uncited effects carry the D2 sentence > getSupplement: an effect whose cited papers are all title-only carries it too
+      Tests  1 failed | 53 passed (54)
+=== restore        Tests  54 passed (54)
+```
+
+**P3-8, the parts that are done:**
+- `caffeine-training.relevantPopulation`: *"athletes, training adults"* → **"recreational and trained runners,
+  mostly men"**, taken from its one paper's abstract-derived population, *"254 recreational and trained
+  runners, mostly men"* (PMID 36615805). It went JSON → `content:generate`, and exactly 2 files changed:
+  the JSON and its generated module.
+- The fish-oil-cardiovascular name versus its triglyceride outcome is registered as **FU-68**, Phase 4.
+
+**P3-8, the part that is STOPPED: the studyQuality convention.** Codified as ruled (*"a randomised design with
+no reported risk-of-bias rating = studyQuality 2"*), it does not match two effects, measured with
+`deriveGrade` on a one-dimension variant:
+
+| Effect | Rationale | Scored | The convention says | Grade if conformed |
+|---|---|---|---|---|
+| creatine-strength (A) | *"Placebo-controlled studies; the abstract reports **no randomisation** or risk-of-bias detail."* | 2 | not covered (randomisation not reported) | **A → B** (0.7667 → 0.6833) if re-judged to 1 |
+| creatine-cognition (C) | *"Small randomised trials with no quality rating reported; the authors call for larger samples."* | 1 | 2 | C → C (0.4167 → 0.5000) |
+
+The convention covers 8 effects without conflict: fish-oil-cardiovascular, protein-powder-training,
+ashwagandha-sleep, berberine-metabolic, fish-oil-mood, l-theanine-focus, melatonin-sleep and
+magnesium-metabolic. **Recording it cannot honestly claim "no grade moves" while creatine-strength sits
+outside it**, and conforming either effect is a content change. Held for the owner.
+
+**P3-9:** the three stale comments are fixed (comments only). `seed-effects.ts`'s generated header goes
+through `content/modules.json`. `weights.ts:2` now states the derivation direction. `evidence-grading.ts:33`
+now points at FU-63. The two that were unregistered are **FU-69** and **FU-70**, both registered as closed.
+
+**Gate (e2):** tsc 0 · lint 415/415, 0 errors · vitest node 120 / **1560** (+6) · jsdom 24 / 130 · build 0 · rendering OK · bundle OK · E2E 70 passed / 30 skipped · 72 paths clean, with the control detected.

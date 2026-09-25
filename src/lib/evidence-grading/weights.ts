@@ -1,6 +1,7 @@
 // Domain — PURE. The grading rubric constants (Design §3.3). Tunable here only.
-// SAFETY/TRUST: thresholds are curated so the DERIVED grade reproduces curated
-// intent for every seeded profile (integrity-tested).
+// SAFETY/TRUST: every seed grade is DERIVED from its profile by these weights and
+// thresholds (G4, src/data/seed-integrity.test.ts). The letters follow the rubric,
+// not the reverse. Changing a weight or threshold is a grading change for every effect.
 import type { EvidenceDimension, DimensionRating } from "@/types/evidence-grading";
 import type { EvidenceGrade } from "@/types";
 

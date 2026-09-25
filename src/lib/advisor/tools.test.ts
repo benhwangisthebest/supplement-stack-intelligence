@@ -175,6 +175,17 @@ describe("uncited effects carry the D2 sentence", () => {
     expect(e.summary).toContain(d2);
   });
 
+  // Phase 3 closeout (e2), P3-7: glycine-sleep cites only a title-only paper (R6),
+  // so the model reads the D2 sentence for it, as the Library card now shows.
+  it("getSupplement: an effect whose cited papers are all title-only carries it too", () => {
+    const r = getSupplement.handler({ slug: "glycine" }, ctx);
+    const g = r.data!.effects.find((e) => e.effectId === "glycine-sleep")!;
+    expect(getEffectsForSupplement("glycine").find((e) => e.id === "glycine-sleep")!.paperIds).toEqual([
+      "p-glycine-sleep",
+    ]);
+    expect(g.summary).toContain(d2);
+  });
+
   // Copy table row 14, pinned verbatim (U7 follow-up, owner 2026-09-24): the seed
   // summary no longer repeats D2's sense, so the model reads each once.
   it("row 14: the uncited effect's full text, exactly", () => {

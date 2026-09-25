@@ -14,7 +14,7 @@ import { evaluateStack } from "@/lib/stack-evaluator";
 import { findInteractions } from "@/lib/interactions";
 import { assessLabMarkers } from "@/lib/biomarkers";
 import { computeTrends } from "@/lib/lab-trends";
-import { COVERAGE } from "@/lib/safety";
+import { COVERAGE, hasSupportingPaper } from "@/lib/safety";
 import { curatedWatchList } from "@/lib/side-effects";
 import { sideEffectLabel } from "@/lib/side-effects/vocab";
 import type { SideEffectFinding } from "@/types/side-effect";
@@ -76,8 +76,11 @@ function effectView(e: Effect): EffectView {
     // Phase 3 U7 (b2): an effect citing no paper reaches the model with the D2
     // sentence, so an absence of verified evidence is never restated as evidence of
     // no effect. Wording only: same fields, same citations.
-    summary:
-      e.paperIds.length === 0 ? `${e.summary} ${COVERAGE.gradeDUncited.text}` : e.summary,
+    // Phase 3 closeout (e2), P3-7: the same R6 predicate as the Library card, so an
+    // effect whose cited papers are all title-only (glycine-sleep) is D2 here too.
+    summary: hasSupportingPaper(e, getPapersForEffect(e))
+      ? e.summary
+      : `${e.summary} ${COVERAGE.gradeDUncited.text}`,
     relevantPopulation: e.relevantPopulation,
   };
 }

@@ -1361,7 +1361,7 @@
     "grade": "A",
     "confidence": "high",
     "summary": "Has evidence for improved endurance running performance, mainly time to exhaustion, in recreational and trained runners.",
-    "relevantPopulation": "athletes, training adults",
+    "relevantPopulation": "recreational and trained runners, mostly men",
     "studiedDose": {
       "min": 150,
       "max": 300,

@@ -175,13 +175,13 @@ function EffectsTab({ effects, papers }: { effects: Effect[]; papers: Paper[] })
           <p className="mt-2 text-sm text-body">{e.summary}</p>
           {/* Phase 3 U7 (b2): Grade D reads as limited or absent verified evidence,
               never as evidence of no effect (U4 closeout note 1). */}
-          {gradeDCoverage(e) && <CoverageLimit copy={gradeDCoverage(e)!} className="mt-2" />}
+          {gradeDCoverage(e, papers) && <CoverageLimit copy={gradeDCoverage(e, papers)!} className="mt-2" />}
           {/* evidence-grading v5: per-dimension breakdown for profiled effects only. */}
           {e.evidenceProfile && (
             <EvidenceBreakdown
               profile={e.evidenceProfile}
               papers={papers}
-              gradeNote={gradeDCoverage(e)}
+              gradeNote={gradeDCoverage(e, papers)}
             />
           )}
         </article>

@@ -2,7 +2,8 @@
 import type { Effect } from "@/types";
 
 // Design §3.1, §8.5 — effect-level grades (>=25 effects, >=1 per supplement).
-// Grades reflect curated sample data for the MVP, not a formal evidence review.
+// Every grade is derived from its evidenceProfile (G4), scored only from verified abstracts
+// (Phase 3 U4). The rubric is this project's own, not a formal systematic review.
 export const SEED_EFFECTS: Effect[] = [
   {
     id: "magnesium-sleep",
@@ -1024,7 +1025,7 @@ export const SEED_EFFECTS: Effect[] = [
     grade: "A",
     confidence: "high",
     summary: "Has evidence for improved endurance running performance, mainly time to exhaustion, in recreational and trained runners.",
-    relevantPopulation: "athletes, training adults",
+    relevantPopulation: "recreational and trained runners, mostly men",
     studiedDose: {
       min: 150,
       max: 300,
