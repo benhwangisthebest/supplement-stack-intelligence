@@ -208,7 +208,7 @@ passing, a clean typecheck, and a successful build.
    `playwright.config.ts` (`workers: 1`, `fullyParallel: false` when `E2E_LIVE=1`), because the authed
    specs share one seeded demo account. That serialisation is **not** guarded by anything — removing it
    breaks no test. Tracked as FU-25, whose real fix is per-worker user isolation.
-10. Before declaring work done: `npx tsc --noEmit`, **`npm run lint`**, `npx vitest run`, `npx next build` and, after the build, **`npm run verify:bundle`** must all pass. *(`verify:bundle` added at the Phase 3 closeout (e3), Check finding P3-10. CI has run it since Phase 3 U8 (c), so the list had omitted a check CI runs.)* *(`npm run lint` added by Phase 2 U18, in the same commit as the CI
+10. Before declaring work done: `npx tsc --noEmit`, **`npm run lint`**, `npx vitest run`, **`npm run test:coverage`**, `npx next build` and, after the build, **`npm run verify:bundle`** must all pass. *(`test:coverage` added by Phase 4 U0 under owner ruling D-15 (b). CI has run it since Phase 1 U13 (the §5 measured-baseline paragraph), so the list had omitted a check CI runs.)* *(`verify:bundle` added at the Phase 3 closeout (e3), Check finding P3-10. CI has run it since Phase 3 U8 (c), so the list had omitted a check CI runs.)* *(`npm run lint` added by Phase 2 U18, in the same commit as the CI
     step. A verification list that omits a check CI runs is N-29's asymmetry in miniature — the gate
     exists, and the person about to declare done is not told to run it.)*
 11. **Verify a change by `git diff`, never by a message asserting one.** A claim that a file changed,
