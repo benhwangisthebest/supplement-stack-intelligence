@@ -4,6 +4,7 @@ import { containsBannedLanguage } from "@/lib/safety";
 import { EVIDENCE_DIMENSIONS } from "@/types/evidence-grading";
 import type { EvidenceProfile } from "@/types/evidence-grading";
 import {
+  compositeGrade,
   compositeScore,
   deriveGrade,
   gradeBreakdown,
@@ -22,7 +23,7 @@ function profile(
   const d = (score: number): { score: 0 | 1 | 2 | 3; rationale: string; paperIds: string[] } => ({
     score: score as 0 | 1 | 2 | 3,
     rationale: "x",
-    paperIds: [],
+    paperIds: ["p"], // cited, so the B gate reads the authored score (R5, FU-74)
   });
   return {
     dimensions: {
@@ -80,15 +81,20 @@ describe("deriveGrade is exact at the thresholds (F-1)", () => {
 
   it("every one of the 4^5 score profiles derives the letter exact integer arithmetic gives", () => {
     // Weights are hundredths, so 300 × composite = Σ (100·w) × score is an integer.
+    // [2026-09-26, Phase 4 U5 (b)] compositeGrade is the exact letter; deriveGrade is that
+    // letter capped at C when an A or B composite has effectSize below 1 (the B gate, G1).
     const w = EVIDENCE_DIMENSIONS.map((d) => Math.round(DIMENSION_WEIGHTS[d] * 100));
     const floors = GRADE_THRESHOLDS.map((t) => ({ n: Math.round(t.min * 300), grade: t.grade }));
+    const effectSizeAt = EVIDENCE_DIMENSIONS.indexOf("effectSize");
     const wrong: string[] = [];
     for (let i = 0; i < 4 ** 5; i++) {
       const s = [0, 1, 2, 3, 4].map((k) => (i >> (2 * k)) & 3);
       const n = s.reduce((a, x, k) => a + w[k] * x, 0);
       const exact = floors.find((f) => n >= f.n)!.grade;
-      const derived = deriveGrade(profile(s[0], s[1], s[2], s[3], s[4]));
-      if (derived !== exact) wrong.push(`${s.join("")}: ${derived} ≠ ${exact}`);
+      const capped = (exact === "A" || exact === "B") && s[effectSizeAt] < 1 ? "C" : exact;
+      const p = profile(s[0], s[1], s[2], s[3], s[4]);
+      if (compositeGrade(p) !== exact) wrong.push(`${s.join("")}: composite ${compositeGrade(p)} ≠ ${exact}`);
+      if (deriveGrade(p) !== capped) wrong.push(`${s.join("")}: derived ${deriveGrade(p)} ≠ ${capped}`);
     }
     expect(wrong).toEqual([]);
   });

@@ -117,3 +117,81 @@ FU-71 notes. **Closed:** FU-71 (documented limit). **Open:** FU-61 until (b); FU
 `content/seed/*.json`, `src/data/**`, `index.ts`, `weights.ts` values, `src/types/**`, components, `CLAUDE.md`, the
 roadmap, every allowlist. No grade moved. Nothing live, no spend. **Next:** the owner batch picks a rule or none.
 Landing (b) is a later brief.
+
+---
+
+# Landing (b): wire the gate (2026-09-26, anchor `f76e3bc`)
+
+**Authority:** the owner batch of 2026-09-26: *"rule G1 (effectSize ≥ 1), applied as a CAP at C when it fails, not a
+one-letter drop. FU-74: an R5 zero on the gated dimension counts as failing. No stored letter changes."* The standing
+approval for landing (b) is on the same terms as (a). **Mid-unit ruling (owner, 2026-09-26):** *May touch* widened to
+`src/lib/evidence/evidence.test.ts`, fixture only (N-92, below).
+
+## (b)1. Plan
+
+Pin G1 as `B_GATE`, apply it inside `deriveGrade` as a cap at C, and prove every stored grade unchanged. **Closes** FU-61
+and FU-74. **Premises, re-measured at `f76e3bc`:** 27 effects, A 4 · B 9 · C 8 · D 6, 0 mismatches. Every stored A and B
+cites its effectSize and scores it ≥ 1, so G1 moves none. Every uncited dimension in the seed scores 0 (G6). Callers of
+`deriveGrade` outside the engine: `src/lib/evidence/index.ts:29` (no edit), and G4b, `grade-changes.test.ts:91` and the
+report script (reads only). Highest issued ids: **N-91, FU-74** (N-99 at `doc-truth.test.ts:677` is a fixture).
+
+## (b)2. Design
+
+`deriveGrade` was the only place a letter came from the composite, and `applyBGate` asked it whether the composite is
+B or better. Wiring the gate into it would recurse, so the uncapped letter moves, unchanged, into a new export
+`compositeGrade` (`index.ts:50`). `deriveGrade` (`:64`) returns that letter, or **C** when
+`applyBGate(profile, B_GATE).passes` is false (`:66`). The gate applies only to an A or B composite, so C and D pass
+through, and a failing A becomes C, not B. `B_GATE` (`gate.ts:28`) is G1 and is `CANDIDATE_RULES[0]` by identity, so
+the two cannot drift. G2–G4 stay as report data. **FU-74:** `gatedScore` (`gate.ts:60`) reads an uncited dimension as
+R5's 0 whatever was authored. Each failure carries a reason, *"Effect size not assessed: …"* (`:66`) or *"Effect size 0
+is below the floor of 1"* (`:67`). `gateMoves` keeps (a)'s one-letter-down view from `compositeGrade`, so the four
+tables are unchanged. **The import cycle** `index` ↔ `gate`: neither module calls the other at load, only inside
+functions. Both load orders are exercised: vitest loads `index` first, and the report script loads `gate` first.
+
+## (b)3. Do: acceptance criteria, with outputs
+
+| AC | Command | Result |
+|---|---|---|
+| AC-1 | `grep -n` gate.ts, index.ts | `gate.ts:28` `export const B_GATE: BGateRule = { id: "G1", floors: { effectSize: 1 } };` · `index.ts:66` `return applyBGate(profile, B_GATE).passes ? grade : "C";`. `CANDIDATE_RULES` is absent from `index.ts`, and a test asserts it (`gate.test.ts`, *deriveGrade applies B_GATE and no other candidate*) |
+| AC-2 green | `npx vitest run src/lib/evidence-grading` | **2 files, 32 tests** green. Planted null (3,3,3,0,2), composite 0.817 → **C**; (3,3,1,0,2) → **C**; uncited effectSize (3,3,3,2,2) → **C**. The 4^5 sweep checks `compositeGrade` against exact integer arithmetic and `deriveGrade` against that letter capped |
+| AC-2 RED 1 | copy `index.ts` to the scratchpad; `sed` makes `:66` `return grade;`; `-t "caps a gate failure"` | **2 failed / 1 passed**: *the planted well-studied nulls derive C, not A and B* → `expected 'A' to be 'C'`; the FU-74 case likewise. `cp` back; **`cmp` equal** |
+| AC-2 RED 2 | copy `gate.ts`; `sed` makes `:60` `return dim.score;`; `-t "FU-74"` | **1 failed**: *FU-74: an uncited effectSize is R5's 0 and fails…* → `expected 'A' to be 'C'`. `cp` back; **`cmp` equal**. Never `git checkout` |
+| AC-3 | G4b, the tally, `git diff --stat` | §(b)5 |
+| AC-4 | `npx vitest run src/data/seed-integrity.test.ts src/lib/protocol-builder/grade-changes.test.ts` | **2 files, 40 tests** green. G5 (R14 mapping) is in that file. **No letter changed, so no persisted `effect-grade` chip can change** |
+| AC-5 | the strings | `weights.ts:10-14` (dated header). `gate.ts:66` `` `${label} not assessed: no cited paper, so R5 scores it 0 (FU-74)` `` · `:67` `` `${label} ${…score} is below the floor of ${floor}` ``, asserted as *"Effect size not assessed: …"* vs *"Effect size 0 is below the floor of 1"* |
+| AC-6 | `npx vitest run src/architecture`; `npm run evidence:gate-report` twice, then `cmp` | §(b)6. The report now opens with the chosen rule and G1's computed move count (**0**). From `## Summary` down, `diff` against (a)'s file is **empty**; two runs `cmp` equal; the input sha256 is unchanged (`8471c1dd…6d6827`). No component or rendered copy touched |
+| AC-7 | independent review | §(b)6 |
+| AC-8 | G on the staged tree, clean worktree | in the commit body, as in (a) |
+
+## (b)4. Registered
+
+**N-92.** The brief's *May touch* omitted a caller's test. `evidence.test.ts:98-113` planted an all-strong profile
+with every `paperIds` empty, an R5 violation G6 guards only in the seed, so the FU-74 clause capped it at C. A stop
+condition fired, and the owner widened *May touch* to that fixture: it now cites a paper and still derives A. The
+tie-break fixture at `:133-159` still pairs a literal B with an uncited effectSize 1, which would derive C. It passes
+because it reads the injected literal. **OPEN**, owner to assign. **Closed:** FU-61 (`index.ts:66`) · FU-74
+(`gate.ts:60`, `weights.ts:10-14`).
+
+## (b)5. Invariant evidence (AC-3)
+
+`npx vitest run src/data/seed-integrity.test.ts`: G4b green. Tally through the new `deriveGrade` over the authored
+JSON: `{"D":6,"C":8,"A":4,"B":9}`, **mismatch 0**, the same as at `f76e3bc`. `git diff --stat` shows **nothing under
+`content/` or `src/data/`**.
+
+## (b)6. Check
+
+**AC-6:** `npx vitest run src/architecture`: **30 files, 470 tests**, green. Full unit suite on the working tree: **1735 across
+145 files**; tsc clean; lint 419 of 419, 0 errors. **AC-7: independent review** (fresh `ecc:code-reviewer`; inputs: the
+U5 row, the diff, this file, the owner batch). **Verdict: PASS**, with no BLOCKING, MAJOR or MINOR finding. It re-ran
+35 files / 556 tests, re-derived the 27 grades (0 mismatches), regenerated the report twice (byte-identical), and
+reproduced both REDs. It judged `compositeGrade` the old body moved, within *deriveGrade only* in spirit, and the cycle
+safe. Next bundling was not checked by it; `next build` in G covers it. **NOTE 1:** the reviewer ran the two
+mutations in the repo, not a scratch copy. Checked after it returned: `gate.ts`, `index.ts` and the report `cmp` equal to
+the post-edit copies, per §5 rule 11. **NOTE 2:** this section was pending when it read the file.
+
+## (b)7. Report
+
+**Landing (b):** G1 wired as a cap at C; FU-74's clause; `compositeGrade` exported; reasons; report header; one
+fixture outside the engine, on the owner's widening. **Closed:** FU-61, FU-74. **Registered:** N-92 (OPEN, one fixture
+remains). **No stored letter moved**; nothing under `content/` or `src/data/`; no weight, threshold, type, component or
+allowlist touched. Nothing live, no spend. **AC-8** and the CI run id go in the commit body and the report back.

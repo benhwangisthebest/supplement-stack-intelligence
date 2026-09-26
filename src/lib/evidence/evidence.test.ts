@@ -95,13 +95,15 @@ describe("evidence-grading v5 — grade resolution", () => {
     return e as Effect;
   }
 
+  // [2026-09-26, Phase 4 U5 (b)] Each dimension cites a paper, as R5 requires of a score above 0:
+  // the B gate reads an uncited effectSize as 0 (FU-74) and would cap this profile at C.
   const profileAllStrong = {
     dimensions: {
-      humanEvidence: { score: 3 as const, rationale: "x", paperIds: [] },
-      studyQuality: { score: 3 as const, rationale: "x", paperIds: [] },
-      consistency: { score: 3 as const, rationale: "x", paperIds: [] },
-      effectSize: { score: 3 as const, rationale: "x", paperIds: [] },
-      populationRelevance: { score: 3 as const, rationale: "x", paperIds: [] },
+      humanEvidence: { score: 3 as const, rationale: "x", paperIds: ["p1"] },
+      studyQuality: { score: 3 as const, rationale: "x", paperIds: ["p1"] },
+      consistency: { score: 3 as const, rationale: "x", paperIds: ["p1"] },
+      effectSize: { score: 3 as const, rationale: "x", paperIds: ["p1"] },
+      populationRelevance: { score: 3 as const, rationale: "x", paperIds: ["p1"] },
     },
   };
 

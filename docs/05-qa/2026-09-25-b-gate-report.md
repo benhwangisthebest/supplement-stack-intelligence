@@ -1,9 +1,12 @@
 # B-gate report — the four candidate rules (Phase 4 U5 (a))
 
+> **Chosen rule (owner batch 2026-09-26, U5 (b)): G1 — effectSize ≥ 1.** `deriveGrade` caps a composite of B or better
+> at **C** when it fails, and an uncited effectSize fails it (an R5 zero, FU-74). G1 moves **0** stored
+> grades (its table below). The four tables below are U5 (a)'s candidate report.
+
 > **Generated** by `npm run evidence:gate-report` (`scripts/evidence-gate-report.mjs`) from `content/seed/seed-effects.json`
 > (sha256 `8471c1ddf79f1de0f8699664d9f706a8185727d37c9e0cee34a2c9ae486d6827`). Do not edit by hand; re-run it.
-> **Report-only (D-2 (c)).** No stored grade changes and `deriveGrade` is untouched. Choosing a rule, or none, is
-> the owner's decision (U5 ruling (i)). A rule applies to a composite of B or better; an effect that fails it is
+> **The candidates (D-2 (c)).** Each table is what that rule, alone, would move. A rule applies to a composite of B or better; an effect that fails it is
 > shown one letter down **for this report only**. A-grade rows are marked *outside D-2's wording — owner decides* (ruling (ii)).
 > Rationales are the profile's own text, verbatim (a `|` is escaped for the table). A failing dimension that cites
 > no paper is marked **not assessed (R5)**: R5 scores an uncited dimension 0.

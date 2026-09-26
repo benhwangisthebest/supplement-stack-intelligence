@@ -1,4 +1,6 @@
-// Phase 4 U5 (a) — the B-gate report (owner ruling D-2 (c): report-only).
+// Phase 4 U5 — the B-gate report (owner ruling D-2 (c)). (a) listed the four candidates, report-only.
+// [2026-09-26, U5 (b)] The owner batch chose G1 and deriveGrade now applies it (B_GATE), so the
+// report states the chosen rule at the top. The four candidate tables are unchanged.
 //
 //   npm run evidence:gate-report              write docs/05-qa/2026-09-25-b-gate-report.md
 //   npm run evidence:gate-report -- --out F   write F instead
@@ -12,7 +14,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CANDIDATE_RULES, gateMoves } from "../src/lib/evidence-grading/gate.ts";
+import { B_GATE, CANDIDATE_RULES, gateMoves } from "../src/lib/evidence-grading/gate.ts";
 import { deriveGrade } from "../src/lib/evidence-grading/index.ts";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -34,14 +36,18 @@ const tally = {};
 for (const e of effects) tally[e.grade] = (tally[e.grade] ?? 0) + 1;
 const mismatched = effects.filter((e) => deriveGrade(e.evidenceProfile) !== e.grade).length;
 const results = CANDIDATE_RULES.map((rule) => ({ rule, moves: gateMoves(effects, rule) }));
+const chosenMoves = results.find((r) => r.rule === B_GATE).moves.length;
 
 const lines = [
   "# B-gate report — the four candidate rules (Phase 4 U5 (a))",
   "",
+  `> **Chosen rule (owner batch 2026-09-26, U5 (b)): ${B_GATE.id} — ${floors(B_GATE)}.** \`deriveGrade\` caps a composite of B or better`,
+  `> at **C** when it fails, and an uncited effectSize fails it (an R5 zero, FU-74). ${B_GATE.id} moves **${chosenMoves}** stored`,
+  "> grades (its table below). The four tables below are U5 (a)'s candidate report.",
+  "",
   `> **Generated** by \`npm run evidence:gate-report\` (\`scripts/evidence-gate-report.mjs\`) from \`${INPUT}\``,
   `> (sha256 \`${sha}\`). Do not edit by hand; re-run it.`,
-  "> **Report-only (D-2 (c)).** No stored grade changes and `deriveGrade` is untouched. Choosing a rule, or none, is",
-  "> the owner's decision (U5 ruling (i)). A rule applies to a composite of B or better; an effect that fails it is",
+  "> **The candidates (D-2 (c)).** Each table is what that rule, alone, would move. A rule applies to a composite of B or better; an effect that fails it is",
   "> shown one letter down **for this report only**. A-grade rows are marked *" + OUTSIDE + "* (ruling (ii)).",
   "> Rationales are the profile's own text, verbatim (a `|` is escaped for the table). A failing dimension that cites",
   "> no paper is marked **not assessed (R5)**: R5 scores an uncited dimension 0.",

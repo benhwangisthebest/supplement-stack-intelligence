@@ -7,6 +7,11 @@
 // subtracts 1 only when the abstract itself flags a small sample, so it follows the authors'
 // wording, not a participant count: an unflagged small study keeps 2 (l-theanine-stress, 12
 // participants), a flagged one scores 1 (creatine-cognition). No objective threshold exists.
+// [2026-09-26, Phase 4 U5 (b); FU-74, owner batch] R5: a dimension that cites no paper scores 0
+// and is NOT ASSESSED. These weights and thresholds give the composite; the B gate (./gate.ts,
+// rule G1: effectSize ≥ 1) then caps an A or B composite at C when it fails. FU-74 ruled that
+// an R5 zero on the gated dimension counts as failing, so the gate reads an uncited effectSize
+// as 0 whatever was authored, and its failure reason says "not assessed", never "effect size 0".
 import type { EvidenceDimension, DimensionRating } from "@/types/evidence-grading";
 import type { EvidenceGrade } from "@/types";
 

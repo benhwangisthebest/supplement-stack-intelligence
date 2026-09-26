@@ -7,6 +7,7 @@ import type {
   EvidenceProfile,
 } from "@/types/evidence-grading";
 import { EVIDENCE_DIMENSIONS } from "@/types/evidence-grading";
+import { applyBGate, B_GATE } from "./gate";
 import {
   DIMENSION_LABELS,
   DIMENSION_WEIGHTS,
@@ -45,13 +46,24 @@ export function compositeScore(profile: EvidenceProfile): number {
   return Math.round(sum * COMPOSITE_PRECISION) / COMPOSITE_PRECISION;
 }
 
-/** Map the composite to an A/B/C/D grade via fixed descending thresholds. */
-export function deriveGrade(profile: EvidenceProfile): EvidenceGrade {
+/** The letter the composite alone reaches, via fixed descending thresholds. The B gate reads this. */
+export function compositeGrade(profile: EvidenceProfile): EvidenceGrade {
   const composite = compositeScore(profile);
   for (const { min, grade } of GRADE_THRESHOLDS) {
     if (composite >= min) return grade;
   }
   return "D"; // unreachable (last threshold is 0)
+}
+
+/**
+ * The grade: the composite's letter, CAPPED AT C when the B gate fails (Phase 4 U5 (b), owner
+ * batch 2026-09-26: rule G1, effectSize ≥ 1; FU-61). The gate applies only to an A or B
+ * composite, so C and D pass through unchanged, and a failing A or B becomes C, not one letter
+ * down. Closes FU-61: a well-studied null (effectSize 0) no longer reaches B.
+ */
+export function deriveGrade(profile: EvidenceProfile): EvidenceGrade {
+  const grade = compositeGrade(profile);
+  return applyBGate(profile, B_GATE).passes ? grade : "C";
 }
 
 /** Per-dimension view for the Library UI (label, rating word, rationale, papers). */

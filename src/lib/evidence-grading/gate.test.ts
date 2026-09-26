@@ -3,10 +3,11 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { EvidenceGrade } from "@/types";
 import type { EvidenceProfile } from "@/types/evidence-grading";
-import { compositeScore, deriveGrade } from "./index";
-import { applyBGate, CANDIDATE_RULES, gateMoves } from "./gate";
+import { compositeGrade, compositeScore, deriveGrade } from "./index";
+import { applyBGate, B_GATE, CANDIDATE_RULES, gateMoves } from "./gate";
 
-// Phase 4 U5 (a), D-2 (c): the report-only gate for Grade B.
+// Phase 4 U5, D-2 (c): the gate for Grade B. (a) carried four candidates, report-only. (b), owner
+// batch 2026-09-26: B_GATE is G1, and deriveGrade caps a failing A or B composite at C.
 
 function profile(
   h: number,
@@ -14,7 +15,7 @@ function profile(
   c: number,
   e: number,
   p: number,
-  cite: (dim: string) => string[] = () => [],
+  cite: (dim: string) => string[] = (dim) => [`p-${dim}`], // cited by default: R5 is met
 ): EvidenceProfile {
   const d = (dim: string, score: number) => ({
     score: score as 0 | 1 | 2 | 3,
@@ -34,7 +35,7 @@ function profile(
 
 const effect = (id: string, evidenceProfile: EvidenceProfile) => ({
   id,
-  grade: deriveGrade(evidenceProfile) as EvidenceGrade,
+  grade: compositeGrade(evidenceProfile) as EvidenceGrade, // the composite letter, as (a) listed it
   evidenceProfile,
 });
 
@@ -54,11 +55,11 @@ describe("the planted well-studied null (the U5 row's red proof)", () => {
   const nullA = profile(3, 3, 3, 0, 2);
   const nullB = profile(3, 3, 1, 0, 2);
 
-  it("derives A and B from the composite alone", () => {
+  it("reach A and B on the composite alone", () => {
     expect(compositeScore(nullA)).toBeCloseTo(0.817, 3);
-    expect(deriveGrade(nullA)).toBe("A");
+    expect(compositeGrade(nullA)).toBe("A");
     expect(compositeScore(nullB)).toBeCloseTo(0.683, 3);
-    expect(deriveGrade(nullB)).toBe("B");
+    expect(compositeGrade(nullB)).toBe("B");
   });
 
   for (const rule of CANDIDATE_RULES) {
@@ -81,7 +82,7 @@ describe("applyBGate", () => {
     const c = profile(2, 1, 1, 0, 2);
     expect(deriveGrade(c)).toBe("C");
     for (const rule of CANDIDATE_RULES) {
-      expect(applyBGate(c, rule)).toEqual({ passes: true, failing: [], ratingsCited: [] });
+      expect(applyBGate(c, rule)).toEqual({ passes: true, failing: [], reasons: [], ratingsCited: [] });
     }
   });
 
@@ -101,6 +102,7 @@ describe("applyBGate", () => {
     expect(applyBGate(both, CANDIDATE_RULES[2])).toEqual({
       passes: false,
       failing: ["consistency", "effectSize"],
+      reasons: ["Consistency 1 is below the floor of 2", "Effect size 0 is below the floor of 1"],
       ratingsCited: ["p-shared", "p-c", "p-e"],
     });
   });
@@ -130,6 +132,50 @@ describe("gateMoves", () => {
         (m) => m.id,
       ),
     ).toEqual(["x", "z"]);
+  });
+});
+
+describe("B_GATE — the owner's choice, wired into deriveGrade (U5 (b), AC-1)", () => {
+  it("is G1, effectSize ≥ 1, and is CANDIDATE_RULES' G1 itself, so the two cannot drift", () => {
+    expect(B_GATE).toEqual({ id: "G1", floors: { effectSize: 1 } });
+    expect(CANDIDATE_RULES[0]).toBe(B_GATE);
+  });
+
+  it("deriveGrade applies B_GATE and no other candidate", () => {
+    const src = readFileSync(path.join(__dirname, "index.ts"), "utf8");
+    expect(src).toMatch(/applyBGate\(profile, B_GATE\)/);
+    expect(src).not.toMatch(/CANDIDATE_RULES/);
+  });
+});
+
+describe("deriveGrade caps a gate failure at C (U5 (b), AC-2)", () => {
+  it("the planted well-studied nulls derive C, not A and B", () => {
+    expect(deriveGrade(profile(3, 3, 3, 0, 2))).toBe("C"); // composite 0.817: a cap, not A → B
+    expect(deriveGrade(profile(3, 3, 1, 0, 2))).toBe("C"); // composite 0.683
+  });
+
+  it("FU-74: an uncited effectSize is R5's 0 and fails, whatever score was authored", () => {
+    const uncited = profile(3, 3, 3, 2, 2, (d) => (d === "effectSize" ? [] : [`p-${d}`]));
+    expect(compositeGrade(uncited)).toBe("A");
+    expect(deriveGrade(uncited)).toBe("C");
+  });
+
+  it("a passing A or B, and any C or D, keep the composite's letter", () => {
+    for (const p of [profile(3, 3, 3, 1, 2), profile(2, 2, 2, 1, 2), profile(2, 1, 1, 0, 2), profile(0, 0, 1, 0, 0)]) {
+      expect(deriveGrade(p)).toBe(compositeGrade(p));
+    }
+  });
+});
+
+describe("the failure reason tells not assessed from a scored 0 (U5 (b), AC-5)", () => {
+  it("a cited effectSize of 0 is 'Effect size 0'; an uncited one is 'not assessed'", () => {
+    expect(applyBGate(profile(3, 3, 3, 0, 2), B_GATE).reasons).toEqual([
+      "Effect size 0 is below the floor of 1",
+    ]);
+    const uncited = profile(3, 3, 3, 0, 2, (d) => (d === "effectSize" ? [] : [`p-${d}`]));
+    expect(applyBGate(uncited, B_GATE).reasons).toEqual([
+      "Effect size not assessed: no cited paper, so R5 scores it 0 (FU-74)",
+    ]);
   });
 });
 
