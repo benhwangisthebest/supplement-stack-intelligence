@@ -154,3 +154,47 @@ CONTENT_FIDELITY and G4b green. The `seed-supplements.json` diff is empty.
 This section was written after G ran. The only change it adds is to this file, which G re-checked with
 `vitest run src/architecture` on the final staged tree. Commit and CI run id: see the bkit record and the owner report.
 **Deferred:** U6 landing (b) (N-93 (1), N-94); FU-62 sourcing (roadmap backlog, `:647`).
+
+## 8. Landing (b): mechanism-tag and description sweep, report-only (N-93, N-94)
+
+> **Anchor** `8d1d971` · **Date** 2026-09-27 · **Authority:** the owner's standing approval for U6 (b); the batch table stops
+> for the owner and changes nothing. §1–§7 above are landing (a), byte-identical. **Rulings:** N-93/N-94 (plan §6), R6, R-3.
+
+**Plan: premises, measured at `8d1d971`.** **P-a:** 38 corpus papers; 36 have a local efetch abstract
+(`content/verification/captures/*/local/**/efetch.xml`, gitignored) whose file hash and `abstractSha256` both match the committed
+`candidates.json` record: **0 mismatches**. Not captured: `p-glycine-sleep` (DOI, title only; R6) and `p-nac-antioxidant`
+(no identifier; cited by no effect). **P-b:** `mechanismTags` are **not rendered**. They are read only by the redundancy rule
+(`src/lib/stack-evaluator/rules.ts:158`), where a shared tag gates a flag whose copy never names it. **P-c:** `description`
+renders at `SupplementCard.tsx:28` and `SupplementDetail.tsx:57`, and `mechanismSummary` at `SupplementDetail.tsx:61`
+(`src/components/library/`). Both go to the advisor model (`src/lib/advisor/tools.ts:95`, `:168`).
+
+**Design: the method (written before any verdict).** *Admission:* an abstract is used only if its `efetch.xml` bytes hash
+to the committed `files[].sha256` **and** `parsePubmedXml` (imported from `capture.mjs`, not re-implemented) yields the
+committed `abstractSha256` for that PMID. Any mismatch exits non-zero (a stop). *Rows:* one per effect × tag (evidence
+set: the effect's `paperIds` ∪ every dimension's) and one per supplement × sentence of `description`/`mechanismSummary`
+(evidence set: the union over its effects). *Verdicts, in precedence:* **SUPPORTED** when an excerpt of a captured
+abstract, or a captured title for a title-level claim (*"studied for X"*), states the tag's concept or **every** claim in the
+sentence. A word merely co-occurring does not count. **NOT CHECKABLE** otherwise, when the set is empty or holds any paper
+without a captured abstract. **UNSUPPORTED** otherwise; the reason names the unstated claim. R6: an uncaptured paper supports
+nothing, its title included. No recall, and no replacement wording. *Mechanics:* `scripts/mechanism-sweep.mjs` enumerates
+the rows, and the verdicts are a table inside it (the only hand-filled part). It asserts every row has exactly one verdict
+and no verdict is orphaned; that each excerpt occurs verbatim in a paper of that row's set, is ≤ 15 words, and is cited as
+`efetch.xml:line` with the committed PMID; each verdict's precondition; the AC-2 known answers; and that every *rendered?*
+line still holds its field. **Excerpts, not sentences:** full abstracts stay local (Phase 3 U6 ruling), so the report commits
+at most 15 words; its file:line locates the abstract element (efetch writes each on one line).
+
+**Do.** `node scripts/mechanism-sweep.mjs` writes `docs/05-qa/2026-09-27-mechanism-sweep.md`, and `--check` returns 0. It
+has 72 rows: **SUPPORTED 8 · UNSUPPORTED 54 · NOT CHECKABLE 10** (tags 7/29/6, sentences 1/25/4). **AC-2** reproduces
+(a): `triglyceride-lowering` is SUPPORTED (PMID 37264945, `paper_p-fish-oil-cv/efetch.xml:4`) and `anti-inflammatory`
+is UNSUPPORTED. **Red proof** on a scratch copy of the script, captures and rendered files: a tampered capture byte
+fails on the file hash; a dropped verdict gives *"no verdict"*; a flipped AC-2 answer fails; a moved `SupplementCard.tsx:28`
+fails. Each was restored by `cp`, and the script `cmp`-equals the repo's. **AC-3:** `git diff --stat -- content/seed/
+src/data/ src/lib/ src/components/` is empty, and grades are unchanged. **N-95** registered: an engine probe (a temporary
+`src/lib/stack-evaluator` test, deleted, `git status src/` clean) shows two redundancy flags resting on UNSUPPORTED tags.
+
+**Check (AC-5).** A fresh subagent reviewed a detached worktree with the diff and captures copied in (R-3). Afterwards all 4
+files `shasum -c` OK. It ran `--check` and reviewed all **8** SUPPORTED rows (only 8 exist, so the brief's 10 cannot be
+met), 15 UNSUPPORTED and all 10 NOT CHECKABLE. **PASS WITH NOTES, no BLOCKING; row-level disagreement: none.** It qualified
+`brain-energy` (a hypothesis, now marked in its row) and the ashwagandha "herb" (marked). Acted on: cortisol rows now cite the
+associational result; the article lookup is anchored to `MedlineCitation` PMID; four reasons completed; N-95 widened.
+**Report.** (b) DONE: G on the staged tree in a clean worktree (patch hash = `git diff --cached`): tsc 0 · lint 420/420 · vitest 145 files / 1736 · test:coverage 0 (no floor edited) · content-check 0 stale · build 0 · verify:bundle OK · verify:rendering OK. Written after G; the final tree was re-checked with `vitest run src/architecture`. Commit and CI: bkit record and owner report. N-93, N-94 and N-95 go to U6 (c), after the owner batch.
