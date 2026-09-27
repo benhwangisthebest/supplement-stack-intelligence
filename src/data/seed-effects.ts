@@ -376,7 +376,7 @@ export const SEED_EFFECTS: Effect[] = [
   {
     id: "fish-oil-cardiovascular",
     supplementId: "fish-oil",
-    name: "Cardiovascular support",
+    name: "Triglyceride lowering",
     outcomeCategory: "metabolic",
     grade: "A",
     confidence: "high",

@@ -93,3 +93,17 @@ describe("R17 studyQuality convention: the two re-scored effects (closeout e2b)"
     expect(e.confidence).toBe(confidence);
   });
 });
+
+// Phase 4 U6, owner ruling D-5 (a) (2026-09-25): an effect is named for the outcome
+// its cited papers measure. fish-oil-cardiovascular's two papers (PMIDs 37264945,
+// 39163858) measure triglycerides, not cardiovascular events (FU-68). The id is
+// kept (rule 16); only the name moves, and the R10 row above still pins its grade
+// and tier. Red proof: the old name "Cardiovascular support" fails this row
+// (docs/01-plan/features/p4-u6-content-corrections.plan.md).
+
+describe("U6 name correction: the name states the measured outcome (D-5 (a))", () => {
+  it.each([{ effect: "fish-oil-cardiovascular", name: "Triglyceride lowering" }])("$effect → $name", ({ effect, name }) => {
+    const e = SEED_EFFECTS.find((x) => x.id === effect);
+    expect(e?.name, `${effect} name`).toBe(name);
+  });
+});
