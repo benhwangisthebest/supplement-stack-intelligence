@@ -584,3 +584,17 @@ export const checkinCopy = {
   feedbackNudgeNote:
     "Adjusted slightly by your check-ins. Evidence still leads — this only refines the order.",
 } as const;
+
+// ---- Advisor confirm-surface outcomes (Phase 4 U10, D-14 (a), N-15). ----
+// Plain strings, not builders: the advisor panel is a client component, so its
+// server page hands these over as props (CLAUDE.md §4 rule 7), and a function
+// cannot cross that boundary. `partiallyApplied` has two placeholders, and the
+// only values that fill them are the confirm route's two counts, since U34 ruled
+// that only numbers cross the boundary (advisor-actions.ts:145-150).
+export const advisorOutcomeCopy = {
+  /** The confirm route answered PARTIALLY_APPLIED: the rollback left `unreverted` > 0. */
+  partiallyApplied:
+    "This didn't finish, and some changes couldn't be undone ({reverted} undone, {unreverted} not undone). Please check your stack in Stack Lab before trying again.",
+  /** The turn ended `aborted`, or the stream closed with no final event. */
+  aborted: "The advisor stopped before finishing this answer. You can send your question again.",
+} as const;

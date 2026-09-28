@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Paper } from "@/types";
 import {
+  advisorOutcomeCopy,
   BACKGROUND_LABEL,
   BANNED_PHRASES,
   containsBannedLanguage,
@@ -19,8 +20,8 @@ describe("lib/safety phrasing", () => {
     expect(containsBannedLanguage("May support sleep quality")).toBe(false);
   });
 
-  it("never emits banned language in disclaimers or the background label", () => {
-    for (const text of [...Object.values(DISCLAIMERS), BACKGROUND_LABEL]) {
+  it("never emits banned language in disclaimers, the background label or the advisor outcomes", () => {
+    for (const text of [...Object.values(DISCLAIMERS), BACKGROUND_LABEL, ...Object.values(advisorOutcomeCopy)]) {
       expect(containsBannedLanguage(text), text).toBe(false);
     }
   });

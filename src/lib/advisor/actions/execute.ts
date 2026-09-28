@@ -88,7 +88,13 @@ export async function executeProposal(
       const prior = await getItemProductId(supabase, stackItemId);
       const intent = forwardIntent(proposal);
       if (intent.op !== "set_item_product") throw new Error("intent mismatch");
-      await setItemProduct(supabase, intent.itemId, intent.productId);
+      // [Phase 4 U10, FU-1] Written only if `prior` is still current. Otherwise
+      // another confirm wrote between the read and this write, and an inverse
+      // restoring `prior` would undo that one too. Not applied is a failure, so
+      // executeBatch rolls back and counts the batch; it is never a success.
+      if (!(await setItemProduct(supabase, intent.itemId, intent.productId, { current: prior }))) {
+        throw new StaleProductError();
+      }
       return {
         inverse: inverseIntent(proposal, { priorProductId: prior }),
         resultingItemId: stackItemId,
@@ -160,7 +166,7 @@ export async function revertAll(
   let unreverted = 0;
   for (let i = done.length - 1; i >= 0; i--) {
     try {
-      await executeIntent(supabase, userId, done[i].exec.inverse);
+      await revertOne(supabase, userId, done[i]);
       reverted += 1;
     } catch (rollbackErr) {
       unreverted += 1;
@@ -188,6 +194,32 @@ export async function revertAll(
     }
   }
   return { reverted, unreverted };
+}
+
+/** A compare-and-set on `product_id` found a value other than the one expected. */
+class StaleProductError extends Error {
+  constructor() {
+    super("stack item product changed since it was read");
+    this.name = "StaleProductError";
+  }
+}
+
+/**
+ * Replay one applied action's inverse. [Phase 4 U10] An attach is reverted only
+ * if the item still holds the product this batch set: if another write has
+ * replaced it since, restoring the prior product would erase that write. The
+ * throw lands in `revertAll`'s catch, so it is counted as unreverted.
+ */
+async function revertOne(supabase: SupabaseClient, userId: string, r: BatchItemResult): Promise<void> {
+  const inverse = r.exec.inverse;
+  if (inverse.op === "set_item_product" && r.proposal.type === "attach_product") {
+    const { productId } = r.proposal.payload as AttachProductPayload;
+    if (!(await setItemProduct(supabase, inverse.itemId, inverse.productId, { current: productId }))) {
+      throw new StaleProductError();
+    }
+    return;
+  }
+  await executeIntent(supabase, userId, inverse);
 }
 
 /**
@@ -274,7 +306,9 @@ export async function executeIntent(
       await deleteStack(supabase, userId, intent.stackId);
       return;
     case "set_item_product":
-      await setItemProduct(supabase, intent.itemId, intent.productId);
+      // Undo's replay. The stored inverse carries no expected value, so this
+      // write stays last-writer-wins: N-101, owned by the undo route.
+      await setItemProduct(supabase, intent.itemId, intent.productId, "unconditional");
       return;
   }
 }

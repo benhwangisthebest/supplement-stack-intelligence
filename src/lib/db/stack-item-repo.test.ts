@@ -86,10 +86,45 @@ describe("stack-item-repo — scoped to the parent stack it inherits ownership f
   });
 
   it("setItemProduct addresses one row by id and writes only the product", async () => {
-    const spy = querySpy({ data: itemRow });
-    await setItemProduct(spy.client, "i1", "prod1");
+    const spy = querySpy({ data: [{ id: "i1" }] });
+    await setItemProduct(spy.client, "i1", "prod1", { current: null });
     expect(spy.filters()).toContainEqual(["id", "i1"]);
     expect(spy.payloads.some((r) => r.product_id === "prod1")).toBe(true);
     expect(spy.payloads.some((r) => "stack_id" in r)).toBe(false);
+  });
+});
+
+// Phase 4 U10, FU-1. The expected product goes into the UPDATE's WHERE clause, so
+// the database applies the write only if the column still holds the value the
+// caller read. Rows returned = rows written; none means another write got there
+// first.
+describe("setItemProduct — compare-and-set on product_id (U10)", () => {
+  const isFilters = (spy: ReturnType<typeof querySpy>) =>
+    spy.calls.filter((c) => c.method === "is").map((c) => c.args);
+
+  it("an expected product id is an equality filter on product_id", async () => {
+    const spy = querySpy({ data: [{ id: "i1" }] });
+    await setItemProduct(spy.client, "i1", "prod2", { current: "prod1" });
+    expect(spy.filters()).toContainEqual(["product_id", "prod1"]);
+  });
+
+  it("an expected null is an IS NULL filter, since = NULL matches no row", async () => {
+    const spy = querySpy({ data: [{ id: "i1" }] });
+    await setItemProduct(spy.client, "i1", "prod2", { current: null });
+    expect(isFilters(spy)).toContainEqual(["product_id", null]);
+  });
+
+  it("returns true when a row was written and false when none matched", async () => {
+    const hit = querySpy({ data: [{ id: "i1" }] });
+    expect(await setItemProduct(hit.client, "i1", "prod2", { current: "prod1" })).toBe(true);
+    const miss = querySpy({ data: [] });
+    expect(await setItemProduct(miss.client, "i1", "prod2", { current: "prod1" })).toBe(false);
+  });
+
+  it("'unconditional' adds no product_id filter (the undo route's replay, N-101)", async () => {
+    const spy = querySpy({ data: [{ id: "i1" }] });
+    await setItemProduct(spy.client, "i1", null, "unconditional");
+    expect(spy.filters().some(([col]) => col === "product_id")).toBe(false);
+    expect(isFilters(spy)).toEqual([]);
   });
 });

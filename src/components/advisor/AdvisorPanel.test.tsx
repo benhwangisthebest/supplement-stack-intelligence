@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Citation } from "@/types/advisor";
 import type { ActionProposal } from "@/types/advisor-action";
 import type { DraftFlag } from "@/types/evaluation";
+import { advisorOutcomeCopy } from "@/lib/safety";
 import { AdvisorPanel } from "./AdvisorPanel";
 import { buildCitationIndex } from "./citation-index";
 
@@ -80,7 +81,7 @@ afterEach(() => {
 });
 
 async function ask() {
-  render(<AdvisorPanel initialConversations={[]} citationIndex={buildCitationIndex()} />);
+  render(<AdvisorPanel initialConversations={[]} citationIndex={buildCitationIndex()} outcomeCopy={outcomeCopy} />);
   fireEvent.change(screen.getByRole("textbox", { name: "Ask the advisor" }), {
     target: { value: "Made-up question?" },
   });
@@ -101,5 +102,101 @@ describe("AdvisorPanel — streamed citations and safety flags reach the message
     const flags = screen.getByRole("list", { name: "Safety flags" });
     expect(within(flags).getByText("⚠ Made-up critical flag")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Confirm" }).hasAttribute("disabled")).toBe(true);
+  });
+});
+
+// ---- Phase 4 U10 — the confirm surface's two outcomes (D-14 (a), FU-34, N-15) ----
+// The copy is the real src/lib/safety text, handed in as the page hands it in.
+// Cycle record: docs/01-plan/features/p4-u10-confirm-surface.plan.md.
+const outcomeCopy = { ...advisorOutcomeCopy };
+
+function stubFetchWith(stream: string, confirm?: { status: number; body: unknown }) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string) => {
+      if (url === "/api/advisor") {
+        return new Response(stream, { status: 200, headers: { "content-type": "text/event-stream" } });
+      }
+      if (url === "/api/advisor/actions" && confirm) {
+        return new Response(JSON.stringify(confirm.body), {
+          status: confirm.status,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { "content-type": "application/json" } });
+    }),
+  );
+}
+
+async function askWith(stream: string, confirm?: { status: number; body: unknown }) {
+  stubFetchWith(stream, confirm);
+  render(<AdvisorPanel initialConversations={[]} citationIndex={buildCitationIndex()} outcomeCopy={outcomeCopy} />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Ask the advisor" }), {
+    target: { value: "Made-up question?" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  await screen.findByRole("button", { name: "Send" });
+}
+
+describe("AdvisorPanel — PARTIALLY_APPLIED renders counts only (U10, D-14 (a), FU-34)", () => {
+  const proposing = sse([
+    ["token", { delta: "Made-up answer." }],
+    ["proposals", { proposals: [proposal], safetyFlags: [] }],
+    ["done", { conversationId: "made-up-conversation", status: "proposed" }],
+  ]);
+  const partial = (details: Record<string, unknown>) => ({
+    status: 500,
+    body: {
+      data: null,
+      error: { code: "PARTIALLY_APPLIED", message: "Something went wrong.", details, correlationId: "made-up-cid" },
+    },
+  });
+
+  it("the approved sentence, built from the reverted and unreverted counts", async () => {
+    await askWith(proposing, partial({ rolledBack: false, reverted: 2, unreverted: 1 }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    const alert = await screen.findByText(/some changes couldn.t be undone/);
+    expect(alert.textContent).toBe(
+      advisorOutcomeCopy.partiallyApplied.replace("{reverted}", "2").replace("{unreverted}", "1"),
+    );
+  });
+
+  it("nothing but the two counts reaches the screen, whatever else details carries", async () => {
+    await askWith(
+      proposing,
+      partial({ rolledBack: false, reverted: 0, unreverted: 1, itemIds: ["SENTINEL-ITEM"], reason: "SENTINEL-REASON", notes: "SENTINEL-NOTES" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    await screen.findByText(/some changes couldn.t be undone/);
+    expect(document.body.textContent).not.toMatch(/SENTINEL/);
+  });
+
+  it("the copy the panel takes is two strings, with no room for anything else", () => {
+    expect(Object.keys(outcomeCopy).sort()).toEqual(["aborted", "partiallyApplied"]);
+    for (const v of Object.values(outcomeCopy)) expect(typeof v).toBe("string");
+    expect(advisorOutcomeCopy.partiallyApplied.match(/\{[a-z]+\}/gi)).toEqual(["{reverted}", "{unreverted}"]);
+  });
+});
+
+describe("AdvisorPanel — an aborted turn renders a message, not a blank (U10, N-15)", () => {
+  it("a done event with status aborted", async () => {
+    await askWith(sse([["done", { conversationId: "made-up-conversation", status: "aborted" }]]));
+    expect(await screen.findByText(advisorOutcomeCopy.aborted)).toBeTruthy();
+  });
+
+  it("a stream that closes with no done or error event, which is what the route sends on abort", async () => {
+    await askWith(sse([["progress", { type: "turn-start" }]]));
+    expect(await screen.findByText(advisorOutcomeCopy.aborted)).toBeTruthy();
+  });
+
+  it("a normal answer is left alone", async () => {
+    await askWith(
+      sse([
+        ["token", { delta: "Made-up answer." }],
+        ["done", { conversationId: "made-up-conversation", status: "answered" }],
+      ]),
+    );
+    expect(screen.getByText("Made-up answer.")).toBeTruthy();
+    expect(screen.queryByText(advisorOutcomeCopy.aborted)).toBeNull();
   });
 });

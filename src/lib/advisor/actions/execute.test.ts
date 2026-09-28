@@ -114,7 +114,7 @@ beforeEach(() => {
   deleteItem.mockResolvedValue(undefined);
   updateItem.mockResolvedValue(undefined);
   getItemProductId.mockResolvedValue("p-old");
-  setItemProduct.mockResolvedValue(undefined);
+  setItemProduct.mockResolvedValue(true);
   createStack.mockResolvedValue({ id: "s-new" });
   deleteStack.mockResolvedValue(undefined);
 });
@@ -219,6 +219,7 @@ describe("executeProposal — attach_product", () => {
     });
     setItemProduct.mockImplementation(async () => {
       order.push("write");
+      return true;
     });
 
     await executeProposal(DB, USER, ATTACH, null);
@@ -239,11 +240,12 @@ describe("executeProposal — attach_product", () => {
     getItemProductId.mockImplementation(async () => column);
     setItemProduct.mockImplementation(async (_db: unknown, _id: string, pid: string | null) => {
       column = pid;
+      return true;
     });
 
     const res = await executeProposal(DB, USER, ATTACH, null);
 
-    expect(setItemProduct).toHaveBeenCalledWith(DB, "i1", "p-new");
+    expect(setItemProduct).toHaveBeenCalledWith(DB, "i1", "p-new", { current: "p-old" });
     expect(res.inverse).toEqual({
       op: "set_item_product",
       stackId: "s1",
@@ -258,6 +260,88 @@ describe("executeProposal — attach_product", () => {
     const res = await executeProposal(DB, USER, ATTACH, null);
 
     expect(res.inverse).toMatchObject({ productId: null });
+  });
+});
+
+// Phase 4 U10, FU-1. The read-then-write above is ordered but not atomic: two
+// confirms against the same item can both read before either writes. The fake
+// below models the column and honours the expectation `setItemProduct` is given,
+// as the WHERE clause does in Postgres. No expectation means an unconditional
+// write, which is what HEAD sent.
+function interleavedColumn(initial: string | null) {
+  const state = { column: initial };
+  let reads = 0;
+  let release!: () => void;
+  const bothRead = new Promise<void>((r) => (release = r));
+  getItemProductId.mockImplementation(async () => {
+    const seen = state.column;
+    if (++reads === 2) release();
+    await bothRead; // neither confirm writes until both have read
+    return seen;
+  });
+  setItemProduct.mockImplementation(
+    async (_db: unknown, _id: string, pid: string | null, expect?: { current: string | null } | "unconditional") => {
+      if (expect && expect !== "unconditional" && expect.current !== state.column) return false;
+      state.column = pid;
+      return true;
+    },
+  );
+  return state;
+}
+
+describe("executeProposal — attach_product is a compare-and-set (U10, FU-1)", () => {
+  const ATTACH_P1 = proposal({ type: "attach_product", payload: { stackItemId: "i1", productId: "p1" } });
+  const ATTACH_P2 = proposal({ type: "attach_product", payload: { stackItemId: "i1", productId: "p2" } });
+
+  it("two interleaved confirms: the second is not applied and records no inverse", async () => {
+    const state = interleavedColumn(null);
+
+    const [first, second] = await Promise.allSettled([
+      executeProposal(DB, USER, ATTACH_P1, null),
+      executeProposal(DB, USER, ATTACH_P2, null),
+    ]);
+
+    // The first confirm's inverse restores null, which WAS current when it wrote.
+    expect(first).toMatchObject({ status: "fulfilled", value: { inverse: { productId: null } } });
+    // The second read null too, but p1 was current when it wrote. An inverse
+    // restoring null would undo p1 as well as p2: a before-value that was never
+    // current. Not applied, so no inverse exists to persist.
+    expect(second.status).toBe("rejected");
+    expect(state.column).toBe("p1");
+  });
+
+  it("passes the value it read as the expected current product", async () => {
+    getItemProductId.mockResolvedValue("p-old");
+    setItemProduct.mockResolvedValue(true);
+
+    await executeProposal(DB, USER, ATTACH, null);
+
+    expect(setItemProduct).toHaveBeenCalledWith(DB, "i1", "p-new", { current: "p-old" });
+  });
+
+  it("a rollback of an attach whose product moved on is counted unreverted, not written", async () => {
+    // attach p-new, then a later action fails. Before the rollback runs, another
+    // writer sets p-other. Restoring p-old would erase p-other.
+    const state = { column: "p-old" as string | null };
+    getItemProductId.mockImplementation(async () => state.column);
+    setItemProduct.mockImplementation(
+      async (_db: unknown, _id: string, pid: string | null, expect?: { current: string | null } | "unconditional") => {
+        if (expect && expect !== "unconditional" && expect.current !== state.column) return false;
+        state.column = pid;
+        return true;
+      },
+    );
+    updateItem.mockImplementation(async () => {
+      state.column = "p-other";
+      throw new Error("write failed");
+    });
+
+    const err = await executeBatch(DB, USER, [{ proposal: ATTACH }, { proposal: EDIT }], [null, PRIOR]).catch(
+      (e: unknown) => e,
+    );
+
+    expect(rollbackOutcomeOf(err)).toEqual({ reverted: 0, unreverted: 1 });
+    expect(state.column).toBe("p-other");
   });
 });
 
@@ -589,7 +673,7 @@ describe("executeIntent — every op reaches its repo", () => {
     },
     {
       intent: { op: "set_item_product", stackId: "s1", itemId: "i1", productId: null },
-      assert: () => expect(setItemProduct).toHaveBeenCalledWith(DB, "i1", null),
+      assert: () => expect(setItemProduct).toHaveBeenCalledWith(DB, "i1", null, "unconditional"),
     },
   ];
 

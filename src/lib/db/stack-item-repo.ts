@@ -92,15 +92,40 @@ export async function getItemProductId(
   return (data?.product_id as string | null | undefined) ?? null;
 }
 
-/** Attach (or clear, with null) a matched product on a stack item. */
+/**
+ * What the caller believes `product_id` holds right now. `{ current }` makes the
+ * write a compare-and-set; `"unconditional"` is the old last-writer-wins write,
+ * named so that no caller gets it by omission.
+ */
+export type ProductExpectation = { current: string | null } | "unconditional";
+
+/**
+ * Attach (or clear, with null) a matched product on a stack item. Returns whether
+ * the row was written.
+ *
+ * [Phase 4 U10, FU-1] With `{ current }`, the expected value is part of the
+ * UPDATE's WHERE clause, so Postgres writes only if the column still holds what
+ * the caller read. Zero rows back means another write got there first: the
+ * caller's read is stale, and so is any inverse built from it. `null` needs
+ * IS NULL, because `= NULL` matches no row.
+ */
 export async function setItemProduct(
   supabase: SupabaseClient,
   itemId: string,
   productId: string | null,
-): Promise<void> {
-  const { error } = await supabase
+  expect: ProductExpectation,
+): Promise<boolean> {
+  let query = supabase
     .from("stack_items")
     .update({ product_id: productId })
     .eq("id", itemId);
+  if (expect !== "unconditional") {
+    query =
+      expect.current === null
+        ? query.is("product_id", null)
+        : query.eq("product_id", expect.current);
+  }
+  const { data, error } = await query.select("id");
   if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }

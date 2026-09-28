@@ -10,6 +10,7 @@
 import { useState } from "react";
 import type { ActionProposal, EditableProposalFields } from "@/types/advisor-action";
 import type { DraftFlag } from "@/types/evaluation";
+import { partiallyAppliedText } from "./outcome-copy";
 
 const TIMINGS = ["morning", "midday", "evening", "pre-workout", "with-meal", "bedtime"] as const;
 
@@ -29,12 +30,15 @@ export function ActionProposalCard({
   proposals,
   safetyFlags,
   conversationId,
+  partiallyAppliedCopy,
   onConfirmed,
   onRejected,
 }: {
   proposals: ActionProposal[];
   safetyFlags: DraftFlag[];
   conversationId: string | null;
+  /** Phase 4 U10: the PARTIALLY_APPLIED sentence, with {reverted} and {unreverted}. */
+  partiallyAppliedCopy: string;
   onConfirmed: (result: ConfirmResult, summary: string) => void;
   onRejected: () => void;
 }) {
@@ -74,7 +78,13 @@ export function ActionProposalCard({
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(json?.error?.message ?? "Couldn't apply that change.");
+        // Phase 4 U10, FU-34: a batch that could not be fully rolled back says
+        // so, with its counts. Nothing else from `details` is read (D-14 (a)).
+        setError(
+          partiallyAppliedText(partiallyAppliedCopy, json) ??
+            json?.error?.message ??
+            "Couldn't apply that change.",
+        );
         return;
       }
       setDone(true);

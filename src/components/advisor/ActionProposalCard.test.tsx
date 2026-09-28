@@ -38,6 +38,7 @@ const renderCard = (safetyFlags: DraftFlag[]) =>
       proposals={[proposal]}
       safetyFlags={safetyFlags}
       conversationId={null}
+      partiallyAppliedCopy="Made-up {reverted} / {unreverted}"
       onConfirmed={vi.fn()}
       onRejected={vi.fn()}
     />,

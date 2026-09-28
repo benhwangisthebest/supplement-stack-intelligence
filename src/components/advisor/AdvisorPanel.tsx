@@ -15,6 +15,7 @@ import { ActionProposalCard, type ConfirmResult } from "./ActionProposalCard";
 import { UndoToast } from "./UndoToast";
 import { ConversationRail } from "./ConversationRail";
 import type { CitationIndex } from "./citation-index";
+import type { AdvisorOutcomeCopy } from "./outcome-copy";
 
 interface ApiMessage {
   role: "user" | "assistant";
@@ -25,10 +26,13 @@ interface ApiMessage {
 export function AdvisorPanel({
   initialConversations,
   citationIndex,
+  outcomeCopy,
 }: {
   initialConversations: AdvisorConversation[];
   /** Resolves source chips without the evidence library in the browser (U9, rule 7). */
   citationIndex: CitationIndex;
+  /** Phase 4 U10: src/lib/safety's advisorOutcomeCopy, passed in by the page (rule 7). */
+  outcomeCopy: AdvisorOutcomeCopy;
 }) {
   const [conversations, setConversations] = useState(initialConversations);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -131,7 +135,15 @@ export function AdvisorPanel({
           failPendingMessage(setMessages, message);
           setError(message);
         },
-        onDone: async ({ conversationId }) => {
+        // Phase 4 U10, N-15: an aborted turn has no answer, so without this
+        // the pending bubble stays blank. Today the route sends no final event
+        // at all on abort; a `done` carrying `aborted` is handled the same way.
+        onAborted: () => failPendingMessage(setMessages, outcomeCopy.aborted),
+        onDone: async ({ conversationId, status }) => {
+          if (status === "aborted") {
+            failPendingMessage(setMessages, outcomeCopy.aborted);
+            return;
+          }
           setMessages((prev) => updateLast(prev, (m) => ({ ...m, pending: false, progress: null })));
           if (!activeId) {
             setActiveId(conversationId);
@@ -177,6 +189,7 @@ export function AdvisorPanel({
                     proposals={m.proposals}
                     safetyFlags={m.safetyFlags ?? []}
                     conversationId={activeId}
+                    partiallyAppliedCopy={outcomeCopy.partiallyApplied}
                     onConfirmed={(result, summary) => onProposalConfirmed(i, result, summary)}
                     onRejected={() => updateAt(i, (msg) => ({ ...msg, rejected: true }))}
                   />
@@ -265,14 +278,20 @@ interface StreamHandlers {
   onCitations: (citations: Citation[]) => void;
   onProposals: (payload: { proposals: ActionProposal[]; safetyFlags: DraftFlag[] }) => void;
   onError: (message: string) => void;
+  /** The stream closed with no `done` or `error` event. */
+  onAborted: () => void;
   onDone: (payload: { conversationId: string; status: string }) => void | Promise<void>;
 }
+
+/** The events that end a turn. A stream that closes without one was aborted (U10, N-15). */
+const SETTLING_EVENTS = new Set(["done", "error"]);
 
 /** Parse the text/event-stream body into progress/token/citations/proposals/done. */
 async function consumeStream(body: ReadableStream<Uint8Array>, h: StreamHandlers) {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let settled = false; // a done or error event arrived
 
   for (;;) {
     const { done, value } = await reader.read();
@@ -287,6 +306,7 @@ async function consumeStream(body: ReadableStream<Uint8Array>, h: StreamHandlers
       const dataLine = /^data: (.*)$/m.exec(raw)?.[1];
       if (!event || !dataLine) continue;
       const data = JSON.parse(dataLine);
+      if (SETTLING_EVENTS.has(event)) settled = true;
       if (event === "progress") h.onProgress(data as ProgressEvent);
       else if (event === "token") h.onToken(data.delta);
       else if (event === "citations") h.onCitations(data.citations);
@@ -301,6 +321,7 @@ async function consumeStream(body: ReadableStream<Uint8Array>, h: StreamHandlers
       else if (event === "done") await h.onDone(data);
     }
   }
+  if (!settled) h.onAborted();
 }
 
 /** Map a structured progress event to a friendly, non-diagnostic status label. */

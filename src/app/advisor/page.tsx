@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { listConversations } from "@/lib/advisor/repo";
 import { AdvisorPanel } from "@/components/advisor/AdvisorPanel";
 import { buildCitationIndex } from "@/components/advisor/citation-index";
-import { DISCLAIMERS } from "@/lib/safety";
+import { advisorOutcomeCopy, DISCLAIMERS } from "@/lib/safety";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
@@ -28,7 +28,11 @@ export default async function AdvisorPage() {
       <Disclaimer text={DISCLAIMERS.general} className="mt-4" />
 
       <section className="mt-8">
-        <AdvisorPanel initialConversations={conversations} citationIndex={buildCitationIndex()} />
+        <AdvisorPanel
+          initialConversations={conversations}
+          citationIndex={buildCitationIndex()}
+          outcomeCopy={advisorOutcomeCopy}
+        />
       </section>
     </main>
   );
