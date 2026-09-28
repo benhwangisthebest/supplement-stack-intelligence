@@ -35,8 +35,9 @@ interface Call {
  * for the health tables. Chainable and awaitable, matching the query shapes the
  * repositories actually use.
  */
-function stubClient(calls: Call[]) {
+function stubClient(calls: Call[], extra: Record<string, unknown[]> = {}) {
   const rowsFor = (table: string): unknown[] => {
+    if (Object.hasOwn(extra, table)) return extra[table];
     switch (table) {
       case "stacks":
         return [{ id: "s1", user_id: "u1", name: "morning" }];
@@ -187,5 +188,101 @@ describe("exportUserData — completeness", () => {
     expect(result.notIncluded.length).toBeGreaterThan(0);
     expect(JSON.stringify(result.notIncluded)).toMatch(/auth\.users/);
     expect(JSON.stringify(result.notIncluded)).toMatch(/api_rate_limits/);
+  });
+});
+
+// Phase 4 U9 — D-16 (b), owner ruling 2026-09-28. A citation's `label` is what the
+// user was shown when the message was written; the export keeps it byte-identical
+// and adds, beside it, the label the Library gives that id today — resolved by
+// `currentCitationLabel`, the resolver the source chips use. Red proofs (HEAD, and the
+// resolver call removed on a scratch copy): docs/01-plan/features/p4-u9-export-labels.plan.md.
+describe("exportUserData — stored citations carry today's label beside the stored one (U9)", () => {
+  const STORED = [
+    // Pre-U6 paper title, with the illustrative note the chip drops.
+    {
+      kind: "paper",
+      refId: "p-creatine-strength",
+      label: "Effects of creatine supplementation on strength and lean mass",
+      detail: "Illustrative evidence summary",
+    },
+    // Pre-U6 effect name, exactly as tools.ts wrote it before the rename (8d1d971).
+    { kind: "effect-grade", refId: "fish-oil-cardiovascular", label: "Fish Oil (Omega-3) → Cardiovascular support, Grade A" },
+    // The Library holds it, but it carries no DOI or PMID (FU-57).
+    { kind: "paper", refId: "p-nac-antioxidant", label: "Stored NAC title" },
+    { kind: "effect-grade", refId: "retired-effect", label: "Gone → Away, Grade C" },
+    { kind: "interaction-rule", refId: "rule-x", label: "A ↔ B (moderate)" },
+  ];
+  const MESSAGE_ROW = {
+    id: "msg1",
+    conversation_id: "c1",
+    role: "assistant",
+    content: "Made-up answer.",
+    citations: STORED,
+    created_at: "2026-09-01T00:00:00Z",
+  };
+
+  async function exportedCitations(): Promise<Record<string, unknown>[]> {
+    const result = await exportUserData(stubClient([], { advisor_messages: [MESSAGE_ROW] }), "u1");
+    const [message] = result.tables.advisor_messages as { citations: Record<string, unknown>[] }[];
+    return message.citations;
+  }
+
+  it("gives the pre-correction paper and effect labels today's label, keeping the stored one (AC-2)", async () => {
+    const out = await exportedCitations();
+    const byId = new Map(out.map((c) => [c.refId, c]));
+    const expected: Record<string, string> = {
+      "p-creatine-strength":
+        "Effects of Creatine Supplementation and Resistance Training on Muscle Strength Gains in Adults <50 Years of Age: A Systematic Review and Meta-Analysis.",
+      "fish-oil-cardiovascular": "Fish Oil (Omega-3) → Triglyceride lowering, Grade A",
+    };
+    // Keyed by refId, so a failure names every id whose label is wrong, not just the first.
+    const got = Object.fromEntries(Object.keys(expected).map((id) => [id, byId.get(id)?.currentLabel]));
+    expect(got, "currentLabel by refId").toEqual(expected);
+    for (const refId of Object.keys(expected)) {
+      expect(byId.get(refId)?.labelResolution, `${refId}: labelResolution`).toBe("resolved");
+      expect(byId.get(refId)?.label, `${refId}: stored label`).toBe(STORED.find((s) => s.refId === refId)!.label);
+    }
+  });
+
+  it("keeps every stored field byte-identical and adds exactly currentLabel and labelResolution (AC-1)", async () => {
+    const out = await exportedCitations();
+    expect(out).toHaveLength(STORED.length);
+    out.forEach((c, i) => {
+      const { currentLabel, labelResolution, ...rest } = c;
+      expect(rest, String(STORED[i].refId)).toEqual(STORED[i]);
+      expect(Object.keys(c), String(STORED[i].refId)).toEqual([...Object.keys(STORED[i]), "currentLabel", "labelResolution"]);
+      expect(currentLabel === null || typeof currentLabel === "string").toBe(true);
+      expect(["resolved", "not-in-library", "not-resolved"]).toContain(labelResolution);
+    });
+  });
+
+  it("an id the Library does not hold exports currentLabel null; no throw, no guess (AC-4)", async () => {
+    const byId = new Map((await exportedCitations()).map((c) => [c.refId, c]));
+    expect(byId.get("retired-effect")).toMatchObject({ currentLabel: null, labelResolution: "not-in-library" });
+    expect(byId.get("rule-x")).toMatchObject({ currentLabel: null, labelResolution: "not-resolved" });
+    // Present without a verified title: resolved, and today's label is the stored one.
+    expect(byId.get("p-nac-antioxidant")).toMatchObject({
+      currentLabel: "Stored NAC title",
+      labelResolution: "resolved",
+    });
+  });
+
+  it("leaves the rest of the message untouched", async () => {
+    const result = await exportUserData(stubClient([], { advisor_messages: [MESSAGE_ROW] }), "u1");
+    const [message] = result.tables.advisor_messages as Record<string, unknown>[];
+    expect(message).toMatchObject({
+      id: "msg1",
+      conversationId: "c1",
+      role: "assistant",
+      content: "Made-up answer.",
+      createdAt: "2026-09-01T00:00:00Z",
+    });
+  });
+
+  it("exports a malformed stored element exactly as stored instead of throwing", async () => {
+    const row = { ...MESSAGE_ROW, citations: ["not-an-object", null, ["an", "array"]] };
+    const result = await exportUserData(stubClient([], { advisor_messages: [row] }), "u1");
+    const [message] = result.tables.advisor_messages as { citations: unknown[] }[];
+    expect(message.citations).toEqual(["not-an-object", null, ["an", "array"]]);
   });
 });

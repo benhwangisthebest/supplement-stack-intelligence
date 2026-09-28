@@ -36,6 +36,8 @@ import { listAllCheckins } from "./checkin-repo";
 import { listAllSideEffectReports } from "./side-effect-repo";
 import { listActionsByUser } from "./advisor-action-repo";
 import { listConversations, getMessages, listUsageRows } from "@/lib/advisor/repo";
+import { currentCitationLabel, type CurrentCitationLabel } from "@/lib/advisor/citation-label";
+import type { AdvisorMessage, Citation } from "@/types/advisor";
 
 /**
  * THE TWELVE. One definition, two consumers.
@@ -152,12 +154,45 @@ export async function exportUserData(
       lab_panels: panels,
       lab_markers: markers,
       advisor_conversations: conversations,
-      advisor_messages: messages.flat(),
+      advisor_messages: messages.flat().map(withCurrentLabels),
       advisor_actions: actions,
       advisor_usage: usage,
       checkins,
       side_effect_reports: sideEffects,
     },
+  };
+}
+
+/**
+ * A stored citation as exported (Phase 4 U9, D-16 (b)): every stored field unchanged
+ * — `label` is what the user was shown when the message was written — plus, beside
+ * it, the label the Library gives that id today and how that was resolved.
+ */
+export type ExportedCitation = Citation & CurrentCitationLabel;
+
+/**
+ * `currentCitationLabel` is the resolver the advisor's source chips use (through
+ * the server-built CitationIndex), so the export and the UI cannot disagree about
+ * today's label. The stored row is spread first and never rewritten. N-41: this is
+ * the export's first per-row transform; the payload grows by two fields per
+ * citation and remains uncapped (N-41 stays OUT — a cap makes an export quietly
+ * partial).
+ */
+function withCurrentLabels(m: AdvisorMessage): Omit<AdvisorMessage, "citations"> & {
+  citations: ExportedCitation[];
+} {
+  return {
+    ...m,
+    citations: m.citations.map((c) => {
+      // `citations` is jsonb read without validation (repo.ts `toMessage`). An
+      // element that is not an object is exported exactly as stored rather than
+      // throwing and losing the whole export. (`toMessage` types it as Citation, so
+      // the element is widened to `unknown` for this runtime-only check.)
+      const raw: unknown = c;
+      if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw as ExportedCitation;
+      const { currentLabel, labelResolution } = currentCitationLabel(c);
+      return { ...c, currentLabel, labelResolution };
+    }),
   };
 }
 

@@ -112,6 +112,26 @@ describe("GET /api/account/export", () => {
     expect(body.data.tables.user_profiles[0].medications).toContain(SENTINELS.medication);
   });
 
+  it("serves exported citations with the stored label and currentLabel side by side, null intact (U9)", async () => {
+    // Phase 4 U9, D-16 (b). The repository builds the shape (export-repo.test.ts);
+    // this asserts the route hands it over unchanged — a null `currentLabel` must
+    // survive serialisation as null, not vanish as `undefined` would.
+    const citations = [
+      {
+        kind: "effect-grade",
+        refId: "fish-oil-cardiovascular",
+        label: "Fish Oil (Omega-3) → Cardiovascular support, Grade A",
+        currentLabel: "Fish Oil (Omega-3) → Triglyceride lowering, Grade A",
+        labelResolution: "resolved",
+      },
+      { kind: "effect-grade", refId: "retired-effect", label: "Gone", currentLabel: null, labelResolution: "not-in-library" },
+    ];
+    getUser.mockResolvedValue(USER);
+    exportUserData.mockResolvedValue({ ...PAYLOAD, tables: { advisor_messages: [{ citations }] } });
+    const body = await (await GET()).json();
+    expect(body.data.tables.advisor_messages[0].citations).toEqual(citations);
+  });
+
   it("scopes the export to the caller's own id", async () => {
     // The only id that may reach the repository is the authenticated user's.
     getUser.mockResolvedValue(USER);

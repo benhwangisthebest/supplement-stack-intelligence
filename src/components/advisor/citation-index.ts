@@ -5,24 +5,30 @@
 // import this file's TYPES only; a runtime import is a CLIENT_TAKES_PROPS failure.
 //
 // EXACTNESS. Each value below is the lib's own answer (citationHref,
-// defaultLibrary, getPaperById), computed for every id that can produce a
+// libraryLabel, defaultLibrary), computed for every id that can produce a
 // non-null answer:
-//  - an effect's grade comes from `defaultLibrary.effects`, and `citationHref`
-//    resolves an effect only through `getEffectsForSupplement`, which filters that
-//    same array — so its ids are the complete key set;
-//  - a paper resolves via `getPaperById` (`defaultLibrary.papers`) or via
-//    `citationHref`, which finds it only in some effect's `paperIds` — so the union
-//    of those two is the complete key set.
+//  - an effect's grade and label come from `defaultLibrary.effects`, and
+//    `citationHref` resolves an effect only through `getEffectsForSupplement`,
+//    which filters that same array — so its ids are the complete key set;
+//  - a paper's label comes from `libraryLabel` (`getPaperById`, i.e.
+//    `defaultLibrary.papers`) and its href from `citationHref`, which finds it only
+//    in some effect's `paperIds` — so the union of those two is the complete key set.
 // An id outside the index gets `undefined` / `null` from the lib as well, which is
 // exactly what the chip's fallback does.
+//
+// Phase 4 U9: `label` is `libraryLabel(kind, id).label` — the same function the
+// account export uses through `currentCitationLabel` (src/lib/advisor/citation-label.ts).
 import { citationHref } from "@/lib/advisor/citation-href";
-import { defaultLibrary, getPaperById } from "@/lib/evidence";
+import { libraryLabel } from "@/lib/advisor/citation-label";
+import { defaultLibrary } from "@/lib/evidence";
 import type { EvidenceGrade } from "@/types";
 
 export interface CitationIndex {
-  effects: Readonly<Record<string, { grade: EvidenceGrade | undefined; href: string | null }>>;
-  /** `verifiedTitle` is set only when the paper carries a DOI or PMID. */
-  papers: Readonly<Record<string, { verifiedTitle: string | null; href: string | null }>>;
+  effects: Readonly<
+    Record<string, { grade: EvidenceGrade | undefined; href: string | null; label: string | null }>
+  >;
+  /** `label` is null when the paper is absent or carries no DOI or PMID. */
+  papers: Readonly<Record<string, { label: string | null; href: string | null }>>;
 }
 
 export function buildCitationIndex(): CitationIndex {
@@ -32,6 +38,7 @@ export function buildCitationIndex(): CitationIndex {
     effects[id] = {
       grade: defaultLibrary.effects.find((e) => e.id === id)?.grade,
       href: citationHref({ kind: "effect-grade", refId: id, label: "" }),
+      label: libraryLabel("effect-grade", id).label,
     };
   }
 
@@ -39,9 +46,8 @@ export function buildCitationIndex(): CitationIndex {
   for (const e of defaultLibrary.effects) for (const p of e.paperIds) paperIds.add(p);
   const papers: Record<string, CitationIndex["papers"][string]> = {};
   for (const id of paperIds) {
-    const paper = getPaperById(id);
     papers[id] = {
-      verifiedTitle: paper && (paper.doi || paper.pmid) ? paper.title : null,
+      label: libraryLabel("paper", id).label,
       href: citationHref({ kind: "paper", refId: id, label: "" }),
     };
   }

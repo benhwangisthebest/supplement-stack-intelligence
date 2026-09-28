@@ -6,7 +6,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { citationHref } from "@/lib/advisor/citation-href";
-import { defaultLibrary, getPaperById } from "@/lib/evidence";
+import { currentCitationLabel } from "@/lib/advisor/citation-label";
+import { defaultLibrary, getPaperById, getSupplementById } from "@/lib/evidence";
 import type { Citation } from "@/types/advisor";
 import { ProvenanceChips } from "./ProvenanceChips";
 import { buildCitationIndex } from "./citation-index";
@@ -89,6 +90,8 @@ describe("ProvenanceChips — historic paper citations (U6 closeout)", () => {
 // (docs/01-plan/features/p3-u4-profiles.plan.md).
 describe("ProvenanceChips — effect-grade citations after a grade change (U4 R2)", () => {
   const effect = defaultLibrary.effects.find((e) => e.id === "creatine-strength")!;
+  const supp = getSupplementById(effect.supplementId)!;
+  const current = `${supp.name} → ${effect.name}, Grade ${effect.grade}`;
   const other = (["A", "B", "C", "D"] as const).find((g) => g !== effect.grade)!;
   const marker = () => screen.queryByTestId("grade-updated");
 
@@ -100,7 +103,7 @@ describe("ProvenanceChips — effect-grade citations after a grade change (U4 R2
     };
     render(<ProvenanceChips index={INDEX} citations={[stored]} />);
     const sources = screen.getByRole("list", { name: "Sources" });
-    expect(within(sources).getByText(`Creatine → ${effect.name}, Grade ${effect.grade}`)).toBeTruthy();
+    expect(within(sources).getByText(current)).toBeTruthy();
     expect(within(sources).queryByText(stored.label)).toBeNull();
     expect(marker()?.textContent).toMatch(/grade updated since this message/);
   });
@@ -108,7 +111,7 @@ describe("ProvenanceChips — effect-grade citations after a grade change (U4 R2
   it("shows no marker when the stored letter is still current", () => {
     const label = `Creatine → ${effect.name}, Grade ${effect.grade}`;
     render(<ProvenanceChips index={INDEX} citations={[{ kind: "effect-grade", refId: effect.id, label }]} />);
-    expect(screen.getByText(label)).toBeTruthy();
+    expect(screen.getByText(current)).toBeTruthy();
     expect(marker()).toBeNull();
   });
 
@@ -121,30 +124,20 @@ describe("ProvenanceChips — effect-grade citations after a grade change (U4 R2
   });
 });
 
-// Phase 3 U9 (b), CLAUDE.md §4 rule 7 — behaviour unchanged. The chip used to call
-// citationHref, defaultLibrary and getPaperById in the browser; it now reads the
-// index the advisor page builds on the server. For EVERY effect and paper id the
-// corpus holds, plus ids it does not (prototype names included), the rendered href
-// and label must equal what those lib calls produce — computed here, independently.
+// Phase 3 U9 (b), CLAUDE.md §4 rule 7. The chip used to call citationHref,
+// defaultLibrary and getPaperById in the browser; it now reads the index the advisor
+// page builds on the server. For EVERY effect and paper id the corpus holds, plus ids
+// it does not (prototype names included), the rendered href and label must equal
+// what the lib produces. Phase 4 U9: the label is `currentCitationLabel` — the
+// resolver the account export uses — or the stored label where it gives none, so
+// this is also the chip↔export binding over the whole corpus.
 describe("ProvenanceChips — the server-built index answers exactly as the lib did (U9)", () => {
   const unknown = ["no-such-id", "constructor", "__proto__", "toString", "hasOwnProperty"];
-  const STORED = /Grade ([ABCD])$/;
 
-  const expected = (c: Citation): { href: string | null; label: string } => {
-    const href = citationHref(c);
-    if (c.kind === "paper") {
-      const p = getPaperById(c.refId);
-      return { href, label: p && (p.doi || p.pmid) ? p.title : c.label };
-    }
-    if (c.kind === "effect-grade") {
-      const stored = STORED.exec(c.label)?.[1];
-      const current = defaultLibrary.effects.find((e) => e.id === c.refId)?.grade;
-      if (stored && current && stored !== current) {
-        return { href, label: c.label.replace(STORED, `Grade ${current}`) };
-      }
-    }
-    return { href, label: c.label };
-  };
+  const expected = (c: Citation): { href: string | null; label: string } => ({
+    href: citationHref(c),
+    label: currentCitationLabel(c).currentLabel ?? c.label,
+  });
 
   const citations: Citation[] = [
     ...[...defaultLibrary.effects.map((e) => e.id), ...unknown].map(
@@ -175,5 +168,28 @@ describe("ProvenanceChips — the server-built index answers exactly as the lib 
       label: li.querySelector(".text-body")!.textContent,
     }));
     expect(got).toEqual(citations.map(expected));
+  });
+});
+
+// Phase 4 U9, owner ruling 2026-09-28 (N-100). Before this landing the chip resolved
+// only an effect's grade letter, so a message written before U6 renamed
+// fish-oil-cardiovascular still read "Cardiovascular support". The chip now shows the
+// effect's current name, and the same string the account export carries as
+// `currentLabel`. Red at 2ba950b: docs/01-plan/features/p4-u9-export-labels.plan.md.
+describe("ProvenanceChips — a pre-U6 effect name shows today's name (U9, N-100)", () => {
+  const stored: Citation = {
+    kind: "effect-grade",
+    refId: "fish-oil-cardiovascular",
+    label: "Fish Oil (Omega-3) → Cardiovascular support, Grade A",
+  };
+
+  it("renders the current effect name, the same string the export carries", () => {
+    render(<ProvenanceChips index={INDEX} citations={[stored]} />);
+    const sources = screen.getByRole("list", { name: "Sources" });
+    expect(within(sources).getByText("Fish Oil (Omega-3) → Triglyceride lowering, Grade A")).toBeTruthy();
+    expect(within(sources).queryByText(stored.label)).toBeNull();
+    expect(currentCitationLabel(stored).currentLabel).toBe("Fish Oil (Omega-3) → Triglyceride lowering, Grade A");
+    // Same grade as stored, so no grade marker.
+    expect(screen.queryByTestId("grade-updated")).toBeNull();
   });
 });

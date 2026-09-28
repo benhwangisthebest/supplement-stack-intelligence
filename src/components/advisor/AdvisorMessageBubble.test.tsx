@@ -31,7 +31,8 @@ describe("AdvisorMessageBubble — the answer's own citations (rule 8)", () => {
     render(<AdvisorMessageBubble message={message({})} citationIndex={index} />);
     const sources = screen.getByRole("list", { name: "Sources" });
     expect(within(sources).getAllByRole("listitem")).toHaveLength(citations.length);
-    expect(within(sources).getByText(citations[0].label)).toBeTruthy();
+    // Phase 4 U9: an effect chip shows the Library's current label, not the stored one.
+    expect(within(sources).getByText(index.effects[effect.id].label!)).toBeTruthy();
     expect(within(sources).getByText("Made-up stack evaluation")).toBeTruthy();
     expect(screen.getByText("Made-up answer.")).toBeTruthy();
   });
