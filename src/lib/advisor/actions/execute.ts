@@ -1,32 +1,41 @@
 // Application/Infrastructure — executes a confirmed proposal via the EXISTING repos.
 // This is the ONLY place advisor-actions writes data, and it writes exclusively
 // through the same repo functions the stack/protocol/product routes already use —
-// so "engines/repos are the only writers" holds (Plan SC-2). Pure intent/inverse
-// mapping stays in actions/apply.ts; this module supplies the runtime snapshots.
+// so "engines/repos are the only writers" holds (Plan SC-2). [U10 (b)] The
+// exceptions are advisor-only compare-and-set variants in the same repo
+// (`updateItemIfUnchanged`, `deleteItemIfUnchanged`): still repo functions, but
+// Stack Lab does not call them. Pure intent/inverse mapping stays in
+// actions/apply.ts; this module supplies the runtime snapshots.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   addItem,
   deleteItem,
+  deleteItemIfUnchanged,
   getItemProductId,
   setItemProduct,
   updateItem,
+  updateItemIfUnchanged,
 } from "@/lib/db/stack-item-repo";
 import { createStack, deleteStack } from "@/lib/db/stack-repo";
 import { reportInternalError } from "@/lib/api/respond";
-import { forwardIntent, inverseIntent } from "./apply";
+import { forwardIntent, inverseIntent, itemToInput } from "./apply";
+import { attachProductPayloadSchema } from "./schema";
 import type {
   ActionProposal,
+  AdvisorActionRecord,
   AttachProductPayload,
   EditableProposalFields,
   WriteIntent,
 } from "@/types/advisor-action";
-import type { StackItem } from "@/types";
+import type { StackItem, StackItemInput } from "@/types";
 
 export interface ExecuteResult {
   /** The reversal to persist for undo (SC-7). */
   inverse: WriteIntent;
   resultingItemId: string | null;
   createdStackId: string | null;
+  /** edit_item only: the values the forward write set, so a rollback can require them. */
+  written?: StackItemInput;
 }
 
 /**
@@ -54,7 +63,12 @@ export async function executeProposal(
     }
     case "remove_item": {
       if (!priorItem) throw new Error("remove_item requires priorItem");
-      await deleteItem(supabase, priorItem.id);
+      // [Phase 4 U10 (b), N-102] Deleted only if the item still holds what was
+      // read. The inverse re-adds `priorItem`, so if another write changed the
+      // item since, that inverse would restore values that were not current.
+      if (!(await deleteItemIfUnchanged(supabase, priorItem.id, itemToInput(priorItem)))) {
+        throw new StaleWriteError();
+      }
       return {
         inverse: inverseIntent(proposal, { priorItem }),
         resultingItemId: null,
@@ -65,11 +79,15 @@ export async function executeProposal(
       if (!priorItem) throw new Error("edit_item requires priorItem");
       const intent = forwardIntent(proposal, { edits, priorItem });
       if (intent.op !== "update_item") throw new Error("intent mismatch");
-      await updateItem(supabase, priorItem.id, intent.input);
+      // [Phase 4 U10 (b), N-102] The same compare-and-set as remove_item.
+      if (!(await updateItemIfUnchanged(supabase, priorItem.id, intent.input, itemToInput(priorItem)))) {
+        throw new StaleWriteError();
+      }
       return {
         inverse: inverseIntent(proposal, { priorItem }),
         resultingItemId: priorItem.id,
         createdStackId: null,
+        written: intent.input,
       };
     }
     case "generate_protocol": {
@@ -93,7 +111,7 @@ export async function executeProposal(
       // restoring `prior` would undo that one too. Not applied is a failure, so
       // executeBatch rolls back and counts the batch; it is never a success.
       if (!(await setItemProduct(supabase, intent.itemId, intent.productId, { current: prior }))) {
-        throw new StaleProductError();
+        throw new StaleWriteError();
       }
       return {
         inverse: inverseIntent(proposal, { priorProductId: prior }),
@@ -196,30 +214,77 @@ export async function revertAll(
   return { reverted, unreverted };
 }
 
-/** A compare-and-set on `product_id` found a value other than the one expected. */
-class StaleProductError extends Error {
+/** A compare-and-set found the item changed since it was read, so nothing was written. */
+class StaleWriteError extends Error {
   constructor() {
-    super("stack item product changed since it was read");
-    this.name = "StaleProductError";
+    super("stack item changed since it was read");
+    this.name = "StaleWriteError";
   }
+}
+
+/**
+ * Whether a caught error is a not-applied compare-and-set. [U10 (b), FU-77] The
+ * service answers it with the existing 409, not a 500. Matched by name, which
+ * only `StaleWriteError` sets; `withRollbackOutcome` rethrows the original
+ * error, so the name survives the rollback.
+ */
+export function isStaleWrite(err: unknown): boolean {
+  return err instanceof Error && err.name === "StaleWriteError";
 }
 
 /**
  * Replay one applied action's inverse. [Phase 4 U10] An attach is reverted only
  * if the item still holds the product this batch set: if another write has
- * replaced it since, restoring the prior product would erase that write. The
- * throw lands in `revertAll`'s catch, so it is counted as unreverted.
+ * replaced it since, restoring the prior product would erase that write.
+ * [U10 (b), N-102] An edit likewise, against the values it wrote. The throw
+ * lands in `revertAll`'s catch, so it is counted as unreverted. A remove's
+ * inverse is an insert, which overwrites nothing.
  */
 async function revertOne(supabase: SupabaseClient, userId: string, r: BatchItemResult): Promise<void> {
   const inverse = r.exec.inverse;
   if (inverse.op === "set_item_product" && r.proposal.type === "attach_product") {
     const { productId } = r.proposal.payload as AttachProductPayload;
     if (!(await setItemProduct(supabase, inverse.itemId, inverse.productId, { current: productId }))) {
-      throw new StaleProductError();
+      throw new StaleWriteError();
+    }
+    return;
+  }
+  if (inverse.op === "update_item" && r.exec.written) {
+    if (!(await updateItemIfUnchanged(supabase, inverse.itemId, inverse.input, r.exec.written))) {
+      throw new StaleWriteError();
     }
     return;
   }
   await executeIntent(supabase, userId, inverse);
+}
+
+/**
+ * Undo's replay of one audit row. Returns whether the inverse was written.
+ *
+ * [Phase 4 U10 (b), N-101] Undo can run long after the confirm. An attach's
+ * inverse restores the product the item held before it, so it is written only
+ * if the item still holds the product the attach set, which the row's payload
+ * records. If the payload does not name that item and product, nothing is
+ * written: fail closed.
+ *
+ * Every other inverse replays as before. An edit's is still unconditional,
+ * because the row does not record what the edit wrote once confirm-card edits
+ * applied (N-105).
+ */
+export async function undoAction(
+  supabase: SupabaseClient,
+  userId: string,
+  row: Pick<AdvisorActionRecord, "actionType" | "payload" | "inverse">,
+): Promise<boolean> {
+  const inverse = row.inverse;
+  if (inverse.op === "set_item_product") {
+    const forward = attachProductPayloadSchema.safeParse(row.payload);
+    if (row.actionType !== "attach_product" || !forward.success) return false;
+    if (forward.data.stackItemId !== inverse.itemId) return false;
+    return setItemProduct(supabase, inverse.itemId, inverse.productId, { current: forward.data.productId });
+  }
+  await executeIntent(supabase, userId, inverse);
+  return true;
 }
 
 /**
@@ -306,9 +371,8 @@ export async function executeIntent(
       await deleteStack(supabase, userId, intent.stackId);
       return;
     case "set_item_product":
-      // Undo's replay. The stored inverse carries no expected value, so this
-      // write stays last-writer-wins: N-101, owned by the undo route.
-      await setItemProduct(supabase, intent.itemId, intent.productId, "unconditional");
-      return;
+      // [U10 (b), N-101] Refused. A product write is a compare-and-set, and an
+      // intent carries no expected value: `revertOne` and `undoAction` supply one.
+      throw new Error("set_item_product needs an expected product; use undoAction");
   }
 }

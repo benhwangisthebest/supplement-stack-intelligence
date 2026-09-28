@@ -109,4 +109,84 @@ diagnoses anything, and both say what to do next.
 - AC-5: rule-8 component tests for `AdvisorPanel` and `ActionProposalCard` are green. No advisor-action route file
   is touched, so no new route tests are owed. `npx vitest run src/architecture`: 30 files green, no new spec file.
 - AC-6 review (fresh subagent, scratch copy, 2026-09-28): **PASS WITH ADVISORIES**, no BLOCKING finding. It ran 49 files and 752 tests, plus `tsc`, and its own nine mutations went red. **Asked whether any path still records an inverse from a stale read:** the forward attach, the batch rollback and the audit-failure rollback are closed, because `setItemProduct` is the only writer of `product_id`. Still open: undo's replay (N-101) and `edit_item`/`remove_item` (N-102), both outside U10. Also raised: N-104 and FU-77. It judged the held `page.tsx` edit *"necessary and correct"* and recommended approving it. Copy nit: the counts do not say that they count actions.
-- AC-7 (G on the staged tree, clean worktree): runs after the owner's approval.
+- AC-7 (G on the staged tree, clean worktree): ~~runs after the owner's approval.~~ **Green** on the staged tree in a
+  clean worktree after the AC-4 approval, as recorded in bkit at landing; per-check figures were not kept. Landed as
+  `0dfe2f8`. Branch CI `36472256910` (`fix/p4-u10`): success. Main CI `36472762496`: in progress at landing,
+  **success** when checked once with `gh run list` at the start of landing (b), 2026-09-28.
+
+---
+
+## 8. Landing (b): stale-read races and undo restore
+
+> **Anchor:** HEAD `0dfe2f8`. **Brief:** owner, 2026-09-28 (N-101, N-102, N-104, FU-77). **Rulings:** D-14 (a) and
+> *"ONLY NUMBERS CROSS THE BOUNDARY"*; N-69 (`recordBatch` untouched); `advisor-actions.ts` for FU-77's error mapping
+> only. **bkit:** `p4-u10-confirm-surface`, `landing: "b"`. **Housekeeping:** §7's AC-7 line corrected; U6 (c) `2ba950b`
+> added to U6's bkit entry.
+
+**Approach.** (1) `updateItemIfUnchanged` / `deleteItemIfUnchanged` (`stack-item-repo.ts:117`, `:134`) put the values read
+into the WHERE clause through `whereItemHolds` (`:93`): `supplement_id`, `dose`, `unit`, `timing`, `frequency`, with
+IS NULL for null. The update SETs only `dose`, `unit`, `timing`, `frequency`, the columns an advisor edit changes
+(review A1). Stack Lab keeps `updateItem` / `deleteItem`, unchanged. (2) The forward edit and remove expect
+`itemToInput(priorItem)` and throw `StaleWriteError` when nothing matched (`execute.ts:69`, `:83`), so the batch rolls
+back and counts. (3) `revertOne` reverts an edit only over the values it wrote (`execute.ts:252`, from
+`ExecuteResult.written`). (4) `undoAction` (`execute.ts:274`) replays an attach's inverse only while the item holds
+the product the row's payload says the attach wrote (`:284`). It fails closed on a payload naming another item. The
+undo route (`[id]/undo/route.ts:76`) marks only applied rows undone. If any row was not applied, it answers
+**409 `STALE_UNDO`** with `details: { reverted, unreverted }` (`:90`). (5) `executeIntent` refuses
+`set_item_product` (`execute.ts:376`), and `ProductExpectation`'s `"unconditional"` variant is deleted, so no product
+write exists without an expected value. (6) FU-77: `isStaleWrite` (`execute.ts:231`). The service answers
+`staleError()` when the rollback was clean (`advisor-actions.ts:240`). One line of mapping; `PARTIALLY_APPLIED` still
+wins when `unreverted > 0`.
+
+**Copy.** No new string. The undo 409 reuses the approved `advisorOutcomeCopy.partiallyApplied`, filled with rows
+undone and rows not undone. That is a reuse in a new context, flagged to the owner. The confirm 409 is the existing
+*"This proposal is no longer valid; please ask the advisor again."*
+
+**Files.** Exactly the brief's *May touch*: `stack-item-repo.ts` + test, `execute.ts` + test, the undo route + test,
+`advisor-actions.ts` (mapping) + the confirm route test, this artifact, the phase plan, bkit state. No component,
+`src/types`, migration, `src/lib/safety` or allowlist change.
+
+### 8.1 Red evidence (HEAD `0dfe2f8`, new tests)
+
+23 red, 95 green. The reds that carry the ACs:
+
+| AC | Test | Red at HEAD |
+|---|---|---|
+| AC-1 | undo route: undo after an intervening change | `expected 'p-old' to be 'p-other'`: the replay overwrote the later product. Batch case: same |
+| AC-2 | two edits built from one read | `expected 'fulfilled' to be 'rejected'`: the second persisted an inverse restoring 200 while 400 was current |
+| AC-2 | remove after an intervening change | `promise resolved … instead of rejecting`: the changed row was deleted |
+| AC-2 | rollback of an edit whose item moved on | `expected { reverted: 1, unreverted: 0 } to deeply equal { reverted: 0, unreverted: 1 }` |
+| AC-4 | confirm route, stale write, clean rollback | `expected 500 to be 409` |
+
+The rest are the new repo and `undoAction` / `isStaleWrite` tests (not functions at HEAD), four existing assertions
+that now name the compare-and-set writer, and `executeIntent`'s refusal.
+
+**Mutations** (scratch copy, restored by file copy, `diff -r src` empty after): M1 drop the `dose` filter → 2 repo
+tests red. M2 remove uses unconditional `deleteItem` → 2 red. M3 edit ignores not-applied → 2 red. M4 rollback skips
+the edit compare-and-set → 1 red. **M5 (AC-1's)**: undo expects a fresh read instead of the payload's product (the
+expected-value check removed in effect) → 3 red, including both undo-route stale cases. M6 route counts a not-applied
+row as applied → 2 red. M7 fail-closed item check removed → 1 red. M8 service mapping removed → 1 red. M9 mapping
+ignores `unreverted` → 1 red. M10 `notes` added to the filter → 2 red. M11 (A1, pre-fix) update SETs all eight
+columns → the four-column test red. M5's first run stayed green because the fakes
+did not model `getItemProductId`; they now answer reads from the same state, and it goes red.
+
+### 8.2 Carried items and new findings
+
+| Id | Disposition |
+|---|---|
+| **N-101** | **CLOSED.** `undoAction` (`execute.ts:274-284`), route `:76-90`. AC-1 red + M5/M6/M7 |
+| **N-102** | **CLOSED.** Forward (`execute.ts:69`, `:83`) and batch rollback (`:252`). AC-2 reds + M1–M4. Consequence: a batch that edits and then removes, or edits twice, the same item now gets the 409, because the second action's read predates the first's write. At HEAD it applied, and its undo failed |
+| **N-104** | **NOT CLOSED: STOPPED.** The re-add inverse is `WriteIntent` `add_item`, whose `input: StackItemInput` has no product (`src/types/advisor-action.ts:105`, `src/types/stack.ts:76`). Neither the row's payload (`{ stackItemId }`) nor the route has it. Carrying it needs a `src/types/**` change: a stop condition. **Owner (2026-09-28): land (b) without it; N-104 → landing (c)**, with `src/types/advisor-action.ts` in *May touch* |
+| **FU-77** | **CLOSED.** `advisor-actions.ts:240`. AC-4 red + M8/M9. The body carries no item id, reason, notes or driver text (asserted) |
+| **N-105** *(new)* | Still unconditional: undo of `edit_item`, `add_item` and `generate_protocol`, and the batch rollback of `add_item` and `generate_protocol` (`execute.ts` `executeIntent`, `update_item` / `delete_item` / `delete_stack`). Edit and add: the payload omits confirm-card edits, so what was written is not recorded. Protocol (review A2): the payload is exact, but a stack-plus-items compare needs an RPC; undo deletes items added to that stack since. **OPEN** |
+| **N-106** *(new)* | The item compare-and-set omits `reason`, `notes` and `custom_name`, because PostgREST filters travel in the URL query string, which the gateway logs (§2.3 rule 15). A concurrent change to only those is not detected. The edit no longer writes them (A1), so this bites only a remove, whose re-add restores the read values. Closing it needs an RPC: stop class. **OPEN, by design** |
+| **N-107** *(new, review A3)* | Two actions on one item in one batch (edit then remove, or two edits) now always 409, because the second read predates the first write. Nothing rejects such a batch earlier, so an advisor that splits one edit in two dead-ends on "ask again". Safer than HEAD, which silently reverted the first. **OPEN** |
+| **FU-78** *(new, review A4/A5)* | (A4, owner's call) The compare-and-set puts `supplement_id`, `dose`, `unit`, `timing`, `frequency` in PostgREST query strings, where `stack_items` filters carried only ids. Not a §2.3 rule 15 category, but health-adjacent. (A5) `src/lib/safety/index.ts:588-596` still says only the confirm route fills `partiallyApplied`. Outside (b). **OPEN** |
+
+### 8.3 Verification
+
+- AC-5: rule-8 component tests green, no component touched. `npx vitest run src/architecture`: 30 files, 470 tests, no new spec.
+- AC-6 review (fresh subagent, scratch copy, 2026-09-28): **PASS WITH ADVISORIES**, no BLOCKING. Ran tsc, lint 424/424, 1840/1840, and 30 architecture files. 15 mutations of its own all red; a no-op control stayed green. **Asked whether any path still writes from a stale read: yes, five.** All five predate (b). Four are N-105: undo of edit, add and protocol, and rollback of add and protocol. The fifth was the forward edit writing back stale free text (A1), **fixed in this landing** (M11). A2 → N-105's text. A3 → N-107. A4/A5 → FU-78. It judged the undo copy reuse truthful and found nothing new crossing D-14.
+- AC-7 (G on staged tree `ec70867`, clean worktree, 2026-09-28): tsc clean · lint 424/424, 0 errors · 1841/1841 in 147
+  files · architecture 30 files / 470 · `test:coverage` exit 0, no floor edited · `next build` ok · `verify:bundle` OK (+8 to +14 B) ·
+  E2E 70 passed, 30 `[LIVE]` skipped. This line was added after the gate, so the staged tree differs from `ec70867` by it alone.

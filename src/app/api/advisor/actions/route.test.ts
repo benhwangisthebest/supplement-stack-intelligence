@@ -20,7 +20,9 @@
 //   400 VALIDATION_ERROR      body fails confirmSchema (ZodError)
 //   400 BAD_REQUEST           body unparseable, non-Zod
 //   404 NOT_FOUND             stack not owned / unknown supplement
-//   409 STALE_PROPOSAL        active stack changed, item gone, product unranked
+//   409 STALE_PROPOSAL        active stack changed, item gone, product unranked,
+//                             or a compare-and-set found the item changed and the
+//                             rollback was clean (U10 (b), FU-77)
 //   409 SAFETY_BLOCK          a NEW critical flag on the projected stack
 //   500 ACTION_ERROR + rolledBack:true   executeBatch threw and was rolled back
 //   500 ACTION_ERROR                     anything else thrown in the outer try
@@ -285,6 +287,60 @@ describe("PIN 409 — STALE_PROPOSAL", () => {
     expect(json.error.message).toBe(
       "That product is no longer a ranked match for the item; please ask the advisor again.",
     );
+  });
+});
+
+// Phase 4 U10 (b), FU-77. The executor's compare-and-set refuses a write whose
+// read has gone stale, and `executeBatch` rolls the batch back. That is the same
+// situation as the three re-validation 409s above, found one step later, so it
+// answers with the same response and the same copy. The error mapping is the
+// only change in the service.
+describe("U10 (b), FU-77 — a stale write is the existing 409, not a 500", () => {
+  beforeEach(() => getUser.mockResolvedValue(USER));
+
+  /** What `executeBatch` rethrows after a not-applied compare-and-set. */
+  const staleWrite = (counts: { reverted: number; unreverted: number }) =>
+    Object.assign(new Error("stack item changed since it was read"), { name: "StaleWriteError", ...counts });
+  const PRIVATE = { ...ITEM, reason: "sleep support", notes: "a private note" };
+
+  it("answers 409 STALE_PROPOSAL with its existing copy when the rollback was clean", async () => {
+    loadAdvisorContext.mockResolvedValue({ ...CTX, stackItems: [PRIVATE] });
+    executeBatch.mockRejectedValue(staleWrite({ reverted: 1, unreverted: 0 }));
+
+    const res = await POST(req(body({ stackItemId: "i1", dose: 400 }, "edit_item")));
+    const json = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(json.error.code).toBe("STALE_PROPOSAL");
+    expect(json.error.message).toBe("This proposal is no longer valid; please ask the advisor again.");
+    expect(json.error.details).toBeUndefined();
+    // Nothing about the item crosses: no id, reason or notes, and no driver text.
+    const text = JSON.stringify(json);
+    for (const leaked of ["i1", "sleep support", "a private note", "changed since"]) {
+      expect(text).not.toContain(leaked);
+    }
+  });
+
+  it("a stale write whose rollback left changes behind is still PARTIALLY_APPLIED", async () => {
+    // The state the user is in outranks the step that failed: some of the
+    // batch stands, so they need the counts, not "ask again".
+    executeBatch.mockRejectedValue(staleWrite({ reverted: 0, unreverted: 1 }));
+
+    const res = await POST(req(body({ stackItemId: "i1", dose: 400 }, "edit_item")));
+    const json = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(json.error.code).toBe("PARTIALLY_APPLIED");
+    expect(json.error.details).toEqual({ rolledBack: false, reverted: 0, unreverted: 1 });
+  });
+
+  it("any other batch failure is unchanged: 500 ACTION_ERROR, rolled back", async () => {
+    executeBatch.mockRejectedValue(Object.assign(new Error("write failed"), { reverted: 1, unreverted: 0 }));
+
+    const res = await POST(req(body({ stackItemId: "i1", dose: 400 }, "edit_item")));
+
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toMatchObject({ code: "ACTION_ERROR", details: { rolledBack: true } });
   });
 });
 

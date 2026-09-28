@@ -38,6 +38,7 @@ import { loadAdvisorContext } from "@/lib/advisor/context-loader";
 import { cumulativeRecheck } from "@/lib/advisor/safety-recheck";
 import {
   executeBatch,
+  isStaleWrite,
   revertAll,
   rollbackOutcomeOf,
   type RollbackOutcome,
@@ -231,7 +232,13 @@ export async function confirmAndApply(
       // It is still not acted on by any client — nothing in `src/components`
       // reads `error.details` (FU-34) — and that half is a follow-up, not
       // something this unit can fix in the service layer.
-      return batchFailure(err, rollbackOutcomeOf(err));
+      const outcome = rollbackOutcomeOf(err);
+      // [Phase 4 U10 (b), FU-77] A compare-and-set found the item changed since
+      // it was read, and the batch rolled back cleanly: the proposal went stale
+      // one step after re-validation, so it gets re-validation's 409. If the
+      // rollback left changes behind, PARTIALLY_APPLIED still wins.
+      if (isStaleWrite(err) && outcome?.unreverted === 0) return staleError();
+      return batchFailure(err, outcome);
     }
 
     // Audit all applied actions under one batch_id → grouped one-click undo (SC-7).

@@ -5,6 +5,9 @@
 // v8 advisor-experience: if the action belongs to a BATCH (batch_id set), undo is
 // GROUPED — every still-applied sibling is reversed in REVERSE apply order so the
 // whole multi-action change is undone in one click (Design §3.3).
+// [Phase 4 U10 (b), N-101] A row whose inverse would overwrite a later change is
+// not replayed and not marked undone. The response counts it (409 STALE_UNDO),
+// and only the two counts cross (D-14 (a)).
 import type { NextRequest } from "next/server";
 import { getUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -13,8 +16,9 @@ import {
   getActionsByBatch,
   markUndone,
 } from "@/lib/db/advisor-action-repo";
-import { executeIntent } from "@/lib/advisor/actions/execute";
+import { undoAction } from "@/lib/advisor/actions/execute";
 import { fail, handle, ok, notFound, unauthorized } from "@/lib/api/respond";
+import { advisorOutcomeCopy } from "@/lib/safety";
 import { uuidParam } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
@@ -66,11 +70,25 @@ export async function POST(
       : [action];
 
     // Reverse in REVERSE apply order so dependent writes unwind correctly.
+    let reverted = 0;
+    let unreverted = 0;
     for (let i = rows.length - 1; i >= 0; i--) {
-      await executeIntent(supabase, user.id, rows[i].inverse);
+      if (!(await undoAction(supabase, user.id, rows[i]))) {
+        unreverted += 1;
+        continue;
+      }
       await markUndone(supabase, user.id, rows[i].id);
+      reverted += 1;
     }
 
+    if (unreverted > 0) {
+      // The confirm route's approved partial-outcome sentence, reused: the same
+      // two counts, now of rows undone and not undone.
+      const message = advisorOutcomeCopy.partiallyApplied
+        .replace("{reverted}", String(reverted))
+        .replace("{unreverted}", String(unreverted));
+      return fail("STALE_UNDO", message, 409, { reverted, unreverted });
+    }
     return ok({ id, undone: true, batchId: action.batchId, count: rows.length });
   }, { code: "UNDO_ERROR" });
 }

@@ -10,6 +10,11 @@
 //      inverse a second time. Replaying a `delete_item` inverse twice is
 //      harmless; replaying an `add_item` inverse twice silently duplicates a
 //      supplement in the user's stack.
+//
+// [Phase 4 U10 (b), N-101] The executor is REAL here and the repos below it are
+// mocked, so these tests see the write that reaches the item rather than the
+// inverse handed to a mock. That is what lets the stale-undo case below fail for
+// the right reason: a replay that overwrites an intervening change.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
 import type { AdvisorActionRecord } from "@/types/advisor-action";
@@ -18,7 +23,9 @@ const getUser = vi.fn();
 const getAction = vi.fn();
 const getActionsByBatch = vi.fn();
 const markUndone = vi.fn();
-const executeIntent = vi.fn();
+const deleteItem = vi.fn();
+const setItemProduct = vi.fn();
+const getItemProductId = vi.fn();
 
 vi.mock("@/lib/auth/session", () => ({ getUser: () => getUser() }));
 const createClient = vi.fn(async () => ({}));
@@ -28,9 +35,16 @@ vi.mock("@/lib/db/advisor-action-repo", () => ({
   getActionsByBatch: (...a: unknown[]) => getActionsByBatch(...a),
   markUndone: (...a: unknown[]) => markUndone(...a),
 }));
-vi.mock("@/lib/advisor/actions/execute", () => ({
-  executeIntent: (...a: unknown[]) => executeIntent(...a),
+vi.mock("@/lib/db/stack-item-repo", () => ({
+  addItem: vi.fn(),
+  updateItem: vi.fn(),
+  deleteItem: (...a: unknown[]) => deleteItem(...a),
+  updateItemIfUnchanged: vi.fn(),
+  deleteItemIfUnchanged: vi.fn(),
+  getItemProductId: (...a: unknown[]) => getItemProductId(...a),
+  setItemProduct: (...a: unknown[]) => setItemProduct(...a),
 }));
+vi.mock("@/lib/db/stack-repo", () => ({ createStack: vi.fn(), deleteStack: vi.fn() }));
 
 import { POST } from "./route";
 
@@ -62,7 +76,8 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   getAction.mockResolvedValue(action());
   getActionsByBatch.mockResolvedValue([]);
-  executeIntent.mockResolvedValue(undefined);
+  deleteItem.mockResolvedValue(undefined);
+  setItemProduct.mockResolvedValue(true);
   markUndone.mockResolvedValue(undefined);
 });
 
@@ -78,7 +93,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     expect(res.status).toBe(401);
     expect(body.error.code).toBe("UNAUTHORIZED");
     expect(getAction).not.toHaveBeenCalled();
-    expect(executeIntent).not.toHaveBeenCalled();
+    expect(deleteItem).not.toHaveBeenCalled();
   });
 
   it("404s — replaying nothing — for an unknown action", async () => {
@@ -90,7 +105,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
 
     expect(res.status).toBe(404);
     expect(body.error.code).toBe("NOT_FOUND");
-    expect(executeIntent).not.toHaveBeenCalled();
+    expect(deleteItem).not.toHaveBeenCalled();
   });
 
   it("409s ALREADY_UNDONE on a double undo, without replaying the inverse", async () => {
@@ -102,7 +117,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
 
     expect(res.status).toBe(409);
     expect(body.error.code).toBe("ALREADY_UNDONE");
-    expect(executeIntent).not.toHaveBeenCalled();
+    expect(deleteItem).not.toHaveBeenCalled();
     expect(markUndone).not.toHaveBeenCalled();
   });
 
@@ -114,11 +129,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
 
     expect(res.status).toBe(200);
     expect(body.data).toEqual({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", undone: true, batchId: null, count: 1 });
-    expect(executeIntent).toHaveBeenCalledWith({}, "u1", {
-      op: "delete_item",
-      stackId: "s1",
-      itemId: "i1",
-    });
+    expect(deleteItem).toHaveBeenCalledWith({}, "i1");
     // U26: the owner travels with every repo call, in the second position.
     expect(getAction).toHaveBeenCalledWith({}, "u1", "f55ff16f-66f4-4360-866b-95db6f8fec01");
     expect(markUndone).toHaveBeenCalledWith({}, "u1", "f55ff16f-66f4-4360-866b-95db6f8fec01");
@@ -139,7 +150,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     expect(res.status).toBe(200);
     expect(body.data).toEqual({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", undone: true, batchId: "b1", count: 2 });
     // Newest first — the same invariant executeBatch holds on the forward path.
-    expect(executeIntent.mock.calls.map((c) => c[2].itemId)).toEqual(["second", "first"]);
+    expect(deleteItem.mock.calls.map((c) => c[1])).toEqual(["second", "first"]);
     expect(getActionsByBatch).toHaveBeenCalledWith({}, "u1", "b1");
     expect(markUndone.mock.calls.map((c) => c[2])).toEqual(["2c3a4249-d770-4005-8649-dbd822dcaf79", "f55ff16f-66f4-4360-866b-95db6f8fec01"]);
     expect(markUndone.mock.calls.every((c) => c[1] === "u1")).toBe(true);
@@ -157,13 +168,13 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     const body = await res.json();
 
     expect(body.data.count).toBe(1);
-    expect(executeIntent).toHaveBeenCalledTimes(1);
-    expect(executeIntent.mock.calls[0][2].itemId).toBe("live");
+    expect(deleteItem).toHaveBeenCalledTimes(1);
+    expect(deleteItem.mock.calls[0][1]).toBe("live");
   });
 
   it("returns the generic 500 envelope when a replay throws", async () => {
     getUser.mockResolvedValue(USER);
-    executeIntent.mockRejectedValue(new Error("deadlock detected on relation stack_items"));
+    deleteItem.mockRejectedValue(new Error("deadlock detected on relation stack_items"));
 
     const res = await POST(req(), ctx());
     const body = await res.json();
@@ -173,6 +184,89 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     expect(body.error.message).toBe("An unexpected internal error occurred.");
     expect(typeof body.error.correlationId).toBe("string");
     expect(JSON.stringify(body)).not.toContain("deadlock");
+  });
+});
+
+// Phase 4 U10 (b), N-101. An attach's inverse restores the product the item held
+// before the confirm. Undo may run long after, so the product the attach wrote
+// (the audit row's payload) must still be there, or the replay would erase
+// whatever replaced it. A row that is not applied is not marked undone, and the
+// response counts it: only numbers cross (D-14 (a)).
+describe("undo of an attach is a compare-and-set (U10 (b), N-101)", () => {
+  const ATTACH_ID = "2c3a4249-d770-4005-8649-dbd822dcaf79";
+  const attach = (over: Partial<AdvisorActionRecord> = {}) =>
+    action({
+      id: ATTACH_ID,
+      actionType: "attach_product",
+      payload: { stackItemId: "i1", productId: "p-new" },
+      inverse: { op: "set_item_product", stackId: "s1", itemId: "i1", productId: "p-old" },
+      ...over,
+    });
+  function column(initial: string | null) {
+    const state = { column: initial };
+    getItemProductId.mockImplementation(async () => state.column);
+    setItemProduct.mockImplementation(
+      async (_db: unknown, _id: string, pid: string | null, expect?: { current: string | null } | string) => {
+        if (typeof expect === "object" && expect.current !== state.column) return false;
+        state.column = pid;
+        return true;
+      },
+    );
+    return state;
+  }
+
+  beforeEach(() => getUser.mockResolvedValue(USER));
+
+  it("an undo after an intervening change writes nothing, marks nothing, and counts it", async () => {
+    const state = column("p-other"); // the item's product changed after the confirm
+    getAction.mockResolvedValue(attach());
+
+    const res = await POST(req(), ctx(ATTACH_ID));
+    const body = await res.json();
+
+    expect(state.column).toBe("p-other");
+    expect(markUndone).not.toHaveBeenCalled();
+    expect(res.status).toBe(409);
+    expect(body.error.code).toBe("STALE_UNDO");
+    expect(body.error.details).toEqual({ reverted: 0, unreverted: 1 });
+    // The approved partial-outcome sentence, filled with the two counts.
+    expect(body.error.message).toBe(
+      "This didn't finish, and some changes couldn't be undone (0 undone, 1 not undone). Please check your stack in Stack Lab before trying again.",
+    );
+    // Only numbers cross: no item, product or action id.
+    for (const id of ["i1", "p-new", "p-old", "p-other", ATTACH_ID]) {
+      expect(JSON.stringify(body)).not.toContain(id);
+    }
+  });
+
+  it("an undo nobody raced restores the prior product, expecting the one the attach wrote", async () => {
+    const state = column("p-new");
+    getAction.mockResolvedValue(attach());
+
+    const res = await POST(req(), ctx(ATTACH_ID));
+
+    expect(res.status).toBe(200);
+    expect(state.column).toBe("p-old");
+    expect(setItemProduct).toHaveBeenCalledWith({}, "i1", "p-old", { current: "p-new" });
+    expect(markUndone).toHaveBeenCalledWith({}, "u1", ATTACH_ID);
+  });
+
+  it("a batch undoes and marks the rows it can, and counts the one it cannot", async () => {
+    const state = column("p-other");
+    getAction.mockResolvedValue(action({ batchId: "b1" }));
+    getActionsByBatch.mockResolvedValue([
+      action({ batchId: "b1", inverse: { op: "delete_item", stackId: "s1", itemId: "i-added" } }),
+      attach({ batchId: "b1" }),
+    ]);
+
+    const res = await POST(req(), ctx());
+    const body = await res.json();
+
+    expect(state.column).toBe("p-other");
+    expect(deleteItem).toHaveBeenCalledWith({}, "i-added");
+    expect(markUndone.mock.calls.map((c) => c[2])).toEqual(["f55ff16f-66f4-4360-866b-95db6f8fec01"]);
+    expect(res.status).toBe(409);
+    expect(body.error.details).toEqual({ reverted: 1, unreverted: 1 });
   });
 });
 

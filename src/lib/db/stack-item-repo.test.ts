@@ -16,10 +16,12 @@ import { querySpy } from "./__testing__/query-spy";
 import {
   addItem,
   deleteItem,
+  deleteItemIfUnchanged,
   getItemProductId,
   listItems,
   setItemProduct,
   updateItem,
+  updateItemIfUnchanged,
 } from "./stack-item-repo";
 
 const itemRow = {
@@ -121,10 +123,71 @@ describe("setItemProduct — compare-and-set on product_id (U10)", () => {
     expect(await setItemProduct(miss.client, "i1", "prod2", { current: "prod1" })).toBe(false);
   });
 
-  it("'unconditional' adds no product_id filter (the undo route's replay, N-101)", async () => {
-    const spy = querySpy({ data: [{ id: "i1" }] });
-    await setItemProduct(spy.client, "i1", null, "unconditional");
-    expect(spy.filters().some(([col]) => col === "product_id")).toBe(false);
-    expect(isFilters(spy)).toEqual([]);
+});
+
+// Phase 4 U10 (b), N-102. The same compare-and-set for edit_item and remove_item:
+// the item is written only if it still holds the values the caller read. Only the
+// structured columns are compared. reason, notes and custom_name hold the user's
+// free text, and a PostgREST filter travels in the URL query string, which the API
+// gateway logs (§2.3 rule 15), so they are never a filter.
+describe("updateItemIfUnchanged / deleteItemIfUnchanged — compare-and-set on the item (U10 (b))", () => {
+  type Client = ReturnType<typeof querySpy>["client"];
+  const isFilters = (spy: ReturnType<typeof querySpy>) =>
+    spy.calls.filter((c) => c.method === "is").map((c) => c.args);
+  const expected = { ...input, timing: null, reason: "sleep", notes: "private note", customName: "my mag" };
+  const cases = [
+    ["updateItemIfUnchanged", (c: Client) => updateItemIfUnchanged(c, "i1", input as never, expected as never)],
+    ["deleteItemIfUnchanged", (c: Client) => deleteItemIfUnchanged(c, "i1", expected as never)],
+  ] as const;
+
+  it.each(cases)("%s addresses one row by id and compares the structured columns", async (_n, run) => {
+    const spy = querySpy({ data: [itemRow] });
+    await run(spy.client);
+    expect(spy.filters()).toEqual(
+      expect.arrayContaining([
+        ["id", "i1"],
+        ["supplement_id", "magnesium"],
+        ["dose", 300],
+        ["unit", "mg"],
+        ["frequency", "daily"],
+      ]),
+    );
+    // null needs IS NULL, since = NULL matches no row.
+    expect(isFilters(spy)).toContainEqual(["timing", null]);
+  });
+
+  it.each(cases)("%s never puts free text in a filter", async (_n, run) => {
+    const spy = querySpy({ data: [itemRow] });
+    await run(spy.client);
+    const filtered = [...spy.filters(), ...isFilters(spy)].map(([col]) => col);
+    expect(filtered).not.toContain("reason");
+    expect(filtered).not.toContain("notes");
+    expect(filtered).not.toContain("custom_name");
+    expect(JSON.stringify(spy.calls.filter((c) => c.method !== "update"))).not.toContain("private note");
+  });
+
+  it("updateItemIfUnchanged writes only the four columns an advisor edit changes", async () => {
+    // [AC-6 review, A1] It compares no free text, so it must write none either:
+    // SETting reason / notes / custom_name from the advisor's read would put
+    // back values a concurrent Stack Lab edit had replaced.
+    const spy = querySpy({ data: [itemRow] });
+    await updateItemIfUnchanged(spy.client, "i1", expected as never, expected as never);
+    expect(spy.payloads).toEqual([{ dose: 300, unit: "mg", timing: null, frequency: "daily" }]);
+  });
+
+  it("updateItemIfUnchanged returns the written item, or null when no row matched", async () => {
+    const hit = querySpy({ data: [itemRow] });
+    expect(await updateItemIfUnchanged(hit.client, "i1", input as never, expected as never)).toMatchObject({
+      id: "i1",
+    });
+    const miss = querySpy({ data: [] });
+    expect(await updateItemIfUnchanged(miss.client, "i1", input as never, expected as never)).toBeNull();
+  });
+
+  it("deleteItemIfUnchanged returns whether a row was deleted", async () => {
+    const hit = querySpy({ data: [{ id: "i1" }] });
+    expect(await deleteItemIfUnchanged(hit.client, "i1", expected as never)).toBe(true);
+    const miss = querySpy({ data: [] });
+    expect(await deleteItemIfUnchanged(miss.client, "i1", expected as never)).toBe(false);
   });
 });

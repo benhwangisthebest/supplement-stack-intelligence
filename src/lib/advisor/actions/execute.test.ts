@@ -21,6 +21,8 @@ import type { StackItem } from "@/types";
 const addItem = vi.fn();
 const deleteItem = vi.fn();
 const updateItem = vi.fn();
+const deleteItemIfUnchanged = vi.fn();
+const updateItemIfUnchanged = vi.fn();
 const getItemProductId = vi.fn();
 const setItemProduct = vi.fn();
 const createStack = vi.fn();
@@ -30,6 +32,8 @@ vi.mock("@/lib/db/stack-item-repo", () => ({
   addItem: (...a: unknown[]) => addItem(...a),
   deleteItem: (...a: unknown[]) => deleteItem(...a),
   updateItem: (...a: unknown[]) => updateItem(...a),
+  deleteItemIfUnchanged: (...a: unknown[]) => deleteItemIfUnchanged(...a),
+  updateItemIfUnchanged: (...a: unknown[]) => updateItemIfUnchanged(...a),
   getItemProductId: (...a: unknown[]) => getItemProductId(...a),
   setItemProduct: (...a: unknown[]) => setItemProduct(...a),
 }));
@@ -47,7 +51,16 @@ vi.mock("@/lib/api/respond", () => ({
   reportInternalError: (...a: unknown[]) => reportInternalError(...a),
 }));
 
-import { executeBatch, executeIntent, executeProposal, rollbackOutcomeOf } from "./execute";
+import { itemToInput } from "./apply";
+import {
+  executeBatch,
+  executeIntent,
+  executeProposal,
+  isStaleWrite,
+  rollbackOutcomeOf,
+  undoAction,
+} from "./execute";
+import type { StackItemInput } from "@/types";
 
 /** The module only forwards this value to the repos; it never reads it. */
 const DB = {} as unknown as SupabaseClient;
@@ -113,6 +126,8 @@ beforeEach(() => {
   addItem.mockResolvedValue({ ...PRIOR, id: "i-new" });
   deleteItem.mockResolvedValue(undefined);
   updateItem.mockResolvedValue(undefined);
+  deleteItemIfUnchanged.mockResolvedValue(true);
+  updateItemIfUnchanged.mockResolvedValue({ ...PRIOR });
   getItemProductId.mockResolvedValue("p-old");
   setItemProduct.mockResolvedValue(true);
   createStack.mockResolvedValue({ id: "s-new" });
@@ -151,7 +166,7 @@ describe("executeProposal — remove_item", () => {
   it("deletes the prior item and inverts to a re-add of its full prior state", async () => {
     const res = await executeProposal(DB, USER, REMOVE, PRIOR);
 
-    expect(deleteItem).toHaveBeenCalledWith(DB, "i1");
+    expect(deleteItemIfUnchanged).toHaveBeenCalledWith(DB, "i1", itemToInput(PRIOR));
     expect(res.inverse).toEqual({
       op: "add_item",
       stackId: "s1",
@@ -164,7 +179,7 @@ describe("executeProposal — remove_item", () => {
     await expect(executeProposal(DB, USER, REMOVE, null)).rejects.toThrow(
       "remove_item requires priorItem",
     );
-    expect(deleteItem).not.toHaveBeenCalled();
+    expect(deleteItemIfUnchanged).not.toHaveBeenCalled();
   });
 });
 
@@ -172,7 +187,12 @@ describe("executeProposal — edit_item", () => {
   it("updates the item and inverts to the PRE-edit values", async () => {
     const res = await executeProposal(DB, USER, EDIT, PRIOR);
 
-    expect(updateItem).toHaveBeenCalledWith(DB, "i1", expect.objectContaining({ dose: 400 }));
+    expect(updateItemIfUnchanged).toHaveBeenCalledWith(
+      DB,
+      "i1",
+      expect.objectContaining({ dose: 400 }),
+      itemToInput(PRIOR),
+    );
     // The inverse must carry 200 — the dose before the write, not after.
     expect(res.inverse).toEqual({
       op: "update_item",
@@ -187,7 +207,7 @@ describe("executeProposal — edit_item", () => {
     await expect(executeProposal(DB, USER, EDIT, null)).rejects.toThrow(
       "edit_item requires priorItem",
     );
-    expect(updateItem).not.toHaveBeenCalled();
+    expect(updateItemIfUnchanged).not.toHaveBeenCalled();
   });
 });
 
@@ -280,8 +300,8 @@ function interleavedColumn(initial: string | null) {
     return seen;
   });
   setItemProduct.mockImplementation(
-    async (_db: unknown, _id: string, pid: string | null, expect?: { current: string | null } | "unconditional") => {
-      if (expect && expect !== "unconditional" && expect.current !== state.column) return false;
+    async (_db: unknown, _id: string, pid: string | null, expect: { current: string | null }) => {
+      if (expect.current !== state.column) return false;
       state.column = pid;
       return true;
     },
@@ -325,13 +345,13 @@ describe("executeProposal — attach_product is a compare-and-set (U10, FU-1)", 
     const state = { column: "p-old" as string | null };
     getItemProductId.mockImplementation(async () => state.column);
     setItemProduct.mockImplementation(
-      async (_db: unknown, _id: string, pid: string | null, expect?: { current: string | null } | "unconditional") => {
-        if (expect && expect !== "unconditional" && expect.current !== state.column) return false;
+      async (_db: unknown, _id: string, pid: string | null, expect: { current: string | null }) => {
+        if (expect.current !== state.column) return false;
         state.column = pid;
         return true;
       },
     );
-    updateItem.mockImplementation(async () => {
+    updateItemIfUnchanged.mockImplementation(async () => {
       state.column = "p-other";
       throw new Error("write failed");
     });
@@ -342,6 +362,159 @@ describe("executeProposal — attach_product is a compare-and-set (U10, FU-1)", 
 
     expect(rollbackOutcomeOf(err)).toEqual({ reverted: 0, unreverted: 1 });
     expect(state.column).toBe("p-other");
+  });
+});
+
+// Phase 4 U10 (b), N-102. A model of the item's structured columns, shared by the
+// unconditional writers (HEAD's updateItem / deleteItem) and the compare-and-set
+// ones, so both honour one state. The compare-and-set fakes check what the WHERE
+// clause checks in Postgres.
+function itemColumns(initial: StackItem) {
+  const state: { row: StackItem | null } = { row: { ...initial } };
+  const holds = (e: StackItemInput) =>
+    state.row !== null &&
+    state.row.supplementId === e.supplementId &&
+    state.row.dose === e.dose &&
+    state.row.unit === e.unit &&
+    state.row.timing === e.timing &&
+    state.row.frequency === e.frequency;
+  const write = (input: StackItemInput) => (state.row = { ...(state.row as StackItem), ...input });
+  updateItem.mockImplementation(async (_db: unknown, _id: string, input: StackItemInput) => write(input));
+  updateItemIfUnchanged.mockImplementation(
+    async (_db: unknown, _id: string, input: StackItemInput, expected: StackItemInput) =>
+      holds(expected) ? write(input) : null,
+  );
+  deleteItem.mockImplementation(async () => {
+    state.row = null;
+  });
+  deleteItemIfUnchanged.mockImplementation(async (_db: unknown, _id: string, expected: StackItemInput) => {
+    if (!holds(expected)) return false;
+    state.row = null;
+    return true;
+  });
+  return state;
+}
+
+describe("executeProposal — edit_item and remove_item are compare-and-set (U10 (b), N-102)", () => {
+  const EDIT_500 = proposal({ type: "edit_item", payload: { stackItemId: "i1", dose: 500 } });
+
+  it("two confirms built from the same read: the second edit is not applied and records no inverse", async () => {
+    const state = itemColumns(PRIOR);
+
+    const [first, second] = await Promise.allSettled([
+      executeProposal(DB, USER, EDIT, PRIOR),
+      executeProposal(DB, USER, EDIT_500, PRIOR),
+    ]);
+
+    // The first confirm's inverse restores 200, which WAS current when it wrote.
+    expect(first).toMatchObject({ status: "fulfilled", value: { inverse: { input: { dose: 200 } } } });
+    // The second read 200 too, but 400 was current when it wrote. An inverse
+    // restoring 200 would undo the first edit as well: not applied, no inverse.
+    expect(second.status).toBe("rejected");
+    expect(state.row?.dose).toBe(400);
+  });
+
+  it("a remove after an intervening change deletes nothing and records no inverse", async () => {
+    const state = itemColumns(PRIOR);
+    state.row = { ...PRIOR, dose: 350 }; // another writer, after the proposal's read
+
+    await expect(executeProposal(DB, USER, REMOVE, PRIOR)).rejects.toSatisfy(isStaleWrite);
+
+    expect(state.row).toMatchObject({ id: "i1", dose: 350 });
+  });
+
+  it("a rollback of an edit whose item moved on is counted unreverted, not written", async () => {
+    // edit 200 → 400, then a later action fails. Before the rollback runs,
+    // another writer sets 350. Restoring 200 would erase it.
+    const state = itemColumns(PRIOR);
+    addItem.mockImplementation(async () => {
+      state.row = { ...(state.row as StackItem), dose: 350 };
+      throw new Error("write failed");
+    });
+
+    const err = await executeBatch(DB, USER, [{ proposal: EDIT }, { proposal: ADD }], [PRIOR, null]).catch(
+      (e: unknown) => e,
+    );
+
+    expect(rollbackOutcomeOf(err)).toEqual({ reverted: 0, unreverted: 1 });
+    expect(state.row?.dose).toBe(350);
+  });
+
+  it("a rollback of an edit nobody touched restores the prior values", async () => {
+    const state = itemColumns(PRIOR);
+    addItem.mockRejectedValue(new Error("write failed"));
+
+    const err = await executeBatch(DB, USER, [{ proposal: EDIT }, { proposal: ADD }], [PRIOR, null]).catch(
+      (e: unknown) => e,
+    );
+
+    expect(rollbackOutcomeOf(err)).toEqual({ reverted: 1, unreverted: 0 });
+    expect(state.row?.dose).toBe(200);
+  });
+
+  it("only a not-applied compare-and-set is a stale write (FU-77)", async () => {
+    itemColumns({ ...PRIOR, dose: 999 });
+    const stale = await executeProposal(DB, USER, EDIT, PRIOR).catch((e: unknown) => e);
+    expect(isStaleWrite(stale)).toBe(true);
+    expect(isStaleWrite(new Error("write failed"))).toBe(false);
+    expect(isStaleWrite(null)).toBe(false);
+  });
+});
+
+// Phase 4 U10 (b), N-101. Undo replays a stored inverse, possibly long after the
+// confirm. For an attach, the product the forward write set is in the audit
+// row's payload, so undo can require that it is still there.
+describe("undoAction — undo writes only over what the action wrote (U10 (b), N-101)", () => {
+  const ROW = {
+    actionType: "attach_product" as const,
+    payload: { stackItemId: "i1", productId: "p-new" } as Record<string, unknown>,
+    inverse: { op: "set_item_product", stackId: "s1", itemId: "i1", productId: "p-old" } as WriteIntent,
+  };
+  function column(initial: string | null) {
+    const state = { column: initial };
+    getItemProductId.mockImplementation(async () => state.column);
+    setItemProduct.mockImplementation(
+      async (_db: unknown, _id: string, pid: string | null, expect: { current: string | null }) => {
+        if (expect.current !== state.column) return false;
+        state.column = pid;
+        return true;
+      },
+    );
+    return state;
+  }
+
+  it("an attach undone after an intervening change is not applied, and says so", async () => {
+    const state = column("p-other");
+
+    expect(await undoAction(DB, USER, ROW)).toBe(false);
+    expect(state.column).toBe("p-other");
+  });
+
+  it("an attach nobody touched since is undone, expecting the product it wrote", async () => {
+    const state = column("p-new");
+
+    expect(await undoAction(DB, USER, ROW)).toBe(true);
+    expect(state.column).toBe("p-old");
+    expect(setItemProduct).toHaveBeenCalledWith(DB, "i1", "p-old", { current: "p-new" });
+  });
+
+  it("fails closed when the payload does not name the item and product the inverse targets", async () => {
+    column("p-new");
+
+    expect(await undoAction(DB, USER, { ...ROW, payload: {} })).toBe(false);
+    expect(await undoAction(DB, USER, { ...ROW, payload: { stackItemId: "i2", productId: "p-new" } })).toBe(false);
+    expect(setItemProduct).not.toHaveBeenCalled();
+  });
+
+  it("any other inverse is replayed as before", async () => {
+    expect(
+      await undoAction(DB, USER, {
+        actionType: "add_item",
+        payload: {},
+        inverse: { op: "delete_item", stackId: "s1", itemId: "i-new" },
+      }),
+    ).toBe(true);
+    expect(deleteItem).toHaveBeenCalledWith(DB, "i-new");
   });
 });
 
@@ -363,7 +536,7 @@ describe("executeBatch — success", () => {
   it("pairs priorItems[i] with actions[i]", async () => {
     await executeBatch(DB, USER, [{ proposal: ADD }, { proposal: EDIT }], [null, PRIOR]);
 
-    expect(updateItem).toHaveBeenCalledWith(DB, "i1", expect.anything());
+    expect(updateItemIfUnchanged).toHaveBeenCalledWith(DB, "i1", expect.anything(), itemToInput(PRIOR));
   });
 });
 
@@ -671,10 +844,6 @@ describe("executeIntent — every op reaches its repo", () => {
       intent: { op: "delete_stack", stackId: "s1" },
       assert: () => expect(deleteStack).toHaveBeenCalledWith(DB, "u1", "s1"),
     },
-    {
-      intent: { op: "set_item_product", stackId: "s1", itemId: "i1", productId: null },
-      assert: () => expect(setItemProduct).toHaveBeenCalledWith(DB, "i1", null, "unconditional"),
-    },
   ];
 
   for (const { intent, assert } of cases) {
@@ -683,6 +852,13 @@ describe("executeIntent — every op reaches its repo", () => {
       assert();
     });
   }
+
+  it("refuses set_item_product, which has no expected value to compare (U10 (b), N-101)", async () => {
+    await expect(
+      executeIntent(DB, USER, { op: "set_item_product", stackId: "s1", itemId: "i1", productId: null }),
+    ).rejects.toThrow();
+    expect(setItemProduct).not.toHaveBeenCalled();
+  });
 
   it("executes create_stack_with_items under the caller's id, then its items", async () => {
     await executeIntent(DB, USER, {
