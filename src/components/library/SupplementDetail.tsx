@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Effect, Paper, Supplement } from "@/types";
-import { COVERAGE, gradeDCoverage } from "@/lib/safety";
+import { BACKGROUND_LABEL, COVERAGE, gradeDCoverage } from "@/lib/safety";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { CoverageLimit } from "@/components/evidence/CoverageLimit";
 import { EffectGradeBadge } from "@/components/evidence/EffectGradeBadge";
@@ -54,12 +54,13 @@ export function SupplementDetail({
 function SummaryTab({ supplement }: { supplement: Supplement }) {
   return (
     <div className="space-y-5">
-      <p className="text-body">{supplement.description}</p>
-
-      <section>
-        <h3 className="text-sm font-semibold text-ink">Mechanism</h3>
-        <p className="mt-1 text-sm text-body">{supplement.mechanismSummary}</p>
-      </section>
+      {/* Phase 4 U6 (c), owner rulings (2) and (3) 2026-09-28: the description renders
+          only under the background label, and mechanismSummary is not rendered until it
+          is sourced (docs/05-qa/2026-09-27-mechanism-sweep.md). */}
+      <div data-background="description">
+        <p className="text-xs text-muted">{BACKGROUND_LABEL}</p>
+        <p className="mt-1 text-body">{supplement.description}</p>
+      </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <section>

@@ -62,7 +62,10 @@ interface SearchHit {
   slug: string;
   name: string;
   category: string;
-  description: string;
+  // Phase 4 U6 (c), owner ruling (3): the Library description, marked for the model as
+  // unverified background, since the U6 (b) sweep found most of it unsupported by the cited
+  // abstracts. The field name carries the caveat so it cannot be read as a sourced claim.
+  unverifiedBackground: string;
   effects: EffectView[];
 }
 
@@ -92,7 +95,7 @@ function hitFor(s: Supplement): SearchHit {
     slug: s.slug,
     name: s.name,
     category: s.category,
-    description: s.description,
+    unverifiedBackground: s.description,
     effects: effects.map(effectView),
   };
 }
@@ -100,7 +103,7 @@ function hitFor(s: Supplement): SearchHit {
 export const searchLibrary: AdvisorTool<SearchInput, SearchHit[]> = {
   name: "searchLibrary",
   description:
-    "Search the supplement Library by name or alias. Returns matched supplements with their effect-level evidence grades and summaries. Use for 'what is X', 'what's the evidence for X', 'which supplements help with Y'.",
+    "Search the supplement Library by name or alias. Returns matched supplements with their effect-level evidence grades and summaries. `unverifiedBackground` is a general description, not part of this library's graded evidence; do not present it as evidence. Use for 'what is X', 'what's the evidence for X', 'which supplements help with Y'.",
   inputSchema: {
     type: "object",
     properties: {
@@ -133,7 +136,6 @@ interface GetSupplementInput {
 }
 interface SupplementDetail extends SearchHit {
   aliases: string[];
-  mechanismSummary: string;
   sideEffects: string[];
   contraindications: string[];
   allergenTags: string[];
@@ -143,7 +145,7 @@ interface SupplementDetail extends SearchHit {
 export const getSupplement: AdvisorTool<GetSupplementInput, SupplementDetail> = {
   name: "getSupplement",
   description:
-    "Get the full detail page for one supplement by its slug: effects + grades, mechanism, side effects, contraindications, allergens, and the papers behind its effects.",
+    "Get the full detail page for one supplement by its slug: effects + grades, side effects, contraindications, allergens, and the papers behind its effects. `unverifiedBackground` is a general description, not part of this library's graded evidence; do not present it as evidence.",
   inputSchema: {
     type: "object",
     properties: {
@@ -165,7 +167,7 @@ export const getSupplement: AdvisorTool<GetSupplementInput, SupplementDetail> = 
     const detail: SupplementDetail = {
       ...hitFor(supp),
       aliases: supp.aliases,
-      mechanismSummary: supp.mechanismSummary,
+      // U6 (c), owner ruling (2): mechanismSummary is withheld from the model until sourced.
       sideEffects: supp.sideEffects,
       contraindications: supp.contraindications,
       allergenTags: supp.allergenTags,

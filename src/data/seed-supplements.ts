@@ -30,7 +30,7 @@ export const SEED_SUPPLEMENTS: Supplement[] = [
     name: "Creatine Monohydrate",
     aliases: ["creatine", "creatine monohydrate"],
     category: "Performance",
-    description: "One of the most well-studied performance supplements, supporting strength, power, and high-intensity output.",
+    description: "A performance supplement studied for strength, power, and high-intensity output.",
     commonForms: ["powder", "capsule"],
     mechanismSummary: "Increases phosphocreatine stores in muscle, improving rapid ATP regeneration during short, intense efforts.",
     sideEffects: ["Mild water retention", "GI upset if taken in large single doses"],

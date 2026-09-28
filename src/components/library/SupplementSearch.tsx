@@ -5,12 +5,21 @@ import type { Effect, Supplement } from "@/types";
 import { SupplementCard } from "./SupplementCard";
 
 export interface LibraryEntry {
-  supplement: Supplement;
+  // U6 (c): mechanismSummary is withheld until sourced; the server page drops it.
+  supplement: Omit<Supplement, "mechanismSummary">;
   topEffect?: Effect;
 }
 
 // Design §5.4 — search box filtering name + aliases, case-insensitive.
-export function SupplementSearch({ entries }: { entries: LibraryEntry[] }) {
+// U6 (c): `backgroundLabel` is BACKGROUND_LABEL from @/lib/safety, passed by the server
+// page because this client graph cannot import it (rule 7).
+export function SupplementSearch({
+  entries,
+  backgroundLabel,
+}: {
+  entries: LibraryEntry[];
+  backgroundLabel: string;
+}) {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -48,6 +57,7 @@ export function SupplementSearch({ entries }: { entries: LibraryEntry[] }) {
               key={entry.supplement.id}
               supplement={entry.supplement}
               topEffect={entry.topEffect}
+              backgroundLabel={backgroundLabel}
             />
           ))}
         </div>

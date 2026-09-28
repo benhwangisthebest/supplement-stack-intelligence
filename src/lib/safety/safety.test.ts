@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Paper } from "@/types";
 import {
+  BACKGROUND_LABEL,
   BANNED_PHRASES,
   containsBannedLanguage,
   COVERAGE,
@@ -18,8 +19,8 @@ describe("lib/safety phrasing", () => {
     expect(containsBannedLanguage("May support sleep quality")).toBe(false);
   });
 
-  it("never emits banned language in disclaimers", () => {
-    for (const text of Object.values(DISCLAIMERS)) {
+  it("never emits banned language in disclaimers or the background label", () => {
+    for (const text of [...Object.values(DISCLAIMERS), BACKGROUND_LABEL]) {
       expect(containsBannedLanguage(text), text).toBe(false);
     }
   });

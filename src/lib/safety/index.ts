@@ -124,6 +124,13 @@ export const COVERAGE = {
 } as const satisfies Record<string, CoverageCopy>;
 
 /**
+ * Phase 4 U6 (c), owner ruling (3) 2026-09-28. A supplement's `description` is general
+ * background: the U6 (b) sweep found most of it unsupported by the cited abstracts
+ * (docs/05-qa/2026-09-27-mechanism-sweep.md). It is rendered only under this label.
+ */
+export const BACKGROUND_LABEL = "Background — a general description, not part of this library's graded evidence.";
+
+/**
  * U4 ruling R6 (owner, 2026-09-23): a title-only paper supports nothing. A paper is
  * title-only when no abstract was captured for it, so every card field reads this
  * literal (U6 (c): card fields come only from the abstract).

@@ -3,12 +3,17 @@ import type { Effect, Supplement } from "@/types";
 import { EffectGradeBadge } from "@/components/evidence/EffectGradeBadge";
 
 // Design §5.4 — Library search result card (name, category, top effect grade).
+// Phase 4 U6 (c), owner ruling (3): the description renders only under the background
+// label. The card sits in SupplementSearch's client graph, so it cannot import
+// @/lib/safety; the server page passes `BACKGROUND_LABEL` down as a prop (rule 7).
 export function SupplementCard({
   supplement,
   topEffect,
+  backgroundLabel,
 }: {
-  supplement: Supplement;
+  supplement: Omit<Supplement, "mechanismSummary">;
   topEffect?: Effect;
+  backgroundLabel: string;
 }) {
   return (
     <Link
@@ -24,9 +29,10 @@ export function SupplementCard({
           <EffectGradeBadge grade={topEffect.grade} confidence={topEffect.confidence} />
         )}
       </div>
-      <p className="mt-2 line-clamp-2 text-sm text-body">
-        {supplement.description}
-      </p>
+      <div data-background="description" className="mt-2">
+        <p className="text-xs text-muted">{backgroundLabel}</p>
+        <p className="line-clamp-2 text-sm text-body">{supplement.description}</p>
+      </div>
     </Link>
   );
 }

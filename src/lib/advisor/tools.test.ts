@@ -96,6 +96,28 @@ describe("getSupplement", () => {
   });
 });
 
+// Phase 4 U6 (c), owner rulings (2) and (3) 2026-09-28. For every supplement and
+// both tools that carry one: mechanismSummary reaches the model neither by key nor by
+// text, and the description arrives only under a name marking it unverified background.
+describe("U6 (c): mechanism text withheld, description marked background", () => {
+  const payloads = getAllSupplements().flatMap((s) => [
+    { s, tool: "getSupplement", hit: getSupplement.handler({ slug: s.slug }, ctx).data! },
+    {
+      s,
+      tool: "searchLibrary",
+      hit: searchLibrary.handler({ query: s.name }, ctx).data!.find((h) => h.supplementId === s.id)!,
+    },
+  ]);
+
+  it.each(payloads.map((p) => [p.tool, p.s.id, p] as const))("%s(%s)", (_tool, _id, { s, hit }) => {
+    const json = JSON.stringify(hit);
+    expect(json).not.toContain("mechanismSummary");
+    expect(json).not.toContain(s.mechanismSummary);
+    expect(hit).not.toHaveProperty("description");
+    expect(hit).toHaveProperty("unverifiedBackground", s.description);
+  });
+});
+
 describe("evaluateStack", () => {
   it("purity: matches evaluateStack() called directly", () => {
     const r = evaluateStackTool.handler({}, ctx);

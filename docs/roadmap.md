@@ -645,6 +645,7 @@ paid-API endpoint inherits the Phase 2 rate-limit and budget requirements.
 - **The accessibility half of item 3** (D-3).
 - **Longitudinal intelligence** (item 4; D-3).
 - **FU-62's sourcing pass** for glycine-sleep and zinc-deficiency (the plan's U7; D-3).
+- **Background sourcing** (U6 (c), owner ruling (5), 2026-09-28): the supplement `description` and `mechanismSummary` text and the 35 mechanism tags the sweep did not rate SUPPORTED (`docs/05-qa/2026-09-27-mechanism-sweep.md`), sourced against captured abstracts with U7's pass. Until then `mechanismSummary` is withheld and `description` renders under the background label.
 - **A logging sink** for N-11, FU-43 and FU-44 (D-7 (d): Phase 4 ships redaction with no sink).
 
 ---

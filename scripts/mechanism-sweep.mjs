@@ -234,6 +234,16 @@ const VERDICTS = {
 
 // ---------------------------------------------------------------------------
 
+// U6 (c), owner ruling (1) 2026-09-28: the redundancy rule counts only the tags rated SUPPORTED here.
+// `<effectId> · <tag>`, derived from VERDICTS and nothing else, so it needs no capture. NOT CHECKABLE
+// counts as UNSUPPORTED. src/lib/stack-evaluator/rules.ts holds a copy that its test binds to this.
+export const SUPPORTED_TAGS = Object.freeze(
+  Object.entries(VERDICTS)
+    .filter(([k, v]) => k.startsWith("tag · ") && v.v === "S")
+    .map(([k]) => k.slice("tag · ".length))
+    .sort(),
+);
+
 const walk = (d) =>
   readdirSync(d).flatMap((f) => {
     const p = path.join(d, f);

@@ -20,6 +20,7 @@ import {
   ruleRedundancy,
   type EvalContext,
 } from "./index";
+import { SUPPORTED_MECHANISM_TAGS } from "./rules";
 import type { TrendDirection, TrendSignal } from "@/types/lab";
 
 function makeTrend(
@@ -167,12 +168,15 @@ describe("ruleEvidenceFit", () => {
 });
 
 describe("ruleRedundancy", () => {
-  it("flags info for two items sharing outcome + mechanism", () => {
+  const training = makeStack({ intent: "training" });
+
+  it("flags info for two items sharing outcome + a SUPPORTED mechanism", () => {
+    // caffeine-training and taurine-training share `ergogenic`, SUPPORTED for both.
     const items = [
-      makeItem({ supplementId: "magnesium", dose: 300 }),
-      makeItem({ supplementId: "magnesium", dose: 200 }),
+      makeItem({ supplementId: "caffeine", dose: 200 }),
+      makeItem({ supplementId: "taurine", dose: 2000 }),
     ];
-    const flags = ruleRedundancy(ctx({ items }));
+    const flags = ruleRedundancy(ctx({ stack: training, items }));
     expect(flags).toHaveLength(1);
     expect(flags[0].severity).toBe("info");
     expect(flags[0].category).toBe("redundancy");
@@ -180,11 +184,51 @@ describe("ruleRedundancy", () => {
 
   it("escalates to warning for three or more overlapping items", () => {
     const items = [
+      makeItem({ supplementId: "caffeine", dose: 200 }),
+      makeItem({ supplementId: "caffeine", dose: 100 }),
+      makeItem({ supplementId: "taurine", dose: 2000 }),
+    ];
+    expect(ruleRedundancy(ctx({ stack: training, items }))[0].severity).toBe("warning");
+  });
+
+  // Phase 4 U6 (c), N-95: a shared tag the sweep did not rate SUPPORTED is inert.
+  // Both pairs raised "Possible redundancy" at 830e108, on GABA and on HPA-axis.
+  it.each([
+    ["magnesium", "l-theanine"],
+    ["magnesium", "ashwagandha"],
+  ])("does not flag %s + %s in a stress stack: their shared tag is UNSUPPORTED", (a, b) => {
+    const items = [makeItem({ supplementId: a, dose: 300 }), makeItem({ supplementId: b, dose: 200 })];
+    expect(ruleRedundancy(ctx({ stack: makeStack({ intent: "stress" }), items }))).toEqual([]);
+  });
+
+  it("still flags a real pair sharing a SUPPORTED tag (magnesium + berberine, metabolic)", () => {
+    const items = [
+      makeItem({ supplementId: "magnesium", dose: 300 }),
+      makeItem({ supplementId: "berberine", dose: 500 }),
+    ];
+    const flags = ruleRedundancy(ctx({ stack: makeStack({ intent: "metabolic" }), items }));
+    expect(flags.map((f) => f.title)).toEqual(["Possible redundancy"]);
+  });
+
+  // N-97 (owner, 2026-09-28): a duplicated supplement flags regardless of tags. Magnesium's
+  // sleep tags are all UNSUPPORTED, so only the duplicate clause can raise this flag.
+  it("flags the same supplement twice even with no SUPPORTED tag", () => {
+    const items = [
       makeItem({ supplementId: "magnesium", dose: 300 }),
       makeItem({ supplementId: "magnesium", dose: 200 }),
-      makeItem({ supplementId: "magnesium", dose: 250 }),
     ];
-    expect(ruleRedundancy(ctx({ items }))[0].severity).toBe("warning");
+    const flags = ruleRedundancy(ctx({ items }));
+    expect(flags.map((f) => [f.title, f.severity])).toEqual([["Possible redundancy", "info"]]);
+  });
+
+  it("the SUPPORTED set is the sweep script's, not a retyped copy", async () => {
+    const { SUPPORTED_TAGS } = await import("../../../scripts/mechanism-sweep.mjs");
+    expect([...SUPPORTED_MECHANISM_TAGS].sort()).toEqual([...SUPPORTED_TAGS]);
+    // Every entry names a real effect carrying that tag, so none is dead.
+    for (const key of SUPPORTED_MECHANISM_TAGS) {
+      const [effectId, tag] = key.split(" · ");
+      expect(defaultLibrary.effects.find((e) => e.id === effectId)?.mechanismTags, key).toContain(tag);
+    }
   });
 
   it("does not flag complementary items with no mechanism overlap", () => {

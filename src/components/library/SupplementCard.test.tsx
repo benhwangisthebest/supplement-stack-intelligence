@@ -5,6 +5,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { SEED_SUPPLEMENTS } from "@/data/seed-supplements";
+import { BACKGROUND_LABEL } from "@/lib/safety";
 import type { Effect } from "@/types";
 import { SupplementCard } from "./SupplementCard";
 
@@ -43,19 +44,39 @@ const effect = (over: Partial<Effect>): Effect => ({
 
 describe("SupplementCard — the top effect's grade (rule 8)", () => {
   it("links to the supplement's Library page", () => {
-    render(<SupplementCard supplement={supplement} />);
+    render(<SupplementCard supplement={supplement} backgroundLabel={BACKGROUND_LABEL} />);
     const link = screen.getByRole("link", { name: new RegExp(supplement.name) });
     expect(link.getAttribute("href")).toBe(`/library/${supplement.slug}`);
   });
 
   it.each(["A", "C", "D"] as const)("shows the top effect's own grade %s and its confidence", (grade) => {
-    render(<SupplementCard supplement={supplement} topEffect={effect({ grade, confidence: "moderate" })} />);
+    render(<SupplementCard supplement={supplement} backgroundLabel={BACKGROUND_LABEL} topEffect={effect({ grade, confidence: "moderate" })} />);
     const badge = screen.getByTitle(new RegExp(`^Evidence grade ${grade} — .* · moderate confidence$`));
     expect(within(badge).getByText(grade)).toBeTruthy();
   });
 
   it("shows no grade at all without a top effect", () => {
-    render(<SupplementCard supplement={supplement} />);
+    render(<SupplementCard supplement={supplement} backgroundLabel={BACKGROUND_LABEL} />);
     expect(screen.queryByTitle(/Evidence grade/)).toBeNull();
+  });
+});
+
+// Phase 4 U6 (c), owner ruling (3) 2026-09-28: the description renders only under the
+// background label, which the server page passes down as a prop (the card is in a client graph).
+describe("SupplementCard — the description is labelled background (U6 (c))", () => {
+  it("renders the label and the description in one block, label first", () => {
+    render(<SupplementCard supplement={supplement} backgroundLabel={BACKGROUND_LABEL} />);
+    const label = screen.getByText(BACKGROUND_LABEL);
+    const block = label.closest("[data-background='description']")!;
+    expect(block).toBeTruthy();
+    expect(within(block as HTMLElement).getByText(supplement.description)).toBeTruthy();
+    expect(block.firstElementChild).toBe(label);
+  });
+
+  it("renders the description exactly once, inside that block", () => {
+    const { container } = render(<SupplementCard supplement={supplement} backgroundLabel={BACKGROUND_LABEL} />);
+    expect(container.textContent!.split(supplement.description)).toHaveLength(2);
+    const block = container.querySelector("[data-background='description']")!;
+    expect(block.textContent).toContain(supplement.description);
   });
 });

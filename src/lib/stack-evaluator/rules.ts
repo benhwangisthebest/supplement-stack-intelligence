@@ -138,6 +138,22 @@ export function ruleDoseFit(ctx: EvalContext): DraftFlag[] {
 }
 
 // ---- Rule 3: redundancy (Design §11.4) ----
+// Phase 4 U6 (c), owner ruling (1) 2026-09-28 (N-95): a mechanism tag counts toward an
+// overlap only if the U6 (b) sweep rated it SUPPORTED for that effect
+// (docs/05-qa/2026-09-27-mechanism-sweep.md). The rest stay in content, inert.
+// A copy of `SUPPORTED_TAGS` from scripts/mechanism-sweep.mjs, which derives it from the verdict
+// table. It is copied, not imported, because the script loads node:fs and capture.mjs, which src/
+// must not reach. stack-evaluator.test.ts fails if this list and the script's differ.
+export const SUPPORTED_MECHANISM_TAGS: ReadonlySet<string> = new Set([
+  "ashwagandha-stress · cortisol-modulation",
+  "berberine-metabolic · insulin-sensitivity",
+  "caffeine-training · ergogenic",
+  "creatine-cognition · brain-energy",
+  "fish-oil-cardiovascular · triglyceride-lowering",
+  "magnesium-metabolic · insulin-sensitivity",
+  "taurine-training · ergogenic",
+]);
+
 export function ruleRedundancy(ctx: EvalContext): DraftFlag[] {
   // Group items by their representative effect's outcomeCategory.
   const groups = new Map<OutcomeCategory, { item: StackItem; effect: Effect }[]>();
@@ -152,15 +168,19 @@ export function ruleRedundancy(ctx: EvalContext): DraftFlag[] {
   const flags: DraftFlag[] = [];
   for (const [outcome, members] of groups) {
     if (members.length < 2) continue;
-    // Require an overlapping mechanism tag across at least two members.
+    // Require an overlapping SUPPORTED mechanism tag across at least two members.
     const tagCount = new Map<string, number>();
     for (const m of members) {
       for (const tag of new Set(m.effect.mechanismTags)) {
+        if (!SUPPORTED_MECHANISM_TAGS.has(`${m.effect.id} · ${tag}`)) continue;
         tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
       }
     }
     const overlaps = [...tagCount.values()].some((c) => c >= 2);
-    if (!overlaps) continue;
+    // N-97 (owner, 2026-09-28): the same supplement twice is redundant whatever its tags.
+    const ids = members.map((m) => m.item.supplementId);
+    const duplicate = new Set(ids).size < ids.length;
+    if (!overlaps && !duplicate) continue;
 
     const names = members.map((m) => itemLabel(m.item, ctx));
     const copy = safetyCopy.redundancy(names, outcome);

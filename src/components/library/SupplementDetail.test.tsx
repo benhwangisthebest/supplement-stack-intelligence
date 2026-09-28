@@ -11,6 +11,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { SEED_SUPPLEMENTS } from "@/data/seed-supplements";
+import { BACKGROUND_LABEL } from "@/lib/safety";
 import type { Effect, Paper } from "@/types";
 import type { EvidenceProfile } from "@/types/evidence-grading";
 import { SupplementDetail } from "./SupplementDetail";
@@ -118,5 +119,19 @@ describe("SupplementDetail — each effect shows its own grade; each cited paper
       const anchor = document.getElementById(`paper-${id}`)!;
       expect(within(anchor).getByRole("heading", { level: 4 }).textContent).toBe(`Made-up paper ${id}`);
     }
+  });
+});
+
+// Phase 4 U6 (c), owner rulings (2) and (3) 2026-09-28. Every seed supplement: the Summary
+// tab shows the description under the background label and never the mechanismSummary.
+describe("SupplementDetail — background label, no mechanism text (U6 (c))", () => {
+  it.each(SEED_SUPPLEMENTS.map((s) => [s.id, s] as const))("%s", (_id, s) => {
+    const { container } = render(<SupplementDetail supplement={s} effects={[]} papers={[]} related={[]} />);
+    const label = screen.getByText(BACKGROUND_LABEL);
+    const block = label.closest("[data-background='description']") as HTMLElement;
+    expect(within(block).getByText(s.description)).toBeTruthy();
+    expect(block.firstElementChild).toBe(label);
+    expect(container.textContent).not.toContain(s.mechanismSummary);
+    expect(screen.queryByRole("heading", { name: "Mechanism" })).toBeNull();
   });
 });
