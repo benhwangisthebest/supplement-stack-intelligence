@@ -15,6 +15,8 @@
 // CLAUDE.md §5.6: new `src/lib/db` mapper functions ship with a row-fixture
 // test. This file retrofits the nine that predate the rule.
 import { describe, expect, it } from "vitest";
+import { OUTCOME_CATEGORIES } from "@/types/primitives";
+import { generateProtocolPayloadSchema } from "@/lib/advisor/actions/schema";
 import type {
   CheckinRow,
   EvaluationFlagRow,
@@ -26,6 +28,7 @@ import type {
   UserProfileRow,
 } from "./types";
 import {
+  MapperDomainError,
   toCheckin,
   toEvaluationFlag,
   toLabMarker,
@@ -436,5 +439,173 @@ describe("toEvaluationFlag", () => {
     // "n/a" is a legal domain value meaning "no graded evidence applies" — not
     // a missing value to be nulled.
     expect(toEvaluationFlag({ ...row, evidence_level: "n/a" }).evidenceLevel).toBe("n/a");
+  });
+});
+
+// FU-29 (a), Phase 4 U16. Every column below is plain `text`/`text[]` with no
+// CHECK, so the database stores any string. Each case plants one value outside
+// the column's src/types union into an otherwise valid row; the mapper must
+// throw rather than hand it to an engine. One case per former cast site.
+describe("FU-29: an out-of-domain row value fails at the mapper", () => {
+  const OUT = "not-in-domain";
+  const profile: UserProfileRow = {
+    id: "prf-9",
+    user_id: "usr-9",
+    goals: ["sleep"],
+    diet: null,
+    risk_tolerance: "low",
+    allergies: [],
+    medications: [],
+    avoided_ingredients: [],
+    form_preferences: ["powder"],
+    caffeine_sensitivity: null,
+    experience_level: "beginner",
+    notes: null,
+    created_at: CREATED,
+    updated_at: UPDATED,
+  };
+  const stack: StackRow = {
+    id: "stk-9",
+    user_id: "usr-9",
+    name: "n",
+    intent: "experimental",
+    mode: "planned",
+    description: null,
+    created_at: CREATED,
+    updated_at: UPDATED,
+  };
+  const item: StackItemRow = {
+    id: "itm-9",
+    stack_id: "stk-9",
+    supplement_id: "zinc",
+    custom_name: null,
+    dose: 15,
+    unit: "mg",
+    timing: "morning",
+    frequency: "weekly",
+    reason: null,
+    notes: null,
+    product_id: null,
+    version: 0,
+  };
+  const flag: EvaluationFlagRow = {
+    id: "flg-9",
+    stack_id: "stk-9",
+    stack_item_id: null,
+    severity: "info",
+    category: "food-pairing",
+    title: "t",
+    explanation: "e",
+    recommendation: "r",
+    evidence_level: "D",
+    created_at: CREATED,
+  };
+  const report: SideEffectReportRow = {
+    id: "ser-9",
+    user_id: "usr-9",
+    report_date: "2026-04-05",
+    effect_label: "metallic-taste",
+    severity: null,
+    note: null,
+    created_at: CREATED,
+  };
+  const panel: LabPanelRow = {
+    id: "pnl-9",
+    user_id: "usr-9",
+    source: "manual",
+    collected_at: "2026-02-03",
+    created_at: CREATED,
+  };
+
+  // [table, column, map the row with that one column planted]
+  const CASES: [string, string, () => unknown][] = [
+    ["side_effect_reports", "effect_label", () => toSideEffectReport({ ...report, effect_label: OUT })],
+    ["user_profiles", "goals", () => toUserProfile({ ...profile, goals: ["sleep", OUT] })],
+    ["user_profiles", "risk_tolerance", () => toUserProfile({ ...profile, risk_tolerance: OUT })],
+    ["user_profiles", "form_preferences", () => toUserProfile({ ...profile, form_preferences: [OUT] })],
+    ["user_profiles", "experience_level", () => toUserProfile({ ...profile, experience_level: OUT })],
+    ["lab_panels", "source", () => toLabPanel({ ...panel, source: OUT })],
+    ["stacks", "intent", () => toStack({ ...stack, intent: OUT })],
+    ["stacks", "mode", () => toStack({ ...stack, mode: OUT })],
+    ["stack_items", "timing", () => toStackItem({ ...item, timing: OUT })],
+    ["stack_items", "frequency", () => toStackItem({ ...item, frequency: OUT })],
+    ["evaluation_flags", "severity", () => toEvaluationFlag({ ...flag, severity: OUT })],
+    ["evaluation_flags", "category", () => toEvaluationFlag({ ...flag, category: OUT })],
+    ["evaluation_flags", "evidence_level", () => toEvaluationFlag({ ...flag, evidence_level: OUT })],
+  ];
+
+  it("covers all 13 former cast sites, each once", () => {
+    expect(CASES).toHaveLength(13);
+    expect(new Set(CASES.map(([t, c]) => `${t}.${c}`)).size).toBe(13);
+  });
+
+  it.each(CASES)("rejects a planted %s.%s value with a MapperDomainError", (table, column, map) => {
+    let caught: unknown;
+    try {
+      map();
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(MapperDomainError);
+    expect(caught).toMatchObject({ table, column });
+  });
+
+  it("names the table and column but never the value (§2.3 rule 15)", () => {
+    expect(() => toUserProfile({ ...profile, goals: ["warfarin-interaction"] })).toThrow(
+      "user_profiles.goals holds a value outside its domain",
+    );
+    try {
+      toUserProfile({ ...profile, goals: ["warfarin-interaction"] });
+    } catch (e) {
+      expect(String((e as Error).message)).not.toContain("warfarin");
+    }
+  });
+
+  it("rejects an Object.prototype key, which `in` would have admitted", () => {
+    expect(() => toStack({ ...stack, intent: "toString" })).toThrow(MapperDomainError);
+    expect(() => toStack({ ...stack, mode: "constructor" })).toThrow(MapperDomainError);
+  });
+
+  it("accepts every in-domain value the planted rows start from, and null where the column allows it", () => {
+    expect(toUserProfile(profile)).toMatchObject({ goals: ["sleep"], formPreferences: ["powder"] });
+    expect(toStack(stack)).toMatchObject({ intent: "experimental", mode: "planned" });
+    expect(toStackItem({ ...item, timing: null, frequency: null })).toMatchObject({
+      timing: null,
+      frequency: null,
+    });
+    expect(toEvaluationFlag(flag)).toMatchObject({ category: "food-pairing", evidenceLevel: "D" });
+    expect(toSideEffectReport(report).effectLabel).toBe("metallic-taste");
+    expect(toLabPanel(panel).source).toBe("manual");
+  });
+});
+
+// The write side of the same contract (queue Q-8, owner ruling 2026-09-29). The
+// advisor's generate_protocol took `intent` as a free string and wrote it to
+// `stacks.intent`; once `toStack` validates, such a row makes every stack read
+// for its owner throw. The advisor must reject what the mapper would reject,
+// and accept everything it accepts.
+describe("Q-8: the advisor cannot write a stack intent the mapper rejects", () => {
+  const payload = (intent: string) => ({ stackName: "n", intent, items: [{}] });
+  const stackWith = (intent: string): StackRow => ({
+    id: "stk-q4",
+    user_id: "usr-q4",
+    name: "n",
+    intent,
+    mode: "current",
+    description: null,
+    created_at: CREATED,
+    updated_at: UPDATED,
+  });
+
+  it("rejects an out-of-domain intent before any write", () => {
+    expect(generateProtocolPayloadSchema.safeParse(payload("cognition")).success).toBe(false);
+    expect(() => toStack(stackWith("cognition"))).toThrow(MapperDomainError);
+  });
+
+  it("accepts every intent the mapper accepts", () => {
+    for (const intent of [...OUTCOME_CATEGORIES, "experimental"]) {
+      expect(generateProtocolPayloadSchema.safeParse(payload(intent)).success).toBe(true);
+      expect(toStack(stackWith(intent)).intent).toBe(intent);
+    }
   });
 });

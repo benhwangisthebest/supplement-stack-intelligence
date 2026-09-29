@@ -3,6 +3,7 @@
 // SAME field rules as stackItemInputSchema so the confirm route can re-parse with
 // the existing item schema before any write. Plan SC-3 (grounding), SC-6 (re-validate).
 import { z } from "zod";
+import { stackInputSchema } from "@/lib/validation/schemas";
 import type { ActionProposal, EditableProposalFields } from "@/types/advisor-action";
 
 const timing = z
@@ -44,7 +45,10 @@ export const editItemPayloadSchema = z
 
 export const generateProtocolPayloadSchema = z.object({
   stackName: z.string().min(1).max(120),
-  intent: z.string().min(1),
+  // The StackIntent union, via the stack route's own rule. A free string was
+  // written to `stacks.intent`, which the mapper then rejects on every read
+  // (Phase 4 U16, queue Q-8).
+  intent: stackInputSchema.shape.intent,
   items: z.array(z.unknown()).min(1), // each re-parsed via stackItemInputSchema in module-2
 });
 
