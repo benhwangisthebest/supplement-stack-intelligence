@@ -10,6 +10,7 @@ import type {
   EditableProposalFields,
   EditItemPayload,
   GenerateProtocolPayload,
+  ItemVersionExpectation,
   RemoveItemPayload,
   WriteIntent,
 } from "@/types/advisor-action";
@@ -116,12 +117,24 @@ export function forwardIntent(p: ActionProposal, opts: ForwardOpts = {}): WriteI
 export interface InverseOpts {
   /** add_item → the id the repo assigned (so undo can delete it). */
   createdItemId?: string;
+  /** add_item → the version the item was created at, which undo expects. [U10 (c)] */
+  createdVersion?: number;
   /** remove_item / edit_item → the item state BEFORE the write (so undo can restore it). */
   priorItem?: StackItem;
+  /** edit_item / attach_product → the version the forward write left, which undo expects. [U10 (c)] */
+  writtenVersion?: number;
   /** generate_protocol → the new stack id (so undo can delete the whole stack). */
   createdStackId?: string;
+  /** generate_protocol → the items it created, which undo requires unchanged. [U10 (c)] */
+  createdItems?: { itemId: string; version: number }[];
   /** attach_product → the product id the item had before (null if none). */
   priorProductId?: string | null;
+}
+
+/** [U10 (c)] The version an edit's or attach's inverse expects, and the one whose state it restores. */
+function expectWritten(opts: InverseOpts): ItemVersionExpectation | undefined {
+  if (opts.writtenVersion === undefined) return undefined;
+  return { version: opts.writtenVersion, restores: opts.priorItem?.version };
 }
 
 /** The reversal to store for one-click undo (SC-7). */
@@ -129,24 +142,43 @@ export function inverseIntent(p: ActionProposal, opts: InverseOpts = {}): WriteI
   switch (p.type) {
     case "add_item": {
       if (!opts.createdItemId) throw new Error("add_item inverse requires createdItemId");
-      return { op: "delete_item", stackId: p.stackId, itemId: opts.createdItemId };
+      const expect = opts.createdVersion === undefined ? undefined : { version: opts.createdVersion };
+      return { op: "delete_item", stackId: p.stackId, itemId: opts.createdItemId, expect };
     }
     case "remove_item": {
-      if (!opts.priorItem) throw new Error("remove_item inverse requires priorItem");
-      return { op: "add_item", stackId: p.stackId, input: itemToInput(opts.priorItem) };
+      const prior = opts.priorItem;
+      if (!prior) throw new Error("remove_item inverse requires priorItem");
+      // [U10 (c), N-104] Back under the same id, version and product.
+      const restore =
+        prior.version === undefined
+          ? undefined
+          : { itemId: prior.id, version: prior.version, productId: prior.productId ?? null };
+      return { op: "add_item", stackId: p.stackId, input: itemToInput(prior), restore };
     }
     case "edit_item": {
       const pl = p.payload as EditItemPayload;
       if (!opts.priorItem) throw new Error("edit_item inverse requires priorItem");
-      return { op: "update_item", stackId: p.stackId, itemId: pl.stackItemId, input: itemToInput(opts.priorItem) };
+      return {
+        op: "update_item",
+        stackId: p.stackId,
+        itemId: pl.stackItemId,
+        input: itemToInput(opts.priorItem),
+        expect: expectWritten(opts),
+      };
     }
     case "generate_protocol": {
       if (!opts.createdStackId) throw new Error("generate_protocol inverse requires createdStackId");
-      return { op: "delete_stack", stackId: opts.createdStackId };
+      return { op: "delete_stack", stackId: opts.createdStackId, expectItems: opts.createdItems };
     }
     case "attach_product": {
       const pl = p.payload as AttachProductPayload;
-      return { op: "set_item_product", stackId: p.stackId, itemId: pl.stackItemId, productId: opts.priorProductId ?? null };
+      return {
+        op: "set_item_product",
+        stackId: p.stackId,
+        itemId: pl.stackItemId,
+        productId: opts.priorProductId ?? null,
+        expect: expectWritten(opts),
+      };
     }
   }
 }

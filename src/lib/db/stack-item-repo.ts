@@ -1,10 +1,23 @@
 // Infrastructure — StackItem persistence (Design §4 /api/stacks/:id/items).
 // Ownership is enforced by RLS via the parent stack (Design §3.3 policies).
+//
+// [Phase 4 U10 (c)] EVERY UPDATE IS A COMPARE-AND-SET ON (id, version). It sets
+// version = expected + 1 WHERE id = … AND version = expected (migration 0011), so
+// a write built from a stale read matches no row. A filter here carries an id
+// (or the parent stack's id) and a version, never a field value: a PostgREST
+// filter travels in the URL query string, which the API gateway logs (FU-78,
+// §2.3 rule 15). A delete removes the row, so any later compare-and-set on it
+// misses. An insert takes version 0 from the column default.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { StackItem } from "@/types";
 import type { StackItemInput } from "@/lib/validation/schemas";
 import { toStackItem } from "./mappers";
 import type { StackItemRow } from "./types";
+
+/** `toStackItem`, plus the version, which the shared mapper does not carry. */
+export function toVersionedItem(row: StackItemRow): StackItem {
+  return { ...toStackItem(row), version: row.version };
+}
 
 export async function listItems(
   supabase: SupabaseClient,
@@ -15,7 +28,21 @@ export async function listItems(
     .select("*")
     .eq("stack_id", stackId);
   if (error) throw error;
-  return (data as StackItemRow[]).map(toStackItem);
+  return (data as StackItemRow[]).map(toVersionedItem);
+}
+
+/** The item columns an input sets. Never `version`, which only a compare-and-set moves. */
+function columnsOf(input: StackItemInput) {
+  return {
+    supplement_id: input.supplementId,
+    custom_name: input.customName,
+    dose: input.dose,
+    unit: input.unit,
+    timing: input.timing,
+    frequency: input.frequency,
+    reason: input.reason,
+    notes: input.notes,
+  };
 }
 
 export async function addItem(
@@ -25,45 +52,61 @@ export async function addItem(
 ): Promise<StackItem> {
   const { data, error } = await supabase
     .from("stack_items")
-    .insert({
-      stack_id: stackId,
-      supplement_id: input.supplementId,
-      custom_name: input.customName,
-      dose: input.dose,
-      unit: input.unit,
-      timing: input.timing,
-      frequency: input.frequency,
-      reason: input.reason,
-      notes: input.notes,
-    })
+    .insert({ stack_id: stackId, ...columnsOf(input) })
     .select("*")
     .single();
   if (error) throw error;
-  return toStackItem(data as StackItemRow);
+  return toVersionedItem(data as StackItemRow);
 }
 
+/**
+ * Write `set` only while the item holds `expected`, moving it to `expected + 1`.
+ * Returns the written item, or null when no row matched: the item changed or was
+ * deleted since `expected` was read.
+ */
+async function writeAtVersion(
+  supabase: SupabaseClient,
+  itemId: string,
+  set: Record<string, unknown>,
+  expected: number,
+): Promise<StackItem | null> {
+  const { data, error } = await supabase
+    .from("stack_items")
+    .update({ ...set, version: expected + 1 })
+    .eq("id", itemId)
+    .eq("version", expected)
+    .select("*");
+  if (error) throw error;
+  const rows = (data ?? []) as StackItemRow[];
+  return rows.length > 0 ? toVersionedItem(rows[0]) : null;
+}
+
+/** How many times a Stack Lab edit re-reads the version before giving up. */
+export const STACK_LAB_ATTEMPTS = 3;
+
+/**
+ * Stack Lab's edit. The user's own edit wins over whatever is there, as it always
+ * has, so this re-reads the version and retries when another write lands between
+ * its read and its write. [U10 (c), AC-6] It still moves the version, so an
+ * advisor inverse built before it misses rather than overwriting it.
+ */
 export async function updateItem(
   supabase: SupabaseClient,
   itemId: string,
   input: StackItemInput,
 ): Promise<StackItem> {
-  const { data, error } = await supabase
-    .from("stack_items")
-    .update({
-      supplement_id: input.supplementId,
-      custom_name: input.customName,
-      dose: input.dose,
-      unit: input.unit,
-      timing: input.timing,
-      frequency: input.frequency,
-      reason: input.reason,
-      notes: input.notes,
-    })
-    .eq("id", itemId)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return toStackItem(data as StackItemRow);
+  for (let attempt = 0; attempt < STACK_LAB_ATTEMPTS; attempt++) {
+    const { data, error } = await supabase
+      .from("stack_items")
+      .select("version")
+      .eq("id", itemId)
+      .single();
+    // No row is PGRST116 here, the error `.single()` on the update raised before.
+    if (error) throw error;
+    const written = await writeAtVersion(supabase, itemId, columnsOf(input), (data as { version: number }).version);
+    if (written) return written;
+  }
+  throw new Error("stack item changed on every attempt");
 }
 
 export async function deleteItem(
@@ -74,124 +117,81 @@ export async function deleteItem(
   if (error) throw error;
 }
 
-// ---- Phase 4 U10 (b), N-102: compare-and-set for the advisor's edit and remove ----
-// The advisor builds an edit's or a remove's inverse from the item as it read it.
-// If another write lands between that read and this one, the inverse restores
-// values that were not current, and undo would erase that write. So the advisor
-// writes only WHERE the item still holds what it read. Zero rows back means it
-// did not; the caller treats that as stale. Stack Lab's own edits keep
-// `updateItem` / `deleteItem` above, unchanged.
+// ---- advisor writes (Phase 4 U10 (b), (c)) -----------------------------------
+// The advisor builds each inverse from the item as it read it. If another write
+// lands in between, that inverse would restore a state that was not current, so
+// every advisor write expects the version it read. Stack Lab does not call these.
 
 /**
- * Narrow a query to the item still holding `expected` in its structured columns.
- *
- * reason, notes and custom_name are NOT compared. They are the user's free text,
- * and a PostgREST filter travels in the URL query string, which the API gateway
- * logs (§2.3 rule 15). A concurrent change to only those three is therefore not
- * detected. null needs IS NULL, because `= NULL` matches no row.
- */
-function whereItemHolds<Q extends { eq(c: string, v: unknown): Q; is(c: string, v: null): Q }>(
-  query: Q,
-  expected: StackItemInput,
-): Q {
-  const nullable: [string, string | null][] = [
-    ["supplement_id", expected.supplementId],
-    ["timing", expected.timing],
-    ["frequency", expected.frequency],
-  ];
-  let q = query.eq("dose", expected.dose).eq("unit", expected.unit);
-  for (const [column, value] of nullable) q = value === null ? q.is(column, null) : q.eq(column, value);
-  return q;
-}
-
-/**
- * An advisor edit, applied only if the item still holds `expected`. Null if it did not.
+ * An advisor edit, applied only while the item holds `expectedVersion`. Null if not.
  *
  * Writes ONLY dose, unit, timing and frequency, the four columns an advisor edit
- * can change (`editToInput`); the other fields of `input` are ignored. The WHERE
- * clause does not compare free text, so writing it back from the advisor's read
- * would silently undo a concurrent Stack Lab edit to reason, notes or custom_name
- * (AC-6 review, A1). A rollback restores the same four, which are all the edit
- * changed.
+ * can change (`editToInput`); the other fields of `input` are ignored. A rollback
+ * or undo restores the same four, which are all the edit changed.
  */
-export async function updateItemIfUnchanged(
+export async function updateItemAtVersion(
   supabase: SupabaseClient,
   itemId: string,
   input: StackItemInput,
-  expected: StackItemInput,
+  expectedVersion: number,
 ): Promise<StackItem | null> {
-  const query = supabase
-    .from("stack_items")
-    .update({ dose: input.dose, unit: input.unit, timing: input.timing, frequency: input.frequency })
-    .eq("id", itemId);
-  const { data, error } = await whereItemHolds(query, expected).select("*");
-  if (error) throw error;
-  const rows = (data ?? []) as StackItemRow[];
-  return rows.length > 0 ? toStackItem(rows[0]) : null;
+  const set = { dose: input.dose, unit: input.unit, timing: input.timing, frequency: input.frequency };
+  return writeAtVersion(supabase, itemId, set, expectedVersion);
 }
 
-/** `deleteItem`, applied only if the item still holds `expected`. Returns whether it was. */
-export async function deleteItemIfUnchanged(
-  supabase: SupabaseClient,
-  itemId: string,
-  expected: StackItemInput,
-): Promise<boolean> {
-  const query = supabase.from("stack_items").delete().eq("id", itemId);
-  const { data, error } = await whereItemHolds(query, expected).select("id");
-  if (error) throw error;
-  return (data?.length ?? 0) > 0;
-}
-
-// ---- advisor-actions v7: product attachment (DB-only column; the StackItem domain
-// type intentionally does NOT carry product_id — the attachment affects no evaluation,
-// so it stays a persistence detail). Migration 0004. ---------------------------------
-
-/** The product_id currently attached to an item (null if none) — for undo snapshots. */
-export async function getItemProductId(
-  supabase: SupabaseClient,
-  itemId: string,
-): Promise<string | null> {
-  const { data, error } = await supabase
-    .from("stack_items")
-    .select("product_id")
-    .eq("id", itemId)
-    .maybeSingle();
-  if (error) throw error;
-  return (data?.product_id as string | null | undefined) ?? null;
-}
-
-/**
- * What the caller believes `product_id` holds right now. Every write is a
- * compare-and-set. [U10 (b), N-101] The `"unconditional"` variant is gone: undo's
- * replay was its last caller, and it now expects the product the attach wrote.
- */
-export type ProductExpectation = { current: string | null };
-
-/**
- * Attach (or clear, with null) a matched product on a stack item. Returns whether
- * the row was written.
- *
- * [Phase 4 U10, FU-1] The expected value is part of the
- * UPDATE's WHERE clause, so Postgres writes only if the column still holds what
- * the caller read. Zero rows back means another write got there first: the
- * caller's read is stale, and so is any inverse built from it. `null` needs
- * IS NULL, because `= NULL` matches no row.
- */
+/** Attach (or clear, with null) a matched product, only while the item holds `expectedVersion`. */
 export async function setItemProduct(
   supabase: SupabaseClient,
   itemId: string,
   productId: string | null,
-  expect: ProductExpectation,
+  expectedVersion: number,
+): Promise<StackItem | null> {
+  return writeAtVersion(supabase, itemId, { product_id: productId }, expectedVersion);
+}
+
+/** Delete the item only while it holds `expectedVersion`. Returns whether it did. */
+export async function deleteItemAtVersion(
+  supabase: SupabaseClient,
+  itemId: string,
+  expectedVersion: number,
 ): Promise<boolean> {
-  const query = supabase
+  const { data, error } = await supabase
     .from("stack_items")
-    .update({ product_id: productId })
-    .eq("id", itemId);
-  const { data, error } = await (
-    expect.current === null
-      ? query.is("product_id", null)
-      : query.eq("product_id", expect.current)
-  ).select("id");
+    .delete()
+    .eq("id", itemId)
+    .eq("version", expectedVersion)
+    .select("id");
   if (error) throw error;
   return (data?.length ?? 0) > 0;
+}
+
+/** Postgres unique_violation: the primary key is taken. */
+const UNIQUE_VIOLATION = "23505";
+
+/**
+ * Undo of a remove (N-104): put the item back under its id, at the version it
+ * was deleted at, with its product. An item's versions only rise while it
+ * exists, so no read can hold a later one, and a reader still holding this one
+ * read exactly this state. Returns false when the id is taken again, which only
+ * another restore can do; nothing is overwritten.
+ */
+export async function restoreItem(
+  supabase: SupabaseClient,
+  stackId: string,
+  restore: { itemId: string; version: number; productId: string | null },
+  input: StackItemInput,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("stack_items")
+    .insert({
+      id: restore.itemId,
+      stack_id: stackId,
+      ...columnsOf(input),
+      product_id: restore.productId,
+      version: restore.version,
+    })
+    .select("id");
+  if (error && (error as { code?: string }).code === UNIQUE_VIOLATION) return false;
+  if (error) throw error;
+  return true;
 }

@@ -101,16 +101,31 @@ export interface AdvisorProposalResult {
 // apply.ts produces these PURELY; the Application layer maps each to an existing
 // repo call. Domain never imports Supabase. Design §9.4.
 
+/**
+ * [Phase 4 U10 (c)] What an inverse expects before it writes: the version the
+ * forward write left on the item. Undo and rollback write only while the item
+ * still holds it (N-105). `restores` is the version whose state the inverse puts
+ * back, so a later inverse in the same pass can chain on it (N-107). Absent on
+ * rows recorded before U10 (c); those are not replayed.
+ */
+export interface ItemVersionExpectation {
+  version: number;
+  restores?: number;
+}
+
 export type WriteIntent =
-  | { op: "add_item"; stackId: string; input: StackItemInput }
-  | { op: "update_item"; stackId: string; itemId: string; input: StackItemInput }
-  | { op: "delete_item"; stackId: string; itemId: string }
+  // `restore`, a remove's inverse (U10 (c), N-104): re-insert under the same id,
+  // version and product. Absent on older rows, which insert a new item.
+  | { op: "add_item"; stackId: string; input: StackItemInput; restore?: { itemId: string; version: number; productId: string | null } }
+  | { op: "update_item"; stackId: string; itemId: string; input: StackItemInput; expect?: ItemVersionExpectation }
+  | { op: "delete_item"; stackId: string; itemId: string; expect?: ItemVersionExpectation }
   | { op: "create_stack_with_items"; stack: StackInput; items: StackItemInput[] }
-  | { op: "delete_stack"; stackId: string }
+  // `expectItems`: the items a protocol created, which its undo requires unchanged.
+  | { op: "delete_stack"; stackId: string; expectItems?: { itemId: string; version: number }[] }
   // NOTE (module-2 dependency): stack_items currently has NO product column.
   // module-2 must add a nullable `product_id` (additive migration) + a
   // `setItemProduct` repo fn. The Domain intent is defined now for completeness.
-  | { op: "set_item_product"; stackId: string; itemId: string; productId: string | null };
+  | { op: "set_item_product"; stackId: string; itemId: string; productId: string | null; expect?: ItemVersionExpectation };
 
 /** Persisted audit record (one per applied action) with its inverse for undo. */
 export interface AdvisorActionRecord {

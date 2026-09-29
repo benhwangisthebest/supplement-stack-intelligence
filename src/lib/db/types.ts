@@ -92,6 +92,7 @@ export interface StackItemRow {
   reason: string | null;
   notes: string | null;
   product_id?: string | null; // v8 advisor-experience (migration 0004 column)
+  version: number; // Phase 4 U10 (c) (migration 0011 column)
 }
 
 export interface EvaluationFlagRow {

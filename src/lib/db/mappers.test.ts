@@ -362,6 +362,7 @@ describe("toStackItem", () => {
     reason: "sleep onset",
     notes: "with food",
     product_id: "prd-1",
+    version: 0,
   };
 
   it("maps every field including the v8 product column", () => {

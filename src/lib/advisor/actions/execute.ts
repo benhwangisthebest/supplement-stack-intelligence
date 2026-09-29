@@ -1,47 +1,54 @@
 // Application/Infrastructure — executes a confirmed proposal via the EXISTING repos.
 // This is the ONLY place advisor-actions writes data, and it writes exclusively
 // through the same repo functions the stack/protocol/product routes already use —
-// so "engines/repos are the only writers" holds (Plan SC-2). [U10 (b)] The
+// so "engines/repos are the only writers" holds (Plan SC-2). [U10 (b), (c)] The
 // exceptions are advisor-only compare-and-set variants in the same repo
-// (`updateItemIfUnchanged`, `deleteItemIfUnchanged`): still repo functions, but
-// Stack Lab does not call them. Pure intent/inverse mapping stays in
-// actions/apply.ts; this module supplies the runtime snapshots.
+// (`updateItemAtVersion`, `deleteItemAtVersion`, `restoreItem`): still repo
+// functions, but Stack Lab does not call them. Pure intent/inverse mapping stays
+// in actions/apply.ts; this module supplies the runtime snapshots.
+//
+// [Phase 4 U10 (c)] Every write to an existing item expects the version it read
+// (migration 0011), and every inverse records the version the forward write
+// left, so undo and rollback write only over what the action wrote (N-105).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   addItem,
-  deleteItem,
-  deleteItemIfUnchanged,
-  getItemProductId,
+  deleteItemAtVersion,
+  listItems,
+  restoreItem,
   setItemProduct,
-  updateItem,
-  updateItemIfUnchanged,
+  updateItemAtVersion,
 } from "@/lib/db/stack-item-repo";
 import { createStack, deleteStack } from "@/lib/db/stack-repo";
 import { reportInternalError } from "@/lib/api/respond";
-import { forwardIntent, inverseIntent, itemToInput } from "./apply";
-import { attachProductPayloadSchema } from "./schema";
+import { forwardIntent, inverseIntent } from "./apply";
 import type {
   ActionProposal,
-  AdvisorActionRecord,
-  AttachProductPayload,
   EditableProposalFields,
+  ItemVersionExpectation,
   WriteIntent,
 } from "@/types/advisor-action";
-import type { StackItem, StackItemInput } from "@/types";
+import type { StackItem } from "@/types";
 
 export interface ExecuteResult {
   /** The reversal to persist for undo (SC-7). */
   inverse: WriteIntent;
   resultingItemId: string | null;
   createdStackId: string | null;
-  /** edit_item only: the values the forward write set, so a rollback can require them. */
-  written?: StackItemInput;
+  /** edit_item / attach_product: the item as the write left it, for a later action on it in the batch. */
+  after?: StackItem;
+}
+
+/** The version an item was read at. Every item read after migration 0011 carries one. */
+function versionOf(item: StackItem): number {
+  if (item.version === undefined) throw new Error("stack item carries no version");
+  return item.version;
 }
 
 /**
  * Apply a re-validated proposal. `priorItem` MUST be supplied for remove_item /
- * edit_item (the route loads it from the owned stack). Runtime ids/prior values are
- * captured here and threaded into the pure inverse mapping.
+ * edit_item / attach_product (the route loads it from the owned stack). Runtime
+ * ids/prior values are captured here and threaded into the pure inverse mapping.
  */
 export async function executeProposal(
   supabase: SupabaseClient,
@@ -56,17 +63,17 @@ export async function executeProposal(
       if (intent.op !== "add_item") throw new Error("intent mismatch");
       const item = await addItem(supabase, intent.stackId, intent.input);
       return {
-        inverse: inverseIntent(proposal, { createdItemId: item.id }),
+        inverse: inverseIntent(proposal, { createdItemId: item.id, createdVersion: item.version }),
         resultingItemId: item.id,
         createdStackId: null,
       };
     }
     case "remove_item": {
       if (!priorItem) throw new Error("remove_item requires priorItem");
-      // [Phase 4 U10 (b), N-102] Deleted only if the item still holds what was
-      // read. The inverse re-adds `priorItem`, so if another write changed the
-      // item since, that inverse would restore values that were not current.
-      if (!(await deleteItemIfUnchanged(supabase, priorItem.id, itemToInput(priorItem)))) {
+      // [Phase 4 U10 (b), (c)] Deleted only if the item still holds the version
+      // that was read. The inverse re-adds `priorItem`, so if another write
+      // changed the item since, that inverse would restore a state that was not current.
+      if (!(await deleteItemAtVersion(supabase, priorItem.id, versionOf(priorItem)))) {
         throw new StaleWriteError();
       }
       return {
@@ -79,44 +86,50 @@ export async function executeProposal(
       if (!priorItem) throw new Error("edit_item requires priorItem");
       const intent = forwardIntent(proposal, { edits, priorItem });
       if (intent.op !== "update_item") throw new Error("intent mismatch");
-      // [Phase 4 U10 (b), N-102] The same compare-and-set as remove_item.
-      if (!(await updateItemIfUnchanged(supabase, priorItem.id, intent.input, itemToInput(priorItem)))) {
-        throw new StaleWriteError();
-      }
+      // [Phase 4 U10 (b), (c)] The same compare-and-set as remove_item.
+      const after = await updateItemAtVersion(supabase, priorItem.id, intent.input, versionOf(priorItem));
+      if (!after) throw new StaleWriteError();
       return {
-        inverse: inverseIntent(proposal, { priorItem }),
+        inverse: inverseIntent(proposal, { priorItem, writtenVersion: after.version }),
         resultingItemId: priorItem.id,
         createdStackId: null,
-        written: intent.input,
+        after,
       };
     }
     case "generate_protocol": {
       const intent = forwardIntent(proposal);
       if (intent.op !== "create_stack_with_items") throw new Error("intent mismatch");
       const stack = await createStack(supabase, userId, intent.stack);
-      for (const item of intent.items) await addItem(supabase, stack.id, item);
+      const created: { itemId: string; version: number }[] = [];
+      for (const input of intent.items) {
+        const item = await addItem(supabase, stack.id, input);
+        created.push({ itemId: item.id, version: versionOf(item) });
+      }
       return {
-        inverse: inverseIntent(proposal, { createdStackId: stack.id }),
+        inverse: inverseIntent(proposal, { createdStackId: stack.id, createdItems: created }),
         resultingItemId: null,
         createdStackId: stack.id,
       };
     }
     case "attach_product": {
-      const { stackItemId } = proposal.payload as AttachProductPayload;
-      const prior = await getItemProductId(supabase, stackItemId);
+      if (!priorItem) throw new Error("attach_product requires priorItem");
       const intent = forwardIntent(proposal);
       if (intent.op !== "set_item_product") throw new Error("intent mismatch");
-      // [Phase 4 U10, FU-1] Written only if `prior` is still current. Otherwise
-      // another confirm wrote between the read and this write, and an inverse
-      // restoring `prior` would undo that one too. Not applied is a failure, so
-      // executeBatch rolls back and counts the batch; it is never a success.
-      if (!(await setItemProduct(supabase, intent.itemId, intent.productId, { current: prior }))) {
-        throw new StaleWriteError();
-      }
+      // [Phase 4 U10, FU-1; (c)] Written only while the item holds the version
+      // `priorItem` was read at, so its product is still the one the inverse
+      // restores. Not applied is a failure: executeBatch rolls back and counts
+      // the batch; it is never a success.
+      const after = await setItemProduct(supabase, intent.itemId, intent.productId, versionOf(priorItem));
+      if (!after) throw new StaleWriteError();
       return {
-        inverse: inverseIntent(proposal, { priorProductId: prior }),
-        resultingItemId: stackItemId,
+        inverse: inverseIntent(proposal, {
+          priorItem,
+          priorProductId: priorItem.productId ?? null,
+          writtenVersion: after.version,
+        }),
+        resultingItemId: intent.itemId,
         createdStackId: null,
+        after,
       };
     }
   }
@@ -134,6 +147,10 @@ export interface BatchItemResult {
  * inverses in REVERSE order (compensating rollback) so the stack is left as it was,
  * then re-throws. Returns each action's ExecuteResult (incl. its inverse) for the
  * audit, in order. `priorItems[i]` pairs with `actions[i]` (null for add/protocol).
+ *
+ * [U10 (c), N-107] Two actions on one item: the second starts from the item as
+ * the first left it, so it expects the version the first wrote and its inverse
+ * restores the first's result, not the pre-batch read.
  */
 export async function executeBatch(
   supabase: SupabaseClient,
@@ -142,10 +159,14 @@ export async function executeBatch(
   priorItems: (StackItem | null)[],
 ): Promise<BatchItemResult[]> {
   const done: BatchItemResult[] = [];
+  const latest = new Map<string, StackItem>();
   try {
     for (let i = 0; i < actions.length; i++) {
       const { proposal, edits } = actions[i];
-      const exec = await executeProposal(supabase, userId, proposal, priorItems[i], edits);
+      const read = priorItems[i];
+      const prior = read ? (latest.get(read.id) ?? read) : null;
+      const exec = await executeProposal(supabase, userId, proposal, prior, edits);
+      if (exec.after) latest.set(exec.after.id, exec.after);
       done.push({ proposal, exec });
     }
     return done;
@@ -180,11 +201,15 @@ export async function revertAll(
   userId: string,
   done: BatchItemResult[],
 ): Promise<{ reverted: number; unreverted: number }> {
+  const undo = undoPass(supabase, userId);
   let reverted = 0;
   let unreverted = 0;
   for (let i = done.length - 1; i >= 0; i--) {
     try {
-      await revertOne(supabase, userId, done[i]);
+      // [Phase 4 U10, (b), (c)] An inverse is written only over what its action
+      // wrote. Not written is thrown here, so it lands in the catch and is
+      // counted as unreverted.
+      if (!(await undo(done[i].exec.inverse))) throw new StaleWriteError();
       reverted += 1;
     } catch (rollbackErr) {
       unreverted += 1;
@@ -232,59 +257,85 @@ export function isStaleWrite(err: unknown): boolean {
   return err instanceof Error && err.name === "StaleWriteError";
 }
 
-/**
- * Replay one applied action's inverse. [Phase 4 U10] An attach is reverted only
- * if the item still holds the product this batch set: if another write has
- * replaced it since, restoring the prior product would erase that write.
- * [U10 (b), N-102] An edit likewise, against the values it wrote. The throw
- * lands in `revertAll`'s catch, so it is counted as unreverted. A remove's
- * inverse is an insert, which overwrites nothing.
- */
-async function revertOne(supabase: SupabaseClient, userId: string, r: BatchItemResult): Promise<void> {
-  const inverse = r.exec.inverse;
-  if (inverse.op === "set_item_product" && r.proposal.type === "attach_product") {
-    const { productId } = r.proposal.payload as AttachProductPayload;
-    if (!(await setItemProduct(supabase, inverse.itemId, inverse.productId, { current: productId }))) {
-      throw new StaleWriteError();
-    }
-    return;
-  }
-  if (inverse.op === "update_item" && r.exec.written) {
-    if (!(await updateItemIfUnchanged(supabase, inverse.itemId, inverse.input, r.exec.written))) {
-      throw new StaleWriteError();
-    }
-    return;
-  }
-  await executeIntent(supabase, userId, inverse);
-}
 
 /**
- * Undo's replay of one audit row. Returns whether the inverse was written.
+ * One undo or rollback pass: replays inverses, newest first, each only while its
+ * item still holds the version the forward write left. Returns, per inverse,
+ * whether it was written. [Phase 4 U10 (c), N-105]
  *
- * [Phase 4 U10 (b), N-101] Undo can run long after the confirm. An attach's
- * inverse restores the product the item held before it, so it is written only
- * if the item still holds the product the attach set, which the row's payload
- * records. If the payload does not name that item and product, nothing is
- * written: fail closed.
+ * Inside one pass, an inverse that restored the state an item had at version r
+ * produced a new version n. A later inverse expecting r then expects n: the pass
+ * itself wrote n, and it holds exactly the state r held (N-107). Anything else
+ * that wrote in between moved the version past n, so that inverse still misses.
  *
- * Every other inverse replays as before. An edit's is still unconditional,
- * because the row does not record what the edit wrote once confirm-card edits
- * applied (N-105).
+ * Fails closed: an inverse recorded before U10 (c) carries no version, so it is
+ * not written. The one exception is a remove's re-add from such a row, which is
+ * an insert under a new id and overwrites nothing.
  */
-export async function undoAction(
+export function undoPass(
   supabase: SupabaseClient,
   userId: string,
-  row: Pick<AdvisorActionRecord, "actionType" | "payload" | "inverse">,
-): Promise<boolean> {
-  const inverse = row.inverse;
-  if (inverse.op === "set_item_product") {
-    const forward = attachProductPayloadSchema.safeParse(row.payload);
-    if (row.actionType !== "attach_product" || !forward.success) return false;
-    if (forward.data.stackItemId !== inverse.itemId) return false;
-    return setItemProduct(supabase, inverse.itemId, inverse.productId, { current: forward.data.productId });
-  }
-  await executeIntent(supabase, userId, inverse);
-  return true;
+): (inverse: WriteIntent) => Promise<boolean> {
+  const restored = new Map<string, { from: number; to: number }>();
+  const expected = (itemId: string, e: ItemVersionExpectation) => {
+    const r = restored.get(itemId);
+    return r && r.from === e.version ? r.to : e.version;
+  };
+  const wrote = (itemId: string, e: ItemVersionExpectation, after: StackItem) => {
+    if (e.restores !== undefined && after.version !== undefined) {
+      restored.set(itemId, { from: e.restores, to: after.version });
+    }
+  };
+
+  return async (inverse) => {
+    switch (inverse.op) {
+      case "update_item": {
+        if (!inverse.expect) return false;
+        const at = expected(inverse.itemId, inverse.expect);
+        const after = await updateItemAtVersion(supabase, inverse.itemId, inverse.input, at);
+        if (!after) return false;
+        wrote(inverse.itemId, inverse.expect, after);
+        return true;
+      }
+      case "set_item_product": {
+        if (!inverse.expect) return false;
+        const at = expected(inverse.itemId, inverse.expect);
+        const after = await setItemProduct(supabase, inverse.itemId, inverse.productId, at);
+        if (!after) return false;
+        wrote(inverse.itemId, inverse.expect, after);
+        return true;
+      }
+      case "delete_item":
+        if (!inverse.expect) return false;
+        return deleteItemAtVersion(supabase, inverse.itemId, expected(inverse.itemId, inverse.expect));
+      case "add_item":
+        // [N-104] Back under its id, version and product.
+        if (inverse.restore) return restoreItem(supabase, inverse.stackId, inverse.restore, inverse.input);
+        await addItem(supabase, inverse.stackId, inverse.input);
+        return true;
+      case "delete_stack": {
+        const expectItems = inverse.expectItems;
+        if (!expectItems) return false;
+        // The protocol's stack goes only if it still holds exactly the items the
+        // protocol created, each at the version it was created at: a user's
+        // added or edited item is never deleted with it.
+        const want = new Map(expectItems.map((e) => [e.itemId, expected(e.itemId, { version: e.version })]));
+        const items = await listItems(supabase, inverse.stackId);
+        if (items.length !== want.size || items.some((i) => want.get(i.id) !== i.version)) return false;
+        for (const [itemId, version] of want) {
+          if (!(await deleteItemAtVersion(supabase, itemId, version))) return false;
+        }
+        // N-108: an item added between this read and the delete below goes with
+        // the stack. Closing that needs the two in one transaction (an RPC).
+        if ((await listItems(supabase, inverse.stackId)).length > 0) return false;
+        await deleteStack(supabase, userId, inverse.stackId);
+        return true;
+      }
+      case "create_stack_with_items":
+        // A forward intent only; no action records it as an inverse.
+        return false;
+    }
+  };
 }
 
 /**
@@ -344,35 +395,4 @@ export function rollbackOutcomeOf(err: unknown): RollbackOutcome | null {
     return null;
   }
   return { reverted: candidate.reverted, unreverted: candidate.unreverted };
-}
-
-/** Execute a stored WriteIntent (used by undo to replay the inverse). */
-export async function executeIntent(
-  supabase: SupabaseClient,
-  userId: string,
-  intent: WriteIntent,
-): Promise<void> {
-  switch (intent.op) {
-    case "add_item":
-      await addItem(supabase, intent.stackId, intent.input);
-      return;
-    case "update_item":
-      await updateItem(supabase, intent.itemId, intent.input);
-      return;
-    case "delete_item":
-      await deleteItem(supabase, intent.itemId);
-      return;
-    case "create_stack_with_items": {
-      const stack = await createStack(supabase, userId, intent.stack);
-      for (const item of intent.items) await addItem(supabase, stack.id, item);
-      return;
-    }
-    case "delete_stack":
-      await deleteStack(supabase, userId, intent.stackId);
-      return;
-    case "set_item_product":
-      // [U10 (b), N-101] Refused. A product write is a compare-and-set, and an
-      // intent carries no expected value: `revertOne` and `undoAction` supply one.
-      throw new Error("set_item_product needs an expected product; use undoAction");
-  }
 }

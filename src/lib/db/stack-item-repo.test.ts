@@ -12,16 +12,20 @@
 // resolves the parent — and that is worth writing down, because it is the whole
 // argument for why the exemption is sound.
 import { describe, expect, it } from "vitest";
-import { querySpy } from "./__testing__/query-spy";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { querySpy, type SpyCall } from "./__testing__/query-spy";
+import * as repo from "./stack-item-repo";
 import {
   addItem,
   deleteItem,
-  deleteItemIfUnchanged,
-  getItemProductId,
+  deleteItemAtVersion,
   listItems,
+  restoreItem,
   setItemProduct,
+  STACK_LAB_ATTEMPTS,
+  toVersionedItem,
   updateItem,
-  updateItemIfUnchanged,
+  updateItemAtVersion,
 } from "./stack-item-repo";
 
 const itemRow = {
@@ -36,6 +40,7 @@ const itemRow = {
   reason: null,
   notes: null,
   product_id: null,
+  version: 4,
   created_at: "2026-08-01T00:00:00Z",
 };
 
@@ -49,6 +54,8 @@ const input = {
   reason: null,
   notes: null,
 };
+
+type Client = SupabaseClient;
 
 describe("stack-item-repo — scoped to the parent stack it inherits ownership from", () => {
   it("listItems filters by stack_id", async () => {
@@ -74,120 +81,196 @@ describe("stack-item-repo — scoped to the parent stack it inherits ownership f
   });
 
   it.each([
-    ["updateItem", () => updateItem],
-    ["deleteItem", () => deleteItem],
-    ["getItemProductId", () => getItemProductId],
-  ])("%s addresses one row by id", async (_name, get) => {
-    const spy = querySpy({ data: itemRow });
-    await (get() as (c: unknown, id: string, i?: unknown) => Promise<unknown>)(
-      spy.client,
-      "i1",
-      input,
-    );
+    ["deleteItem", (c: Client) => deleteItem(c, "i1")],
+    ["updateItemAtVersion", (c: Client) => updateItemAtVersion(c, "i1", input as never, 4)],
+    ["setItemProduct", (c: Client) => setItemProduct(c, "i1", "prod1", 4)],
+    ["deleteItemAtVersion", (c: Client) => deleteItemAtVersion(c, "i1", 4)],
+  ])("%s addresses one row by id", async (_name, run) => {
+    const spy = querySpy({ data: [itemRow] });
+    await run(spy.client);
     expect(spy.filters()).toContainEqual(["id", "i1"]);
-  });
-
-  it("setItemProduct addresses one row by id and writes only the product", async () => {
-    const spy = querySpy({ data: [{ id: "i1" }] });
-    await setItemProduct(spy.client, "i1", "prod1", { current: null });
-    expect(spy.filters()).toContainEqual(["id", "i1"]);
-    expect(spy.payloads.some((r) => r.product_id === "prod1")).toBe(true);
-    expect(spy.payloads.some((r) => "stack_id" in r)).toBe(false);
   });
 });
 
-// Phase 4 U10, FU-1. The expected product goes into the UPDATE's WHERE clause, so
-// the database applies the write only if the column still holds the value the
-// caller read. Rows returned = rows written; none means another write got there
-// first.
-describe("setItemProduct — compare-and-set on product_id (U10)", () => {
-  const isFilters = (spy: ReturnType<typeof querySpy>) =>
-    spy.calls.filter((c) => c.method === "is").map((c) => c.args);
-
-  it("an expected product id is an equality filter on product_id", async () => {
-    const spy = querySpy({ data: [{ id: "i1" }] });
-    await setItemProduct(spy.client, "i1", "prod2", { current: "prod1" });
-    expect(spy.filters()).toContainEqual(["product_id", "prod1"]);
-  });
-
-  it("an expected null is an IS NULL filter, since = NULL matches no row", async () => {
-    const spy = querySpy({ data: [{ id: "i1" }] });
-    await setItemProduct(spy.client, "i1", "prod2", { current: null });
-    expect(isFilters(spy)).toContainEqual(["product_id", null]);
-  });
-
-  it("returns true when a row was written and false when none matched", async () => {
-    const hit = querySpy({ data: [{ id: "i1" }] });
-    expect(await setItemProduct(hit.client, "i1", "prod2", { current: "prod1" })).toBe(true);
-    const miss = querySpy({ data: [] });
-    expect(await setItemProduct(miss.client, "i1", "prod2", { current: "prod1" })).toBe(false);
-  });
-
-});
-
-// Phase 4 U10 (b), N-102. The same compare-and-set for edit_item and remove_item:
-// the item is written only if it still holds the values the caller read. Only the
-// structured columns are compared. reason, notes and custom_name hold the user's
-// free text, and a PostgREST filter travels in the URL query string, which the API
-// gateway logs (§2.3 rule 15), so they are never a filter.
-describe("updateItemIfUnchanged / deleteItemIfUnchanged — compare-and-set on the item (U10 (b))", () => {
-  type Client = ReturnType<typeof querySpy>["client"];
-  const isFilters = (spy: ReturnType<typeof querySpy>) =>
-    spy.calls.filter((c) => c.method === "is").map((c) => c.args);
-  const expected = { ...input, timing: null, reason: "sleep", notes: "private note", customName: "my mag" };
-  const cases = [
-    ["updateItemIfUnchanged", (c: Client) => updateItemIfUnchanged(c, "i1", input as never, expected as never)],
-    ["deleteItemIfUnchanged", (c: Client) => deleteItemIfUnchanged(c, "i1", expected as never)],
-  ] as const;
-
-  it.each(cases)("%s addresses one row by id and compares the structured columns", async (_n, run) => {
-    const spy = querySpy({ data: [itemRow] });
-    await run(spy.client);
-    expect(spy.filters()).toEqual(
-      expect.arrayContaining([
-        ["id", "i1"],
-        ["supplement_id", "magnesium"],
-        ["dose", 300],
-        ["unit", "mg"],
-        ["frequency", "daily"],
-      ]),
-    );
-    // null needs IS NULL, since = NULL matches no row.
-    expect(isFilters(spy)).toContainEqual(["timing", null]);
-  });
-
-  it.each(cases)("%s never puts free text in a filter", async (_n, run) => {
-    const spy = querySpy({ data: [itemRow] });
-    await run(spy.client);
-    const filtered = [...spy.filters(), ...isFilters(spy)].map(([col]) => col);
-    expect(filtered).not.toContain("reason");
-    expect(filtered).not.toContain("notes");
-    expect(filtered).not.toContain("custom_name");
-    expect(JSON.stringify(spy.calls.filter((c) => c.method !== "update"))).not.toContain("private note");
-  });
-
-  it("updateItemIfUnchanged writes only the four columns an advisor edit changes", async () => {
-    // [AC-6 review, A1] It compares no free text, so it must write none either:
-    // SETting reason / notes / custom_name from the advisor's read would put
-    // back values a concurrent Stack Lab edit had replaced.
-    const spy = querySpy({ data: [itemRow] });
-    await updateItemIfUnchanged(spy.client, "i1", expected as never, expected as never);
-    expect(spy.payloads).toEqual([{ dose: 300, unit: "mg", timing: null, frequency: "daily" }]);
-  });
-
-  it("updateItemIfUnchanged returns the written item, or null when no row matched", async () => {
-    const hit = querySpy({ data: [itemRow] });
-    expect(await updateItemIfUnchanged(hit.client, "i1", input as never, expected as never)).toMatchObject({
+describe("toVersionedItem — the row fixture maps, version included (U10 (c))", () => {
+  it("maps every column, and carries the version the shared mapper drops", () => {
+    expect(toVersionedItem({ ...itemRow, product_id: "prod1" })).toEqual({
       id: "i1",
+      stackId: "st1",
+      supplementId: "magnesium",
+      customName: null,
+      dose: 300,
+      unit: "mg",
+      timing: "bedtime",
+      frequency: "daily",
+      reason: null,
+      notes: null,
+      productId: "prod1",
+      version: 4,
     });
-    const miss = querySpy({ data: [] });
-    expect(await updateItemIfUnchanged(miss.client, "i1", input as never, expected as never)).toBeNull();
+  });
+});
+
+// Phase 4 U10 (c), FU-78. A PostgREST filter travels in the URL query string,
+// which the API gateway logs (§2.3 rule 15). So a write to a stack item may
+// filter on its id and its version, and nothing else: never a field value. The
+// write set is DERIVED from the module's exports, so a new export must be
+// classified here before it can exist.
+describe("every write filters on id and version only (U10 (c), FU-78)", () => {
+  const SENTINEL = {
+    supplementId: "SENTINEL-SUPPLEMENT",
+    customName: "SENTINEL-CUSTOM",
+    dose: 1234.5678,
+    unit: "SENTINEL-UNIT",
+    timing: "morning",
+    frequency: "weekly",
+    reason: "SENTINEL-REASON",
+    notes: "SENTINEL-NOTES",
+  };
+  const WRITES: Record<string, (c: Client) => Promise<unknown>> = {
+    addItem: (c) => addItem(c, "st1", SENTINEL as never),
+    updateItem: (c) => updateItem(c, "i1", SENTINEL as never),
+    deleteItem: (c) => deleteItem(c, "i1"),
+    updateItemAtVersion: (c) => updateItemAtVersion(c, "i1", SENTINEL as never, 4),
+    setItemProduct: (c) => setItemProduct(c, "i1", "SENTINEL-PRODUCT", 4),
+    deleteItemAtVersion: (c) => deleteItemAtVersion(c, "i1", 4),
+    restoreItem: (c) => restoreItem(c, "st1", { itemId: "i1", version: 4, productId: "SENTINEL-PRODUCT" }, SENTINEL as never),
+  };
+  const NOT_WRITES = ["listItems", "toVersionedItem", "STACK_LAB_ATTEMPTS"];
+  const FILTERS = new Set(["eq", "neq", "is", "in", "gt", "gte", "lt", "lte", "match", "not", "or", "contains"]);
+
+  it("every export is classified, so a new writer cannot skip the check", () => {
+    expect(Object.keys(repo).sort()).toEqual([...Object.keys(WRITES), ...NOT_WRITES].sort());
   });
 
-  it("deleteItemIfUnchanged returns whether a row was deleted", async () => {
+  it.each(Object.entries(WRITES))("%s filters on nothing but id and version", async (_name, run) => {
+    const spy = querySpy({ data: [itemRow] });
+    await run(spy.client).catch(() => undefined); // a scripted miss may throw; the filters are what count
+    const filters = spy.calls.filter((c: SpyCall) => FILTERS.has(c.method));
+    for (const call of filters) expect(["id", "version"]).toContain(call.args[0]);
+    // Nothing but a write's own body may carry a value.
+    const outsideBody = JSON.stringify(spy.calls.filter((c) => !["insert", "update"].includes(c.method)));
+    expect(outsideBody).not.toMatch(/SENTINEL|1234\.5678/);
+  });
+});
+
+// Phase 4 U10 (c). The advisor writes an existing item only while it holds the
+// version the advisor read, and moves it on by one. Rows returned = rows written;
+// none means the item changed or went since that read.
+describe("the advisor's writes are compare-and-set on (id, version) (U10 (c))", () => {
+  it("updateItemAtVersion writes the four edit columns and version + 1, WHERE id and version", async () => {
+    const spy = querySpy({ data: [{ ...itemRow, version: 5 }] });
+    const written = await updateItemAtVersion(spy.client, "i1", { ...input, notes: "x" } as never, 4);
+    expect(spy.payloads).toEqual([{ dose: 300, unit: "mg", timing: "bedtime", frequency: "daily", version: 5 }]);
+    expect(spy.filters()).toEqual([["id", "i1"], ["version", 4]]);
+    expect(written).toMatchObject({ id: "i1", version: 5 });
+  });
+
+  it("setItemProduct writes only the product and version + 1, WHERE id and version", async () => {
+    const spy = querySpy({ data: [{ ...itemRow, product_id: "prod1", version: 5 }] });
+    const written = await setItemProduct(spy.client, "i1", "prod1", 4);
+    expect(spy.payloads).toEqual([{ product_id: "prod1", version: 5 }]);
+    expect(spy.filters()).toEqual([["id", "i1"], ["version", 4]]);
+    expect(written).toMatchObject({ productId: "prod1", version: 5 });
+  });
+
+  it.each([
+    ["updateItemAtVersion", (c: Client) => updateItemAtVersion(c, "i1", input as never, 4)],
+    ["setItemProduct", (c: Client) => setItemProduct(c, "i1", null, 4)],
+  ])("%s returns null when no row matched", async (_n, run) => {
+    expect(await run(querySpy({ data: [] }).client)).toBeNull();
+  });
+
+  it("deleteItemAtVersion deletes WHERE id and version, and says whether it did", async () => {
     const hit = querySpy({ data: [{ id: "i1" }] });
-    expect(await deleteItemIfUnchanged(hit.client, "i1", expected as never)).toBe(true);
-    const miss = querySpy({ data: [] });
-    expect(await deleteItemIfUnchanged(miss.client, "i1", expected as never)).toBe(false);
+    expect(await deleteItemAtVersion(hit.client, "i1", 4)).toBe(true);
+    expect(hit.filters()).toEqual([["id", "i1"], ["version", 4]]);
+    expect(await deleteItemAtVersion(querySpy({ data: [] }).client, "i1", 4)).toBe(false);
+  });
+
+  it("restoreItem re-inserts under the same id, version and product (N-104)", async () => {
+    const spy = querySpy({ data: [{ id: "i1" }] });
+    expect(await restoreItem(spy.client, "st1", { itemId: "i1", version: 4, productId: "prod1" }, input as never)).toBe(true);
+    expect(spy.payloads).toEqual([
+      expect.objectContaining({ id: "i1", stack_id: "st1", version: 4, product_id: "prod1", dose: 300 }),
+    ]);
+  });
+
+  it("restoreItem answers false when the id is taken, and throws any other error", async () => {
+    const taken = querySpy({ error: { code: "23505" } });
+    expect(await restoreItem(taken.client, "st1", { itemId: "i1", version: 4, productId: null }, input as never)).toBe(false);
+    const other = querySpy({ error: { code: "23503" } });
+    await expect(
+      restoreItem(other.client, "st1", { itemId: "i1", version: 4, productId: null }, input as never),
+    ).rejects.toMatchObject({ code: "23503" });
+  });
+
+  it("addItem never sets a version: a new row starts at the column default, 0", async () => {
+    const spy = querySpy({ data: itemRow });
+    await addItem(spy.client, "st1", input as never);
+    expect(spy.payloads.every((r) => !("version" in r))).toBe(true);
+  });
+});
+
+/**
+ * A client whose Nth awaited request resolves to `results[N]`, for the Stack Lab
+ * retry, whose read and write need different answers. Records every call.
+ */
+function scripted(results: { data?: unknown; error?: unknown }[]) {
+  const calls: SpyCall[] = [];
+  const next = async () => {
+    const r = results.shift() ?? { data: null };
+    return { data: r.data ?? null, error: r.error ?? null };
+  };
+  const builder = () => {
+    const self: Record<string, unknown> = {
+      then: (ok: (v: unknown) => unknown, ko?: (e: unknown) => unknown) => next().then(ok, ko),
+      single: () => next(),
+    };
+    for (const m of ["select", "eq", "update", "insert", "delete"]) {
+      self[m] = (...args: unknown[]) => (calls.push({ method: m, args }), self);
+    }
+    return self;
+  };
+  return { client: { from: () => builder() } as unknown as Client, calls };
+}
+
+// Phase 4 U10 (c), AC-6. Stack Lab's edit is last-writer-wins, as it always
+// was, but it now moves the version, so an advisor inverse built before it
+// misses instead of overwriting it.
+describe("updateItem — Stack Lab's edit moves the version (U10 (c), AC-6)", () => {
+  const updates = (calls: SpyCall[]) => calls.filter((c) => c.method === "update").map((c) => c.args[0]);
+
+  it("reads the version, then writes version + 1 WHERE the item still holds it", async () => {
+    const s = scripted([{ data: { version: 4 } }, { data: [{ ...itemRow, version: 5 }] }]);
+    await expect(updateItem(s.client, "i1", input as never)).resolves.toMatchObject({ version: 5 });
+    expect(updates(s.calls)).toEqual([expect.objectContaining({ dose: 300, notes: null, version: 5 })]);
+    expect(s.calls.filter((c) => c.method === "eq").map((c) => c.args)).toEqual([
+      ["id", "i1"],
+      ["id", "i1"],
+      ["version", 4],
+    ]);
+  });
+
+  it("re-reads and writes again when another write took the version first", async () => {
+    const s = scripted([
+      { data: { version: 4 } },
+      { data: [] },
+      { data: { version: 6 } },
+      { data: [{ ...itemRow, version: 7 }] },
+    ]);
+    await expect(updateItem(s.client, "i1", input as never)).resolves.toMatchObject({ version: 7 });
+    expect(updates(s.calls).map((u) => (u as { version: number }).version)).toEqual([5, 7]);
+  });
+
+  it(`gives up after ${STACK_LAB_ATTEMPTS} misses rather than looping`, async () => {
+    const misses = Array.from({ length: STACK_LAB_ATTEMPTS }, () => [{ data: { version: 4 } }, { data: [] }]).flat();
+    await expect(updateItem(scripted(misses).client, "i1", input as never)).rejects.toThrow();
+  });
+
+  it("throws the read's error when the item is gone", async () => {
+    const s = scripted([{ error: { code: "PGRST116" } }]);
+    await expect(updateItem(s.client, "i1", input as never)).rejects.toMatchObject({ code: "PGRST116" });
+    expect(updates(s.calls)).toEqual([]);
   });
 });

@@ -23,9 +23,9 @@ const getUser = vi.fn();
 const getAction = vi.fn();
 const getActionsByBatch = vi.fn();
 const markUndone = vi.fn();
-const deleteItem = vi.fn();
+const deleteItemAtVersion = vi.fn();
 const setItemProduct = vi.fn();
-const getItemProductId = vi.fn();
+const updateItemAtVersion = vi.fn();
 
 vi.mock("@/lib/auth/session", () => ({ getUser: () => getUser() }));
 const createClient = vi.fn(async () => ({}));
@@ -37,11 +37,10 @@ vi.mock("@/lib/db/advisor-action-repo", () => ({
 }));
 vi.mock("@/lib/db/stack-item-repo", () => ({
   addItem: vi.fn(),
-  updateItem: vi.fn(),
-  deleteItem: (...a: unknown[]) => deleteItem(...a),
-  updateItemIfUnchanged: vi.fn(),
-  deleteItemIfUnchanged: vi.fn(),
-  getItemProductId: (...a: unknown[]) => getItemProductId(...a),
+  listItems: vi.fn(),
+  restoreItem: vi.fn(),
+  updateItemAtVersion: (...a: unknown[]) => updateItemAtVersion(...a),
+  deleteItemAtVersion: (...a: unknown[]) => deleteItemAtVersion(...a),
   setItemProduct: (...a: unknown[]) => setItemProduct(...a),
 }));
 vi.mock("@/lib/db/stack-repo", () => ({ createStack: vi.fn(), deleteStack: vi.fn() }));
@@ -63,7 +62,7 @@ function action(over: Partial<AdvisorActionRecord> = {}): AdvisorActionRecord {
     actionType: "add_item",
     status: "applied",
     payload: {},
-    inverse: { op: "delete_item", stackId: "s1", itemId: "i1" },
+    inverse: { op: "delete_item", stackId: "s1", itemId: "i1", expect: { version: 0 } },
     createdAt: "2026-08-01T00:00:00Z",
     batchId: null,
     undoneAt: null,
@@ -76,8 +75,8 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   getAction.mockResolvedValue(action());
   getActionsByBatch.mockResolvedValue([]);
-  deleteItem.mockResolvedValue(undefined);
-  setItemProduct.mockResolvedValue(true);
+  deleteItemAtVersion.mockResolvedValue(true);
+  setItemProduct.mockResolvedValue({ id: "i1", version: 5 });
   markUndone.mockResolvedValue(undefined);
 });
 
@@ -93,7 +92,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     expect(res.status).toBe(401);
     expect(body.error.code).toBe("UNAUTHORIZED");
     expect(getAction).not.toHaveBeenCalled();
-    expect(deleteItem).not.toHaveBeenCalled();
+    expect(deleteItemAtVersion).not.toHaveBeenCalled();
   });
 
   it("404s — replaying nothing — for an unknown action", async () => {
@@ -105,7 +104,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
 
     expect(res.status).toBe(404);
     expect(body.error.code).toBe("NOT_FOUND");
-    expect(deleteItem).not.toHaveBeenCalled();
+    expect(deleteItemAtVersion).not.toHaveBeenCalled();
   });
 
   it("409s ALREADY_UNDONE on a double undo, without replaying the inverse", async () => {
@@ -117,7 +116,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
 
     expect(res.status).toBe(409);
     expect(body.error.code).toBe("ALREADY_UNDONE");
-    expect(deleteItem).not.toHaveBeenCalled();
+    expect(deleteItemAtVersion).not.toHaveBeenCalled();
     expect(markUndone).not.toHaveBeenCalled();
   });
 
@@ -129,7 +128,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
 
     expect(res.status).toBe(200);
     expect(body.data).toEqual({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", undone: true, batchId: null, count: 1 });
-    expect(deleteItem).toHaveBeenCalledWith({}, "i1");
+    expect(deleteItemAtVersion).toHaveBeenCalledWith({}, "i1", 0);
     // U26: the owner travels with every repo call, in the second position.
     expect(getAction).toHaveBeenCalledWith({}, "u1", "f55ff16f-66f4-4360-866b-95db6f8fec01");
     expect(markUndone).toHaveBeenCalledWith({}, "u1", "f55ff16f-66f4-4360-866b-95db6f8fec01");
@@ -140,8 +139,8 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     getUser.mockResolvedValue(USER);
     getAction.mockResolvedValue(action({ batchId: "b1" }));
     getActionsByBatch.mockResolvedValue([
-      action({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", inverse: { op: "delete_item", stackId: "s1", itemId: "first" } }),
-      action({ id: "2c3a4249-d770-4005-8649-dbd822dcaf79", inverse: { op: "delete_item", stackId: "s1", itemId: "second" } }),
+      action({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", inverse: { op: "delete_item", stackId: "s1", itemId: "first", expect: { version: 0 } } }),
+      action({ id: "2c3a4249-d770-4005-8649-dbd822dcaf79", inverse: { op: "delete_item", stackId: "s1", itemId: "second", expect: { version: 0 } } }),
     ]);
 
     const res = await POST(req(), ctx());
@@ -150,7 +149,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     expect(res.status).toBe(200);
     expect(body.data).toEqual({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", undone: true, batchId: "b1", count: 2 });
     // Newest first — the same invariant executeBatch holds on the forward path.
-    expect(deleteItem.mock.calls.map((c) => c[1])).toEqual(["second", "first"]);
+    expect(deleteItemAtVersion.mock.calls.map((c) => c[1])).toEqual(["second", "first"]);
     expect(getActionsByBatch).toHaveBeenCalledWith({}, "u1", "b1");
     expect(markUndone.mock.calls.map((c) => c[2])).toEqual(["2c3a4249-d770-4005-8649-dbd822dcaf79", "f55ff16f-66f4-4360-866b-95db6f8fec01"]);
     expect(markUndone.mock.calls.every((c) => c[1] === "u1")).toBe(true);
@@ -160,7 +159,7 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     getUser.mockResolvedValue(USER);
     getAction.mockResolvedValue(action({ batchId: "b1" }));
     getActionsByBatch.mockResolvedValue([
-      action({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", inverse: { op: "delete_item", stackId: "s1", itemId: "live" } }),
+      action({ id: "f55ff16f-66f4-4360-866b-95db6f8fec01", inverse: { op: "delete_item", stackId: "s1", itemId: "live", expect: { version: 0 } } }),
       action({ id: "2c3a4249-d770-4005-8649-dbd822dcaf79", status: "undone" }),
     ]);
 
@@ -168,13 +167,13 @@ describe("POST /api/advisor/actions/:id/undo", () => {
     const body = await res.json();
 
     expect(body.data.count).toBe(1);
-    expect(deleteItem).toHaveBeenCalledTimes(1);
-    expect(deleteItem.mock.calls[0][1]).toBe("live");
+    expect(deleteItemAtVersion).toHaveBeenCalledTimes(1);
+    expect(deleteItemAtVersion.mock.calls[0][1]).toBe("live");
   });
 
   it("returns the generic 500 envelope when a replay throws", async () => {
     getUser.mockResolvedValue(USER);
-    deleteItem.mockRejectedValue(new Error("deadlock detected on relation stack_items"));
+    deleteItemAtVersion.mockRejectedValue(new Error("deadlock detected on relation stack_items"));
 
     const res = await POST(req(), ctx());
     const body = await res.json();
@@ -187,44 +186,41 @@ describe("POST /api/advisor/actions/:id/undo", () => {
   });
 });
 
-// Phase 4 U10 (b), N-101. An attach's inverse restores the product the item held
-// before the confirm. Undo may run long after, so the product the attach wrote
-// (the audit row's payload) must still be there, or the replay would erase
-// whatever replaced it. A row that is not applied is not marked undone, and the
-// response counts it: only numbers cross (D-14 (a)).
-describe("undo of an attach is a compare-and-set (U10 (b), N-101)", () => {
+// Phase 4 U10 (b), N-101; (c), N-105. An inverse restores the state the item held
+// before the confirm. Undo may run long after, so the item must still hold the
+// version the action left, or the replay would erase whatever replaced it. A row
+// that is not applied is not marked undone, and the response counts it: only
+// numbers cross (D-14 (a)).
+describe("undo writes only over what the action wrote (U10 (b), (c))", () => {
   const ATTACH_ID = "2c3a4249-d770-4005-8649-dbd822dcaf79";
   const attach = (over: Partial<AdvisorActionRecord> = {}) =>
     action({
       id: ATTACH_ID,
       actionType: "attach_product",
       payload: { stackItemId: "i1", productId: "p-new" },
-      inverse: { op: "set_item_product", stackId: "s1", itemId: "i1", productId: "p-old" },
+      inverse: { op: "set_item_product", stackId: "s1", itemId: "i1", productId: "p-old", expect: { version: 4, restores: 3 } },
       ...over,
     });
-  function column(initial: string | null) {
-    const state = { column: initial };
-    getItemProductId.mockImplementation(async () => state.column);
-    setItemProduct.mockImplementation(
-      async (_db: unknown, _id: string, pid: string | null, expect?: { current: string | null } | string) => {
-        if (typeof expect === "object" && expect.current !== state.column) return false;
-        state.column = pid;
-        return true;
-      },
-    );
+  function item(version: number) {
+    const state = { product: "p-new" as string | null, version };
+    setItemProduct.mockImplementation(async (_db: unknown, _id: string, pid: string | null, at: number) => {
+      if (at !== state.version) return null;
+      state.product = pid;
+      return { id: "i1", productId: pid, version: ++state.version };
+    });
     return state;
   }
 
   beforeEach(() => getUser.mockResolvedValue(USER));
 
   it("an undo after an intervening change writes nothing, marks nothing, and counts it", async () => {
-    const state = column("p-other"); // the item's product changed after the confirm
+    const state = item(5); // another write moved the item on after the confirm
     getAction.mockResolvedValue(attach());
 
     const res = await POST(req(), ctx(ATTACH_ID));
     const body = await res.json();
 
-    expect(state.column).toBe("p-other");
+    expect(state.product).toBe("p-new");
     expect(markUndone).not.toHaveBeenCalled();
     expect(res.status).toBe(409);
     expect(body.error.code).toBe("STALE_UNDO");
@@ -234,39 +230,75 @@ describe("undo of an attach is a compare-and-set (U10 (b), N-101)", () => {
       "This didn't finish, and some changes couldn't be undone (0 undone, 1 not undone). Please check your stack in Stack Lab before trying again.",
     );
     // Only numbers cross: no item, product or action id.
-    for (const id of ["i1", "p-new", "p-old", "p-other", ATTACH_ID]) {
+    for (const id of ["i1", "p-new", "p-old", ATTACH_ID]) {
       expect(JSON.stringify(body)).not.toContain(id);
     }
   });
 
-  it("an undo nobody raced restores the prior product, expecting the one the attach wrote", async () => {
-    const state = column("p-new");
+  it("an undo nobody raced restores the prior product, expecting the version the attach left", async () => {
+    const state = item(4);
     getAction.mockResolvedValue(attach());
 
     const res = await POST(req(), ctx(ATTACH_ID));
 
     expect(res.status).toBe(200);
-    expect(state.column).toBe("p-old");
-    expect(setItemProduct).toHaveBeenCalledWith({}, "i1", "p-old", { current: "p-new" });
+    expect(state.product).toBe("p-old");
+    expect(setItemProduct).toHaveBeenCalledWith({}, "i1", "p-old", 4);
     expect(markUndone).toHaveBeenCalledWith({}, "u1", ATTACH_ID);
   });
 
   it("a batch undoes and marks the rows it can, and counts the one it cannot", async () => {
-    const state = column("p-other");
+    item(5);
     getAction.mockResolvedValue(action({ batchId: "b1" }));
     getActionsByBatch.mockResolvedValue([
-      action({ batchId: "b1", inverse: { op: "delete_item", stackId: "s1", itemId: "i-added" } }),
+      action({ batchId: "b1", inverse: { op: "delete_item", stackId: "s1", itemId: "i-added", expect: { version: 0 } } }),
       attach({ batchId: "b1" }),
     ]);
 
     const res = await POST(req(), ctx());
     const body = await res.json();
 
-    expect(state.column).toBe("p-other");
-    expect(deleteItem).toHaveBeenCalledWith({}, "i-added");
+    expect(deleteItemAtVersion).toHaveBeenCalledWith({}, "i-added", 0);
     expect(markUndone.mock.calls.map((c) => c[2])).toEqual(["f55ff16f-66f4-4360-866b-95db6f8fec01"]);
     expect(res.status).toBe(409);
     expect(body.error.details).toEqual({ reverted: 1, unreverted: 1 });
+  });
+
+  it("a batch that edited one item twice is undone in one pass, the older inverse chaining on the newer (N-107)", async () => {
+    // edit 3 → 4, edit 4 → 5. Undo writes 5 → 6 (state of 4), then must expect 6, not 4.
+    const state = { version: 5 };
+    updateItemAtVersion.mockImplementation(async (_db: unknown, _id: string, _input: unknown, at: number) =>
+      at === state.version ? { id: "i1", version: ++state.version } : null,
+    );
+    const edit = (id: string, version: number, restores: number) =>
+      action({
+        id,
+        batchId: "b1",
+        actionType: "edit_item",
+        inverse: { op: "update_item", stackId: "s1", itemId: "i1", input: {} as never, expect: { version, restores } },
+      });
+    getAction.mockResolvedValue(action({ batchId: "b1" }));
+    getActionsByBatch.mockResolvedValue([
+      edit("f55ff16f-66f4-4360-866b-95db6f8fec01", 4, 3),
+      edit("2c3a4249-d770-4005-8649-dbd822dcaf79", 5, 4),
+    ]);
+
+    const res = await POST(req(), ctx());
+
+    expect(res.status).toBe(200);
+    expect(updateItemAtVersion.mock.calls.map((c) => c[3])).toEqual([5, 6]);
+    expect(markUndone).toHaveBeenCalledTimes(2);
+  });
+
+  it("a row recorded before U10 (c) carries no version: not replayed, not marked, counted", async () => {
+    getAction.mockResolvedValue(action({ inverse: { op: "delete_item", stackId: "s1", itemId: "i1" } }));
+
+    const res = await POST(req(), ctx());
+
+    expect(deleteItemAtVersion).not.toHaveBeenCalled();
+    expect(markUndone).not.toHaveBeenCalled();
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.details).toEqual({ reverted: 0, unreverted: 1 });
   });
 });
 

@@ -41,6 +41,10 @@ export interface StackItem {
    *  0004 column). Read-only display field — affects no evaluation, so it's OPTIONAL
    *  and ignored by the engines; the domain still treats items product-agnostically. */
   productId?: string | null;
+  /** [Phase 4 U10 (c)] The row version (migration 0011). Every write sets it to
+   *  expected + 1 WHERE the row still holds the expected one, so a write built
+   *  from a stale read matches no row. Optional: the engines ignore it. */
+  version?: number;
 }
 
 // ---- write contracts (Domain-owned) -----------------------------------------

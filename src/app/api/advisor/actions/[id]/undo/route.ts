@@ -7,7 +7,8 @@
 // whole multi-action change is undone in one click (Design §3.3).
 // [Phase 4 U10 (b), N-101] A row whose inverse would overwrite a later change is
 // not replayed and not marked undone. The response counts it (409 STALE_UNDO),
-// and only the two counts cross (D-14 (a)).
+// and only the two counts cross (D-14 (a)). [U10 (c)] Every inverse, not only a
+// product's, is written only while its item holds the version the action left.
 import type { NextRequest } from "next/server";
 import { getUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -16,7 +17,7 @@ import {
   getActionsByBatch,
   markUndone,
 } from "@/lib/db/advisor-action-repo";
-import { undoAction } from "@/lib/advisor/actions/execute";
+import { undoPass } from "@/lib/advisor/actions/execute";
 import { fail, handle, ok, notFound, unauthorized } from "@/lib/api/respond";
 import { advisorOutcomeCopy } from "@/lib/safety";
 import { uuidParam } from "@/lib/validation/schemas";
@@ -69,11 +70,13 @@ export async function POST(
         )
       : [action];
 
-    // Reverse in REVERSE apply order so dependent writes unwind correctly.
+    // Reverse in REVERSE apply order so dependent writes unwind correctly. One
+    // pass for the whole batch, so two actions on one item chain (N-107).
+    const undo = undoPass(supabase, user.id);
     let reverted = 0;
     let unreverted = 0;
     for (let i = rows.length - 1; i >= 0; i--) {
-      if (!(await undoAction(supabase, user.id, rows[i]))) {
+      if (!(await undo(rows[i].inverse))) {
         unreverted += 1;
         continue;
       }

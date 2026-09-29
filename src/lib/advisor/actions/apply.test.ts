@@ -111,3 +111,40 @@ describe("inverseIntent (undo)", () => {
     expect(() => inverseIntent(p)).toThrow(/createdItemId/);
   });
 });
+
+// Phase 4 U10 (c). Each inverse records the version its undo expects; without
+// it, undo fails closed (execute.ts `undoPass`).
+describe("inverseIntent carries the version its undo expects (U10 (c))", () => {
+  const versioned = { ...itemSi3, version: 7, productId: "prod-1" };
+
+  it("add_item: the version the item was created at", () => {
+    const p = prop(proposeAddItem.handler({ supplementId: "magnesium", dose: 300, unit: "mg" }, ctx).data);
+    expect(inverseIntent(p, { createdItemId: "new-id", createdVersion: 0 })).toMatchObject({ expect: { version: 0 } });
+  });
+
+  it("remove_item: a restore under the same id, version and product (N-104)", () => {
+    const p = prop(proposeRemoveItem.handler({ stackItemId: "si-3" }, ctx).data);
+    expect(inverseIntent(p, { priorItem: versioned })).toMatchObject({
+      restore: { itemId: itemSi3.id, version: 7, productId: "prod-1" },
+    });
+  });
+
+  it("edit_item: the version the edit wrote, and the one it restores", () => {
+    const p = prop(proposeEditItem.handler({ stackItemId: "si-3", dose: 999 }, ctx).data);
+    expect(inverseIntent(p, { priorItem: versioned, writtenVersion: 8 })).toMatchObject({
+      expect: { version: 8, restores: 7 },
+    });
+  });
+
+  it("generate_protocol: the items it created", () => {
+    const p = prop(proposeGenerateProtocol.handler({}, ctx).data);
+    const createdItems = [{ itemId: "a", version: 0 }];
+    expect(inverseIntent(p, { createdStackId: "new-stack", createdItems })).toMatchObject({ expectItems: createdItems });
+  });
+
+  it("no version known, no expectation recorded: undo then refuses rather than guessing", () => {
+    const p = prop(proposeEditItem.handler({ stackItemId: "si-3", dose: 999 }, ctx).data);
+    const intent = inverseIntent(p, { priorItem: itemSi3 });
+    expect(intent.op === "update_item" && intent.expect).toBeFalsy();
+  });
+});
