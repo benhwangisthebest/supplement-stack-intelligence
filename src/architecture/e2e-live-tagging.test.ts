@@ -42,11 +42,18 @@
 //     way (a different env var, a helper-wrapped predicate) is invisible here and
 //     would need this parser extended — stated so nobody reads a green run as
 //     "no untagged gating exists anywhere".
-import { describe, expect, it } from "vitest";
+//
+// TWO FURTHER GUARDS on `playwright.config.ts` sit at the bottom of this file
+// (Phase 4 U12). They extend this spec rather than adding one, so SPEC_COUNT
+// stays 30. LIVE_SERIAL binds the serialisation a live run depends on (FU-25's
+// guard half). SERVER_REUSE binds N-32's fix. Both evaluate the config under a
+// stubbed environment instead of reading its text.
+import { describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { stripComments } from "./__testing__/strip";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -349,5 +356,171 @@ describe("LIVE_TAGGING — parser self-tests", () => {
     // untracked spec pass unseen.
     expect(SPEC_FILES.every((f) => f.startsWith("tests/e2e/"))).toBe(true);
     expect(SPEC_FILES).toContain("tests/e2e/medication-interactions.spec.ts");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// LIVE_SERIAL and SERVER_REUSE: `playwright.config.ts` evaluated, not read
+// (Phase 4 U12)
+//
+// WHY. A live run logs every authed spec in as ONE seeded demo account, so the
+// run is deterministic only while it is serial (the shared-user-race comment in
+// `playwright.config.ts`). Phase 1 U16 made it serial, and nothing bound that:
+// deleting either line broke no test (CLAUDE.md §5.9, FU-25). FU-25's other
+// half, per-worker user isolation, belongs to D-9. This guard does not do it.
+//
+// N-32. `reuseExistingServer: !process.env.CI` let a stale `next dev` left on
+// the port stand in for the production build the suite exists to judge. The
+// U14 baseline measured the cost: 12 failures that were all the substituted
+// server. The fix is `false` outside CI, so an occupied port is an error, not a
+// substitution. A run that means to test a server it started itself says so
+// with PLAYWRIGHT_NO_SERVER.
+//
+// WHAT IT COMPUTES. It imports the config afresh under each environment in a
+// small matrix and asserts on the object Playwright would receive. It does not
+// read the config as text, so the guard follows the value, whatever expression
+// produces it.
+//
+// WHAT IT DOES NOT COMPUTE:
+//   * A command-line override. `--workers=4` or `--fully-parallel` beats the
+//     config, and no file in the repository can bind a flag someone types.
+//   * Which server a PLAYWRIGHT_NO_SERVER run measured. That path is an
+//     explicit opt-out, and the guard asserts only serialisation on it.
+// ---------------------------------------------------------------------------
+type WebServer = { reuseExistingServer?: boolean };
+type LoadedConfig = {
+  workers?: number | string;
+  fullyParallel?: boolean;
+  webServer?: WebServer | WebServer[];
+  use?: { baseURL?: string };
+};
+
+// Every variable the config reads. Each load sets all of them, so the ambient
+// environment cannot leak in: CI runs this suite with CI=true.
+const CONFIG_ENV_KEYS = ["E2E_LIVE", "CI", "PLAYWRIGHT_NO_SERVER", "PLAYWRIGHT_BASE_URL"] as const;
+type ConfigEnv = Partial<Record<(typeof CONFIG_ENV_KEYS)[number], string>>;
+
+async function loadPlaywrightConfig(env: ConfigEnv): Promise<LoadedConfig> {
+  for (const key of CONFIG_ENV_KEYS) vi.stubEnv(key, env[key]);
+  // The config reads process.env at module scope. Without a fresh module
+  // registry the first load would answer for every environment after it.
+  vi.resetModules();
+  const mod = await import("../../playwright.config");
+  return mod.default as LoadedConfig;
+}
+
+const envLabel = (env: ConfigEnv) =>
+  CONFIG_ENV_KEYS.map((k) => `${k}=${env[k] ?? "(unset)"}`).join(" ");
+
+const LIVE_ENVS: ConfigEnv[] = [
+  { E2E_LIVE: "1" },
+  { E2E_LIVE: "1", CI: "true" },
+  { E2E_LIVE: "1", PLAYWRIGHT_NO_SERVER: "1" },
+  { E2E_LIVE: "1", CI: "true", PLAYWRIGHT_NO_SERVER: "1" },
+];
+
+// CI unset, live and non-live. PLAYWRIGHT_NO_SERVER stays unset: with it set
+// there is no webServer, and a reuse check would pass by checking nothing.
+const LOCAL_ENVS: ConfigEnv[] = [{}, { E2E_LIVE: "1" }];
+
+describe("LIVE_SERIAL — a live E2E run is serial (FU-25's guard half, CLAUDE.md §5.9)", () => {
+  it("sets workers: 1 whenever E2E_LIVE=1", async () => {
+    for (const env of LIVE_ENVS) {
+      const { workers } = await loadPlaywrightConfig(env);
+      expect(
+        workers,
+        `LIVE_SERIAL: playwright.config.ts gives \`workers\` = ${JSON.stringify(workers)} under\n` +
+          `${envLabel(env)}; a live run needs exactly 1. Every authed spec signs in as\n` +
+          "one seeded demo account, so parallel workers interleave writes to the same\n" +
+          "rows and the live run stops being deterministic. Restore\n" +
+          "`workers: LIVE ? 1 : undefined`.",
+      ).toBe(1);
+    }
+  });
+
+  it("sets fullyParallel: false whenever E2E_LIVE=1", async () => {
+    for (const env of LIVE_ENVS) {
+      const { fullyParallel } = await loadPlaywrightConfig(env);
+      expect(
+        fullyParallel,
+        `LIVE_SERIAL: playwright.config.ts gives \`fullyParallel\` = ${JSON.stringify(fullyParallel)}\n` +
+          `under ${envLabel(env)}; a live run needs exactly false, stated in the config\n` +
+          "rather than left to Playwright's default. Restore `fullyParallel: !LIVE`.",
+      ).toBe(false);
+    }
+  });
+});
+
+describe("SERVER_REUSE — outside CI the E2E suite never reuses a server on the port (N-32)", () => {
+  it("defines a webServer when PLAYWRIGHT_NO_SERVER is unset", async () => {
+    // Anti-vacuity. With no webServer there is nothing to reuse, and the rule
+    // below would pass by checking nothing.
+    for (const env of LOCAL_ENVS) {
+      const { webServer } = await loadPlaywrightConfig(env);
+      expect(
+        [webServer ?? []].flat().length,
+        `SERVER_REUSE: no webServer under ${envLabel(env)}, so the reuse rule below\n` +
+          "checks nothing. If the config stopped starting the app, retire this guard\n" +
+          "on purpose instead of letting it pass empty.",
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("sets reuseExistingServer: false whenever CI is unset", async () => {
+    for (const env of LOCAL_ENVS) {
+      const servers = [(await loadPlaywrightConfig(env)).webServer ?? []].flat();
+      for (const server of servers) {
+        expect(
+          server.reuseExistingServer,
+          `SERVER_REUSE: playwright.config.ts gives \`reuseExistingServer\` =\n` +
+            `${JSON.stringify(server.reuseExistingServer)} under ${envLabel(env)}. Anything on\n` +
+            "the port, such as a stale `next dev`, would then stand in for the\n" +
+            "production build the suite exists to judge (N-32: 12 false failures in the\n" +
+            "U14 baseline). Set it to false. To test a server you started yourself, set\n" +
+            "PLAYWRIGHT_NO_SERVER.",
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("loads the config afresh for each environment (loader self-test)", async () => {
+    // Both guards above depend on it. A cached module would answer every
+    // environment with the first one's config, and the matrix would be a
+    // single case repeated.
+    const a = await loadPlaywrightConfig({ PLAYWRIGHT_BASE_URL: "http://sentinel-a.test" });
+    const b = await loadPlaywrightConfig({ PLAYWRIGHT_BASE_URL: "http://sentinel-b.test" });
+    expect([a.use?.baseURL, b.use?.baseURL]).toEqual([
+      "http://sentinel-a.test",
+      "http://sentinel-b.test",
+    ]);
+  });
+
+  it("stubs every environment variable the config reads (loader self-test)", () => {
+    // The matrix is only as good as the list it stubs. A read of any other
+    // variable is ambient, and a config such as
+    // `workers: LIVE && !process.env.PW_FAST ? 1 : 4` passed both guards above
+    // (U12 review). So the list is checked against the config's own reads.
+    // Any `process.env` access that is not `process.env.NAME` is refused
+    // rather than guessed at.
+    // The shared string-aware stripper (FU-47): a `//` inside the config's URL
+    // literal must not hide the rest of that line.
+    const source = stripComments(
+      fs.readFileSync(path.join(REPO_ROOT, "playwright.config.ts"), "utf8"),
+    );
+    const reads = [...source.matchAll(/process\.env\b(?:\.([A-Za-z_]\w*))?/g)];
+    const names = [...new Set(reads.map((m) => m[1]).filter((n): n is string => !!n))];
+    expect(names.length, "no process.env reads found; the check has rotted").toBeGreaterThan(0);
+    expect(
+      reads.filter((m) => !m[1]).length,
+      "SERVER_REUSE/LIVE_SERIAL: playwright.config.ts reads process.env in a form other\n" +
+        "than `process.env.NAME` (brackets, destructuring, a spread). Use the dotted form,\n" +
+        "or extend this check so the variable can be stubbed.",
+    ).toBe(0);
+    expect(
+      names.filter((n) => !(CONFIG_ENV_KEYS as readonly string[]).includes(n)),
+      "SERVER_REUSE/LIVE_SERIAL: playwright.config.ts reads a variable the loader does\n" +
+        "not stub, so the guards above would pass or fail on whatever the machine running\n" +
+        "them has set. Add it to CONFIG_ENV_KEYS and cover it in the matrices.",
+    ).toEqual([]);
   });
 });

@@ -34,6 +34,9 @@ export default defineConfig({
   // a fresh user per spec hits Supabase's email rate limits (the reason
   // helpers.ts logs in rather than signing up). Serialising is the honest,
   // available fix; isolation is a larger piece of work than this unit.
+  //
+  // Guarded by LIVE_SERIAL in src/architecture/e2e-live-tagging.test.ts
+  // (Phase 4 U12): removing or changing either line below is a red build.
   fullyParallel: !LIVE,
   workers: LIVE ? 1 : undefined,
 
@@ -47,7 +50,8 @@ export default defineConfig({
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
   ],
-  // Auto-start the app for local runs (skipped if a server is already up).
+  // Auto-start the app. To test a server you started yourself, set
+  // PLAYWRIGHT_NO_SERVER (and PLAYWRIGHT_BASE_URL if it is not on :3000).
   //
   // BUILD-THEN-START, not `next dev` (Phase 1 U16). The E2E suite is the only
   // thing in this repository that exercises the app as a user meets it, and
@@ -61,12 +65,20 @@ export default defineConfig({
   // 300s is deliberate headroom on a slower or cold-cache machine rather than a
   // measurement of the fast path — a webServer timeout that fires mid-build
   // reports as an unreachable app, which is a maximally confusing symptom.
+  //
+  // NEVER REUSE (N-32, Phase 4 U12). This was `!process.env.CI`, so outside CI
+  // whatever already answered on the port was trusted in place of the build
+  // above. A stale `next dev` did exactly that in the U14 baseline: 12 failures,
+  // all of them the substituted server. With `false`, an occupied port fails
+  // the run up front, and using an existing server is an explicit choice
+  // (PLAYWRIGHT_NO_SERVER). CI already ran with `false`, so CI is unchanged.
+  // Guarded by SERVER_REUSE in src/architecture/e2e-live-tagging.test.ts.
   webServer: process.env.PLAYWRIGHT_NO_SERVER
     ? undefined
     : {
         command: "npm run build && npm run start",
         url: BASE_URL,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         timeout: 300_000,
       },
 });
