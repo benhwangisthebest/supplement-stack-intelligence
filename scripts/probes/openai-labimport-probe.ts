@@ -13,6 +13,14 @@
  *   option (a)  an OpenAI `file` content part carrying a base64 data URL
  *   option (b)  `/v1/ocr` first, then the existing text transcription path
  *
+ * [2026-09-29, Phase 4 U4] OPTION (b) IS REMOVED FROM THIS SCRIPT. `/v1/ocr` 404'd
+ * at api.openai.com on both fixtures (docs/05-qa/2026-09-18-u31-openai-probe-
+ * record.md §3), and U32 pins the probes to that host, so the step could only
+ * re-measure a known 404. It was also the one request body here written by hand
+ * rather than built by `src/`, which FU-35's guard now forbids
+ * (`first-party-base-url.test.ts`, PROBE_BODIES_FROM_SRC). Restoring it means
+ * giving it a request builder in `src/` first.
+ *
  * THIS SCRIPT WRITES NOTHING AND CHANGES NOTHING. It is deliberately NOT an
  * implementation of either option: it reads `EXTRACTION_SYSTEM_PROMPT` and
  * `candidatesFromTranscript` from the existing lab-import module so that it
@@ -187,78 +195,6 @@ async function probeFilePart(
   reportTranscript(body.choices?.[0]?.message?.content ?? "");
 }
 
-/**
- * OPTION (b): `/v1/ocr`, then the existing text path.
- *
- * The request shape for `/v1/ocr` is NOT documented in anything consulted while
- * planning U25 — the endpoint is listed, its body is not. So this sends the
- * most plausible JSON shape and REPORTS WHAT COMES BACK, including a 404 or a
- * 400. "The probe could not determine the shape" is a valid outcome and a
- * useful one; guessing and reporting success would not be.
- */
-async function probeOcr(
-  cfg: { baseUrl: string; apiKey: string },
-  label: string,
-  pdfPath: string,
-): Promise<void> {
-  console.log(`\n── OPTION (b) · /v1/ocr · ${label} ──`);
-  const base64 = fs.readFileSync(pdfPath).toString("base64");
-  const url = `${cfg.baseUrl.replace(/\/+$/, "")}/v1/ocr`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: authHeaders(cfg.apiKey),
-    body: JSON.stringify({
-      model: MODEL,
-      file: `data:application/pdf;base64,${base64}`,
-    }),
-  });
-
-  line("http status", response.status);
-  if (!response.ok) {
-    line("RESULT", "unavailable or a different request shape — record the status");
-    return;
-  }
-
-  const body = (await response.json()) as Record<string, unknown>;
-  line("top-level keys", Object.keys(body).sort().join(", "));
-  const text =
-    typeof body.text === "string"
-      ? body.text
-      : typeof body.content === "string"
-        ? body.content
-        : "";
-  line("extracted text length", text.length);
-  if (text.length === 0) {
-    console.log("  → no text field recognised; record the key list above verbatim.");
-    return;
-  }
-
-  // Second leg: OCR text through the transcription prompt, which is exactly the
-  // existing `extractFromText` path and needs no new code to work.
-  const second = await fetch(completionsUrl(cfg.baseUrl), {
-    method: "POST",
-    headers: authHeaders(cfg.apiKey),
-    // Same repair as option (a) (N-58). Unreachable while `/v1/ocr` 404s, but a
-    // stale body left here is the identical defect one function down.
-    body: JSON.stringify(
-      buildCompletionBody(
-        buildTranscriptionRequest({
-          model: MODEL,
-          reasoningEffort: process.env.OPENAI_REASONING_EFFORT,
-          userContent: text,
-        }),
-      ),
-    ),
-  });
-  line("transcription status", second.status);
-  if (!second.ok) return;
-  const body2 = (await second.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  reportTranscript(body2.choices?.[0]?.message?.content ?? "");
-}
-
 async function main(): Promise<void> {
   const cfg = requireConfig();
   const textPdf = arg("text-pdf");
@@ -289,7 +225,6 @@ async function main(): Promise<void> {
 
   for (const [label, pdfPath] of targets) {
     await probeFilePart(cfg, label, pdfPath);
-    await probeOcr(cfg, label, pdfPath);
   }
 
   console.log("\nDone. Record this output in a dated copy of");

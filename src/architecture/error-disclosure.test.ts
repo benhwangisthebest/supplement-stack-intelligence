@@ -27,11 +27,32 @@
 //                               and the legacy `(<Error>err).message` assertion
 //   err["message"]              element access with a string literal
 //   String(err)                 whole-value stringification
+//   err.toString(), JSON.stringify(err)   the same (U4, from the U4 review)
 //   `${err}`                    template-literal interpolation
 //   catch ({ message })         destructuring the text out of the binding
 //   const { message } = err     same, one statement later
 //   err.cause.message           `cause` carries taint (see TAINT_CARRIERS), at
 //                               any chain depth: `err.cause.cause.message` too
+//
+// SECOND SOURCE (Phase 4 U4, FU-31 retargeted by P-04). Supabase's client does
+// not throw: it returns `{ data, error }`. So the error that reached the browser
+// from `src/lib/auth/actions.ts:27,44` never passed through a catch clause, and the
+// model above could not see it however wide the scan. A declaration that
+// destructures `error` out of an AWAITED value — `const { error } = await …`,
+// `{ error: e }` included — seeds the same walk over its enclosing block, with
+// its forms prefixed `result-` in the report. Two forms apply to it only:
+//
+//   return { error } / return error     the whole object as a server action's
+//                                       return value (`"use server"` module or
+//                                       function), because that return IS the
+//                                       response
+//   NextResponse.json({ error })        the whole object in a response body
+//
+// A result error returned whole from any other module is not flagged: that is a
+// repository handing a result to an in-process caller, and `__testing__/fake-
+// stack-db.ts` imitates Supabase that way on purpose (it was the first false
+// positive measured, before this scoping). Reading `error.code` is clean, which
+// is how owned copy is chosen.
 //
 // It flags a read of the TEXT, so it does not flag a whole-value pass of the
 // binding itself — `internalError(err, …)`, `reportInternalError(err, …)`,
@@ -63,6 +84,13 @@
 //   * a name inside the handler that shadows the caught binding — it stays
 //     tainted, so `catch (err) { rows.forEach((err) => f(err.message)) }` is a
 //     false positive;
+//   * a result error not destructured from an await: `const r = await go();
+//     send(r.error.message)`, a `.then(({ error }) => …)` callback, or a
+//     synchronous `{ error }` such as zod's `safeParse` (pinned as a self-test);
+//   * a result error in a response built any way but `NextResponse.json`/
+//     `Response.json` — `new Response(body)`, or a local helper that wraps one;
+//   * a result error returned whole from a module that is not a server action,
+//     and then returned onward by one that is — the taint does not cross modules;
 //   * anything in a file outside the scanned inventory — see the next block,
 //     which states exactly what that is.
 // It is a regression guard for the forms this defect actually took and the
@@ -84,13 +112,18 @@
 //     for that layer is a different rule, not a wider pathspec here.
 //   * `src/app/**/page.tsx` and every other non-route file under `src/app`.
 //   * `src/data/**`, `src/types/**` — inert.
-//   * **The one `"use server"` module, `src/lib/auth/actions.ts`.** It IS inside
+//   * ~~**The one `"use server"` module, `src/lib/auth/actions.ts`.** It IS inside
 //     LIB_MODULES' pathspec and so is walked — but its reads at :27 and :44 are
 //     of a returned Supabase result object, not of a caught binding, so the
 //     detector's model does not reach them and this extension does NOT close
 //     them. That module is a POST endpoint the browser calls directly and
 //     `AUTH_COVERAGE` does not see it either. Recorded as **FU-31**; unclosed,
-//     and deliberately not papered over by a passing green here.
+//     and deliberately not papered over by a passing green here.~~
+//     **[2026-09-29, Phase 4 U4] FU-31 CLOSED.** The gap was the taint model, not
+//     the scope (P-04), and the second source above reaches both reads: with
+//     only that change, :27 and :44 went red with no plant. Both now return
+//     owned copy from `src/lib/safety`. `AUTH_COVERAGE` still does not see the
+//     module; that is unchanged, since a server action has no 401 to assert.
 //
 // FU-7 is closed by the third inventory: the class of "a helper one import away
 // from a route" is now covered. The class of "error text reaching a client by a
@@ -115,6 +148,47 @@ const TEXT_PROPS = new Set(["message", "stack"]);
  * the log, so `err.cause.message` must not be a hole in this rule.
  */
 const TAINT_CARRIERS = new Set(["cause"]);
+
+/**
+ * U4: the destructured field of an awaited result that is a second taint source.
+ * Supabase's client returns `{ data, error }` rather than throwing, so its error
+ * never reaches a catch clause.
+ */
+const RESULT_ERROR_KEYS = new Set(["error"]);
+
+/** `X.json(body)` on these is a response body leaving the server. */
+const RESPONSE_CLASSES = new Set(["NextResponse", "Response"]);
+
+/** A `"use server"` directive as the first statement of these statements. */
+function hasUseServer(statements: ts.NodeArray<ts.Statement>): boolean {
+  const first = statements[0];
+  return (
+    first !== undefined &&
+    ts.isExpressionStatement(first) &&
+    ts.isStringLiteral(first.expression) &&
+    first.expression.text === "use server"
+  );
+}
+
+/** Is this node inside a server action: a "use server" module, or a function that opens with one? */
+function inServerAction(node: ts.Node): boolean {
+  for (let at: ts.Node | undefined = node; at; at = at.parent) {
+    if (ts.isSourceFile(at)) return hasUseServer(at.statements);
+    if (ts.isFunctionLike(at) && "body" in at && at.body && ts.isBlock(at.body as ts.Node)) {
+      if (hasUseServer((at.body as ts.Block).statements)) return true;
+    }
+  }
+  return false;
+}
+
+/** The block a declaration lives in: the span its binding is visible over. */
+function enclosingScope(node: ts.Node): ts.Node {
+  let scope: ts.Node = node;
+  while (scope.parent && !ts.isBlock(scope) && !ts.isSourceFile(scope) && !ts.isCaseClause(scope)) {
+    scope = scope.parent;
+  }
+  return scope;
+}
 
 /**
  * Tracked files under `pathspec`, filtered by `keep`. Tracked-file discovery
@@ -279,8 +353,37 @@ function findViolations(fileName: string, sourceText: string): Violation[] {
       return ts.isIdentifier(key) && TEXT_PROPS.has(key.text);
     });
 
-  const scanBody = (body: ts.Node, seed: string) => {
+  /**
+   * `source` names where the seed came from. A caught binding (`catch (err)`,
+   * `.catch(err => …)`) is the original model. A result error (`const { error } =
+   * await …`, U4) is the second source: its forms are prefixed `result-`, and it
+   * additionally flags the whole object reaching a `return` or a response body,
+   * because a returned result error is sent to the client as-is.
+   */
+  const scanBody = (body: ts.Node, seed: string, source: "caught" | "result" = "caught") => {
     const tainted = new Set<string>([seed]);
+    const mark = (node: ts.Node, form: string) =>
+      record(node, source === "result" ? `result-${form}` : form);
+
+    /** Is the tainted value itself (not a call on it) what this expression hands over? */
+    const handsOverTainted = (node: ts.Node): boolean => {
+      const inner = unwrap(node);
+      if (isTainted(inner, tainted)) return true;
+      if (ts.isObjectLiteralExpression(inner)) {
+        return inner.properties.some((p) =>
+          ts.isShorthandPropertyAssignment(p)
+            ? tainted.has(p.name.text)
+            : ts.isPropertyAssignment(p)
+              ? handsOverTainted(p.initializer)
+              : ts.isSpreadAssignment(p) && handsOverTainted(p.expression),
+        );
+      }
+      if (ts.isArrayLiteralExpression(inner)) return inner.elements.some(handsOverTainted);
+      if (ts.isConditionalExpression(inner)) {
+        return handsOverTainted(inner.whenTrue) || handsOverTainted(inner.whenFalse);
+      }
+      return false;
+    };
 
     const walk = (node: ts.Node) => {
       // `const e = err;` — follow the alias. Source order means a declaration is
@@ -291,7 +394,7 @@ function findViolations(fileName: string, sourceText: string): Violation[] {
         }
         // `const { message } = err` / `const { message: m } = err`
         if (ts.isObjectBindingPattern(node.name) && isTainted(node.initializer, tainted)) {
-          for (const el of textNamesInPattern(node.name)) record(el, "destructured-text");
+          for (const el of textNamesInPattern(node.name)) mark(el, "destructured-text");
         }
       }
 
@@ -301,7 +404,7 @@ function findViolations(fileName: string, sourceText: string): Violation[] {
         TEXT_PROPS.has(node.name.text) &&
         isTainted(node.expression, tainted)
       ) {
-        record(node, "property-access");
+        mark(node, "property-access");
       }
 
       // err["message"]
@@ -312,7 +415,7 @@ function findViolations(fileName: string, sourceText: string): Violation[] {
         TEXT_PROPS.has(node.argumentExpression.text) &&
         isTainted(node.expression, tainted)
       ) {
-        record(node, "element-access");
+        mark(node, "element-access");
       }
 
       // String(err) — a whole-value stringification is `err.message` with extra steps.
@@ -322,13 +425,61 @@ function findViolations(fileName: string, sourceText: string): Violation[] {
         node.expression.text === "String" &&
         node.arguments.some((arg) => isTainted(arg, tainted))
       ) {
-        record(node, "String()");
+        mark(node, "String()");
+      }
+
+      // err.toString() / JSON.stringify(err) — U4, raised by the U4 review: two
+      // more whole-value stringifications. (`JSON.stringify` of an Error drops
+      // `message`, but a Supabase result error is a plain-ish object that keeps it.)
+      if (
+        ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        node.expression.name.text === "toString" &&
+        isTainted(node.expression.expression, tainted)
+      ) {
+        mark(node, "toString()");
+      }
+      if (
+        ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) &&
+        node.expression.expression.text === "JSON" &&
+        node.expression.name.text === "stringify" &&
+        node.arguments.some((arg) => isTainted(arg, tainted))
+      ) {
+        mark(node, "JSON.stringify()");
       }
 
       // `${err}` — same, via the template machinery.
       if (ts.isTemplateExpression(node)) {
         for (const span of node.templateSpans) {
-          if (isTainted(span.expression, tainted)) record(span.expression, "template-interpolation");
+          if (isTainted(span.expression, tainted)) mark(span.expression, "template-interpolation");
+        }
+      }
+
+      if (source === "result") {
+        // `return { error }` / `return error` — the object itself leaves, but only
+        // where a return IS the response: a server action. Elsewhere a return goes
+        // to an in-process caller, which is how a repository hands a result upward
+        // (and how `__testing__/fake-stack-db.ts` imitates Supabase itself).
+        if (
+          ts.isReturnStatement(node) &&
+          node.expression &&
+          inServerAction(node) &&
+          handsOverTainted(node.expression)
+        ) {
+          mark(node, "returned");
+        }
+        // `NextResponse.json({ error })` / `Response.json(error)`.
+        if (
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          node.expression.name.text === "json" &&
+          ts.isIdentifier(node.expression.expression) &&
+          RESPONSE_CLASSES.has(node.expression.expression.text) &&
+          node.arguments.some(handsOverTainted)
+        ) {
+          mark(node, "response-body");
         }
       }
 
@@ -347,6 +498,29 @@ function findViolations(fileName: string, sourceText: string): Violation[] {
         } else if (ts.isObjectBindingPattern(decl.name)) {
           // `catch ({ message })` — the pattern itself is the read.
           for (const el of textNamesInPattern(decl.name)) record(el, "destructured-text");
+        }
+      }
+    }
+
+    // U4 (FU-31, retargeted by P-04): a Supabase-style result, `const { error } =
+    // await supabase.auth.signUp(…)`. The error is not thrown, so no catch clause
+    // ever sees it; it arrives as a destructured field of an awaited value. The
+    // seed is the local name the pattern binds (`error`, or `e` for
+    // `{ error: e }`), scanned over the enclosing block.
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isObjectBindingPattern(node.name) &&
+      node.initializer &&
+      ts.isAwaitExpression(unwrap(node.initializer))
+    ) {
+      for (const el of node.name.elements) {
+        const key = el.propertyName ?? el.name;
+        if (!ts.isIdentifier(key) || !RESULT_ERROR_KEYS.has(key.text)) continue;
+        if (ts.isIdentifier(el.name)) {
+          scanBody(enclosingScope(node), el.name.text, "result");
+        } else if (ts.isObjectBindingPattern(el.name)) {
+          // `const { error: { message } } = await …` — the pattern is the read.
+          for (const inner of textNamesInPattern(el.name)) record(inner, "result-destructured-text");
         }
       }
     }
@@ -432,21 +606,24 @@ describe("API error disclosure — CLAUDE.md §2.3 rule 13", () => {
     expect(LIB_MODULES.filter((f) => f.endsWith(".test.ts"))).toEqual([]);
   });
 
-  it("no API route, service module, or library module reads a caught exception's error text", () => {
+  it("no API route, service module, or library module reads a caught exception's or a result error's text", () => {
     const violations = SCANNED_FILES.flatMap(violationsInFile);
 
     expect(
       violations,
       violations.length === 0
         ? ""
-        : "A route, service, or library module is reading a caught exception's text.\n" +
+        : "A route, service, or library module is reading a caught exception's text,\n" +
+            "or (forms prefixed `result-`) the text of a destructured `{ error }` result.\n" +
             "This rule flags the READ,\n" +
             "not proof of disclosure — but this repo renders `error.message` at 17 call sites\n" +
             "across 15 files, and AdvisorPanel renders the SSE `error` event, so a read here\n" +
             "is one edit away from CLAUDE.md §2.3 rule 13 — rank 1.\n\n" +
             "Pass the whole value to the shared boundary instead:\n" +
             '  return internalError(err, { code: "YOUR_CODE" });   // 500 + correlation id\n' +
-            '  const id = reportInternalError(err, "YOUR_CODE");   // already-streaming responses\n\n' +
+            '  const id = reportInternalError(err, "YOUR_CODE");   // already-streaming responses\n' +
+            "A result error shown to a user gets owned copy from src/lib/safety instead, chosen by\n" +
+            "its non-text `code` if at all (see src/lib/auth/actions.ts).\n\n" +
             violations.map((v) => `  ${v.file}:${v.line}  [${v.form}]  ${v.text}`).join("\n"),
     ).toEqual([]);
   });
@@ -468,6 +645,8 @@ describe("API error disclosure — CLAUDE.md §2.3 rule 13", () => {
       ["element access", 'try { go(); } catch (err) { return send(err["message"]); }'],
       ["stack, not just message", "try { go(); } catch (err) { return send(err.stack); }"],
       ["String()", "try { go(); } catch (err) { return send(String(err)); }"],
+      ["toString()", "try { go(); } catch (err) { return send(err.toString()); }"],
+      ["JSON.stringify", "try { go(); } catch (err) { return send(JSON.stringify(err)); }"],
       ["template interpolation", "try { go(); } catch (err) { return send(`failed: ${err}`); }"],
       ["alias then read", "try { go(); } catch (err) { const e = err; return send(e.message); }"],
       [
@@ -518,6 +697,62 @@ describe("API error disclosure — CLAUDE.md §2.3 rule 13", () => {
       [
         "a whole-value pass to reportInternalError",
         "try { go(); } catch (err) { const id = reportInternalError(err, 'ADVISOR_ERROR'); return sse(id); }",
+      ],
+    ])("does not flag %s", (_label, src) => {
+      expect(scan(src)).toEqual([]);
+    });
+
+    // U4 (FU-31): the second taint source, a destructured result error.
+    it.each([
+      [
+        "a result error's message",
+        "async function f() { const { error } = await supabase.auth.signUp(x); if (error) return { error: error.message }; }",
+      ],
+      [
+        "a renamed result error",
+        "async function f() { const { data, error: e } = await db.from('t').select(); if (e) return send(e.message); }",
+      ],
+      ["String() of a result error", "async function f() { const { error } = await go(); send(String(error)); }"],
+      ["toString() of a result error", "async function f() { const { error } = await go(); send(error.toString()); }"],
+      ["JSON.stringify of a result error", "async function f() { const { error } = await go(); send(JSON.stringify(error)); }"],
+      ["a result error interpolated", "async function f() { const { error } = await go(); send(`no: ${error}`); }"],
+      ["a result error's text destructured", "async function f() { const { error: { message } } = await go(); send(message); }"],
+      [
+        "a result error returned whole from a server action module",
+        '"use server";\nexport async function a() { const { error } = await go(); if (error) return { error }; }',
+      ],
+      [
+        "a result error returned whole from an inline server action",
+        'export async function a() { "use server"; const { error } = await go(); return error; }',
+      ],
+      [
+        "a result error in a response body",
+        "export async function GET() { const { error } = await go(); return NextResponse.json({ error }); }",
+      ],
+    ])("detects %s", (_label, src) => {
+      expect(scan(src).length).toBeGreaterThan(0);
+    });
+
+    it.each([
+      ["a rethrown result error", "async function f() { const { error } = await go(); if (error) throw error; }"],
+      [
+        "a result error passed whole to the boundary helper",
+        "async function f() { const { error } = await go(); if (error) return internalError(error, { code: 'X' }); }",
+      ],
+      [
+        "owned copy chosen by a result error's code",
+        '"use server";\nexport async function a() { const { error } = await go(); if (error?.code === "weak_password") return { error: COPY.weak }; }',
+      ],
+      [
+        "a result handed upward by a module that is not a server action",
+        "export async function repo() { const { data, error } = await go(); return { data, error }; }",
+      ],
+      [
+        // A STATED LIMIT, pinned so that widening it is a deliberate edit: the
+        // source is an AWAITED result. zod's synchronous `safeParse` also returns
+        // `{ error }`, and its text is validation detail, not a provider's.
+        "a destructured error that was never awaited (zod's safeParse; a stated limit)",
+        "function f() { const { error } = schema.safeParse(x); if (error) return send(error.message); }",
       ],
     ])("does not flag %s", (_label, src) => {
       expect(scan(src)).toEqual([]);

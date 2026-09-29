@@ -26,6 +26,21 @@
 //
 // `.env.local` itself is ignored by `.gitignore:27` (`.env*.local`), verified
 // with `git check-ignore` before this file was written.
+//
+// ---------------------------------------------------------------------------
+// A POPULATED FILE THAT MATCHES NOTHING IS WARNED ABOUT (Phase 4 U4, FU-37)
+// ---------------------------------------------------------------------------
+// N-57: after a worktree split, `.env.local` still held the previous provider's
+// settings, and the probe reported "not configured" against a full file. Now a
+// file with at least one setting and no `OPENAI_*` setting prints a warning to
+// stderr as it loads, with a COUNT, never a name or value.
+//
+// ITS RECORDED LIMIT, restated rather than implied away: the case actually
+// observed in N-57 would NOT have been caught. There, three `OPENAI_*` keys
+// matched, and a fourth was glued onto the end of another setting's value by an
+// append with no trailing newline, where `parseEnvFile` absorbed it. A file
+// that matches three keys is not a file that matches zero. The test beside the
+// warning pins that case as silent, so the limit stays visible.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -40,6 +55,8 @@ export interface LoadedEnv {
   fromShell: string[];
   /** Absolute path read, or null when there was no file. */
   file: string | null;
+  /** Set when the file holds settings and none is `OPENAI_*` (FU-37). Carries no name or value. */
+  warning: string | null;
 }
 
 /**
@@ -85,12 +102,14 @@ export function parseEnvFile(text: string): Array<[string, string]> {
  */
 export function loadProbeEnv(repoRoot = process.cwd()): LoadedEnv {
   const file = path.join(repoRoot, ".env.local");
-  if (!fs.existsSync(file)) return { fromFile: [], fromShell: [], file: null };
+  if (!fs.existsSync(file)) return { fromFile: [], fromShell: [], file: null, warning: null };
 
   const fromFile: string[] = [];
   const fromShell: string[] = [];
+  const parsed = parseEnvFile(fs.readFileSync(file, "utf8"));
+  const matched = parsed.filter(([key]) => key.startsWith(ALLOWED_PREFIX)).length;
 
-  for (const [key, value] of parseEnvFile(fs.readFileSync(file, "utf8"))) {
+  for (const [key, value] of parsed) {
     if (!key.startsWith(ALLOWED_PREFIX)) continue; // rule 14 fence
     if (process.env[key] !== undefined && process.env[key] !== "") {
       fromShell.push(key);
@@ -100,7 +119,14 @@ export function loadProbeEnv(repoRoot = process.cwd()): LoadedEnv {
     fromFile.push(key);
   }
 
-  return { fromFile: fromFile.sort(), fromShell: fromShell.sort(), file };
+  const warning =
+    parsed.length > 0 && matched === 0
+      ? `env: WARNING — .env.local has ${parsed.length} setting(s) and none is ${ALLOWED_PREFIX}*. ` +
+        "It may be stale (e.g. from before a worktree split or a provider change). Names and values not printed."
+      : null;
+  if (warning) console.warn(warning);
+
+  return { fromFile: fromFile.sort(), fromShell: fromShell.sort(), file, warning };
 }
 
 /** A one-line report of NAMES and SOURCES. Contains no value, by construction. */

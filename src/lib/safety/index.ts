@@ -598,3 +598,28 @@ export const advisorOutcomeCopy = {
   /** The turn ended `aborted`, or the stream closed with no final event. */
   aborted: "The advisor stopped before finishing this answer. You can send your question again.",
 } as const;
+
+// ---- Sign-in and sign-up errors (Phase 4 U4, FU-31; owner direction 2026-09-29). ----
+// The auth actions used to return Supabase's own `error.message`, which can
+// say whether an email has an account ("User already registered", "Email not
+// confirmed"). Now every string the browser can receive from them is here.
+// LOGIN: one message for every provider failure, so a wrong password and an
+// unknown email read the same. SIGNUP: only failures that say nothing about
+// whether an account exists (a weak password, a malformed email) get their own
+// wording; every other failure, "already registered" included, gets one message.
+// Approved by the owner 2026-09-29 (Phase 4 decision queue Q-11), with
+// `signupWeakPassword` amended by the owner.
+export const authCopy = {
+  /** Local check, before any provider call. Unchanged wording, moved from actions.ts. */
+  missingFields: "Email and password are required.",
+  /** Local check on signup, before any provider call. Unchanged wording, moved from actions.ts. */
+  passwordTooShort: "Password must be at least 8 characters.",
+  /** Every login failure the provider returns. */
+  loginFailed: "We couldn't sign you in with that email and password. Check them and try again.",
+  /** Signup: the provider rejected the password's strength (`weak_password`). */
+  signupWeakPassword: "That password isn't strong enough. Try a longer, less common password.",
+  /** Signup: the provider rejected the email's format (`email_address_invalid`). */
+  signupInvalidEmail: "That doesn't look like a valid email address. Check it and try again.",
+  /** Every other signup failure, including an address that is already registered. */
+  signupFailed: "We couldn't create an account with those details. Please try again.",
+} as const;

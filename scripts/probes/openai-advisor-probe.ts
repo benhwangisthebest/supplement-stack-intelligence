@@ -39,6 +39,7 @@ import {
 } from "@/lib/openai/client";
 import { AdvisorModelAdapter } from "@/lib/advisor/model-adapter";
 import { ADVISOR_TOOLS } from "@/lib/advisor/tools";
+import { probeToolResult, TOOL_BAIT } from "./advisor-fixture";
 
 // FIRST statement in the module body, before any `process.env` read below it.
 // ES imports are evaluated ahead of the body, and none of the imports above
@@ -86,9 +87,6 @@ function requireModel(): string {
   }
   return model;
 }
-
-/** A question that should make a grounded advisor reach for a tool. */
-const TOOL_BAIT = "Is there an interaction between magnesium and zinc?";
 
 function line(label: string, value: unknown): void {
   console.log(`${label.padEnd(34)} ${String(value)}`);
@@ -205,9 +203,11 @@ async function throughClient(cfg: { baseUrl: string; apiKey: string }): Promise<
  * STEP 3 — the real adapter, two steps, with the real tool schemas
  * (answers OP-4(c)).
  *
- * The tool RESULT is fabricated on purpose: this probes transport and protocol,
- * not grounding. Running a real handler would need a database and a user, and
- * would tell us nothing more about the wire.
+ * The tool RESULT is the same for every call: this probes transport and
+ * protocol, not tool choice. [2026-09-29, U4 / N-26] It used to be an empty
+ * note, which made an empty answer ambiguous. It is now the real
+ * `checkInteractions` handler over a synthetic user (`./advisor-fixture`), and
+ * it answers TOOL_BAIT, so an empty second step means the round trip broke.
  */
 async function toolRoundTrip(): Promise<void> {
   console.log("\n── STEP 3 · tool round trip through the real adapter (OP-4(c)) ──");
@@ -244,7 +244,7 @@ async function toolRoundTrip(): Promise<void> {
     tools: ADVISOR_TOOLS,
     toolResults: first.toolCalls.map((c) => ({
       toolCallId: c.id,
-      content: JSON.stringify({ ok: true, data: { note: "probe fixture" }, citations: [] }),
+      content: JSON.stringify(probeToolResult()),
     })),
   });
 
@@ -252,7 +252,8 @@ async function toolRoundTrip(): Promise<void> {
   line("usageReported after step 2", adapter.usageReported);
   console.log(
     "  → a non-empty second-step answer means assistant tool_calls + role:'tool' messages\n" +
-      "    were accepted. That is the whole of OP-4(c).",
+      "    were accepted. That is the whole of OP-4(c). The tool result answers the question\n" +
+      "    (N-26), so an EMPTY answer is a failure, not an obedient model.",
   );
 }
 
