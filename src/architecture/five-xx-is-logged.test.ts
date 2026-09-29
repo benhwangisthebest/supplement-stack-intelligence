@@ -44,9 +44,11 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { stripComments } from "./__testing__/strip";
 
+import { REDACTED_LOG_FIELDS } from "@/lib/api/redact";
 import { DECLARED_OPERATIONAL_STATES, fail, INTERNAL_ERROR_MESSAGE } from "@/lib/api/respond";
 
 const ROOT = path.resolve(__dirname, "../..");
@@ -373,5 +375,139 @@ describe("STRIP_COMMENTS — the shared comment-stripper (FU-47, N-79)", () => {
     const more = ["xs.filter((l) => /`/.test(l)); // handle(\nnext(); // handle(", "<p>Don't</p>;// handle("];
     for (const src of more) expect(stripComments(src), src).not.toContain("handle(");
     expect(stripComments('<a>Don\'t "https://x.test/y"</a>;')).toContain("https://x.test/y");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// LOG_REDACTION — Phase 4 U15, ruling D-7 (d); N-40 and FU-41, narrowed.
+//
+// Everything `respond.ts` and `src/middleware.ts` write to the console passes
+// through `redactErrorLog` (`src/lib/api/redact.ts`), which keeps the owner's
+// allowlist and drops the rest. The rows it narrows were STRUCTURAL: nothing
+// stood between health-bearing error text and a log line. This binds the
+// structure, so a future `console.error(err)` in either file is a red build.
+//
+// WHAT IT DOES NOT DO, stated because a guard's limits belong in it:
+//   · It governs two files, by name — the brief's scope. A console call anywhere
+//     else in `src/` is not this guard's business (`seed.ts` and the OpenAI
+//     client's `console.warn` are outside it).
+//   · There is still no sink (N-11, FU-43, FU-44 open). This proves what is
+//     WRITTEN, not where it goes.
+//   · Any `console` IDENTIFIER in these files that is not the compliant call
+//     shape is a violation — which closes a local alias and `globalThis.console`
+//     (pinned in the self-test). Not seen: a computed `globalThis["console"]`,
+//     an alias built in another module, and other sinks such as
+//     `process.stderr.write` (U15 review advisory 3).
+// ---------------------------------------------------------------------------
+
+/** The files whose console output must pass through the layer (U15 brief). */
+const REDACTED_FILES = ["src/lib/api/respond.ts", "src/middleware.ts"] as const;
+
+/**
+ * Every `console` reference in `source` that is not exactly
+ * `console.error(redactErrorLog(...))` — one argument, and that argument a direct
+ * call to the layer. Returned as "line: text" so the red output names the site.
+ */
+function unredactedConsoleUses(fileName: string, source: string): string[] {
+  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const out: string[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isIdentifier(node) && node.text === "console") {
+      const access = node.parent;
+      const call = access?.parent;
+      const compliant =
+        access !== undefined &&
+        ts.isPropertyAccessExpression(access) &&
+        access.expression === node &&
+        access.name.text === "error" &&
+        call !== undefined &&
+        ts.isCallExpression(call) &&
+        call.expression === access &&
+        call.arguments.length === 1 &&
+        ts.isCallExpression(call.arguments[0]) &&
+        ts.isIdentifier(call.arguments[0].expression) &&
+        call.arguments[0].expression.text === "redactErrorLog";
+      if (!compliant) {
+        const { line } = sf.getLineAndCharacterOfPosition(node.getStart());
+        const site = (call ?? access ?? node).getText(sf).split("\n")[0];
+        out.push(`${fileName}:${line + 1}: ${site}`);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return out;
+}
+
+describe("LOG_REDACTION — respond.ts and middleware.ts log only through the allowlist (U15)", () => {
+  it("the allowlist is exactly the owner's five fields — changing it is a ruling, not a commit", () => {
+    // Owner definition, 2026-09-29: error class name, error code, HTTP status,
+    // route pattern, request id. Asserted against the IMPORTED binding, for the
+    // reason `EXEMPT` above is: a test that re-types what it checks checks itself.
+    expect([...REDACTED_LOG_FIELDS].sort()).toEqual(["code", "errorClass", "requestId", "route", "status"]);
+  });
+
+  it("every console call in the governed files is console.error(redactErrorLog(...))", () => {
+    const tracked = new Set(trackedSource());
+    for (const f of REDACTED_FILES) expect(tracked, `${f} is not tracked — the scope went vacuous`).toContain(f);
+
+    const violations = REDACTED_FILES.flatMap((f) =>
+      unredactedConsoleUses(f, readFileSync(path.join(ROOT, f), "utf8")),
+    );
+    expect(
+      violations,
+      "these console uses bypass src/lib/api/redact.ts, so whatever they are handed —\n" +
+        "an error message, a stack, a row — reaches the log unfiltered (N-40, §2.3 rule 15):\n  " +
+        violations.join("\n  "),
+    ).toEqual([]);
+
+    // ANTI-VACUITY. respond.ts must actually log through the layer: a file with
+    // no console call at all would pass the check above by matching nothing,
+    // and would also have stopped recording 5xx failures.
+    const respond = readFileSync(path.join(ROOT, "src/lib/api/respond.ts"), "utf8");
+    expect(respond).toMatch(/console\.error\(\s*redactErrorLog\(/);
+  });
+
+  it("the detector itself goes red on the shapes it exists to catch (known-answer self-test)", () => {
+    const planted = [
+      "console.error(err);",
+      "console.error(`[api] ${code}`, { message: err.message });",
+      "console.error(redactErrorLog(x), err);",
+      "console.warn(err.stack);",
+      "console.log(redactErrorLog(x));",
+      "const log = console.error; log(err);",
+      "console['error'](err);",
+      "globalThis.console.error(err);",
+    ];
+    for (const src of planted) expect(unredactedConsoleUses("planted.ts", src), src).toHaveLength(1);
+    expect(unredactedConsoleUses("ok.ts", "console.error(redactErrorLog({ thrown: e }));")).toEqual([]);
+    expect(unredactedConsoleUses("ok.ts", "// console.error(err)\nconst s = 'console.error(err)';")).toEqual([]);
+  });
+
+  it("redact.ts is pure: no imports and no console", () => {
+    const text = readFileSync(path.join(ROOT, "src/lib/api/redact.ts"), "utf8");
+    const sf = ts.createSourceFile("redact.ts", text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    expect(sf.statements.filter((s) => ts.isImportDeclaration(s) || ts.isImportEqualsDeclaration(s))).toEqual([]);
+    // Not even the compliant shape: the layer builds the record, it never writes it.
+    const consoleRefs: string[] = [];
+    const visit = (n: ts.Node): void => {
+      if (ts.isIdentifier(n) && n.text === "console") consoleRefs.push(n.getText(sf));
+      ts.forEachChild(n, visit);
+    };
+    visit(sf);
+    expect(consoleRefs, "redact.ts must not write anywhere — it returns the record").toEqual([]);
+  });
+
+  it("AC-3: a 5xx is still logged, as one record carrying the allowlisted fields", async () => {
+    const res = fail("EXTRACTION_FAILED", "a client-safe message", 502);
+    const parsed = await body(res);
+    expect(logged).toHaveLength(1);
+    expect(logged[0], "one argument: the record").toHaveLength(1);
+    expect(logged[0][0]).toEqual({
+      errorClass: "DeclaredFailure",
+      code: "EXTRACTION_FAILED",
+      status: 502,
+      requestId: parsed.error.correlationId,
+    });
   });
 });
