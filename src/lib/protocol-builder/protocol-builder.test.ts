@@ -76,6 +76,23 @@ describe("generateProtocol", () => {
     expect(deficiency.suggestions[0].labBoosted).toBe(true);
   });
 
+  // [Phase 4 U21] An in-range entry in a non-canonical unit changes nothing;
+  // before U21 its unconverted range made it read "low" and boosted vitamin D.
+  it("does not lab-boost an in-range nmol/L vitamin D entry (U21)", () => {
+    const inRange: LabMarker = {
+      id: "l1", userId: "u1", marker: "Vitamin D", value: 100,
+      unit: "nmol/L", referenceLow: 75, referenceHigh: 250, date: null, notes: null,
+    };
+    const profile = makeProfile({ goals: ["deficiency"] });
+    const pick = (labMarkers: LabMarker[]) =>
+      group(generateProtocol({ profile, labMarkers }), "deficiency")!
+        .suggestions.find((s) => s.supplementId === "vitamin-d")!;
+    const vitD = pick([inRange]);
+    expect(vitD.labSignal).toBe(0);
+    expect(vitD.labBoosted).toBe(false);
+    expect(vitD).toEqual(pick([]));
+  });
+
   it("lab-timeline v4: a worsening trend nudges the supplement up with an explainable note", () => {
     const worsening = {
       biomarkerId: "vitamin-d-25oh",

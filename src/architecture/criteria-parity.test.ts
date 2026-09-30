@@ -282,7 +282,7 @@ describe("PARTIAL_EXPLAINED — a [~] criterion carries its explanation (FU-42)"
 const ARTIFACT_CAP = 200;
 const ARTIFACT_GRANDFATHERED: Record<string, number> = {
   "docs/01-plan/features/architecture-boundary-repair.plan.md": 527,
-  "docs/01-plan/features/context-adjusted-evidence.plan.md": 399,
+  "docs/01-plan/features/context-adjusted-evidence.plan.md": 395,
   "docs/01-plan/features/mvp-core-loop.plan.md": 330,
   "docs/01-plan/features/p3-u10-rule8-tests.plan.md": 517,
   "docs/01-plan/features/p3-u2-corpus-migrates.plan.md": 217,

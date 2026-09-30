@@ -32,12 +32,23 @@ export type MarkerStatus = BiomarkerDirection | "in-range" | "unknown";
  * The user's marker status vs ranges. User-entered reference range wins over the
  * registry's population range (Design §11.4). "unknown" when the unit can't be
  * converted — caller must NOT emit a finding (no guessing).
+ *
+ * [Phase 4 U21] A user bound is in the row's unit, so it converts with the
+ * value's factor; a registry bound is already canonical. Each bound falls back
+ * independently. Before U21 only the value converted, and 100 nmol/L against a
+ * user range of 75–250 nmol/L read "low".
  */
 export function statusOf(marker: LabMarker, biomarker: Biomarker): MarkerStatus {
   const value = toCanonical(marker.value, marker.unit, biomarker);
   if (value === null) return "unknown";
-  const low = marker.referenceLow ?? biomarker.refLow;
-  const high = marker.referenceHigh ?? biomarker.refHigh;
+  const low =
+    marker.referenceLow == null
+      ? biomarker.refLow
+      : toCanonical(marker.referenceLow, marker.unit, biomarker);
+  const high =
+    marker.referenceHigh == null
+      ? biomarker.refHigh
+      : toCanonical(marker.referenceHigh, marker.unit, biomarker);
   if (low !== null && value < low) return "low";
   if (high !== null && value > high) return "high";
   return "in-range";

@@ -301,6 +301,16 @@ describe("ruleLabRelevance", () => {
     ).toBe("warning");
   });
 
+  // [Phase 4 U21] The range is in the row's unit; before U21 it was compared
+  // unconverted against the canonical value, so this entry read "low".
+  it("raises no lab flag for an in-range nmol/L vitamin D entry (U21)", () => {
+    const inRange: LabMarker = {
+      ...lowVitD, value: 100, unit: "nmol/L", referenceLow: 75, referenceHigh: 250,
+    };
+    const items = [makeItem({ supplementId: "vitamin-d", dose: 2000, unit: "IU" })];
+    expect(ruleLabRelevance(ctx({ items, profile: makeProfile(), labMarkers: [inRange] }))).toEqual([]);
+  });
+
   it("surfaces an unrecognized lab marker as an info flag (curation honesty)", () => {
     const unknown: LabMarker = { ...lowVitD, marker: "Dragon Enzyme" };
     const items = [makeItem({ supplementId: "vitamin-d", dose: 2000, unit: "IU" })];

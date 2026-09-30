@@ -90,6 +90,89 @@ describe("lib/biomarkers — statusOf + range precedence", () => {
   });
 });
 
+// [Phase 4 U21, Q-25] A user-entered bound is in the unit the row states, so it
+// converts with the value's factor; a catalog bound is already canonical. Before
+// U21 only the value converted, so 100 nmol/L against 75–250 nmol/L read "low".
+describe("lib/biomarkers — statusOf compares value and range in one unit (U21)", () => {
+  const vitD = biomarkerById.get("vitamin-d-25oh")!;
+
+  // Every accepted (marker, unit) pair, derived from the catalog so a new
+  // conversion is covered the day it is added.
+  const allPairs = SEED_BIOMARKERS.flatMap((b) =>
+    Object.entries(b.unitConversions).map(([unit, factor]) => ({ b, unit, factor })),
+  );
+
+  it("covers at least ten non-canonical (marker, unit) pairs", () => {
+    expect(allPairs.filter((p) => p.factor !== 1).length).toBeGreaterThanOrEqual(10);
+  });
+
+  it.each(allPairs.map((p) => [p.b.id, p.unit, p] as const))(
+    "%s in %s: a user range in the entered unit gives the correct status",
+    (_id, _unit, { b, unit, factor }) => {
+      // The catalog range expressed in the entered unit (a stand-in user range).
+      const low = b.refLow === null ? null : b.refLow / factor;
+      const high = b.refHigh! / factor;
+      const at = (value: number) =>
+        statusOf(lab({ marker: b.name, value, unit, referenceLow: low, referenceHigh: high }), b);
+      const mid = low === null ? high * 0.5 : (low + high) / 2;
+      expect(at(mid)).toBe("in-range");
+      expect(at(high * 0.95)).toBe("in-range");
+      expect(at(high * 1.5)).toBe("high");
+      if (low !== null) {
+        expect(at(low * 1.05)).toBe("in-range");
+        expect(at(low * 0.5)).toBe("low");
+      }
+    },
+  );
+
+  it.each(allPairs.map((p) => [p.b.id, p.unit, p] as const))(
+    "%s in %s: the catalog fallback gives the correct status",
+    (_id, _unit, { b, unit, factor }) => {
+      const at = (value: number) => statusOf(lab({ marker: b.name, value, unit }), b);
+      const high = b.refHigh! / factor;
+      expect(at(high * 0.95)).toBe("in-range");
+      expect(at(high * 1.5)).toBe("high");
+      if (b.refLow !== null) expect(at((b.refLow / factor) * 0.5)).toBe("low");
+    },
+  );
+
+  it("Q-25 probe: 100 nmol/L against the user's 75–250 nmol/L is in range", () => {
+    const m = lab({ marker: "vitamin d", value: 100, unit: "nmol/L", referenceLow: 75, referenceHigh: 250 });
+    expect(statusOf(m, vitD)).toBe("in-range");
+  });
+
+  it("a user low bound in nmol/L mixed with the catalog high bound", () => {
+    const at = (value: number) =>
+      statusOf(lab({ marker: "vitamin d", value, unit: "nmol/L", referenceLow: 75 }), vitD);
+    expect(at(100)).toBe("in-range"); // 40.06 ng/mL: ≥ 75 nmol/L, ≤ catalog 100 ng/mL
+    expect(at(50)).toBe("low");
+    expect(at(300)).toBe("high"); // 120.18 ng/mL > catalog 100 ng/mL
+  });
+
+  it("a value equal to its user bound is in range", () => {
+    const m = lab({ marker: "vitamin d", value: 75, unit: "nmol/L", referenceLow: 75, referenceHigh: 250 });
+    expect(statusOf(m, vitD)).toBe("in-range");
+    expect(statusOf({ ...m, value: 250 }, vitD)).toBe("in-range");
+  });
+
+  it("direction is not inverted: a low mmol/L magnesium reads low", () => {
+    const mg = biomarkerById.get("magnesium-serum")!;
+    const m = lab({ marker: "magnesium", value: 0.5, unit: "mmol/L", referenceLow: 0.7, referenceHigh: 1.0 });
+    expect(statusOf(m, mg)).toBe("low");
+  });
+
+  it("an unknown unit stays unknown even with a user range (no bound is guessed)", () => {
+    const m = lab({ marker: "vitamin d", value: 100, unit: "??", referenceLow: 75, referenceHigh: 250 });
+    expect(statusOf(m, vitD)).toBe("unknown");
+  });
+
+  it("assessLabMarkers and labBoost: an in-range nmol/L entry yields no finding and no boost", () => {
+    const m = lab({ marker: "Vitamin D", value: 100, unit: "nmol/L", referenceLow: 75, referenceHigh: 250 });
+    expect(assessLabMarkers({ labMarkers: [m], stackItems: [item("vitamin-d")] })).toEqual([]);
+    expect(labBoost("vitamin-d", [m])).toEqual({ score: 0, biomarkerName: null, rationale: null });
+  });
+});
+
 describe("lib/biomarkers — assessLabMarkers", () => {
   it("flags a low biomarker against a relevant stack supplement (support)", () => {
     const findings = assessLabMarkers({

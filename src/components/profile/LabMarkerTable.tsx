@@ -18,6 +18,23 @@ export function lookupMarkerCatalog(catalog: MarkerCatalog, name: string): Marke
   return Object.hasOwn(catalog.entries, key) ? catalog.entries[key] : null;
 }
 
+/**
+ * [Phase 4 U21] `normalizeUnit` from `@/lib/biomarkers/units`, restated because a
+ * client component may not import `src/lib` (rule 7). The test pins the two equal.
+ */
+export function normalizeEnteredUnit(unit: string): string {
+  return unit.trim().toLowerCase().replace(/µ/g, "u").replace(/\s+/g, "");
+}
+
+/** What the form auto-filled, so an untouched range can be kept with its unit. */
+interface AutoFill {
+  name: string; // the catalog entry it came from
+  unit: string; // the catalog unit the range is expressed in
+  filledUnit: string | null; // the value put in the unit field, or null if it filled none
+  refLow: string | null; // the value put in each field, or null if it filled none
+  refHigh: string | null;
+}
+
 interface MarkerGroup {
   name: string;
   current: LabMarker; // most recent reading — shown in the table
@@ -79,6 +96,7 @@ export function LabMarkerTable({
   const [unit, setUnit] = useState("");
   const [refLow, setRefLow] = useState("");
   const [refHigh, setRefHigh] = useState("");
+  const [autoFill, setAutoFill] = useState<AutoFill | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const markerListId = useId();
@@ -90,9 +108,51 @@ export function LabMarkerTable({
     setMarker(name);
     const entry = lookupMarkerCatalog(catalog, name);
     if (!entry) return;
-    if (!unit.trim()) setUnit(entry.unit);
-    if (refLow === "" && entry.refLow !== null) setRefLow(String(entry.refLow));
-    if (refHigh === "" && entry.refHigh !== null) setRefHigh(String(entry.refHigh));
+    // [Phase 4 U21] On a switch to another entry, whatever the previous entry
+    // auto-filled and the user left untouched is cleared, so it is refilled from
+    // the new entry instead of travelling with it.
+    const prev = autoFill !== null && autoFill.name !== entry.name ? autoFill : null;
+    const untouched = (field: string, filled: string | null) => prev !== null && field === filled;
+    const curLow = untouched(refLow, prev?.refLow ?? null) ? "" : refLow;
+    const curHigh = untouched(refHigh, prev?.refHigh ?? null) ? "" : refHigh;
+    // An untouched auto-filled unit belongs to the previous entry. With a bound or
+    // value typed, moving it would relabel what was typed and keeping it would
+    // carry it to the wrong marker, so it is cleared and the user picks the unit.
+    const typed = curLow !== "" || curHigh !== "" || value.trim() !== "";
+    const autoUnit = untouched(unit, prev?.filledUnit ?? null);
+    const curUnit = autoUnit ? "" : unit;
+    const filledUnit = curUnit.trim() || (autoUnit && typed) ? null : entry.unit;
+    const low = curLow === "" && entry.refLow !== null ? String(entry.refLow) : null;
+    const high = curHigh === "" && entry.refHigh !== null ? String(entry.refHigh) : null;
+    setUnit(filledUnit ?? curUnit);
+    setRefLow(low ?? curLow);
+    setRefHigh(high ?? curHigh);
+    const same = autoFill !== null && autoFill.name === entry.name ? autoFill : null;
+    setAutoFill({
+      name: entry.name,
+      unit: entry.unit,
+      filledUnit: filledUnit ?? same?.filledUnit ?? null,
+      refLow: low ?? same?.refLow ?? null,
+      refHigh: high ?? same?.refHigh ?? null,
+    });
+  }
+
+  // [Phase 4 U21] An auto-filled bound is in the catalog's unit, for one entry.
+  // Sent under a different unit, or with a marker the form no longer resolves to
+  // that entry (the server also matches names that merely contain an alias), it
+  // would be stored mislabelled. So an untouched auto-filled bound is sent as
+  // null there, and the catalog range applies for whatever the server resolves.
+  function boundToSend(field: string, filled: string | null | undefined): number | null {
+    if (field === "") return null;
+    if (
+      autoFill !== null &&
+      field === filled &&
+      (normalizeEnteredUnit(unit) !== normalizeEnteredUnit(autoFill.unit) ||
+        lookupMarkerCatalog(catalog, marker)?.name !== autoFill.name)
+    ) {
+      return null;
+    }
+    return Number(field);
   }
 
   async function add() {
@@ -111,8 +171,8 @@ export function LabMarkerTable({
           marker: marker.trim(),
           value: num,
           unit: unit.trim(),
-          referenceLow: refLow === "" ? null : Number(refLow),
-          referenceHigh: refHigh === "" ? null : Number(refHigh),
+          referenceLow: boundToSend(refLow, autoFill?.refLow),
+          referenceHigh: boundToSend(refHigh, autoFill?.refHigh),
         }),
       });
       const json = await res.json();
@@ -122,6 +182,7 @@ export function LabMarkerTable({
       setUnit("");
       setRefLow("");
       setRefHigh("");
+      setAutoFill(null);
       router.refresh(); // re-render with fresh markers + recomputed trends/points
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to add marker.");
