@@ -175,14 +175,35 @@ function members<T extends string>(
   return values.map((value) => member(domain, value, table, column));
 }
 
+// FU-17 (owner ruling (c), 2026-09-29). `checkins.ratings`, `taken` and
+// `scheduled` are `jsonb not null`, which rejects SQL NULL but stores the JSON
+// value `null`, and no CHECK constrains their shape. An unwritten column gets
+// its DDL default, so only a direct write puts anything else there; the mapper
+// refuses it instead of defaulting it away or passing it on.
+function jsonObject(value: unknown, table: string, column: string): Record<string, unknown> {
+  if (absent(value)) return value as Record<string, unknown>;
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  throw new MapperDomainError(table, column);
+}
+
+function stringArray(value: unknown, table: string, column: string): string[] {
+  if (absent(value)) return value as string[];
+  if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) return value;
+  throw new MapperDomainError(table, column);
+}
+
 export function toCheckin(row: CheckinRow): DailyCheckin {
   return {
     id: row.id,
     userId: row.user_id,
     date: row.checkin_date,
-    ratings: (row.ratings ?? {}) as Partial<Record<OutcomeCategory, GoalRating>>,
-    taken: row.taken ?? [],
-    scheduled: row.scheduled ?? [],
+    ratings: jsonObject(row.ratings, "checkins", "ratings") as Partial<
+      Record<OutcomeCategory, GoalRating>
+    >,
+    taken: stringArray(row.taken, "checkins", "taken"),
+    scheduled: stringArray(row.scheduled, "checkins", "scheduled"),
     note: row.note,
     sideEffect: row.side_effect,
     createdAt: row.created_at,

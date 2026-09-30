@@ -74,22 +74,32 @@ describe("toCheckin", () => {
     });
   });
 
-  it("defaults null ratings/taken/scheduled to empty rather than passing null through", () => {
-    // Postgres can return null for a jsonb/array column that was never written.
-    // The domain type says these are always present, so the mapper is what
-    // makes that true — a `null.length` downstream is the failure it prevents.
-    const sparse = {
-      ...row,
-      ratings: null,
-      taken: null,
-      scheduled: null,
-    } as unknown as CheckinRow;
-    const mapped = toCheckin(sparse);
-
-    expect(mapped.ratings).toEqual({});
-    expect(mapped.taken).toEqual([]);
-    expect(mapped.scheduled).toEqual([]);
-  });
+  // An unwritten column gets its DDL default ('{}' / '[]'), never null. The case
+  // is a stored JSON `null`, or any other shape: `jsonb not null` rejects SQL
+  // NULL only, and no CHECK constrains the shape. FU-17, owner ruling (c): the
+  // mapper throws, naming the column and never the value (§2.3 rule 15).
+  it.each([
+    ["ratings", {}, [null, ["warfarin"], "warfarin"]],
+    ["taken", [], [null, { 0: "warfarin" }, ["warfarin", 4]]],
+    ["scheduled", [], [null, { 0: "warfarin" }, ["warfarin", 4]]],
+  ] as const)(
+    "throws a MapperDomainError naming checkins.%s when it holds a JSON null or the wrong shape",
+    (column, ddlDefault, stored) => {
+      for (const value of stored) {
+        const planted = { ...row, [column]: value } as unknown as CheckinRow;
+        let caught: unknown;
+        try {
+          toCheckin(planted);
+        } catch (e) {
+          caught = e;
+        }
+        expect(caught).toBeInstanceOf(MapperDomainError);
+        expect(caught).toMatchObject({ table: "checkins", column });
+        expect(String((caught as Error).message)).not.toContain("warfarin");
+      }
+      expect(toCheckin({ ...row, [column]: ddlDefault })[column]).toEqual(ddlDefault);
+    },
+  );
 
   it("preserves nullable note and sideEffect as null", () => {
     expect(toCheckin({ ...row, note: null, side_effect: null })).toMatchObject({
