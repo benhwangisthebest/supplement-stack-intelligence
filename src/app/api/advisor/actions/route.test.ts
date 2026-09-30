@@ -233,7 +233,7 @@ describe("PIN 404 — not found", () => {
     expect(executeBatch).not.toHaveBeenCalled();
   });
 
-  it("returns 404 NOT_FOUND naming an unknown supplement", async () => {
+  it("returns 404 NOT_FOUND for an unknown supplement", async () => {
     getSupplementById.mockReturnValue(undefined);
 
     const res = await POST(req(body(ADD_PAYLOAD)));
@@ -241,7 +241,61 @@ describe("PIN 404 — not found", () => {
 
     expect(res.status).toBe(404);
     expect(json.error.code).toBe("NOT_FOUND");
-    expect(json.error.message).toBe('Supplement "creatine" not found.');
+    // [Phase 4 U11, D-4 (c)(ii)] Was `Supplement "creatine" not found.` — the
+    // one pin in this file changed on purpose: the owner ruled that the service
+    // 404s stop echoing the caller-supplied id. Status and code are unchanged.
+    expect(json.error.message).toBe("Supplement not found.");
+  });
+});
+
+// [Phase 4 U11, D-4 (c)(ii), N-87] The two service 404s that named an unknown
+// supplement (`advisor-actions.ts`, the generate_protocol and add_item
+// branches) interpolated the caller's id into the message. The id is planted
+// here and must not come back in ANY part: not whole, not a segment, not any
+// four-character run of it, in any case. The body is read as raw text and the
+// headers are read too, so a copy of the id anywhere in the response is caught.
+// The whole body must then equal the fixed 404, which catches an encoded id.
+describe("404 does not echo the requested supplement id", () => {
+  beforeEach(() => getUser.mockResolvedValue(USER));
+
+  const PLANTED = "qx7j-zv9k-wq3p";
+  const partsOf = (id: string): string[] => {
+    const parts = new Set<string>([id, ...id.split(/[^a-z0-9]+/i).filter(Boolean)]);
+    for (let i = 0; i + 4 <= id.length; i++) parts.add(id.slice(i, i + 4));
+    return [...parts];
+  };
+
+  async function expectNoEcho(res: Response) {
+    const text = await res.text();
+    const headers = [...res.headers].map(([k, v]) => `${k}: ${v}`).join("\n");
+    expect(res.status).toBe(404);
+    for (const part of partsOf(PLANTED)) {
+      expect(text.toLowerCase(), `404 body echoes "${part}" of the requested id`).not.toContain(part);
+      expect(headers.toLowerCase(), `404 headers echo "${part}" of the requested id`).not.toContain(part);
+    }
+    expect(JSON.parse(text)).toEqual({
+      data: null,
+      error: { code: "NOT_FOUND", message: "Supplement not found." },
+    });
+  }
+
+  it("add_item: an unknown supplement id is not echoed", async () => {
+    getSupplementById.mockReturnValue(undefined);
+    const res = await POST(req(body({ ...ADD_PAYLOAD, supplementId: PLANTED })));
+    await expectNoEcho(res);
+    expect(executeBatch).not.toHaveBeenCalled();
+  });
+
+  it("generate_protocol: an unknown supplement id in an item is not echoed", async () => {
+    getSupplementById.mockReturnValue(undefined);
+    const payload = {
+      stackName: "Planted",
+      intent: "sleep",
+      items: [{ supplementId: PLANTED, dose: 1, unit: "g" }],
+    };
+    const res = await POST(req(body(payload, "generate_protocol")));
+    await expectNoEcho(res);
+    expect(executeBatch).not.toHaveBeenCalled();
   });
 });
 

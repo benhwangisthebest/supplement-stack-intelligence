@@ -77,8 +77,10 @@ async function revalidate(
     const pl = generateProtocolPayloadSchema.parse(proposal.payload);
     for (const raw of pl.items) {
       const item = stackItemInputSchema.parse(raw); // SC-6: re-parse every item
+      // [Phase 4 U11, D-4 (c)(ii)] The message does not echo the caller's id,
+      // here or in add_item below. `route.test.ts` plants one and checks.
       if (item.supplementId && !getSupplementById(item.supplementId)) {
-        return { error: fail("NOT_FOUND", `Supplement "${item.supplementId}" not found.`, 404) };
+        return { error: fail("NOT_FOUND", "Supplement not found.", 404) };
       }
     }
     return { priorItem: null };
@@ -93,7 +95,7 @@ async function revalidate(
     case "add_item": {
       const pl = addItemPayloadSchema.parse(proposal.payload);
       if (!getSupplementById(pl.supplementId)) {
-        return { error: fail("NOT_FOUND", `Supplement "${pl.supplementId}" not found.`, 404) };
+        return { error: fail("NOT_FOUND", "Supplement not found.", 404) };
       }
       return { priorItem: null };
     }
