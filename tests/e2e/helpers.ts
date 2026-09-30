@@ -43,15 +43,34 @@ export const LIVE = process.env.E2E_LIVE === "1";
 
 // Seeded, email-confirmed demo account (created by `npm run db:seed`).
 // Logging in (vs signing up per test) avoids Supabase email rate limits and is deterministic.
-export const DEMO_EMAIL = process.env.SEED_DEMO_EMAIL ?? "demo@example.com";
-export const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD ?? "demo-password-123";
+//
+// NO DEFAULT CREDENTIALS (Phase 4 U17, 2026-09-30), matching `src/lib/db/seed.ts`:
+// the old defaults were published in this public repository. They are read when
+// `login()` runs, not at import, so the non-live specs, which never log in,
+// need neither variable.
+function demoCredentials(): { email: string; password: string } {
+  const email = process.env.SEED_DEMO_EMAIL;
+  const password = process.env.SEED_DEMO_PASSWORD;
+  if (!email || !password) {
+    const missing = [
+      ...(email ? [] : ["SEED_DEMO_EMAIL"]),
+      ...(password ? [] : ["SEED_DEMO_PASSWORD"]),
+    ];
+    throw new Error(
+      `login() requires ${missing.join(" and ")}: export the credentials ` +
+        "`npm run db:seed` was run with. There is no default.",
+    );
+  }
+  return { email, password };
+}
 
 export function uniqueEmail(): string {
   return `e2e_${Date.now()}_${Math.floor(Math.random() * 1e4)}@example.com`;
 }
 
 /** Logs in as the seeded demo user and lands authenticated (Design §8.4 auth flow). */
-export async function login(page: Page, email = DEMO_EMAIL, password = DEMO_PASSWORD) {
+export async function login(page: Page) {
+  const { email, password } = demoCredentials();
   await page.goto("/auth/login");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);

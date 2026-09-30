@@ -15,7 +15,7 @@ export default defineConfig({
   // THE SHARED-USER RACE (Phase 1 U16).
   //
   // Every authed spec logs in as ONE seeded demo account (`SEED_DEMO_EMAIL`,
-  // default demo@example.com) and writes to that single user's rows — stacks,
+  // no default since Phase 4 U17) and writes to that single user's rows — stacks,
   // lab panels, check-ins. Under `fullyParallel` those writes interleave across
   // workers, and `tests/e2e/helpers.ts` says so out loud: "Run these specs with
   // --workers=1 (the extract-no-write count check needs no concurrent writes)."

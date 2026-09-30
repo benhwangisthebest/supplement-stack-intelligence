@@ -471,7 +471,7 @@ test" part does not.
 | Content delivery (authoring format) | ~~**X**~~ **B** *(2026-09-25, owner ruling; see below)* |
 | Observability | **B** |
 | Release/integration process | **B** |
-| `db/seed.ts` shared demo fixture | **X** |
+| `db/seed.ts` shared demo fixture | ~~**X**~~ **B** *(2026-09-29, Phase 4 U17, owner ruling D-9 (b); see below)* |
 
 **[2026-09-22, Phase 2 closeout (d2)] Six rows moved or were re-examined; each reason is dated here rather
 than left to the table's single letter.**
@@ -499,6 +499,20 @@ than left to the table's single letter.**
 | Row | Was | Now | Why |
 |---|---|---|---|
 | **Content delivery (authoring format)** | X | **B** | Authored as JSON with byte-identical codegen, guarded by CONTENT_FIDELITY; a correction that adds or renames an id still requires a hand edit to src/data/id-manifest.json ([P3-X5] caveat) (**[2026-09-25, Phase 4 U3]** moved to `content/id-manifest.json`; an id-*adding* correction now touches only `content/` and GENERATED modules, proven by `ID_CORRECTION_DIFF` (`src/architecture/canonical-layout.test.ts`). A removal or rename still needs a tombstone and a data migration (rule 16), which U3 did not test), so the format is not yet fully src-free. **Registered as a Phase 4 candidate:** move the id manifest out of `src/` so that an id-adding correction is src-free. The Phase 4 plan's §3 dispositions it. |
+
+**[2026-09-29, Phase 4 U17] `db/seed.ts`: X → B, on D-9 (b).** The X was written at `110715d` (2026-07-30)
+with no reason, and no later record gives one. The file is **dev and test tooling, not a product
+subsystem**: nothing imports it (it runs only as `npm run db:seed`), it is the sole reader of the
+service-role key (`SERVICE_ROLE_CONFINEMENT`), and `REPO_SCOPING` exempts it as unreachable from
+`src/app`. **Against §8 rule 2, stated:** it is load-bearing. 17 of 24 E2E spec files (at `35b7503`) log in
+as the one account it seeds, and the D-12 closeout live baseline runs through it. So it is classified B, not
+labelled permanent, and its bounded step is **FU-25** (per-worker isolation), which stays open. The race
+the 2026-07-30 text described was closed by serialisation (Phase 1 U16, 2026-08-06) and guarded by
+`LIVE_SERIAL` (U12, 2026-09-29). What remains is order dependence and state that accumulates across runs.
+**Default credentials:** until U17 the script defaulted to `demo@example.com` / `demo-password-123`,
+published in this public repository. Owner checked the deployed project's Authentication → Users for
+demo@example.com: present, and deleted by the owner on 2026-09-29. U17 removed both defaults: the script now
+exits with a clear message unless `SEED_DEMO_EMAIL` and `SEED_DEMO_PASSWORD` are set.
 
 **Why the reasons are dated and the letters are not.** A classification letter with no date is the
 counts-written-once class (**FU-32**) wearing a single character: it was true when written and says nothing

@@ -3,15 +3,36 @@
  * Creates (or reuses) a demo auth user, then seeds a profile + a sample sleep stack
  * with items chosen to exercise the evaluator (dose flag, allergy path, redundancy).
  *
- * Requires service-role access. Run with:
- *   NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run db:seed
+ * Requires service-role access and the demo account's credentials. Run with:
+ *   NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
+ *   SEED_DEMO_EMAIL=... SEED_DEMO_PASSWORD=... npm run db:seed
+ *
+ * NO DEFAULT CREDENTIALS (Phase 4 U17, 2026-09-29). The email and password used
+ * to default to `demo@example.com` / `demo-password-123`, which this public
+ * repository published. The account this script creates is a real login on
+ * whichever project NEXT_PUBLIC_SUPABASE_URL names, and such an account was
+ * found on the deployed project (the owner deleted it on 2026-09-29). Both
+ * values are now required, so the password is always one you chose.
  *
  * Idempotent: safe to run repeatedly (re-uses the demo user, resets their stacks).
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const DEMO_EMAIL = process.env.SEED_DEMO_EMAIL ?? "demo@example.com";
-const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD ?? "demo-password-123";
+function demoCredentials(): { email: string; password: string } {
+  const email = process.env.SEED_DEMO_EMAIL;
+  const password = process.env.SEED_DEMO_PASSWORD;
+  if (!email || !password) {
+    const missing = [
+      ...(email ? [] : ["SEED_DEMO_EMAIL"]),
+      ...(password ? [] : ["SEED_DEMO_PASSWORD"]),
+    ];
+    throw new Error(
+      `Seed requires ${missing.join(" and ")}. There is no default: set a private ` +
+        "password, since the seeded account is a real login on the target project.",
+    );
+  }
+  return { email, password };
+}
 
 function adminClient(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -26,25 +47,30 @@ function adminClient(): SupabaseClient {
   });
 }
 
-async function ensureDemoUser(admin: SupabaseClient): Promise<string> {
+async function ensureDemoUser(
+  admin: SupabaseClient,
+  { email, password }: { email: string; password: string },
+): Promise<string> {
   // Try to create; if already exists, look it up.
   const created = await admin.auth.admin.createUser({
-    email: DEMO_EMAIL,
-    password: DEMO_PASSWORD,
+    email,
+    password,
     email_confirm: true,
   });
   if (created.data.user) return created.data.user.id;
 
   const { data, error } = await admin.auth.admin.listUsers();
   if (error) throw error;
-  const existing = data.users.find((u) => u.email === DEMO_EMAIL);
+  const existing = data.users.find((u) => u.email === email);
   if (!existing) throw new Error("Could not create or find the demo user.");
   return existing.id;
 }
 
 export async function seed(): Promise<void> {
+  // Credentials first: a missing value fails before any network call.
+  const credentials = demoCredentials();
   const admin = adminClient();
-  const userId = await ensureDemoUser(admin);
+  const userId = await ensureDemoUser(admin, credentials);
 
   // Profile: goal=sleep, allergy=fish (so fish-oil triggers an allergy flag).
   await admin
@@ -101,7 +127,7 @@ export async function seed(): Promise<void> {
     // Fish oil -> allergy-conflict (profile allergy=fish).
     { stack_id: stackId, supplement_id: "fish-oil", dose: 1000, unit: "mg", timing: "morning", frequency: "daily" },
   ]);
-  console.log(`Seeded demo user ${DEMO_EMAIL} (${userId}) with stack ${stackId}.`);
+  console.log(`Seeded demo user ${credentials.email} (${userId}) with stack ${stackId}.`);
 }
 
 // Allow `tsx src/lib/db/seed.ts` / node ESM execution.
