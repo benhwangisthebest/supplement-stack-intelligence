@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { IllustrativeDatasetNotice } from "@/components/evidence/IllustrativeDatasetNotice";
 import type { Citation } from "@/types/advisor";
+import { OUTCOME_CATEGORIES } from "@/types/primitives";
 import type { CitationIndex } from "./citation-index";
 
 /** Own-property read: a refId like "constructor" must not resolve to Object.prototype. */
@@ -50,19 +51,59 @@ function currentLabel(c: Citation, index: CitationIndex): string | null {
 // current grade, the chip says so.
 const STORED_GRADE = /Grade ([ABCD])$/;
 
-function displayed(
-  c: Citation,
-  index: CitationIndex,
-): { label: string; detail?: string; gradeUpdated?: boolean } {
+// Phase 4 U20 (FU-76): the same label stores the effect NAME it had then
+// ("Fish Oil (Omega-3) → Cardiovascular support, Grade A"), and the message text beside the
+// chip may still use it. When it differs from today's name, the chip says so too. A protocol
+// proposal's citation stores an OUTCOME CATEGORY in the name's place ("… → sleep, Grade C",
+// src/lib/advisor/actions/proposals.ts), so any category word there is not a rename, whichever
+// category the effect has today. A label in any other shape, or one that is not a string (the
+// rows are unvalidated jsonb), gets no name marker: the marker never claims a rename it cannot
+// read from the label. Known limit: an effect or supplement name containing " → " would be read
+// wrongly; none does today.
+const STORED_NAME = /^.+ → (.+), Grade [ABCD]$/;
+const CATEGORY_WORDS: ReadonlySet<string> = new Set(OUTCOME_CATEGORIES);
+
+interface Shown {
+  label: string;
+  detail?: string;
+  gradeUpdated?: boolean;
+  /** The effect name the stored label carries, when it is not today's. */
+  renamedFrom?: string;
+}
+
+function displayed(c: Citation, index: CitationIndex): Shown {
   const current = currentLabel(c, index);
   if (c.kind === "effect-grade") {
+    const now = own(index.effects, c.refId);
     const stored = STORED_GRADE.exec(c.label)?.[1];
-    const grade = own(index.effects, c.refId)?.grade;
-    const gradeUpdated = !!stored && !!grade && stored !== grade;
-    return { label: current ?? c.label, detail: c.detail, ...(gradeUpdated && { gradeUpdated }) };
+    const gradeUpdated = !!stored && !!now?.grade && stored !== now.grade;
+    const storedName = typeof c.label === "string" ? STORED_NAME.exec(c.label)?.[1] : undefined;
+    const renamed =
+      !!storedName && !!now?.name && storedName !== now.name && !CATEGORY_WORDS.has(storedName);
+    return {
+      label: current ?? c.label,
+      detail: c.detail,
+      ...(gradeUpdated && { gradeUpdated }),
+      ...(renamed && { renamedFrom: storedName }),
+    };
   }
   if (c.kind === "paper" && current != null) return { label: current };
   return { label: current ?? c.label, detail: c.detail };
+}
+
+/** The marker for a chip whose grade or name changed since the message, or null. */
+function UpdatedMarker({ shown, copy }: { shown: Shown; copy: CitationIndex["updatedCopy"] }) {
+  const { gradeUpdated, renamedFrom } = shown;
+  if (!gradeUpdated && renamedFrom === undefined) return null;
+  const text =
+    renamedFrom === undefined
+      ? copy.grade
+      : (gradeUpdated ? copy.nameAndGrade : copy.name).replace("{name}", () => renamedFrom);
+  return (
+    <span className="text-muted" data-testid={gradeUpdated ? "grade-updated" : "name-updated"}>
+      · {text}
+    </span>
+  );
 }
 
 const KIND_LABEL: Record<Citation["kind"], string> = {
@@ -94,11 +135,7 @@ export function ProvenanceChips({
             <>
               <span className="font-medium text-muted">{KIND_LABEL[c.kind]}</span>
               <span className="text-body">{shown.label}</span>
-              {shown.gradeUpdated && (
-                <span className="text-muted" data-testid="grade-updated">
-                  · grade updated since this message
-                </span>
-              )}
+              <UpdatedMarker shown={shown} copy={index.updatedCopy} />
             </>
           );
           const className =

@@ -74,12 +74,12 @@ describe("lib/evidence lookups", () => {
 });
 
 describe("evidence-grading v5 — grade resolution", () => {
-  // Phase 4 U2 (FU-63): evidenceProfile is required on Effect. The legacy cases
-  // below (e2, e4) still build a profile-less effect, past the type with a cast,
-  // because lib/evidence keeps its no-profile branch until the owner rules on it.
-  function effect(partial: Partial<Effect> & { id: string }): Effect {
-    // Every field but the profile is type-checked; only its absence is cast.
-    const e: Omit<Effect, "evidenceProfile"> & Partial<Pick<Effect, "evidenceProfile">> = {
+  // Phase 4 U2 (FU-63): evidenceProfile is required on Effect. [2026-09-29, Phase 4 U20; N-90]
+  // lib/evidence's no-profile branch is gone, so every fixture carries a profile and none is cast.
+  function effect(
+    partial: Partial<Effect> & Pick<Effect, "id" | "evidenceProfile">,
+  ): Effect {
+    return {
       supplementId: "x",
       name: "n",
       outcomeCategory: "focus",
@@ -92,7 +92,6 @@ describe("evidence-grading v5 — grade resolution", () => {
       paperIds: [],
       ...partial,
     };
-    return e as Effect;
   }
 
   // [2026-09-26, Phase 4 U5 (b)] Each dimension cites a paper, as R5 requires of a score above 0:
@@ -112,14 +111,8 @@ describe("evidence-grading v5 — grade resolution", () => {
     expect(resolveEffect(e).grade).toBe("A"); // derived from all-strong
   });
 
-  it("resolveEffect leaves a profile-less effect unchanged (legacy)", () => {
-    const e = effect({ id: "e2", grade: "B" });
-    expect(resolveEffect(e)).toBe(e); // identity — no allocation
-  });
-
-  it("effectComposite returns a score for profiled, null for legacy", () => {
+  it("effectComposite returns the profile's composite score", () => {
     expect(effectComposite(effect({ id: "e3", evidenceProfile: profileAllStrong }))).toBeCloseTo(1.0, 6);
-    expect(effectComposite(effect({ id: "e4" }))).toBeNull();
   });
 
   it("the default library pre-resolves grades (profiled effect's grade is derived)", () => {
@@ -127,34 +120,46 @@ describe("evidence-grading v5 — grade resolution", () => {
       (e) => e.id === "creatine-strength",
     )!;
     expect(creatineStrength.grade).toBe("A"); // derived == curated
-    expect(effectComposite(creatineStrength)).not.toBeNull();
+    // U20 (N-90): never null now, so assert the value, not its presence.
+    expect(effectComposite(creatineStrength)).toBeGreaterThan(0);
   });
 
   it("getBestEffectForOutcome breaks equal-grade ties by composite", () => {
+    // [2026-09-29, Phase 4 U20; N-92] Every scored dimension cites a paper, as R5 requires, so
+    // each fixture DERIVES the B it carries. Uncited, the B gate reads effectSize as 0 (FU-74)
+    // and both derive C, and the literal B would be a grade the engine cannot produce.
     const lib = {
       supplements: [],
       papers: [],
       effects: [
         effect({ id: "low", supplementId: "s", grade: "B", evidenceProfile: {
           dimensions: {
-            humanEvidence: { score: 2 as const, rationale: "x", paperIds: [] },
-            studyQuality: { score: 2 as const, rationale: "x", paperIds: [] },
-            consistency: { score: 2 as const, rationale: "x", paperIds: [] },
-            effectSize: { score: 1 as const, rationale: "x", paperIds: [] },
-            populationRelevance: { score: 1 as const, rationale: "x", paperIds: [] },
+            humanEvidence: { score: 2 as const, rationale: "x", paperIds: ["p1"] },
+            studyQuality: { score: 2 as const, rationale: "x", paperIds: ["p1"] },
+            consistency: { score: 2 as const, rationale: "x", paperIds: ["p1"] },
+            effectSize: { score: 1 as const, rationale: "x", paperIds: ["p1"] },
+            populationRelevance: { score: 1 as const, rationale: "x", paperIds: ["p1"] },
           },
         } }),
         effect({ id: "high", supplementId: "s", grade: "B", evidenceProfile: {
           dimensions: {
-            humanEvidence: { score: 2 as const, rationale: "x", paperIds: [] },
-            studyQuality: { score: 3 as const, rationale: "x", paperIds: [] },
-            consistency: { score: 2 as const, rationale: "x", paperIds: [] },
-            effectSize: { score: 1 as const, rationale: "x", paperIds: [] },
-            populationRelevance: { score: 2 as const, rationale: "x", paperIds: [] },
+            humanEvidence: { score: 2 as const, rationale: "x", paperIds: ["p1"] },
+            studyQuality: { score: 3 as const, rationale: "x", paperIds: ["p1"] },
+            consistency: { score: 2 as const, rationale: "x", paperIds: ["p1"] },
+            effectSize: { score: 1 as const, rationale: "x", paperIds: ["p1"] },
+            populationRelevance: { score: 2 as const, rationale: "x", paperIds: ["p1"] },
           },
         } }),
       ],
     };
+    // R5: every scored dimension of both fixtures cites a paper.
+    for (const e of lib.effects) {
+      for (const d of Object.values(e.evidenceProfile.dimensions)) {
+        if (d.score > 0) expect(d.paperIds, e.id).not.toHaveLength(0);
+      }
+    }
+    // The tie is real: both fixtures derive the grade they carry.
+    for (const e of lib.effects) expect(resolveEffect(e).grade).toBe("B");
     expect(getBestEffectForOutcome("s", "focus", lib)!.id).toBe("high");
   });
 });

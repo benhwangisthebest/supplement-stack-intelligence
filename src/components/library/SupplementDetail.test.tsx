@@ -3,11 +3,11 @@
 // `e.evidenceProfile && <EvidenceBreakdown …/>` in SupplementDetail — can no longer
 // be reached from the seed, and the E2E spec that used l-theanine as its
 // "legacy (unprofiled)" example had to change. The fallback is guarded here with
-// made-up effects instead. Red proof: rendering the breakdown unconditionally fails
-// the first test (docs/01-plan/features/p3-u4-profiles.plan.md).
-// Phase 4 U2 made Effect.evidenceProfile REQUIRED (FU-63), so the unprofiled
-// effect below is built past the type with a cast. The branch and this test stay
-// until the owner rules on retiring them (U2 artifact).
+// made-up effects instead (docs/01-plan/features/p3-u4-profiles.plan.md).
+// Phase 4 U2 made Effect.evidenceProfile REQUIRED (FU-63). [2026-09-29, Phase 4 U20; N-90]
+// The fallback and its unprofiled test are retired: an unprofiled effect no longer
+// type-checks, and SupplementDetail renders the breakdown for every effect. The profiled
+// test stays as the positive check that the breakdown renders.
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { SEED_SUPPLEMENTS } from "@/data/seed-supplements";
@@ -31,41 +31,29 @@ const profile: EvidenceProfile = {
   },
 };
 
-const effect = (id: string, name: string, evidenceProfile?: EvidenceProfile): Effect => {
-  // Every field but the profile is type-checked; only the unprofiled case is cast.
-  const base: Omit<Effect, "evidenceProfile"> = {
-    id,
-    supplementId: supplement.id,
-    name,
-    outcomeCategory: "focus",
-    grade: "B",
-    confidence: "moderate",
-    summary: "Made-up summary.",
-    relevantPopulation: "made-up population",
-    studiedDose: { min: 1, max: 2, unit: "mg" },
-    mechanismTags: [],
-    paperIds: [],
-  };
-  return evidenceProfile ? { ...base, evidenceProfile } : (base as Effect);
-};
+const effect = (id: string, name: string, evidenceProfile: EvidenceProfile = profile): Effect => ({
+  id,
+  supplementId: supplement.id,
+  name,
+  outcomeCategory: "focus",
+  grade: "B",
+  confidence: "moderate",
+  summary: "Made-up summary.",
+  relevantPopulation: "made-up population",
+  studiedDose: { min: 1, max: 2, unit: "mg" },
+  mechanismTags: [],
+  paperIds: [],
+  evidenceProfile,
+});
 
 function renderEffects(effects: Effect[]) {
   render(<SupplementDetail supplement={supplement} effects={effects} papers={[]} related={[]} />);
   fireEvent.click(screen.getByRole("tab", { name: "Effects" }));
 }
 
-describe("SupplementDetail — the no-profile fallback (U4, FU-63)", () => {
-  it("an effect without an evidenceProfile shows its grade but no breakdown", () => {
-    renderEffects([effect("made-up-unprofiled", "Made-up unprofiled effect")]);
-    const card = document.getElementById("effect-made-up-unprofiled")!;
-    expect(within(card).getByText("Made-up unprofiled effect")).toBeTruthy();
-    // FU-67: the title promised a grade and nothing asserted one.
-    expect(within(card).getByTitle("Evidence grade B — Moderate · moderate confidence")).toBeTruthy();
-    expect(within(card).queryByText("Evidence breakdown")).toBeNull();
-  });
-
-  it("an effect with an evidenceProfile shows the breakdown (anti-vacuity)", () => {
-    renderEffects([effect("made-up-profiled", "Made-up profiled effect", profile)]);
+describe("SupplementDetail — the evidence breakdown (U4, FU-63)", () => {
+  it("an effect shows its evidence breakdown", () => {
+    renderEffects([effect("made-up-profiled", "Made-up profiled effect")]);
     const card = document.getElementById("effect-made-up-profiled")!;
     expect(within(card).getByText("Evidence breakdown")).toBeTruthy();
   });

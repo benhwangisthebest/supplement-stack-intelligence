@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { citationHref } from "@/lib/advisor/citation-href";
 import { currentCitationLabel } from "@/lib/advisor/citation-label";
 import { defaultLibrary, getPaperById, getSupplementById } from "@/lib/evidence";
+import { citationUpdatedCopy } from "@/lib/safety";
 import type { Citation } from "@/types/advisor";
 import { ProvenanceChips } from "./ProvenanceChips";
 import { buildCitationIndex } from "./citation-index";
@@ -191,5 +192,105 @@ describe("ProvenanceChips — a pre-U6 effect name shows today's name (U9, N-100
     expect(currentCitationLabel(stored).currentLabel).toBe("Fish Oil (Omega-3) → Triglyceride lowering, Grade A");
     // Same grade as stored, so no grade marker.
     expect(screen.queryByTestId("grade-updated")).toBeNull();
+  });
+});
+
+// Phase 4 U20 (FU-76). U9 made the chip show an effect's CURRENT name, but said nothing when
+// that name differed from the one the message was written with, so a reader could see
+// "Cardiovascular support" in the answer and "Triglyceride lowering" on its chip with no
+// link between them. The U4 R2 marker now also covers a rename. Red at HEAD (3c52ab1): the
+// first test (no marker renders). docs/01-plan/features/p4-u20-evidence-hygiene.plan.md.
+describe("ProvenanceChips — a renamed effect is marked (U20, FU-76)", () => {
+  const nameMarker = () => screen.queryByTestId("name-updated");
+  const gradeMarker = () => screen.queryByTestId("grade-updated");
+  const fishOil: Citation = {
+    kind: "effect-grade",
+    refId: "fish-oil-cardiovascular",
+    label: "Fish Oil (Omega-3) → Cardiovascular support, Grade A",
+  };
+
+  it("marks the pre-U6 fish-oil chip as renamed, with the old name visible", () => {
+    render(<ProvenanceChips index={INDEX} citations={[fishOil]} />);
+    expect(nameMarker(), "no rename marker on the fish-oil chip").not.toBeNull();
+    expect(nameMarker()!.textContent).toBe(
+      `· ${INDEX.updatedCopy.name.replace("{name}", "Cardiovascular support")}`,
+    );
+    expect(nameMarker()!.textContent).toContain("(was “Cardiovascular support”)");
+    expect(gradeMarker()).toBeNull();
+    // The chip's link carries the old name in its accessible text.
+    expect(screen.getByRole("link").textContent).toContain("Cardiovascular support");
+  });
+
+  it("says both when the name and the grade changed", () => {
+    const effect = defaultLibrary.effects.find((e) => e.id === "fish-oil-cardiovascular")!;
+    const other = (["A", "B", "C", "D"] as const).find((g) => g !== effect.grade)!;
+    render(
+      <ProvenanceChips
+        index={INDEX}
+        citations={[{ ...fishOil, label: `Fish Oil (Omega-3) → Cardiovascular support, Grade ${other}` }]}
+      />,
+    );
+    expect(gradeMarker()?.textContent).toBe(
+      `· ${INDEX.updatedCopy.nameAndGrade.replace("{name}", "Cardiovascular support")}`,
+    );
+    expect(nameMarker()).toBeNull();
+  });
+
+  it("does not mark a protocol citation, which stores an outcome category in the name's place", () => {
+    const effect = defaultLibrary.effects.find((e) => e.id === "creatine-strength")!;
+    // The shape src/lib/advisor/actions/proposals.ts writes for a suggested protocol.
+    const label = `Creatine → ${effect.outcomeCategory}, Grade ${effect.grade}`;
+    render(<ProvenanceChips index={INDEX} citations={[{ kind: "effect-grade", refId: effect.id, label }]} />);
+    expect(nameMarker()).toBeNull();
+    expect(gradeMarker()).toBeNull();
+    cleanup();
+    // A category the effect does NOT have today (as if it had moved) is still not a rename.
+    const moved = `Creatine → ${effect.outcomeCategory === "sleep" ? "focus" : "sleep"}, Grade ${effect.grade}`;
+    render(<ProvenanceChips index={INDEX} citations={[{ kind: "effect-grade", refId: effect.id, label: moved }]} />);
+    expect(nameMarker()).toBeNull();
+  });
+
+  it("does not mark, or throw on, a stored label that is not a string", () => {
+    const odd = { kind: "effect-grade", refId: "fish-oil-cardiovascular", label: ["S → Old, Grade A"] };
+    render(<ProvenanceChips index={INDEX} citations={[odd as unknown as Citation]} />);
+    expect(nameMarker()).toBeNull();
+  });
+
+  it("marks no chip whose stored name is today's, or the outcome category, across the corpus", () => {
+    const byName = defaultLibrary.effects.map(
+      (e): Citation => ({ kind: "effect-grade", refId: e.id, label: `S → ${e.name}, Grade ${e.grade}` }),
+    );
+    const byCategory = defaultLibrary.effects.map(
+      (e): Citation => ({ kind: "effect-grade", refId: e.id, label: `S → ${e.outcomeCategory}, Grade ${e.grade}` }),
+    );
+    expect(byName.length).toBeGreaterThan(10); // anti-vacuity: the whole corpus
+    for (const citations of [byName, byCategory]) {
+      render(<ProvenanceChips index={INDEX} citations={citations} />);
+      expect(screen.getAllByRole("listitem")).toHaveLength(citations.length);
+      expect(nameMarker()).toBeNull();
+      cleanup();
+    }
+    // Anti-vacuity: among the same chips, the one real rename IS marked.
+    const withRename = [...byName.filter((c) => c.refId !== fishOil.refId), fishOil];
+    render(<ProvenanceChips index={INDEX} citations={withRename} />);
+    expect(screen.getAllByTestId("name-updated")).toHaveLength(1);
+  });
+
+  it("the server-built index carries src/lib/safety's copy and each effect's current name", () => {
+    expect(INDEX.updatedCopy).toEqual(citationUpdatedCopy);
+    for (const e of defaultLibrary.effects) {
+      expect(INDEX.effects[e.id]).toMatchObject({ name: e.name });
+    }
+  });
+
+  it("renders the marker copy it is handed, placeholder filled, and retypes none of it", () => {
+    const updatedCopy = { grade: "COPY-GRADE", name: "COPY-NAME <{name}>", nameAndGrade: "COPY-BOTH" };
+    render(<ProvenanceChips index={{ ...INDEX, updatedCopy }} citations={[fishOil]} />);
+    expect(nameMarker()?.textContent).toBe("· COPY-NAME <Cardiovascular support>");
+    cleanup();
+    // A stored name is inserted literally: "$&" in it is not a replacement pattern.
+    const odd = { ...fishOil, label: "Fish Oil (Omega-3) → Old $& name, Grade A" };
+    render(<ProvenanceChips index={{ ...INDEX, updatedCopy }} citations={[odd]} />);
+    expect(nameMarker()?.textContent).toBe("· COPY-NAME <Old $& name>");
   });
 });

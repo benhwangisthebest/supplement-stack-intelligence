@@ -645,3 +645,21 @@ export const authCopy = {
   /** Every other signup failure, including an address that is already registered. */
   signupFailed: "We couldn't create an account with those details. Please try again.",
 } as const;
+
+// ---- Source-chip "updated" markers (Phase 4 U20, FU-76; approved by the owner 2026-09-29, Q-21). ----
+// An advisor source chip shows what the Library calls a cited effect TODAY, and the
+// message beside it was written with what it was called THEN (the stored label). When the
+// two differ, the chip says so. `grade` is the U4 R2 marker's wording, moved here unchanged
+// from ProvenanceChips.tsx. Plain strings, not builders: the chips are client components,
+// and the server page hands these over inside the CitationIndex (CLAUDE.md §4 rule 7).
+// `name` and `nameAndGrade` have one placeholder, {name}, filled with the effect name the stored
+// label carries, so the old name is visible beside the new one. No separate screen-reader text:
+// it would only repeat the visible words, which the chip's link already announces.
+export const citationUpdatedCopy = {
+  /** The stored grade letter differs from today's; the name is unchanged. */
+  grade: "grade updated since this message",
+  /** The stored effect name differs from today's; the grade is unchanged. */
+  name: "renamed since this message (was “{name}”)",
+  /** Both differ. */
+  nameAndGrade: "renamed and grade updated since this message (was “{name}”)",
+} as const;

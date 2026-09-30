@@ -22,8 +22,8 @@ test.describe("L2: Library evidence breakdown", () => {
   // Phase 3 U4 (owner ruling 2026-09-23): this test used l-theanine as its
   // "legacy (unprofiled)" example. U4 profiled every seed effect (G4 forbids a grade
   // without a profile), so l-theanine now shows a breakdown for each of its two
-  // effects. The no-profile fallback is guarded in SupplementDetail.test.tsx with
-  // made-up effects until evidenceProfile becomes required (FU-63).
+  // effects. [2026-09-29, Phase 4 U20; N-90] evidenceProfile is now required (FU-63),
+  // so the Library has no no-profile fallback left to guard.
   test("a supplement profiled by U4 (l-theanine) shows a breakdown for each effect", async ({
     page,
   }) => {

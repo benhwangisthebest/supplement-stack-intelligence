@@ -20,19 +20,19 @@ export interface EvidenceLibrary {
 }
 
 /**
- * evidence-grading v5 (Design §2.2): resolve an effect's grade. When the effect
- * carries an evidenceProfile, the grade is DERIVED from it (single source of
- * truth); otherwise the literal seed grade is kept. Pure & idempotent.
+ * evidence-grading v5 (Design §2.2): resolve an effect's grade. The grade is DERIVED
+ * from the effect's evidenceProfile (single source of truth). Pure & idempotent.
+ * [2026-09-29, Phase 4 U20; N-90] The profile is required (FU-63), so the old
+ * no-profile branch that kept the literal seed grade could not be reached, and is gone.
  */
 export function resolveEffect(effect: Effect): Effect {
-  if (!effect.evidenceProfile) return effect;
   const grade = deriveGrade(effect.evidenceProfile);
   return grade === effect.grade ? effect : { ...effect, grade };
 }
 
-/** Bounded composite ∈ [0,1] for a profiled effect, else null (ranking key). */
-export function effectComposite(effect: Effect): number | null {
-  return effect.evidenceProfile ? compositeScore(effect.evidenceProfile) : null;
+/** Bounded composite ∈ [0,1] for the effect's profile (ranking key). Never null since U20 (N-90). */
+export function effectComposite(effect: Effect): number {
+  return compositeScore(effect.evidenceProfile);
 }
 
 export const defaultLibrary: EvidenceLibrary = {
@@ -98,10 +98,10 @@ export function getBestEffectForOutcome(
     .filter((e) => e.outcomeCategory === outcome)
     .sort((a, b) => {
       // Grade dominates; within an equal grade, the finer composite breaks ties
-      // (evidence-grading v5). Profiled effects sort ahead of unprofiled ones.
+      // (evidence-grading v5). Every effect has one since U20 (N-90).
       const byGrade = compareGrades(a.grade, b.grade);
       if (byGrade !== 0) return byGrade;
-      return (effectComposite(b) ?? -1) - (effectComposite(a) ?? -1);
+      return effectComposite(b) - effectComposite(a);
     })[0];
 }
 

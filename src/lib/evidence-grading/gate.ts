@@ -6,8 +6,8 @@
 // (./index), as a CAP at C, not a one-letter drop. The other three candidates stay here only as
 // data for the report script (scripts/evidence-gate-report.mjs). FU-74: an R5 zero on the gated
 // dimension fails the gate (see `gatedScore`).
-// Reads no seed data; callers hand it profiles. It imports ./index, which imports it back: nothing
-// here calls into ./index at module load, only inside functions, so the cycle is safe either way.
+// Reads no seed data; callers hand it profiles. [2026-09-29, Phase 4 U20; FU-75] It reads the
+// composite from ./composite, not ./index, so ./index imports it without an import cycle.
 import type { EvidenceGrade } from "@/types";
 import type {
   DimensionRating,
@@ -15,7 +15,7 @@ import type {
   EvidenceProfile,
 } from "@/types/evidence-grading";
 import { EVIDENCE_DIMENSIONS } from "@/types/evidence-grading";
-import { compositeGrade, compositeScore } from "./index";
+import { compositeGrade, compositeScore } from "./composite";
 import { DIMENSION_LABELS } from "./weights";
 
 /** A candidate gate: the minimum score each named dimension must reach. */

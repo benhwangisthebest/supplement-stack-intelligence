@@ -31,9 +31,8 @@ export interface DimensionScore {
 }
 
 /**
- * The full per-effect profile. Optional on Effect in the type only. Since Phase 3
- * U4 every seed effect has one, and a grade without one fails G4. Making it
- * required is FU-63.
+ * The full per-effect profile. Required on Effect since Phase 4 U2 (FU-63), and
+ * every seed grade is derived from it (G4). No code path handles an effect without one.
  */
 export interface EvidenceProfile {
   dimensions: Record<EvidenceDimension, DimensionScore>;
