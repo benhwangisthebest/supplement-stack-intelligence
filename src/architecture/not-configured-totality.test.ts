@@ -66,6 +66,8 @@ import {
 } from "@/lib/api/errors";
 import { handle } from "@/lib/api/respond";
 
+import { stripComments } from "./__testing__/strip";
+
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 /** The one class allowed to carry this state. */
@@ -142,16 +144,12 @@ interface Construction {
 export function readPhraseConstants(sources: { file: string; ts: string }[]): Set<string> {
   const names = new Set<string>();
   const DECL = /\b(?:const|let|var)\s+([A-Za-z0-9_$]+)\s*(?::[^=]+)?=\s*(["'`])([\s\S]*?)\2/g;
-  for (const { ts } of sources) {
-    for (const m of stripLineComments(ts).matchAll(DECL)) {
+  for (const { file, ts } of sources) {
+    for (const m of stripComments(ts, file).matchAll(DECL)) {
       if (m[3].toLowerCase().includes(PHRASE)) names.add(m[1]);
     }
   }
   return names;
-}
-
-function stripLineComments(text: string): string {
-  return text.replace(/^\s*\/\/[^\n]*$/gm, "");
 }
 
 /** Literal text of an argument, or null when it is not a literal this rule reads. */

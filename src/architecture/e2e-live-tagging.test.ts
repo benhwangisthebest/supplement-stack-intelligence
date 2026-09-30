@@ -53,7 +53,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
-import { stripComments } from "./__testing__/strip";
+import { blankStringsAndComments, stripComments } from "./__testing__/strip";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -99,10 +99,13 @@ export interface Block {
  * `[LIVE]` tag on a describe that runs anywhere.
  *
  * String and comment contents are blanked first (positions preserved) so a `{`
- * inside a title or a comment cannot shift the depth.
+ * inside a title or a comment cannot shift the depth. The blanking is the shared
+ * parser-based `blankStringsAndComments` (Phase 4 U19, N-88 (1)). This file's
+ * private regex version blanked comments BEFORE strings with an unanchored
+ * `//` pattern, so a `//` inside a URL literal blanked the rest of its line.
  */
 export function parseBlocks(source: string, file = "<inline>"): Block[] {
-  const stripped = stripStringsAndComments(source);
+  const stripped = blankStringsAndComments(source, file.endsWith(".ts") ? file : undefined);
   const lineOf = (index: number) => source.slice(0, index).split("\n").length;
 
   // Openings are matched on the ORIGINAL source (titles are string literals and
@@ -156,20 +159,6 @@ export function parseBlocks(source: string, file = "<inline>"): Block[] {
     }
   }
   return blocks;
-}
-
-/**
- * Blank string literals and comments, preserving length and newlines so every
- * index in the result still refers to the same character of the input.
- */
-function stripStringsAndComments(source: string): string {
-  const blank = (m: string) => m.replace(/[^\n]/g, " ");
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, blank)
-    .replace(/\/\/[^\n]*/g, blank)
-    .replace(/"(?:[^"\\\n]|\\.)*"/g, blank)
-    .replace(/'(?:[^'\\\n]|\\.)*'/g, blank)
-    .replace(/`(?:[^`\\]|\\.)*`/g, blank);
 }
 
 const SPEC_FILES = trackedSpecFiles();
@@ -351,6 +340,23 @@ describe("LIVE_TAGGING — parser self-tests", () => {
     expect(blocks.find((b) => b.title === "second")?.gated).toBe(false);
   });
 
+  it("does not let a `//` inside a URL literal hide a gate on the same line (N-88 (1), Phase 4 U19)", () => {
+    // The private blanker this file carried until U19 blanked comments before
+    // strings with an unanchored `//` pattern: the URL's `//` blanked the rest of
+    // its line, the `test.skip(!LIVE` on it, and the `}` that closes the test.
+    const blocks = parseBlocks(
+      [
+        'test.describe("outer", () => {',
+        '  test("[LIVE] visits", async ({ page }) => { await page.goto("https://x.test/"); test.skip(!LIVE, "creds"); });',
+        '  test("plain", async () => {});',
+        "});",
+      ].join("\n"),
+    );
+    expect(blocks.find((b) => b.title === "[LIVE] visits")?.gated).toBe(true);
+    expect(blocks.find((b) => b.title === "outer")?.gated).toBe(false);
+    expect(blocks.find((b) => b.title === "plain")?.gated).toBe(false);
+  });
+
   it("reads tracked spec files from the git index, not the working tree", () => {
     // §4.2: an inventory built by globbing the working tree would let an
     // untracked spec pass unseen.
@@ -502,10 +508,11 @@ describe("SERVER_REUSE — outside CI the E2E suite never reuses a server on the
     // (U12 review). So the list is checked against the config's own reads.
     // Any `process.env` access that is not `process.env.NAME` is refused
     // rather than guessed at.
-    // The shared string-aware stripper (FU-47): a `//` inside the config's URL
-    // literal must not hide the rest of that line.
+    // The shared parser-based stripper (FU-47, U19): a `//` inside the config's
+    // URL literal must not hide the rest of that line.
     const source = stripComments(
       fs.readFileSync(path.join(REPO_ROOT, "playwright.config.ts"), "utf8"),
+      "playwright.config.ts",
     );
     const reads = [...source.matchAll(/process\.env\b(?:\.([A-Za-z_]\w*))?/g)];
     const names = [...new Set(reads.map((m) => m[1]).filter((n): n is string => !!n))];

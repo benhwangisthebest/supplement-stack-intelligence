@@ -28,6 +28,8 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { stripComments } from "./__testing__/strip";
+
 const REPO_ROOT = join(__dirname, "..", "..");
 const PRELUDE = "supabase/ci/auth-prelude.sql";
 const RUNNER = "scripts/verify-migrations.mjs";
@@ -45,9 +47,7 @@ function sqlCode(relative: string): string {
 
 /** JS line comments stripped, same reason — this file's own header names `0010`. */
 function jsCode(relative: string): string {
-  return read(relative)
-    .replace(/\/\*[\s\S]*?\*\//g, " ")
-    .replace(/^\s*\/\/.*$/gm, " ");
+  return stripComments(read(relative), relative);
 }
 
 /**

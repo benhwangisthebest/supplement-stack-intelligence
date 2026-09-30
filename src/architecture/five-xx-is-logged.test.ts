@@ -46,7 +46,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { stripComments } from "./__testing__/strip";
+import { blankStringsAndComments, stripComments, stripLineComments } from "./__testing__/strip";
 
 import { REDACTED_LOG_FIELDS } from "@/lib/api/redact";
 import { DECLARED_OPERATIONAL_STATES, fail, INTERNAL_ERROR_MESSAGE } from "@/lib/api/respond";
@@ -195,10 +195,10 @@ describe("FIVE_XX_IS_LOGGED — every 5xx carries a correlated record", () => {
 
     // [2026-09-22, N-79 → closed by Phase 4 U1] This strip used to be unanchored,
     // so a `//` inside a URL literal could blank a `handle(` beside it. It is now
-    // the shared `stripComments` (FU-47), which strips only comments that start
-    // outside a literal; its limits are in `./__testing__/strip.ts`.
+    // the shared `stripComments` (FU-47), which removes exactly what the
+    // TypeScript parser calls a comment (Phase 4 U19); see `./__testing__/strip.ts`.
     const unwrapped = routes.filter((f) => {
-      const text = stripComments(readFileSync(path.join(ROOT, f), "utf8"));
+      const text = stripComments(readFileSync(path.join(ROOT, f), "utf8"), f);
       return !/\bhandle[(<]/.test(text);
     });
 
@@ -265,11 +265,12 @@ describe("FIVE_XX_IS_LOGGED — every 5xx carries a correlated record", () => {
     // throw to land.
     // STATED LIMITATION (`ecc:code-reviewer`, (d1b)), NARROWED by Phase 4 U1: the
     // strip is the shared `stripComments` (FU-47), so a `//` inside a URL literal
-    // no longer blinds the rest of the line. It is still not a full lexer (limits
-    // in `./__testing__/strip.ts`), and it preserves line structure, which this
-    // positional check needs. An AST scan remains the fix if this ever governs
+    // no longer blinds the rest of the line. Since Phase 4 U19 the comments are the
+    // TypeScript parser's (`./__testing__/strip.ts`), and line structure is kept,
+    // which this positional check needs. The CHECK is still a text scan over the
+    // stripped code, not an AST walk. An AST scan remains the fix if this ever governs
     // more than two hand-read files, as U33's `readsIdentifier` had to.
-    const codeOf = (f: string) => stripComments(readFileSync(path.join(ROOT, f), "utf8"));
+    const codeOf = (f: string) => stripComments(readFileSync(path.join(ROOT, f), "utf8"), f);
 
     // ANTI-VACUITY FIRST. The positional check below is a no-op for a route that
     // does not call `getUser` at all, so a rename would silence it rather than
@@ -375,6 +376,72 @@ describe("STRIP_COMMENTS — the shared comment-stripper (FU-47, N-79)", () => {
     const more = ["xs.filter((l) => /`/.test(l)); // handle(\nnext(); // handle(", "<p>Don't</p>;// handle("];
     for (const src of more) expect(stripComments(src), src).not.toContain("handle(");
     expect(stripComments('<a>Don\'t "https://x.test/y"</a>;')).toContain("https://x.test/y");
+  });
+
+  // Phase 4 U19 (FU-73, N-88): the helper now asks the TypeScript parser. The
+  // U1 helper's block-comment regex is kept here verbatim as `PRE_U19_BLOCK`, so
+  // each contrast below stays executable.
+  const PRE_U19_BLOCK = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, " ");
+
+  it("STRIP_COMMENTS: U1's KNOWN LIMIT now passes: a misread backtick no longer keeps the comments after it (FU-73)", () => {
+    // A regex holding a backtick right after `)`, and a lone backtick in JSX text.
+    const cases = ["if (x) /`/.test(s) ? a() : b(); // handle(\nnext();", "<p>use a ` here</p>; // handle(\nnext();"];
+    for (const src of cases) {
+      expect(stripComments(src), src).not.toContain("handle(");
+      expect(stripComments(src), src).toContain("next();");
+    }
+  });
+
+  it("STRIP_COMMENTS: a slash-star inside a LINE comment no longer hides the code after it (N-88 (2))", () => {
+    const src = '// the gateway serves `/v1/*` paths\nconst model = "gpt-4o-mini";\n/* closes here */ ok();';
+    expect(PRE_U19_BLOCK(src)).not.toContain("gpt-4o-mini");
+    expect(stripComments(src)).toContain('const model = "gpt-4o-mini";');
+    expect(stripComments(src)).toContain("ok();");
+    expect(stripComments(src)).not.toContain("closes here");
+  });
+
+  it("STRIP_COMMENTS: a slash-star inside a glob STRING no longer eats code (N-88)", () => {
+    const src = 'const glob = "src/lib/*.ts"; handle(x); const end = "*/";';
+    expect(PRE_U19_BLOCK(src)).not.toContain("handle(x)");
+    expect(stripComments(src)).toBe(src);
+  });
+
+  it("STRIP_COMMENTS: a multi-line block comment keeps its line breaks, so line numbers survive", () => {
+    const src = "a();\n/**\n * doc\n */\nb(); /* x\n y */ c();";
+    const out = stripComments(src);
+    expect(out.split("\n")).toHaveLength(src.split("\n").length);
+    expect(out.split("\n")[4]).toContain("b();");
+    expect(out.split("\n")[5]).toContain("c();");
+    expect(out).not.toContain("doc");
+  });
+
+  it("STRIP_COMMENTS: stripLineComments keeps block comments; JSON comments are lexed by file name", () => {
+    expect(stripLineComments("a(); /* keep */ b(); // drop")).toContain("/* keep */");
+    expect(stripLineComments("a(); /* keep */ b(); // drop")).not.toContain("drop");
+    const json = '{\n  // note\n  "a": "https://x.test/*", /* c */ "b": 1\n}';
+    expect(JSON.parse(stripComments(json, "tsconfig.json"))).toEqual({ a: "https://x.test/*", b: 1 });
+  });
+
+  it("STRIP_COMMENTS: blankStringsAndComments preserves every index, and a `//` in a URL blanks only its literal (N-88 (1))", () => {
+    const src = 'go("https://x.test/{"); test("t {", () => { /* { */ skip(); }); // {';
+    const out = blankStringsAndComments(src);
+    expect(out).toHaveLength(src.length);
+    expect(out).toContain("skip();");
+    expect([...out].filter((c) => c === "{").length).toBe(1);
+    expect(out.indexOf("skip();")).toBe(src.indexOf("skip();"));
+  });
+
+  it("STRIP_COMMENTS: text inside JSX and inside a JSDoc comment is never re-read as a comment", () => {
+    // JSX text is one token: a `//` in it is text, and so is what follows it.
+    expect(stripComments("<p>// not a comment</p>;\nnext();")).toContain("<p>// not a comment</p>");
+    // A `//` inside a JSDoc block is part of that block, so stripLineComments keeps it.
+    const jsdoc = "/**\n * Text // here\n * @see {@link x} // there\n */\nexport const a = 1;";
+    expect(stripLineComments(jsdoc)).toBe(jsdoc);
+  });
+
+  it("STRIP_COMMENTS: source that does not parse THROWS rather than being stripped by a guess", () => {
+    expect(() => stripComments("const = ;", "x.ts")).toThrow(/does not parse/);
+    expect(() => stripComments("a();", "schema.sql")).toThrow(/no JS, TS or JSON lexer/);
   });
 });
 

@@ -758,7 +758,7 @@ describe("architecture boundaries — harness sanity", () => {
 
   it("governs every path alias declared in tsconfig", () => {
     const tsconfig = JSON.parse(
-      fs.readFileSync(path.join(REPO_ROOT, "tsconfig.json"), "utf8").replace(/^\s*\/\/.*$/gm, ""),
+      stripComments(fs.readFileSync(path.join(REPO_ROOT, "tsconfig.json"), "utf8"), "tsconfig.json"),
     );
     // resolveSpecifier() only understands "@/*". A new alias would silently
     // un-govern a whole import style, so adding one must fail here first.
@@ -1279,8 +1279,10 @@ describe("architecture boundaries — the real source tree", () => {
   // strip is the shared `stripComments` (`./__testing__/strip`, FU-47, Phase 4 U1):
   // a `//` inside a string or URL literal is code and stays, so the line
   // `docs: "https://example.com/models", fallback: "some-model-id"` that N-79
-  // named (blind until U1) now shows the literal beside the URL. Its own limits
-  // are stated in that module's header.
+  // named (blind until U1) now shows the literal beside the URL. Since Phase 4
+  // U19 (FU-73, N-88) the helper asks the TypeScript parser what a comment is, so
+  // a slash-star inside a line comment (a wildcard path) no longer hides code
+  // from this scan either: five tracked files were partly invisible to it before.
 
   // ---- U25: SOLE_PAID_CLIENT ----------------------------------------------
   //
@@ -1509,6 +1511,7 @@ describe("architecture boundaries — the real source tree", () => {
     expect(
       stripComments(
         fs.readFileSync(path.join(REPO_ROOT, "src/lib/lab-import/pdf-adapter.ts"), "utf8"),
+        "src/lib/lab-import/pdf-adapter.ts",
       ),
       "the lab-import hardcoded model id is back",
     ).not.toContain('"claude-haiku-4-5-20251001"');
@@ -1522,7 +1525,7 @@ describe("architecture boundaries — the real source tree", () => {
 
     const found: string[] = [];
     for (const file of NON_TEST_SRC) {
-      const code = stripComments(fs.readFileSync(path.join(REPO_ROOT, file), "utf8"));
+      const code = stripComments(fs.readFileSync(path.join(REPO_ROOT, file), "utf8"), file);
       for (const [, literal] of code.matchAll(/["'`]([A-Za-z0-9._/-]{4,60})["'`]/g)) {
         const low = literal.toLowerCase();
         if (!FAMILIES.some((f) => low.includes(f))) continue;
@@ -1615,6 +1618,40 @@ describe("architecture boundaries — the real source tree", () => {
         "Phase 2 U25, and the dependency is gone from package.json. An import that comes\n" +
         "back is a paid provider that no marker sees AND a missing dependency at build\n" +
         "time:\n  " + survivors.join("\n  "),
+    ).toEqual([]);
+  });
+
+  // ---- Phase 4 U19 (Q-18): NO_FONT_FETCH ----------------------------------
+  //
+  // Phase 4 U18 moved Inter to `next/font/local`, so `next build` makes no
+  // network call (plan §0 note, D-10, FU-66). U18's review found nothing
+  // enforced that: re-importing `next/font/google` brings the build-time fetch
+  // back, and CI never builds under a network deny. This is the import ban the
+  // owner assigned here (Q-18). It covers every tracked JS/TS file under src/,
+  // tests included, and the specifier is found by the parser (`extractEdges`),
+  // so a mention in a comment or a string is not an import.
+  it("NO_FONT_FETCH: nothing under src/ imports next/font/google", () => {
+    const scanned = TRACKED_SRC_PATHS.filter((f) => /\.[cm]?[jt]sx?$/.test(f));
+    const edgesOf = (f: string) => extractEdges(f, fs.readFileSync(path.join(REPO_ROOT, f), "utf8"));
+
+    // Anti-vacuity: the scan must see the font import that IS there.
+    expect(scanned.length, "NO_FONT_FETCH scanned nothing").toBeGreaterThanOrEqual(100);
+    expect(
+      edgesOf("src/app/layout.tsx").map((e) => e.specifier),
+      "NO_FONT_FETCH: the layout's next/font/local import is not visible to the scan",
+    ).toContain("next/font/local");
+
+    const offenders = scanned.flatMap((f) =>
+      edgesOf(f)
+        .filter((e) => e.specifier === "next/font/google" || e.specifier.startsWith("next/font/google/"))
+        .map((e) => `${f}:${e.line}`),
+    );
+    expect(
+      offenders,
+      "NO_FONT_FETCH: next/font/google downloads the font from Google at build time,\n" +
+        "so the build makes a network call again (FU-66, D-10). Self-host the file and\n" +
+        "load it through next/font/local, as src/app/layout.tsx does:\n  " +
+        offenders.join("\n  "),
     ).toEqual([]);
   });
 

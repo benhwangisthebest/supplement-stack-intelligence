@@ -48,7 +48,7 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { stripLineComments } from "./__testing__/strip";
+import { stripComments } from "./__testing__/strip";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), "utf8");
@@ -239,7 +239,7 @@ const ALL_SPEC_TITLES: string[] = fs
   // Comments stripped first (U1 review, MAJOR 1): this file mentions real guard
   // names in its own comments, and a mention must not satisfy the check. The
   // self-test fixtures below use fictitious names for the same reason.
-  .flatMap((f) => titlesIn(stripLineComments(read(`src/architecture/${f}`))));
+  .flatMap((f) => titlesIn(stripComments(read(`src/architecture/${f}`), f)));
 
 describe("DOC_TRUTH — CLAUDE.md §4's enforcement table", () => {
   it("finds a non-empty rule table to check", () => {
@@ -300,10 +300,12 @@ describe("DOC_TRUTH — CLAUDE.md §4's enforcement table", () => {
       .filter((f) => f.endsWith(".test.ts"));
     const universe = new Set<string>();
     for (const f of specs) {
-      // Line comments stripped first (U1 review, MAJOR 1): a guard named only in
-      // a comment is not a guard. NOT the block-comment regex: spec sources hold
-      // globs like "src/**/*.ts", where that regex would swallow real titles (N-88).
-      for (const t of guardTokensIn(stripLineComments(read(`src/architecture/${f}`)))) universe.add(t);
+      // Comments stripped first (U1 review, MAJOR 1): a guard named only in a
+      // comment is not a guard. Block and JSDoc comments too since Phase 4 U19
+      // (N-88 (2)): the U1 helper removed line comments only here, because its
+      // block-comment regex would have swallowed globs like "src/**/*.ts" in spec
+      // sources. The parser-based helper does not.
+      for (const t of guardTokensIn(stripComments(read(`src/architecture/${f}`), f))) universe.add(t);
     }
     expect(universe.size, "resolved no guard tokens at all from src/architecture").toBeGreaterThan(5);
 

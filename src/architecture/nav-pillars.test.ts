@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 
 import { PILLARS } from "@/components/layout/TopNav";
 
+import { stripComments } from "./__testing__/strip";
+
 // ---------------------------------------------------------------------------
 // NAV_PILLARS — Phase 2 U24, executing §7 decision 1 (ruled Option A 2026-08-08).
 // ---------------------------------------------------------------------------
@@ -51,9 +53,7 @@ const source = readFileSync(TOPNAV, "utf8");
 // FU-27 defect, and the "rendered exactly once" assertion counted it as a
 // second render. A guard that a file's PROSE can redden or green is not
 // measuring the file's STRUCTURE.
-const code = source
-  .replace(/\/\*[\s\S]*?\*\//g, "")
-  .replace(/^\s*\/\/.*$/gm, "");
+const code = stripComments(source, TOPNAV);
 
 /** The three names, quoted from `docs/product-direction.md` §3.3. */
 const THE_THREE = ["Library", "Profile", "Stack Lab"];

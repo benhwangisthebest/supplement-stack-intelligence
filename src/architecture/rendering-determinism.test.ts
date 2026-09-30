@@ -39,14 +39,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { stripComments } from "./__testing__/strip";
+
 const REPO_ROOT = join(__dirname, "..", "..");
 const SESSION_PATH = "src/lib/auth/session.ts";
 
 /** Comments stripped, so prose can neither trip nor satisfy a rule. */
 function sessionCode(): string {
-  return readFileSync(join(REPO_ROOT, SESSION_PATH), "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "");
+  return stripComments(readFileSync(join(REPO_ROOT, SESSION_PATH), "utf8"), SESSION_PATH);
 }
 
 describe("RENDERING_DETERMINISM: the dynamic marker is unconditional", () => {

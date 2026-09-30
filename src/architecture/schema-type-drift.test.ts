@@ -62,6 +62,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { blankComments } from "./__testing__/strip";
+
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 /**
@@ -278,7 +280,11 @@ function splitDeclarations(body: string): string[] {
 export function readRowTypes(sources: { file: string; ts: string }[]): Map<string, RowTypeFact> {
   const rowTypes = new Map<string, RowTypeFact>();
 
-  for (const { file, ts } of sources) {
+  for (const { file, ts: raw } of sources) {
+    // Comments blanked first, positions preserved (the shared parser-based helper,
+    // Phase 4 U19): a brace or a field-shaped line inside a comment is not a
+    // declaration, and a `//` inside a string-literal type is not a comment.
+    const ts = blankComments(raw, file);
     const IFACE = /(?:export\s+)?interface\s+([A-Za-z0-9_]*Row)\s*\{/g;
     for (const m of ts.matchAll(IFACE)) {
       const open = ts.indexOf("{", m.index);
@@ -298,7 +304,7 @@ export function readRowTypes(sources: { file: string; ts: string }[]): Map<strin
 
       const fields = new Map<string, FieldFact>();
       for (const rawLine of splitDeclarations(ts.slice(open + 1, close))) {
-        const line = rawLine.replace(/\/\/.*$/, "").trim();
+        const line = rawLine.trim();
         const f = /^([a-z0-9_]+)(\?)?\s*:\s*(.+?);?$/i.exec(line);
         if (!f) continue;
         const type = f[3].replace(/;$/, "").trim();

@@ -52,6 +52,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { stripComments } from "./__testing__/strip";
+
 const REPO_ROOT = join(__dirname, "..", "..");
 
 /** Git's index, not the working tree — §4.2's staged-file rule. */
@@ -130,9 +132,7 @@ function middlewareCode(): string {
     ).toBe(true);
   }
   // Comments stripped, so a rule cannot be tripped or satisfied by prose.
-  return readFileSync(path, "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "");
+  return stripComments(readFileSync(path, "utf8"), MIDDLEWARE_PATH);
 }
 
 describe("MIDDLEWARE_SCOPE: the middleware stays thin", () => {

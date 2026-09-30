@@ -4,6 +4,8 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { stripComments } from "./__testing__/strip";
+
 // ---------------------------------------------------------------------------
 // UI_ERROR_TEXT — Phase 2 U19, discharging F5.
 // ---------------------------------------------------------------------------
@@ -93,9 +95,7 @@ const UI_FILES = trackedTsx("src/components", "src/app");
  * A guard that a file's PROSE can redden or green is not measuring structure.
  */
 function codeOf(file: string): string {
-  return readFileSync(join(REPO_ROOT, file), "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "");
+  return stripComments(readFileSync(join(REPO_ROOT, file), "utf8"), file);
 }
 
 /**

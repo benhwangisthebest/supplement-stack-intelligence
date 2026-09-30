@@ -46,6 +46,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { stripComments } from "./__testing__/strip";
+
 const REPO_ROOT = join(__dirname, "..", "..");
 
 /**
@@ -123,9 +125,7 @@ function read(relative: string): string {
 
 /** Comments stripped: a `.parse(` inside a header comment classifies nothing. */
 function code(relative: string): string {
-  return read(relative)
-    .replace(/\/\*[\s\S]*?\*\//g, " ")
-    .replace(/^\s*\/\/.*$/gm, " ");
+  return stripComments(read(relative), relative);
 }
 
 const testFileFor = (route: string) => route.replace(/\.ts$/, ".test.ts");
