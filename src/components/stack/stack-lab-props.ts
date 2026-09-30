@@ -6,7 +6,7 @@
 // failure, because it would pull the imports below into the browser bundle.
 import { SEED_PRODUCTS } from "@/data/seed-products";
 import { getProductById } from "@/lib/product-matcher";
-import { COVERAGE, DISCLAIMERS, type CoverageCopy } from "@/lib/safety";
+import { COVERAGE, DISCLAIMERS, productMatchCopy, safetyCopy, type CoverageCopy } from "@/lib/safety";
 import type { DisclaimerText } from "@/components/ui/Disclaimer";
 
 export interface StackLabCopy {
@@ -14,6 +14,21 @@ export interface StackLabCopy {
   interactionDisclaimer: DisclaimerText;
   stackEvaluationLimit: CoverageCopy;
   stackCustomItems: CoverageCopy;
+  productMatch: ProductMatchPanelCopy;
+}
+
+/**
+ * Phase 4 U13 (FU-59, Q-14): everything ProductMatchPanel says, built here so the
+ * client retypes nothing. `hiddenReasons` are the matcher's reason strings derived
+ * from certification/testing fields, which the card does not render (render-only:
+ * the matcher and the seed are untouched).
+ */
+export interface ProductMatchPanelCopy {
+  subtitle: string;
+  noMatches: string;
+  additivesLabel: string;
+  limit: CoverageCopy;
+  hiddenReasons: readonly string[];
 }
 
 export function stackLabCopy(): StackLabCopy {
@@ -22,6 +37,13 @@ export function stackLabCopy(): StackLabCopy {
     interactionDisclaimer: DISCLAIMERS.interaction,
     stackEvaluationLimit: COVERAGE.stackEvaluationLimit,
     stackCustomItems: COVERAGE.stackCustomItems,
+    productMatch: {
+      subtitle: productMatchCopy.subtitle,
+      noMatches: productMatchCopy.noMatches,
+      additivesLabel: productMatchCopy.additivesLabel,
+      limit: COVERAGE.productMatchLimit,
+      hiddenReasons: [safetyCopy.productReasonTested()],
+    },
   };
 }
 

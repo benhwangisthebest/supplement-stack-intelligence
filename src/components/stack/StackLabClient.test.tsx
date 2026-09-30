@@ -5,16 +5,19 @@
 // `attachedProductLabels()`). Behaviour unchanged: the same copy renders in the same
 // places, and the attached-product badge shows exactly what `getProductById` returns
 // — nothing for an unknown id, including prototype names.
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SEED_PRODUCTS } from "@/data/seed-products";
-import { getProductById } from "@/lib/product-matcher";
-import { COVERAGE, DISCLAIMERS } from "@/lib/safety";
+import { getProductById, matchProducts } from "@/lib/product-matcher";
+import { COVERAGE, DISCLAIMERS, productMatchCopy, safetyCopy } from "@/lib/safety";
 import type { EvaluationFlag, Stack, StackItem } from "@/types";
 import { StackLabClient } from "./StackLabClient";
 import { attachedProductLabels, stackLabCopy } from "./stack-lab-props";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const stack = {
   id: "made-up-stack",
@@ -156,11 +159,64 @@ describe("StackLabClient — the evaluation flags it is handed reach the page (r
 });
 
 describe("StackWorkspace / StackLabClient — safety copy from the server page (U9)", () => {
-  it("renders the interaction disclaimer, both coverage limits and the evaluation disclaimer verbatim", () => {
+  it("renders the interaction disclaimer, all three coverage limits and the evaluation disclaimer verbatim", () => {
     renderLab([item({ id: "custom", supplementId: null, customName: "Custom" })], [interactionFlag]);
     expect(screen.getByText(DISCLAIMERS.interaction)).toBeTruthy();
     const limits = screen.getAllByTestId("coverage-limit").map((el) => el.textContent);
-    expect(limits).toEqual([COVERAGE.stackEvaluationLimit.text, COVERAGE.stackCustomItems.text]);
+    // Phase 4 U13 (FU-59): the product panel's limit arrives through `copy` (rule 7).
+    expect(limits).toEqual([
+      COVERAGE.stackEvaluationLimit.text,
+      COVERAGE.stackCustomItems.text,
+      COVERAGE.productMatchLimit.text,
+    ]);
     expect(screen.getByRole("note").textContent).toBe(DISCLAIMERS.evaluation);
+    expect(screen.getByText(productMatchCopy.subtitle)).toBeTruthy();
+  });
+});
+
+// Phase 4 U13, owner ruling on Q-14 (2026-09-29). The seed's certifier names sit on
+// fictional brands (§2.2 rule 8), so the panel renders no certification claim: no
+// certifier name, no testing reason, no "Tested" score, no free-text quality note.
+// Render-only; the matcher and the seed are untouched. Red at HEAD (artifact §5).
+describe("ProductMatchPanel — no certification claim reaches the page (U13, Q-14)", () => {
+  it("renders every seed product with no certifier name, testing reason, Tested score or quality note", async () => {
+    const supplementIds = [...new Set(SEED_PRODUCTS.map((p) => p.supplementId))];
+    const items = supplementIds.map((supplementId, i) => item({ id: `p-${i}`, supplementId }));
+    const result = matchProducts({ stackItems: items });
+    // Anti-vacuity: every seed product is in the result, and the seed does carry certifiers.
+    expect(result.groups.flatMap((g) => g.matches.map((m) => m.product.id)).sort()).toEqual(
+      SEED_PRODUCTS.map((p) => p.id).sort(),
+    );
+    const certifiers = [...new Set(SEED_PRODUCTS.flatMap((p) => p.testingTags))];
+    expect(certifiers.length).toBeGreaterThan(0);
+    expect(result.groups.some((g) => g.matches.some((m) => m.reasons.includes(safetyCopy.productReasonTested())))).toBe(true);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ data: result }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    renderLab(items);
+    fireEvent.click(screen.getByRole("button", { name: "Find Products" }));
+    await screen.findAllByText(/per effective dose/);
+    const panel = screen.getByRole("heading", { name: "Product Match" }).closest("section")!;
+    // Visible text AND the attribute values a user or assistive tech is shown (round 2 A6).
+    const attrs = [...panel.querySelectorAll("*")].flatMap((el) =>
+      ["title", "aria-label", "alt"].map((a) => el.getAttribute(a) ?? ""),
+    );
+    const text = [panel.textContent ?? "", ...attrs].join("\n");
+
+    for (const p of SEED_PRODUCTS) expect(text, p.id).toContain(`${p.brand} · ${p.name}`);
+    for (const name of [...certifiers, "NSF", "USP", "IFOS", "Informed"]) expect(text, name).not.toContain(name);
+    expect(text).not.toContain(safetyCopy.productReasonTested());
+    expect(text).not.toMatch(/\b(tested|testing|certif\w*|verified)\b/i);
+    expect(within(panel).queryByText("Tested")).toBeNull();
+    expect(within(panel).queryAllByText("Clean")).toEqual([]);
+    expect(within(panel).getAllByText(productMatchCopy.additivesLabel).length).toBe(SEED_PRODUCTS.length);
+    for (const p of SEED_PRODUCTS) expect(text, p.id).not.toContain(p.qualityNotes);
   });
 });

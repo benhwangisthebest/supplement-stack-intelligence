@@ -2,13 +2,27 @@
 
 import type { ProductMatch } from "@/types";
 
-// Design §5.4 — one matched product: fit score, breakdown, badges, quality notes, affiliate link.
+// Design §5.4 — one matched product: fit score, breakdown, badges, affiliate link.
+// Phase 4 U13 (Q-14): no certification claim is rendered. The seed's certifier names
+// sit on fictional brands (§2.2 rule 8), so the testing badges, the "Tested" score, the
+// testing reason (`hiddenReasons`) and the free-text quality notes (which name
+// certifiers) are not shown. Render-only: the matcher still scores testing. The
+// additives cell's label arrives as a prop (was "Clean", a purity claim).
 function pct(n: number): string {
   return `${Math.round(n * 100)}%`;
 }
 
-export function ProductMatchCard({ match }: { match: ProductMatch }) {
-  const { product, fitScore, breakdown, pricePerEffectiveDose, reasons } = match;
+export function ProductMatchCard({
+  match,
+  hiddenReasons,
+  additivesLabel,
+}: {
+  match: ProductMatch;
+  hiddenReasons: readonly string[];
+  additivesLabel: string;
+}) {
+  const { product, fitScore, breakdown, pricePerEffectiveDose } = match;
+  const reasons = match.reasons.filter((r) => !hiddenReasons.includes(r));
 
   return (
     <article className="rounded-lg border border-hairline p-4">
@@ -33,13 +47,12 @@ export function ProductMatchCard({ match }: { match: ProductMatch }) {
       </p>
 
       {/* Per-criterion breakdown */}
-      <dl className="mt-2 grid grid-cols-5 gap-1 text-center text-[10px] text-muted">
+      <dl className="mt-2 grid grid-cols-4 gap-1 text-center text-[10px] text-muted">
         {(
           [
             ["Dose", breakdown.dose],
             ["Form", breakdown.form],
-            ["Tested", breakdown.testing],
-            ["Clean", breakdown.additives],
+            [additivesLabel, breakdown.additives],
             ["Value", breakdown.price],
           ] as [string, number][]
         ).map(([label, v]) => (
@@ -51,11 +64,6 @@ export function ProductMatchCard({ match }: { match: ProductMatch }) {
       </dl>
 
       <div className="mt-2 flex flex-wrap gap-1.5">
-        {product.testingTags.map((t) => (
-          <span key={t} className="rounded-full bg-success/10 px-2 py-0.5 text-xs text-success">
-            {t}
-          </span>
-        ))}
         {product.additivesTags.length > 0 && (
           <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs text-warning">
             contains additives
@@ -70,8 +78,6 @@ export function ProductMatchCard({ match }: { match: ProductMatch }) {
           ))}
         </ul>
       )}
-
-      <p className="mt-2 text-xs text-muted-soft">{product.qualityNotes}</p>
 
       {product.affiliateLink && (
         <div className="mt-3">

@@ -11,6 +11,7 @@ import {
   gradeDCoverage,
   isTitleOnly,
   NOT_IN_ABSTRACT,
+  productMatchCopy,
   safetyCopy,
 } from "./index";
 
@@ -21,10 +22,12 @@ describe("lib/safety phrasing", () => {
     expect(containsBannedLanguage("May support sleep quality")).toBe(false);
   });
 
-  it("never emits banned language in disclaimers, the background label, the advisor outcomes or the auth errors", () => {
+  it("never emits banned language in disclaimers, the background label, the product-match copy, the advisor outcomes or the auth errors", () => {
     for (const text of [
       ...Object.values(DISCLAIMERS),
       BACKGROUND_LABEL,
+      COVERAGE.productMatchLimit.text,
+      ...Object.values(productMatchCopy),
       ...Object.values(advisorOutcomeCopy),
       ...Object.values(authCopy),
     ]) {
@@ -102,5 +105,36 @@ describe("gradeDCoverage — D1/D2 follows R6 (P3-7)", () => {
 
   it("not Grade D → null", () => {
     expect(gradeDCoverage({ grade: "C", paperIds: ["t1"] }, [titleOnly("t1")])).toBeNull();
+  });
+});
+
+// Phase 4 U13 (FU-59) — the brief's constraints on the product-match statement,
+// executable: it says the set is small and curated, says an absent product is not
+// judged, and makes no claim about product quality (§2.2 rule 10). Owner ruling on
+// Q-14 (2026-09-29): option (b), allergen sentences re-ruled; "not an endorsement" is allowed.
+describe("COVERAGE.productMatchLimit — U13 copy constraints", () => {
+  const { dataset, state, text } = COVERAGE.productMatchLimit;
+
+  it("is the products dataset's limit statement", () => {
+    expect([dataset, state]).toEqual(["products", "limit"]);
+  });
+
+  it("says the set is small, curated sample data, that absence is not a judgement, and names the allergen exclusion", () => {
+    expect(text).toMatch(/\bsmall\b/);
+    expect(text).toMatch(/\bcurated\b/);
+    expect(text).toMatch(/sample products, not real market listings/);
+    expect(text).toMatch(/is not a judgement on it/);
+    expect(text).toMatch(/left out only when a listed allergen matches an allergy entered in your profile\./);
+    expect(text).toMatch(/Allergen listings in this set are incomplete, so a product shown here may still contain something you avoid/);
+    expect(text).not.toMatch(/conflict with allergies in your profile are left out/); // round 2's B2: overclaims the exact-tag match
+  });
+
+  it("makes no claim about product quality; only the negated \"not an endorsement\" is allowed", () => {
+    const QUALITY =
+      /\b(best|top|quality|trusted|trustworthy|vetted|vetting|verified|tested|assess\w*|recommend\w*|endorse\w*|safe|reliable|premium|approved|pure|clean)\b/i;
+    expect(text).toMatch(/\bnot an endorsement\b/); // the allowance is used, so it is not vacuous
+    const unnegated = text.replace(/\bnot an endorsement\b/g, "");
+    expect(unnegated).not.toMatch(QUALITY);
+    for (const s of Object.values(productMatchCopy)) expect(s).not.toMatch(QUALITY);
   });
 });

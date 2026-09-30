@@ -46,7 +46,8 @@ export type CoverageDataset =
   | "food"
   | "side-effects"
   | "safety-lists"
-  | "stack-evaluation";
+  | "stack-evaluation"
+  | "products";
 export type CoverageState = "none" | "limit";
 export interface CoverageCopy {
   dataset: CoverageDataset;
@@ -121,7 +122,28 @@ export const COVERAGE = {
     state: "none",
     text: "No verified evidence in this library for this effect. That is not the same as evidence that it doesn't work.",
   },
+  // Phase 4 U13 (FU-59), owner rulings on Q-14 (2026-09-29), verbatim. The catalog is
+  // mock sample data (src/data/seed-products.ts), and D-3 keeps a real one out of
+  // Phase 4. The allergen sentences state exactly what the matcher computes: an exact
+  // match of a listed tag (hasAllergenConflict), over tags that are incomplete.
+  productMatchLimit: {
+    dataset: "products",
+    state: "limit",
+    text: "Matches come from a small, curated set of sample products, not real market listings. Being in this set is not an endorsement, and a product outside it was never considered, so its absence here is not a judgement on it. Products are left out only when a listed allergen matches an allergy entered in your profile. Allergen listings in this set are incomplete, so a product shown here may still contain something you avoid — check the label.",
+  },
 } as const satisfies Record<string, CoverageCopy>;
+
+/**
+ * Phase 4 U13 (FU-59), owner rulings on Q-14 (2026-09-29): the Product Match panel's own
+ * strings. The catalog is sample data, so the panel says "sample", and it renders no
+ * certification claim (the seed's certifier names sit on fictional brands, §2.2 rule 8).
+ */
+export const productMatchCopy = {
+  subtitle: "Sample products ranked by fit — never by commission.",
+  noMatches: "No matching products to show.",
+  /** The breakdown cell for `breakdown.additives` (was "Clean", which read as a purity claim). */
+  additivesLabel: "Additives",
+} as const;
 
 /**
  * Phase 4 U6 (c), owner ruling (3) 2026-09-28. A supplement's `description` is general

@@ -20,8 +20,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SEED_SUPPLEMENTS } from "@/data/seed-supplements";
 import { foodPairingsForSupplement, interactionsForSupplement } from "@/lib/interactions";
 import { getEffectsForSupplement, getPapersForEffect } from "@/lib/evidence";
-import { COVERAGE, containsBannedLanguage, type CoverageCopy } from "@/lib/safety";
+import { COVERAGE, containsBannedLanguage, productMatchCopy, type CoverageCopy } from "@/lib/safety";
+import { matchProducts } from "@/lib/product-matcher";
 import { profileForSupplement } from "@/lib/side-effects";
+import { SEED_PRODUCTS } from "@/data/seed-products";
 import type { Effect, EvaluationFlag, Paper, Stack, StackItem, Supplement } from "@/types";
 import type { EvidenceProfile } from "@/types/evidence-grading";
 import { EvidenceBreakdown } from "@/components/evidence/EvidenceBreakdown";
@@ -29,6 +31,7 @@ import { FoodPairingSection } from "@/components/library/FoodPairingSection";
 import { InteractionSection } from "@/components/library/InteractionSection";
 import { SupplementDetail } from "@/components/library/SupplementDetail";
 import { WhatToWatch } from "@/components/library/WhatToWatch";
+import { ProductMatchPanel } from "@/components/stack/ProductMatchPanel";
 import { StackWorkspace } from "@/components/stack/StackWorkspace";
 import { attachedProductLabels, stackLabCopy } from "@/components/stack/stack-lab-props";
 
@@ -51,6 +54,8 @@ const SURFACES: Record<string, string> = {
     "stack evaluation over the curated datasets (API result, not an accessor import)",
   "src/components/evidence/EvidenceBreakdown.tsx":
     "per-dimension evidence: a dimension citing no paper, and the Grade D statement (U7 b2)",
+  "src/components/stack/ProductMatchPanel.tsx":
+    "matches from the seeded product catalog (API result, not an accessor import; Phase 4 U13, FU-59)",
 };
 
 /** Modules whose import makes a component a surface. `vocab` and
@@ -201,6 +206,24 @@ const dim = (score: 0 | 1 | 2 | 3, paperIds: string[]) => ({
   paperIds,
 });
 const madeUpPaper = { id: "p-made-up", title: "Made-up paper" } as Paper;
+
+/** Phase 4 U13: the panel as StackLabClient mounts it, its copy built by the server page. */
+function renderProductPanel() {
+  render(<ProductMatchPanel stackId={stack.id} copy={stackLabCopy().productMatch} />);
+}
+
+/** Stubs POST /api/products/match to answer with `result`. */
+function stubMatch(result: unknown) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      new Response(JSON.stringify({ data: result }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    ),
+  );
+}
 
 /** RENDER cases, keyed by the SURFACES file each one exercises. */
 const RENDER_CASES: Record<string, { name: string; run: () => void | Promise<void> }[]> = {
@@ -409,6 +432,31 @@ const RENDER_CASES: Record<string, { name: string; run: () => void | Promise<voi
       },
     },
   ],
+  "src/components/stack/ProductMatchPanel.tsx": [
+    {
+      name: "limit: the catalog's limit is stated before any search",
+      run: () => {
+        renderProductPanel();
+        expectCoverage(COVERAGE.productMatchLimit);
+      },
+    },
+    {
+      name: "limit: still stated beside real matches and beside a group with none",
+      run: async () => {
+        const seeded = SEED_PRODUCTS[0].supplementId;
+        const result = matchProducts({
+          stackItems: [item({ id: "seeded", supplementId: seeded }), item({ id: "made-up", supplementId: MADE_UP })],
+        });
+        expect(result.groups.map((g) => g.matches.length > 0)).toEqual([true, false]); // both states in play
+        stubMatch(result);
+        renderProductPanel();
+        fireEvent.click(screen.getByRole("button", { name: "Find Products" }));
+        await screen.findByText(productMatchCopy.noMatches);
+        expect(screen.getAllByText(/per effective dose/).length).toBeGreaterThan(0);
+        expectCoverage(COVERAGE.productMatchLimit);
+      },
+    },
+  ],
 };
 
 describe("coverage honesty — render (U7, [P3-X4])", () => {
@@ -449,6 +497,38 @@ describe("coverage honesty — completeness (U7)", () => {
 
   it("every registered surface has a render case, and every case a surface", () => {
     expect(Object.keys(RENDER_CASES).sort()).toEqual(Object.keys(SURFACES).sort());
+  });
+});
+
+// AC-3, as re-specified by the owner on Q-14: render the panel with placeholder copy.
+// What renders must be the placeholder, and no real string may appear, so a string
+// retyped in the component (whole, split or concatenated) fails either way.
+describe("coverage honesty — the product panel renders only the copy it is handed (Phase 4 U13, AC-3)", () => {
+  it("placeholders passed through the prop are what renders; the real strings never appear", async () => {
+    const placeholder = {
+      subtitle: "PLACEHOLDER subtitle",
+      noMatches: "PLACEHOLDER no matches",
+      additivesLabel: "PLACEHOLDER additives",
+      limit: { dataset: "products", state: "limit", text: "PLACEHOLDER limit" } as CoverageCopy,
+      hiddenReasons: [],
+    };
+    const seeded = SEED_PRODUCTS[0].supplementId;
+    stubMatch(
+      matchProducts({
+        stackItems: [item({ id: "seeded", supplementId: seeded }), item({ id: "made-up", supplementId: MADE_UP })],
+      }),
+    );
+    render(<ProductMatchPanel stackId={stack.id} copy={placeholder} />);
+    expect(screen.getByTestId("coverage-limit").textContent).toBe("PLACEHOLDER limit");
+    expect(screen.getByText("PLACEHOLDER subtitle")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Find Products" }));
+    await screen.findByText("PLACEHOLDER no matches");
+    expect(screen.getAllByText("PLACEHOLDER additives").length).toBeGreaterThan(0); // cards rendered
+    expect(screen.queryAllByText(productMatchCopy.additivesLabel)).toEqual([]);
+    const text = document.body.textContent ?? "";
+    for (const real of [COVERAGE.productMatchLimit.text, productMatchCopy.subtitle, productMatchCopy.noMatches]) {
+      expect(text, real).not.toContain(real);
+    }
   });
 });
 

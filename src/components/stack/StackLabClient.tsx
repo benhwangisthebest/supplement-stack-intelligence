@@ -53,7 +53,7 @@ export function StackLabClient({
       </div>
 
       <div className="mt-10">
-        <ProductMatchPanel stackId={stack.id} />
+        <ProductMatchPanel stackId={stack.id} copy={copy.productMatch} />
       </div>
 
       <Disclaimer text={copy.evaluationDisclaimer} className="mt-10" />
