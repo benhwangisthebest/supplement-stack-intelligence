@@ -4,7 +4,7 @@ import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LabMarker } from "@/types";
 import type { MarkerCatalogEntry } from "@/lib/biomarkers/marker-catalog";
-import type { labRangeClearedCopy } from "@/lib/safety";
+import type { labBoundNotNumberCopy, labRangeClearedCopy } from "@/lib/safety";
 import type { MarkerCatalog } from "./profile-props";
 
 /**
@@ -25,6 +25,23 @@ export function lookupMarkerCatalog(catalog: MarkerCatalog, name: string): Marke
  */
 export function normalizeEnteredUnit(unit: string): string {
   return unit.trim().toLowerCase().replace(/µ/g, "u").replace(/\s+/g, "");
+}
+
+/**
+ * [Phase 4 U23, N-118] True when a typed bound is filled in but is not a number.
+ * `Number("3,5")` is NaN and `Number("1e999")` is Infinity, and JSON sends both as
+ * null, which the server stores as "no bound". `Number("0x10")` is 16. So a bound is
+ * read only as a plain decimal (a dot for decimals, an optional exponent) that is
+ * finite, and not a nonzero decimal that underflows to 0 (`1e-400`). Blank is not
+ * "not a number": it means no bound (U22).
+ */
+export function boundIsNotNumber(field: string): boolean {
+  const t = field.trim();
+  if (t === "") return false;
+  const m = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.exec(t);
+  if (!m) return true;
+  const n = Number(t);
+  return !Number.isFinite(n) || (n === 0 && /[1-9]/.test(m[1]));
 }
 
 /** What the form auto-filled, so an untouched range can be kept with its unit. */
@@ -87,12 +104,15 @@ export function LabMarkerTable({
   initial,
   catalog,
   rangeCleared,
+  boundNotNumber,
 }: {
   initial: LabMarker[];
   /** Marker suggestions + unit/range auto-fill table, from the server page (U9, rule 7). */
   catalog: MarkerCatalog;
   /** `labRangeClearedCopy.form`, from the server page (U22, N-115, rule 7). */
   rangeCleared: (typeof labRangeClearedCopy)["form"];
+  /** `labBoundNotNumberCopy`, from the server page (U23, N-118, rule 7). */
+  boundNotNumber: typeof labBoundNotNumberCopy;
 }) {
   const router = useRouter();
   const [marker, setMarker] = useState("");
@@ -161,6 +181,9 @@ export function LabMarkerTable({
   }
   const dropLow = dropped(refLow, autoFill?.refLow);
   const dropHigh = dropped(refHigh, autoFill?.refHigh);
+  // [Phase 4 U23, N-118] Only a bound that will be sent is checked.
+  const badLow = !dropLow && boundIsNotNumber(refLow);
+  const badHigh = !dropHigh && boundIsNotNumber(refHigh);
 
   function boundToSend(field: string, isDropped: boolean): number | null {
     if (field.trim() === "" || isDropped) return null; // [U22, N-116] Number("  ") is 0
@@ -178,6 +201,10 @@ export function LabMarkerTable({
     const num = value.trim() === "" ? Number.NaN : Number(value);
     if (!marker.trim() || !unit.trim() || Number.isNaN(num)) {
       setError("Marker, numeric value, and unit are required.");
+      return;
+    }
+    if (badLow || badHigh) {
+      setError(boundNotNumber);
       return;
     }
     setBusy(true);
@@ -332,7 +359,8 @@ export function LabMarkerTable({
           }}
           placeholder="Ref low (optional)"
           inputMode="decimal"
-          className="rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
+          aria-invalid={badLow}
+          className={`rounded-md border px-3 py-2 text-sm outline-none focus:border-ink ${badLow ? "border-error" : "border-hairline"}`}
         />
         <input
           value={dropHigh ? "" : refHigh}
@@ -342,7 +370,8 @@ export function LabMarkerTable({
           }}
           placeholder="Ref high (optional)"
           inputMode="decimal"
-          className="rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
+          aria-invalid={badHigh}
+          className={`rounded-md border px-3 py-2 text-sm outline-none focus:border-ink ${badHigh ? "border-error" : "border-hairline"}`}
         />
       </div>
 

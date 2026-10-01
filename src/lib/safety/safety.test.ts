@@ -6,6 +6,7 @@ import {
   BACKGROUND_LABEL,
   BANNED_PHRASES,
   citationUpdatedCopy,
+  labBoundNotNumberCopy,
   labRangeClearedCopy,
   containsBannedLanguage,
   COVERAGE,
@@ -24,7 +25,7 @@ describe("lib/safety phrasing", () => {
     expect(containsBannedLanguage("May support sleep quality")).toBe(false);
   });
 
-  it("never emits banned language in disclaimers, the background label, the product-match copy, the advisor outcomes, the auth errors, the source-chip markers or the cleared-range notices", () => {
+  it("never emits banned language in disclaimers, the background label, the product-match copy, the advisor outcomes, the auth errors, the source-chip markers, the cleared-range notices or the bound message", () => {
     for (const text of [
       ...Object.values(DISCLAIMERS),
       BACKGROUND_LABEL,
@@ -34,9 +35,15 @@ describe("lib/safety phrasing", () => {
       ...Object.values(authCopy),
       ...Object.values(citationUpdatedCopy),
       ...Object.values(labRangeClearedCopy),
+      labBoundNotNumberCopy,
     ]) {
       expect(containsBannedLanguage(text), text).toBe(false);
     }
+  });
+
+  // [Phase 4 U23, N-118] Owner-approved copy (2026-10-01), pinned verbatim.
+  it("keeps the bound message exactly as approved", () => {
+    expect(labBoundNotNumberCopy).toBe("Enter a number, using a dot for decimals (for example 3.5).");
   });
 
   it("every flag copy builder produces non-diagnostic, complete copy", () => {

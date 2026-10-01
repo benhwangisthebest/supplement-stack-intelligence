@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SEED_BIOMARKERS } from "@/data/seed-biomarkers";
 import { markerCatalogEntry, markerSuggestions } from "@/lib/biomarkers/marker-catalog";
 import { normalizeUnit } from "@/lib/biomarkers/units";
-import { labRangeClearedCopy } from "@/lib/safety";
+import { labBoundNotNumberCopy, labRangeClearedCopy } from "@/lib/safety";
 import { LabMarkerTable, lookupMarkerCatalog, normalizeEnteredUnit } from "./LabMarkerTable";
 import { markerCatalog } from "./profile-props";
 
@@ -42,7 +42,7 @@ describe("LabMarkerTable — catalog from the server page (U9)", () => {
   });
 
   it("offers markerSuggestions() as the datalist, and auto-fills unit and range from a typed alias", () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     const marker = screen.getByPlaceholderText("Marker (e.g. Vitamin D)");
     const list = document.getElementById(marker.getAttribute("list")!)!;
     expect([...list.querySelectorAll("option")].map((o) => o.value)).toEqual(markerSuggestions());
@@ -88,7 +88,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   });
 
   it("sends the auto-filled range as null when the unit is changed after auto-fill", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Vitamin D");
     expect(field("Unit").value).toBe(vitD.unit);
     type("Unit", "nmol/L");
@@ -98,7 +98,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   });
 
   it("sends the auto-filled range as null when a different unit was typed first", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Unit", "nmol/L");
     type("Marker (e.g. Vitamin D)", "Vitamin D");
     // [U22, owner approval 2026-10-01] was: shows String(vitD.refLow). The range is
@@ -110,7 +110,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   });
 
   it("keeps the auto-filled range when the unit only differs in case or spacing", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Vitamin D");
     type("Unit", " NG / mL ");
     type("Value", "40");
@@ -119,7 +119,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   });
 
   it("keeps a bound the user edited after auto-fill", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Vitamin D");
     type("Unit", "nmol/L");
     type("Ref low (optional)", "75");
@@ -129,7 +129,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   });
 
   it("keeps a range the user typed for a marker the catalog does not know", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Dragon Enzyme");
     type("Unit", "nmol/L");
     type("Ref low (optional)", "75");
@@ -143,7 +143,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   // to keep the first marker's auto-filled bound under the second marker.
   it("refills an untouched bound when the marker switches to another entry", async () => {
     const mg = markerCatalogEntry("Magnesium")!;
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "hs-CRP"); // mg/L, high 3
     type("Unit", "mg/dL");
     type("Marker (e.g. Vitamin D)", "Magnesium"); // mg/dL, 1.7–2.4
@@ -154,7 +154,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
 
   it("refills an untouched bound across two markers in the same unit", async () => {
     const ca = markerCatalogEntry("Calcium")!;
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Glucose"); // mg/dL, high 100
     type("Marker (e.g. Vitamin D)", "Calcium"); // mg/dL, 8.5–10.5
     expect(field("Ref high (optional)").value).toBe(String(ca.refHigh));
@@ -164,7 +164,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   });
 
   it("keeps a bound the user edited when the marker switches", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Glucose");
     type("Ref high (optional)", "99");
     type("Marker (e.g. Vitamin D)", "Calcium");
@@ -172,7 +172,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   });
 
   it("moves an auto-filled unit to the new marker's unit on a switch", () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "hs-CRP");
     expect(field("Unit").value).toBe(markerCatalogEntry("hs-CRP")!.unit);
     type("Marker (e.g. Vitamin D)", "Magnesium");
@@ -187,7 +187,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
     ["a low bound", "Ref low (optional)"],
     ["a value", "Value"],
   ])("clears an auto-filled unit on a switch when the user typed %s", (_what, placeholder) => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "hs-CRP");
     type(placeholder, "4");
     type("Marker (e.g. Vitamin D)", "Magnesium");
@@ -195,7 +195,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   });
 
   it("clears the unit when a value typed before any unit meets a switch", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Value", "2");
     type("Marker (e.g. Vitamin D)", "Magnesium"); // fills mg/dL
     type("Marker (e.g. Vitamin D)", "hs-CRP");
@@ -212,7 +212,7 @@ describe("LabMarkerTable — an auto-filled range follows its unit (U21)", () =>
   // contains an alias ("Total Magnesium"); the form's exact lookup misses it, so
   // an untouched bound auto-filled for another marker must not be sent with it.
   it("does not send an auto-filled bound once the marker no longer resolves to its entry", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Glucose");
     type("Marker (e.g. Vitamin D)", "Total Magnesium");
     type("Value", "3");
@@ -233,7 +233,7 @@ describe("LabMarkerTable — an empty field is never a 0 (U22, N-116)", () => {
     ["empty", ""],
     ["whitespace-only", "   "],
   ])("rejects an %s Value with the existing message and sends nothing", (_what, v) => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Dragon Enzyme");
     type("Unit", "U/L");
     type("Value", v);
@@ -246,7 +246,7 @@ describe("LabMarkerTable — an empty field is never a 0 (U22, N-116)", () => {
   });
 
   it("sends a whitespace-only bound as null, not 0", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Dragon Enzyme");
     type("Unit", "U/L");
     type("Value", "12");
@@ -262,7 +262,7 @@ describe("LabMarkerTable — an empty field is never a 0 (U22, N-116)", () => {
   });
 
   it("still sends a typed 0 as 0", async () => {
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
     type("Marker (e.g. Vitamin D)", "Dragon Enzyme");
     type("Unit", "U/L");
     type("Value", "0");
@@ -287,7 +287,7 @@ describe("LabMarkerTable — a cleared range is shown cleared, with the notice (
   const type = (p: string, v: string) => fireEvent.change(field(p), { target: { value: v } });
   const notice = () => screen.queryByText(labRangeClearedCopy.form);
   const mount = () =>
-    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} />);
+    render(<LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />);
 
   it("blanks the auto-filled range and shows the notice on a unit edit, and restores both on an edit back", () => {
     mount();
@@ -326,5 +326,98 @@ describe("LabMarkerTable — a cleared range is shown cleared, with the notice (
     vi.unstubAllGlobals();
     const body = JSON.parse(((fetchMock.mock.calls[0] as unknown[])[1] as { body: string }).body);
     expect(body).toMatchObject({ referenceLow: vitD.refLow, referenceHigh: vitD.refHigh });
+  });
+});
+
+// [Phase 4 U23, N-118] Number("3,5") is NaN and Number("1e999") is Infinity, and
+// JSON.stringify sends both as null, which the server stores as "no bound". The
+// field kept showing the text and nothing said the bound was gone. Now a typed
+// bound that is not a finite number shows the approved message and sends nothing.
+// An empty bound still means "no bound" (U22), and a valid number is sent as typed.
+describe("LabMarkerTable — a bound that is not a number is refused, never sent as null (U23, N-118)", () => {
+  const field = (p: string) => screen.getByPlaceholderText(p) as HTMLInputElement;
+  const type = (p: string, v: string) => fireEvent.change(field(p), { target: { value: v } });
+
+  function fill(bound: "Ref low (optional)" | "Ref high (optional)", v: string) {
+    render(
+      <LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />,
+    );
+    type("Marker (e.g. Vitamin D)", "Dragon Enzyme");
+    type("Unit", "U/L");
+    type("Value", "12");
+    type(bound, v);
+  }
+
+  async function submitted(): Promise<Record<string, unknown>> {
+    const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({}) }));
+    vi.stubGlobal("fetch", fetchMock);
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    vi.unstubAllGlobals();
+    return JSON.parse(((fetchMock.mock.calls[0] as unknown[])[1] as { body: string }).body);
+  }
+
+  it.each(
+    ["3,5", "1e999", "abc", "Infinity", "0x10", "1e-400"].flatMap((v) => [
+      ["Ref low (optional)", v],
+      ["Ref high (optional)", v],
+    ]),
+  )("refuses %s = %j with the message and sends nothing", (bound, v) => {
+    fill(bound as "Ref low (optional)", v);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    vi.unstubAllGlobals();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toBe(labBoundNotNumberCopy);
+    expect(field(bound).getAttribute("aria-invalid")).toBe("true");
+    expect(field(bound).value).toBe(v);
+  });
+
+  it("still sends an empty bound as null", async () => {
+    fill("Ref low (optional)", "");
+    expect(await submitted()).toMatchObject({ value: 12, referenceLow: null, referenceHigh: null });
+  });
+
+  it.each([
+    ["3.5", 3.5],
+    [" 3.5 ", 3.5],
+    ["-2", -2],
+    ["0", 0],
+    ["1e2", 100],
+  ])("sends a valid bound %j as %j", async (v, n) => {
+    fill("Ref high (optional)", v);
+    expect(field("Ref high (optional)").getAttribute("aria-invalid")).not.toBe("true");
+    expect(await submitted()).toMatchObject({ referenceLow: null, referenceHigh: n });
+  });
+
+  // [U23 review finding 2] A bound U22 blanked (auto-filled, then a unit edit) and
+  // then typed into is the user's: it is checked, not dropped as null.
+  it("refuses a bad bound typed into a range a unit edit cleared", () => {
+    render(
+      <LabMarkerTable initial={[]} catalog={markerCatalog()} rangeCleared={labRangeClearedCopy.form} boundNotNumber={labBoundNotNumberCopy} />,
+    );
+    type("Marker (e.g. Vitamin D)", "Vitamin D");
+    type("Unit", "nmol/L");
+    type("Value", "100");
+    expect(field("Ref low (optional)").value).toBe("");
+    type("Ref low (optional)", "3,5");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    vi.unstubAllGlobals();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toBe(labBoundNotNumberCopy);
+  });
+
+  it("clears the message once the bound is corrected", async () => {
+    fill("Ref low (optional)", "3,5");
+    vi.stubGlobal("fetch", vi.fn());
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    vi.unstubAllGlobals();
+    expect(screen.getByText(labBoundNotNumberCopy)).toBeTruthy();
+    type("Ref low (optional)", "3.5");
+    expect(await submitted()).toMatchObject({ referenceLow: 3.5 });
+    expect(screen.queryByText(labBoundNotNumberCopy)).toBeNull();
   });
 });

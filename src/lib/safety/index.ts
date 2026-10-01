@@ -677,3 +677,10 @@ export const labRangeClearedCopy = {
   review:
     "Reference range cleared: it was read from your report in a different unit. If your report gives a range in this unit, you can add it to the reading after saving.",
 } as const;
+
+// ---- A reference bound that is not a number (Phase 4 U23, N-118; approved by the owner 2026-10-01). ----
+// `Number("3,5")` is NaN and `Number("1e999")` is Infinity, and JSON sends both as null,
+// which the server reads as "no bound". So a typed bound that is not a finite number is
+// refused with this message instead of being dropped silently (CLAUDE.md §8.3). It serves
+// the add-marker form and the per-reading edit, as a prop (CLAUDE.md §4 rule 7).
+export const labBoundNotNumberCopy = "Enter a number, using a dot for decimals (for example 3.5).";

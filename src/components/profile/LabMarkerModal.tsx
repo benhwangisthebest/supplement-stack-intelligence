@@ -9,8 +9,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LabMarker } from "@/types";
 import type { LabMarkerTimelinePoint, TrendSignal } from "@/types/lab";
-import type { labRangeClearedCopy } from "@/lib/safety";
-import { normalizeEnteredUnit } from "./LabMarkerTable";
+import type { labBoundNotNumberCopy, labRangeClearedCopy } from "@/lib/safety";
+import { boundIsNotNumber, normalizeEnteredUnit } from "./LabMarkerTable";
 
 interface Props {
   trend: TrendSignal;
@@ -20,6 +20,8 @@ interface Props {
   biomarkerIds: Readonly<Record<string, string | null>>;
   /** `labRangeClearedCopy.form`, from the server page via LabTimeline (U22, rule 7). */
   rangeCleared: (typeof labRangeClearedCopy)["form"];
+  /** `labBoundNotNumberCopy`, from the server page via LabTimeline (U23, N-118, rule 7). */
+  boundNotNumber: typeof labBoundNotNumberCopy;
   onClose: () => void;
 }
 
@@ -55,6 +57,7 @@ export function LabMarkerModal({
   markers,
   biomarkerIds,
   rangeCleared,
+  boundNotNumber,
   onClose,
 }: Props) {
   const router = useRouter();
@@ -137,6 +140,11 @@ export function LabMarkerModal({
     // [U22, N-116] Number("  ") is 0, so a whitespace-only bound is empty.
     return d[bound].trim() === "" || dropped(m, d, bound) ? null : Number(d[bound]);
   }
+  // [Phase 4 U23, N-118] A bound that will be sent but is not a number. Sent, it
+  // would be null, wiping the stored bound; so the save is refused with a message.
+  function badBound(m: LabMarker, d: Draft, bound: "refLow" | "refHigh"): boolean {
+    return !dropped(m, d, bound) && boundIsNotNumber(d[bound]);
+  }
 
   function cancelEdit() {
     setEditingId(null);
@@ -150,6 +158,10 @@ export function LabMarkerModal({
     const num = draft.value.trim() === "" ? Number.NaN : Number(draft.value);
     if (!draft.unit.trim() || Number.isNaN(num)) {
       setError("A numeric value and a unit are required.");
+      return;
+    }
+    if (badBound(m, draft, "refLow") || badBound(m, draft, "refHigh")) {
+      setError(boundNotNumber);
       return;
     }
     setBusy(true);
@@ -198,6 +210,7 @@ export function LabMarkerModal({
 
   const inputCls =
     "w-full rounded-md border border-hairline px-2 py-1 text-sm outline-none focus:border-ink";
+  const invalidCls = inputCls.replace("border-hairline", "border-error"); // U23, N-118
 
   return (
     <div
@@ -344,23 +357,25 @@ export function LabMarkerModal({
                           aria-label="Reference low"
                           value={dropped(m, draft, "refLow") ? "" : draft.refLow}
                           inputMode="decimal"
+                          aria-invalid={badBound(m, draft, "refLow")}
                           onChange={(e) => {
                             setDraft({ ...draft, refLow: e.target.value });
                             setTyped((t) => ({ ...t, refLow: true }));
                           }}
                           placeholder="Ref low"
-                          className={inputCls}
+                          className={badBound(m, draft, "refLow") ? invalidCls : inputCls}
                         />
                         <input
                           aria-label="Reference high"
                           value={dropped(m, draft, "refHigh") ? "" : draft.refHigh}
                           inputMode="decimal"
+                          aria-invalid={badBound(m, draft, "refHigh")}
                           onChange={(e) => {
                             setDraft({ ...draft, refHigh: e.target.value });
                             setTyped((t) => ({ ...t, refHigh: true }));
                           }}
                           placeholder="Ref high"
-                          className={inputCls}
+                          className={badBound(m, draft, "refHigh") ? invalidCls : inputCls}
                         />
                       </div>
                       {(dropped(m, draft, "refLow") || dropped(m, draft, "refHigh")) && (

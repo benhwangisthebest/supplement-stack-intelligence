@@ -18,7 +18,7 @@ import {
   medicationSuggestions,
 } from "@/components/profile/profile-props";
 import { SideEffectTimeline } from "@/components/profile/SideEffectTimeline";
-import { DISCLAIMERS, labRangeClearedCopy } from "@/lib/safety";
+import { DISCLAIMERS, labBoundNotNumberCopy, labRangeClearedCopy } from "@/lib/safety";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
@@ -82,6 +82,7 @@ export default async function ProfilePage() {
               markers={markers}
               biomarkerIds={biomarkerIdsByMarker(markers)}
               rangeCleared={labRangeClearedCopy.form}
+              boundNotNumber={labBoundNotNumberCopy}
             />
           </div>
         </div>
@@ -97,6 +98,7 @@ export default async function ProfilePage() {
               initial={markers}
               catalog={markerCatalog()}
               rangeCleared={labRangeClearedCopy.form}
+              boundNotNumber={labBoundNotNumberCopy}
             />
           </div>
         </div>

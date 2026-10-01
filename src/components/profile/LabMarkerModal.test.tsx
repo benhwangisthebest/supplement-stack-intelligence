@@ -8,7 +8,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SEED_BIOMARKERS } from "@/data/seed-biomarkers";
 import { normalizeMarker } from "@/lib/biomarkers";
-import { labRangeClearedCopy } from "@/lib/safety";
+import { labBoundNotNumberCopy, labRangeClearedCopy } from "@/lib/safety";
 import type { LabMarker } from "@/types";
 import type { TrendSignal } from "@/types/lab";
 import { LabMarkerModal } from "./LabMarkerModal";
@@ -67,6 +67,7 @@ describe("LabMarkerModal — readings chosen by server-computed biomarker ids (U
           markers={markers}
           biomarkerIds={biomarkerIdsByMarker(markers)}
           rangeCleared={labRangeClearedCopy.form}
+          boundNotNumber={labBoundNotNumberCopy}
           onClose={() => {}}
         />,
       );
@@ -103,6 +104,7 @@ describe("LabMarkerModal — the per-reading edit never saves a false value (U22
         markers={[vitD]}
         biomarkerIds={{ r1: "vitamin-d-25oh" }}
         rangeCleared={labRangeClearedCopy.form}
+        boundNotNumber={labBoundNotNumberCopy}
         onClose={() => {}}
       />,
     );
@@ -182,6 +184,7 @@ describe("LabMarkerModal — the per-reading edit never saves a false value (U22
         markers={[vitD, older]}
         biomarkerIds={{ r1: "vitamin-d-25oh", r0: "vitamin-d-25oh" }}
         rangeCleared={labRangeClearedCopy.form}
+        boundNotNumber={labBoundNotNumberCopy}
         onClose={() => {}}
       />,
     );
@@ -193,5 +196,107 @@ describe("LabMarkerModal — the per-reading edit never saves a false value (U22
     type("Unit", "nmol/L");
     expect(screen.getByText(labRangeClearedCopy.form)).toBeTruthy();
     expect(await saved()).toMatchObject({ value: 35, referenceLow: null, referenceHigh: null });
+  });
+});
+
+// [Phase 4 U23, N-118] In the per-reading edit a stored bound is pre-filled. A
+// bound edited to "3,5" or "1e999" was Number()'d to NaN or Infinity, which JSON
+// sends as null, so the save silently WIPED the stored bound. Now the approved
+// message shows and nothing is sent. Empty still means "no bound" (U22).
+describe("LabMarkerModal — a bound that is not a number is refused, never sent as null (U23, N-118)", () => {
+  const vitD: LabMarker = {
+    id: "r1",
+    userId: "made-up-user",
+    marker: "Vitamin D",
+    value: 40,
+    unit: "ng/mL",
+    referenceLow: 30,
+    referenceHigh: 100,
+    date: "2026-01-01",
+    notes: null,
+  };
+  const field = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
+  const type = (label: string, v: string) => fireEvent.change(field(label), { target: { value: v } });
+
+  function open() {
+    render(
+      <LabMarkerModal
+        trend={trendFor("vitamin-d-25oh", "Vitamin D")}
+        points={[]}
+        markers={[vitD]}
+        biomarkerIds={{ r1: "vitamin-d-25oh" }}
+        rangeCleared={labRangeClearedCopy.form}
+        boundNotNumber={labBoundNotNumberCopy}
+        onClose={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  }
+
+  async function saved(): Promise<Record<string, unknown>> {
+    const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({}) }));
+    vi.stubGlobal("fetch", fetchMock);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    vi.unstubAllGlobals();
+    return JSON.parse(((fetchMock.mock.calls[0] as unknown[])[1] as { body: string }).body);
+  }
+
+  it.each(
+    ["3,5", "1e999", "abc", "Infinity", "0x10", "1e-400"].flatMap((v) => [
+      ["Reference low", v],
+      ["Reference high", v],
+    ]),
+  )("refuses %s = %j with the message and does not wipe the stored bound", (label, v) => {
+    open();
+    type(label, v);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    vi.unstubAllGlobals();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toBe(labBoundNotNumberCopy);
+    expect(field(label).getAttribute("aria-invalid")).toBe("true");
+    expect(field(label).value).toBe(v);
+  });
+
+  it("still sends an emptied bound as null", async () => {
+    open();
+    type("Reference high", "");
+    expect(await saved()).toMatchObject({ referenceLow: 30, referenceHigh: null });
+  });
+
+  it.each([
+    ["3.5", 3.5],
+    [" 3.5 ", 3.5],
+    ["0", 0],
+    ["1e1", 10],
+  ])("sends a valid bound %j as %j", async (v, n) => {
+    open();
+    type("Reference low", v);
+    expect(field("Reference low").getAttribute("aria-invalid")).not.toBe("true");
+    expect(await saved()).toMatchObject({ referenceLow: n, referenceHigh: 100 });
+  });
+
+  // [U23 review finding 2] A stored bound blanked by a Unit edit, then typed into,
+  // is the user's: it is checked, not dropped as null.
+  it("refuses a bad bound typed into a stored range a Unit edit cleared", () => {
+    open();
+    type("Unit", "nmol/L");
+    expect(field("Reference low").value).toBe("");
+    type("Reference low", "3,5");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    vi.unstubAllGlobals();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toBe(labBoundNotNumberCopy);
+  });
+
+  it("does not hold a stored bound the Unit edit cleared against the save", async () => {
+    // The cleared bound is not sent, so it is not checked: only what is sent is.
+    open();
+    type("Unit", "nmol/L");
+    expect(await saved()).toMatchObject({ unit: "nmol/L", referenceLow: null, referenceHigh: null });
   });
 });

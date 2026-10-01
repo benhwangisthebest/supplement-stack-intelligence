@@ -28,6 +28,7 @@ import {
   stackInputSchema,
   stackItemInputSchema,
 } from "./schemas";
+import { labCommitSchema } from "@/lib/lab-import/schema";
 
 const UUID = "11111111-2222-4333-8444-555555555555";
 
@@ -185,6 +186,27 @@ describe("labMarkerInputSchema — the reference-range refinement", () => {
 
   it("accepts a negative value — some markers legitimately report one", () => {
     expect(labMarkerInputSchema.safeParse({ ...base, value: -1 }).success).toBe(true);
+  });
+
+  // [Phase 4 U23, N-118] JSON cannot carry NaN or Infinity (it sends null), so the
+  // browser forms refuse those bounds before sending. This pins the server's half,
+  // for both lab write schemas: a non-finite or string bound that does arrive is
+  // rejected, never stored. `.finite()` is what rejects Infinity: z.number() alone
+  // accepts it.
+  it("rejects a non-finite or string bound, in both lab write schemas", () => {
+    const commit = (m: Record<string, unknown>) =>
+      labCommitSchema.safeParse({
+        collectedAt: "2026-01-01",
+        source: "csv",
+        markers: [{ rawLabel: "Ferritin", value: 45, unit: "ng/mL", ...m }],
+      }).success;
+    expect(commit({ referenceLow: 3.5, referenceHigh: 100 })).toBe(true); // anti-vacuity
+    for (const bad of [NaN, Infinity, -Infinity, "3,5", "3.5"]) {
+      for (const bound of ["referenceLow", "referenceHigh"]) {
+        expect(labMarkerInputSchema.safeParse({ ...base, [bound]: bad }).success, `${bound} ${bad}`).toBe(false);
+        expect(commit({ [bound]: bad }), `commit ${bound} ${bad}`).toBe(false);
+      }
+    }
   });
 });
 

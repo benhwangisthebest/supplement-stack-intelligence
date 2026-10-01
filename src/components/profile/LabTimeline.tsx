@@ -8,7 +8,7 @@
 import { useState } from "react";
 import type { LabMarker } from "@/types";
 import type { LabMarkerTimelinePoint, TrendSignal } from "@/types/lab";
-import type { labRangeClearedCopy } from "@/lib/safety";
+import type { labBoundNotNumberCopy, labRangeClearedCopy } from "@/lib/safety";
 import { TrendChart } from "./TrendChart";
 import { LabMarkerModal } from "./LabMarkerModal";
 
@@ -19,6 +19,8 @@ interface Props {
   biomarkerIds: Readonly<Record<string, string | null>>; // row id → canonical biomarker (server-computed, U9)
   /** `labRangeClearedCopy.form`, from the server page, for the per-reading edit (U22, rule 7). */
   rangeCleared: (typeof labRangeClearedCopy)["form"];
+  /** `labBoundNotNumberCopy`, from the server page, for the per-reading edit (U23, N-118, rule 7). */
+  boundNotNumber: typeof labBoundNotNumberCopy;
 }
 
 const ARROW: Record<TrendSignal["direction"], string> = {
@@ -38,7 +40,14 @@ function seriesFor(
     .map((p) => p.canonicalValue);
 }
 
-export function LabTimeline({ trends, points, markers, biomarkerIds, rangeCleared }: Props) {
+export function LabTimeline({
+  trends,
+  points,
+  markers,
+  biomarkerIds,
+  rangeCleared,
+  boundNotNumber,
+}: Props) {
   const [selected, setSelected] = useState<TrendSignal | null>(null);
 
   if (trends.length === 0) {
@@ -113,6 +122,7 @@ export function LabTimeline({ trends, points, markers, biomarkerIds, rangeCleare
           markers={markers}
           biomarkerIds={biomarkerIds}
           rangeCleared={rangeCleared}
+          boundNotNumber={boundNotNumber}
           onClose={() => setSelected(null)}
         />
       )}
