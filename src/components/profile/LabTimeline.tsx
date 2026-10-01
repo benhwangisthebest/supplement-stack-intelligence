@@ -8,6 +8,7 @@
 import { useState } from "react";
 import type { LabMarker } from "@/types";
 import type { LabMarkerTimelinePoint, TrendSignal } from "@/types/lab";
+import type { labRangeClearedCopy } from "@/lib/safety";
 import { TrendChart } from "./TrendChart";
 import { LabMarkerModal } from "./LabMarkerModal";
 
@@ -16,6 +17,8 @@ interface Props {
   points: LabMarkerTimelinePoint[];
   markers: LabMarker[]; // raw rows (with ids) so the history modal can edit/remove
   biomarkerIds: Readonly<Record<string, string | null>>; // row id → canonical biomarker (server-computed, U9)
+  /** `labRangeClearedCopy.form`, from the server page, for the per-reading edit (U22, rule 7). */
+  rangeCleared: (typeof labRangeClearedCopy)["form"];
 }
 
 const ARROW: Record<TrendSignal["direction"], string> = {
@@ -35,7 +38,7 @@ function seriesFor(
     .map((p) => p.canonicalValue);
 }
 
-export function LabTimeline({ trends, points, markers, biomarkerIds }: Props) {
+export function LabTimeline({ trends, points, markers, biomarkerIds, rangeCleared }: Props) {
   const [selected, setSelected] = useState<TrendSignal | null>(null);
 
   if (trends.length === 0) {
@@ -109,6 +112,7 @@ export function LabTimeline({ trends, points, markers, biomarkerIds }: Props) {
           points={points}
           markers={markers}
           biomarkerIds={biomarkerIds}
+          rangeCleared={rangeCleared}
           onClose={() => setSelected(null)}
         />
       )}

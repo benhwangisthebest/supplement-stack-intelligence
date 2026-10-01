@@ -172,6 +172,17 @@ describe("labMarkerInputSchema — the reference-range refinement", () => {
     expect(labMarkerInputSchema.safeParse({ ...base, unit: "" }).success).toBe(false);
   });
 
+  // [Phase 4 U22, N-116] The schema takes a number and does not coerce, so an
+  // empty field cannot arrive as 0 through it: "" and "  " are rejected, never
+  // read as Number("") === 0. Pinned so a later z.coerce cannot bring the bug here.
+  it("rejects an empty or whitespace string for the value and each bound", () => {
+    for (const blank of ["", "   "]) {
+      expect(labMarkerInputSchema.safeParse({ ...base, value: blank }).success).toBe(false);
+      expect(labMarkerInputSchema.safeParse({ ...base, referenceLow: blank }).success).toBe(false);
+      expect(labMarkerInputSchema.safeParse({ ...base, referenceHigh: blank }).success).toBe(false);
+    }
+  });
+
   it("accepts a negative value — some markers legitimately report one", () => {
     expect(labMarkerInputSchema.safeParse({ ...base, value: -1 }).success).toBe(true);
   });

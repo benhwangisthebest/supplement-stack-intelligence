@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LabMarker } from "@/types";
 import type { MarkerCatalogEntry } from "@/lib/biomarkers/marker-catalog";
+import type { labRangeClearedCopy } from "@/lib/safety";
 import type { MarkerCatalog } from "./profile-props";
 
 /**
@@ -31,7 +32,7 @@ interface AutoFill {
   name: string; // the catalog entry it came from
   unit: string; // the catalog unit the range is expressed in
   filledUnit: string | null; // the value put in the unit field, or null if it filled none
-  refLow: string | null; // the value put in each field, or null if it filled none
+  refLow: string | null; // the value put in each field, or null if it filled none or the user has since typed in it
   refHigh: string | null;
 }
 
@@ -85,10 +86,13 @@ function fmtDate(iso: string | null): string {
 export function LabMarkerTable({
   initial,
   catalog,
+  rangeCleared,
 }: {
   initial: LabMarker[];
   /** Marker suggestions + unit/range auto-fill table, from the server page (U9, rule 7). */
   catalog: MarkerCatalog;
+  /** `labRangeClearedCopy.form`, from the server page (U22, N-115, rule 7). */
+  rangeCleared: (typeof labRangeClearedCopy)["form"];
 }) {
   const router = useRouter();
   const [marker, setMarker] = useState("");
@@ -142,22 +146,36 @@ export function LabMarkerTable({
   // that entry (the server also matches names that merely contain an alias), it
   // would be stored mislabelled. So an untouched auto-filled bound is sent as
   // null there, and the catalog range applies for whatever the server resolves.
-  function boundToSend(field: string, filled: string | null | undefined): number | null {
-    if (field === "") return null;
-    if (
+  // [Phase 4 U22, N-115] It is also SHOWN blank, with the notice, so the user is
+  // not left looking at a range that will not be saved. A unit edited back
+  // restores it. Typing in a bound marks it the user's (`markTyped`), so a typed
+  // number is kept even when it equals the auto-filled one.
+  function dropped(field: string, filled: string | null | undefined): boolean {
+    return (
       autoFill !== null &&
+      field.trim() !== "" &&
       field === filled &&
       (normalizeEnteredUnit(unit) !== normalizeEnteredUnit(autoFill.unit) ||
         lookupMarkerCatalog(catalog, marker)?.name !== autoFill.name)
-    ) {
-      return null;
-    }
+    );
+  }
+  const dropLow = dropped(refLow, autoFill?.refLow);
+  const dropHigh = dropped(refHigh, autoFill?.refHigh);
+
+  function boundToSend(field: string, isDropped: boolean): number | null {
+    if (field.trim() === "" || isDropped) return null; // [U22, N-116] Number("  ") is 0
     return Number(field);
+  }
+
+  function markTyped(bound: "refLow" | "refHigh") {
+    setAutoFill((a) => (a === null || a[bound] === null ? a : { ...a, [bound]: null }));
   }
 
   async function add() {
     setError(null);
-    const num = Number(value);
+    // [Phase 4 U22, N-116] Number("") and Number("  ") are 0, not NaN, so an
+    // empty Value would pass the check below and be saved as a reading of 0.
+    const num = value.trim() === "" ? Number.NaN : Number(value);
     if (!marker.trim() || !unit.trim() || Number.isNaN(num)) {
       setError("Marker, numeric value, and unit are required.");
       return;
@@ -171,8 +189,8 @@ export function LabMarkerTable({
           marker: marker.trim(),
           value: num,
           unit: unit.trim(),
-          referenceLow: boundToSend(refLow, autoFill?.refLow),
-          referenceHigh: boundToSend(refHigh, autoFill?.refHigh),
+          referenceLow: boundToSend(refLow, dropLow),
+          referenceHigh: boundToSend(refHigh, dropHigh),
         }),
       });
       const json = await res.json();
@@ -307,20 +325,32 @@ export function LabMarkerTable({
           Add
         </button>
         <input
-          value={refLow}
-          onChange={(e) => setRefLow(e.target.value)}
+          value={dropLow ? "" : refLow}
+          onChange={(e) => {
+            setRefLow(e.target.value);
+            markTyped("refLow");
+          }}
           placeholder="Ref low (optional)"
           inputMode="decimal"
           className="rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         />
         <input
-          value={refHigh}
-          onChange={(e) => setRefHigh(e.target.value)}
+          value={dropHigh ? "" : refHigh}
+          onChange={(e) => {
+            setRefHigh(e.target.value);
+            markTyped("refHigh");
+          }}
           placeholder="Ref high (optional)"
           inputMode="decimal"
           className="rounded-md border border-hairline px-3 py-2 text-sm outline-none focus:border-ink"
         />
       </div>
+
+      {(dropLow || dropHigh) && (
+        <p role="status" className="mt-2 text-xs text-muted">
+          {rangeCleared}
+        </p>
+      )}
 
       {error && (
         <p role="alert" className="mt-2 text-sm text-error">

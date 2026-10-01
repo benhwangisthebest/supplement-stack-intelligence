@@ -663,3 +663,17 @@ export const citationUpdatedCopy = {
   /** Both differ. */
   nameAndGrade: "renamed and grade updated since this message (was “{name}”)",
 } as const;
+
+// ---- Cleared reference-range notices (Phase 4 U22, N-115; approved by the owner 2026-10-01). ----
+// A reference range is in the unit it was written in. When a lab entry surface drops a
+// range the user saw (a unit edit, a marker switch), it says so here instead of doing it
+// silently (CLAUDE.md §8.3). `form` serves the add-marker form and the per-reading edit;
+// `review` serves the import review, which has no range fields. Plain strings: the
+// surfaces are client components and receive these as props (CLAUDE.md §4 rule 7).
+export const labRangeClearedCopy = {
+  /** Add-marker form and per-reading edit: an auto-filled or stored range was cleared. */
+  form: "Reference range cleared: it was filled in for a different unit or marker. If your lab report gives a range for this result, enter it from the report.",
+  /** Import review: an extracted range was cleared by a unit edit. */
+  review:
+    "Reference range cleared: it was read from your report in a different unit. If your report gives a range in this unit, you can add it to the reading after saving.",
+} as const;

@@ -6,6 +6,7 @@ import {
   BACKGROUND_LABEL,
   BANNED_PHRASES,
   citationUpdatedCopy,
+  labRangeClearedCopy,
   containsBannedLanguage,
   COVERAGE,
   DISCLAIMERS,
@@ -23,7 +24,7 @@ describe("lib/safety phrasing", () => {
     expect(containsBannedLanguage("May support sleep quality")).toBe(false);
   });
 
-  it("never emits banned language in disclaimers, the background label, the product-match copy, the advisor outcomes, the auth errors or the source-chip markers", () => {
+  it("never emits banned language in disclaimers, the background label, the product-match copy, the advisor outcomes, the auth errors, the source-chip markers or the cleared-range notices", () => {
     for (const text of [
       ...Object.values(DISCLAIMERS),
       BACKGROUND_LABEL,
@@ -32,6 +33,7 @@ describe("lib/safety phrasing", () => {
       ...Object.values(advisorOutcomeCopy),
       ...Object.values(authCopy),
       ...Object.values(citationUpdatedCopy),
+      ...Object.values(labRangeClearedCopy),
     ]) {
       expect(containsBannedLanguage(text), text).toBe(false);
     }

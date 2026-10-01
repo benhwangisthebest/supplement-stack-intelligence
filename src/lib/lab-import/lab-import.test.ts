@@ -313,6 +313,22 @@ describe("schema (confirm-gate guarantees)", () => {
     expect(ok.success).toBe(true);
   });
 
+  // [Phase 4 U22, N-116] No coercion: an empty or whitespace string for the
+  // value or a bound is rejected, never read as 0.
+  it("labCommitSchema rejects an empty or whitespace string for the value and each bound", () => {
+    const marker = { rawLabel: "Ferritin", value: 35, unit: "ng/mL" };
+    for (const blank of ["", "   "]) {
+      for (const k of ["value", "referenceLow", "referenceHigh"]) {
+        const r = labCommitSchema.safeParse({
+          collectedAt: "2026-06-01",
+          source: "csv",
+          markers: [{ ...marker, [k]: blank }],
+        });
+        expect(r.success).toBe(false);
+      }
+    }
+  });
+
   it("labCommitSchema has NO canonical fields (server recomputes them)", () => {
     const shape = labCommitSchema.parse({
       collectedAt: "2026-06-01",

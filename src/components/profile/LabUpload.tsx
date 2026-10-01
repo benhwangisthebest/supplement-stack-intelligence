@@ -8,9 +8,17 @@ import { useRouter } from "next/navigation";
 import { useLabImport } from "./useLabImport";
 import { LabReviewConfirm } from "./LabReviewConfirm";
 import type { DisclaimerText } from "@/components/ui/Disclaimer";
+import type { labRangeClearedCopy } from "@/lib/safety";
 
 // U9 (b): the review gate's disclaimer arrives as a prop from the profile page.
-export function LabUpload({ labsDisclaimer }: { labsDisclaimer: DisclaimerText }) {
+// U22: so does the cleared-range notice (`labRangeClearedCopy.review`).
+export function LabUpload({
+  labsDisclaimer,
+  rangeCleared,
+}: {
+  labsDisclaimer: DisclaimerText;
+  rangeCleared: (typeof labRangeClearedCopy)["review"];
+}) {
   const router = useRouter();
   const imp = useLabImport(() => router.refresh());
   const fileRef = useRef<HTMLInputElement>(null);
@@ -28,6 +36,7 @@ export function LabUpload({ labsDisclaimer }: { labsDisclaimer: DisclaimerText }
         onConfirm={imp.commit}
         onCancel={imp.reset}
         labsDisclaimer={labsDisclaimer}
+        rangeCleared={rangeCleared}
       />
     );
   }

@@ -18,7 +18,7 @@ import {
   medicationSuggestions,
 } from "@/components/profile/profile-props";
 import { SideEffectTimeline } from "@/components/profile/SideEffectTimeline";
-import { DISCLAIMERS } from "@/lib/safety";
+import { DISCLAIMERS, labRangeClearedCopy } from "@/lib/safety";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PageHeader } from "@/components/ui/PageHeader";
 
@@ -66,7 +66,7 @@ export default async function ProfilePage() {
         </p>
 
         <div className="mt-4">
-          <LabUpload labsDisclaimer={DISCLAIMERS.labs} />
+          <LabUpload labsDisclaimer={DISCLAIMERS.labs} rangeCleared={labRangeClearedCopy.review} />
         </div>
 
         <div className="mt-6">
@@ -81,6 +81,7 @@ export default async function ProfilePage() {
               points={points}
               markers={markers}
               biomarkerIds={biomarkerIdsByMarker(markers)}
+              rangeCleared={labRangeClearedCopy.form}
             />
           </div>
         </div>
@@ -92,7 +93,11 @@ export default async function ProfilePage() {
             readings are archived under “+N earlier”.
           </p>
           <div className="mt-2">
-            <LabMarkerTable initial={markers} catalog={markerCatalog()} />
+            <LabMarkerTable
+              initial={markers}
+              catalog={markerCatalog()}
+              rangeCleared={labRangeClearedCopy.form}
+            />
           </div>
         </div>
         <Disclaimer text={DISCLAIMERS.labs} className="mt-4" />

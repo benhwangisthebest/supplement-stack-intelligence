@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LabMarker } from "@/types";
 import type { LabMarkerTimelinePoint, TrendSignal } from "@/types/lab";
+import type { labRangeClearedCopy } from "@/lib/safety";
+import { normalizeEnteredUnit } from "./LabMarkerTable";
 
 interface Props {
   trend: TrendSignal;
@@ -16,6 +18,8 @@ interface Props {
   markers: LabMarker[];
   /** Row id → `normalizeMarker(row.marker)`, computed by the server page (U9, rule 7). */
   biomarkerIds: Readonly<Record<string, string | null>>;
+  /** `labRangeClearedCopy.form`, from the server page via LabTimeline (U22, rule 7). */
+  rangeCleared: (typeof labRangeClearedCopy)["form"];
   onClose: () => void;
 }
 
@@ -45,10 +49,19 @@ function toDraft(m: LabMarker): Draft {
   };
 }
 
-export function LabMarkerModal({ trend, points, markers, biomarkerIds, onClose }: Props) {
+export function LabMarkerModal({
+  trend,
+  points,
+  markers,
+  biomarkerIds,
+  rangeCleared,
+  onClose,
+}: Props) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
+  // [Phase 4 U22] Which bounds the user has typed in since the edit opened.
+  const [typed, setTyped] = useState({ refLow: false, refHigh: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,6 +119,23 @@ export function LabMarkerModal({ trend, points, markers, biomarkerIds, onClose }
     setError(null);
     setEditingId(m.id);
     setDraft(toDraft(m));
+    setTyped({ refLow: false, refHigh: false });
+  }
+
+  // [Phase 4 U22, owner ruling 2026-10-01] A stored bound is in the stored unit.
+  // While the Unit no longer normalises to it, a stored bound the user has not
+  // typed in is shown blank, sent as null, and the notice says so. Typed bounds
+  // are kept; a Unit edited back restores the stored ones.
+  function dropped(m: LabMarker, d: Draft, bound: "refLow" | "refHigh"): boolean {
+    return (
+      !typed[bound] &&
+      d[bound].trim() !== "" &&
+      normalizeEnteredUnit(d.unit) !== normalizeEnteredUnit(m.unit)
+    );
+  }
+  function boundToSend(m: LabMarker, d: Draft, bound: "refLow" | "refHigh"): number | null {
+    // [U22, N-116] Number("  ") is 0, so a whitespace-only bound is empty.
+    return d[bound].trim() === "" || dropped(m, d, bound) ? null : Number(d[bound]);
   }
 
   function cancelEdit() {
@@ -116,7 +146,8 @@ export function LabMarkerModal({ trend, points, markers, biomarkerIds, onClose }
 
   async function saveEdit(m: LabMarker) {
     if (!draft) return;
-    const num = Number(draft.value);
+    // [Phase 4 U22, N-116] Number("") is 0, so a cleared Value would be saved as 0.
+    const num = draft.value.trim() === "" ? Number.NaN : Number(draft.value);
     if (!draft.unit.trim() || Number.isNaN(num)) {
       setError("A numeric value and a unit are required.");
       return;
@@ -131,8 +162,8 @@ export function LabMarkerModal({ trend, points, markers, biomarkerIds, onClose }
           marker: m.marker,
           value: num,
           unit: draft.unit.trim(),
-          referenceLow: draft.refLow === "" ? null : Number(draft.refLow),
-          referenceHigh: draft.refHigh === "" ? null : Number(draft.refHigh),
+          referenceLow: boundToSend(m, draft, "refLow"),
+          referenceHigh: boundToSend(m, draft, "refHigh"),
           date: draft.date === "" ? null : draft.date,
           notes: m.notes,
         }),
@@ -311,23 +342,32 @@ export function LabMarkerModal({ trend, points, markers, biomarkerIds, onClose }
                         />
                         <input
                           aria-label="Reference low"
-                          value={draft.refLow}
+                          value={dropped(m, draft, "refLow") ? "" : draft.refLow}
                           inputMode="decimal"
-                          onChange={(e) => setDraft({ ...draft, refLow: e.target.value })}
+                          onChange={(e) => {
+                            setDraft({ ...draft, refLow: e.target.value });
+                            setTyped((t) => ({ ...t, refLow: true }));
+                          }}
                           placeholder="Ref low"
                           className={inputCls}
                         />
                         <input
                           aria-label="Reference high"
-                          value={draft.refHigh}
+                          value={dropped(m, draft, "refHigh") ? "" : draft.refHigh}
                           inputMode="decimal"
-                          onChange={(e) =>
-                            setDraft({ ...draft, refHigh: e.target.value })
-                          }
+                          onChange={(e) => {
+                            setDraft({ ...draft, refHigh: e.target.value });
+                            setTyped((t) => ({ ...t, refHigh: true }));
+                          }}
                           placeholder="Ref high"
                           className={inputCls}
                         />
                       </div>
+                      {(dropped(m, draft, "refLow") || dropped(m, draft, "refHigh")) && (
+                        <p role="status" className="text-xs text-muted">
+                          {rangeCleared}
+                        </p>
+                      )}
                       <div className="flex gap-2">
                         <button
                           type="button"
