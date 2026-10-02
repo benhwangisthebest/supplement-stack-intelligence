@@ -92,9 +92,9 @@ export const CSP_DIRECTIVES: ReadonlyArray<readonly [string, readonly string[]]>
   // `data:` covers inlined SVG/PNG; `blob:` covers Next's image optimisation.
   ["img-src", ["'self'", "data:", "blob:"]],
 
-  // `next/font/google` self-hosts at build time — the fonts are served from
-  // `/_next/static`, so no external font origin is needed. If that ever stops
-  // being true, this directive is where it surfaces.
+  // `next/font/local` serves the committed Inter file (`src/app/fonts/`) from
+  // `/_next/static/media`, so no external font origin is needed. If that ever
+  // stops being true, this directive is where it surfaces.
   ["font-src", ["'self'"]],
 
   // Same-origin only, and this one is a real assertion rather than a formality:

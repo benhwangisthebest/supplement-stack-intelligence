@@ -611,8 +611,12 @@ export const checkinCopy = {
 // Plain strings, not builders: the advisor panel is a client component, so its
 // server page hands these over as props (CLAUDE.md §4 rule 7), and a function
 // cannot cross that boundary. `partiallyApplied` has two placeholders, and the
-// only values that fill them are the confirm route's two counts, since U34 ruled
-// that only numbers cross the boundary (advisor-actions.ts:145-150).
+// only values that fill them are counts, since U34 ruled that only numbers cross
+// the boundary (advisor-actions.ts:148-153). Two routes return it: the confirm
+// route, POST /api/advisor/actions (`PARTIALLY_APPLIED`, rolled-back changes;
+// src/services/advisor-actions.ts:155-161), and the undo route,
+// POST /api/advisor/actions/[id]/undo (409 `STALE_UNDO`, rows undone and not
+// undone; src/app/api/advisor/actions/[id]/undo/route.ts:87-93).
 export const advisorOutcomeCopy = {
   /** The confirm route answered PARTIALLY_APPLIED: the rollback left `unreverted` > 0. */
   partiallyApplied:

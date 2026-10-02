@@ -54,8 +54,8 @@ npm run dev                  # http://localhost:3000
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest unit suite |
 | `npm run test:e2e:install` | **Run once per clone** — installs the pinned Playwright browser. Without it the suite fails as dozens of specs at once, which looks like an application regression rather than a missing binary (FU-26). A cache holding a *newer* browser than the pin wants fails the same way, so "my browsers are installed" is not the check. |
-| `npm run test:e2e` | Playwright (set `E2E_LIVE=1` for authed flows) |
-| `npm run db:seed` | Seed demo data (needs Supabase env) |
+| `npm run test:e2e` | Playwright (set `E2E_LIVE=1` for authed flows). It builds and starts the app itself, and fails up front if something already answers on the port, including a running `npm run dev`. To test a server you started yourself, set `PLAYWRIGHT_NO_SERVER=1` (and `PLAYWRIGHT_BASE_URL` if it is not on `http://localhost:3000`). |
+| `npm run db:seed` | Seed demo data (needs Supabase env). `SEED_DEMO_EMAIL` and `SEED_DEMO_PASSWORD` are required and have no defaults; the seed stops if either is unset. Keep the password private: it signs in to a real account. |
 
 ## Licence
 

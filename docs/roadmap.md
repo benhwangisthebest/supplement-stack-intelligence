@@ -39,7 +39,7 @@ page returned HTTP 403); the **live E2E half stays BLOCKED(env)** by ruling 3; a
 FU-44 all wait on the same thing — a logging sink that does not exist.** Observability is classified **B**
 by ruling and was **measured X** on the sink alone; both readings are recorded in `project-status.md` §2.8.
 ~~Planning (2026-08-06): a DRAFT plan exists; it is not approved and authorises nothing.~~
-~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ ~~**[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.**~~ **[2026-09-25] Phase 3 — COMPLETE WITH FOLLOW-UP** (declared on the owner's go, 2026-09-25). All eleven units (U0–U10) are DONE. The independent closeout Check returned COMPLETE WITH FOLLOW-UP (P3-1…P3-11); its remediations have landed, and a delta check found 7 ADDRESSED, 4 CARRIED-WITH-OWNER and 0 NOT ADDRESSED. Every carried item has an owner, for Phase 4 (report §10). See the Phase 3 section for the full status. ~~**Phase 4 — not started.**~~ **[2026-09-25] Phase 4 — IN PROGRESS:** plan `docs/01-plan/phase-4-product-completion.plan.md` **APPROVED** with owner rulings D-1…D-16; no unit executed.
+~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ ~~**[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.**~~ **[2026-09-25] Phase 3 — COMPLETE WITH FOLLOW-UP** (declared on the owner's go, 2026-09-25). All eleven units (U0–U10) are DONE. The independent closeout Check returned COMPLETE WITH FOLLOW-UP (P3-1…P3-11); its remediations have landed, and a delta check found 7 ADDRESSED, 4 CARRIED-WITH-OWNER and 0 NOT ADDRESSED. Every carried item has an owner, for Phase 4 (report §10). See the Phase 3 section for the full status. ~~**Phase 4 — not started.**~~ **[2026-09-25] Phase 4 — IN PROGRESS:** plan `docs/01-plan/phase-4-product-completion.plan.md` **APPROVED** with owner rulings D-1…D-16; ~~no unit executed~~ **[2026-10-01, Phase 4 docs-sync] Phase 4 units have run;** their state is the plan's §4 unit table, which this line does not repeat.
 
 **Two Phase 2 items were already delivered out of order** and the plan marks them so rather than
 scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` (**[2026-09-25, Phase 4 U3]** moved to `content/id-manifest.json`) +
@@ -580,7 +580,7 @@ offline — never a runtime fetch reachable from a request path.
 
 ## Phase 4 — Product completion
 
-**Status.** **IN PROGRESS — 2026-09-25.** The plan, `docs/01-plan/phase-4-product-completion.plan.md`, is **APPROVED** with owner rulings D-1…D-16. Scope (D-3): carried correctness (Shape A) plus item 1. Items 2, 3 and 4 are OUT, to the backlog below. **No unit has been executed.** Approval authorised the units the plan's §4 marks IN, and nothing beyond them.
+**Status.** **IN PROGRESS — 2026-09-25.** The plan, `docs/01-plan/phase-4-product-completion.plan.md`, is **APPROVED** with owner rulings D-1…D-16. Scope (D-3): carried correctness (Shape A) plus item 1. Items 2, 3 and 4 are OUT, to the backlog below. ~~**No unit has been executed.**~~ **[2026-10-01, Phase 4 docs-sync] Phase 4 units have run.** Each unit's state is in the plan's §4 unit table; it is not listed here, so this line cannot go stale with it. Approval authorised the units the plan's §4 marks IN, and nothing beyond them.
 
 **Objective.** Complete the intended core product on a foundation that is now correct, verified,
 operable, and grounded.
@@ -595,6 +595,9 @@ operable, and grounded.
    report and **named nowhere in this file, the sequencing authority** — an item deferred *into* a phase
    whose own section does not name it is the N-11 shape: a disposition pointing at something that will not
    look back.
+   **[2026-10-01, Phase 4 docs-sync] DECIDED:** D-4 (a), ruled 2026-09-25: per-resource 404 wording is the
+   product's voice. Implemented by U11 (`bd304d1`), which also stopped the service 404s echoing the supplement
+   id (D-4 (c)(ii)). Recorded in the Phase 4 plan's exit criteria (§5).
 1. **Context-adjusted evidence** — resume `docs/01-plan/features/context-adjusted-evidence.plan.md`. The
    plan must be revised first: it was halted at design and assumed a `populationRelevance` seam that
    exists for only 8 of 27 effects. Phase 3 removes that blocker.
@@ -647,7 +650,7 @@ paid-API endpoint inherits the Phase 2 rate-limit and budget requirements.
 - **Longitudinal intelligence** (item 4; D-3).
 - **FU-62's sourcing pass** for glycine-sleep and zinc-deficiency (the plan's U7; D-3).
 - **Background sourcing** (U6 (c), owner ruling (5), 2026-09-28): the supplement `description` and `mechanismSummary` text and the 35 mechanism tags the sweep did not rate SUPPORTED (`docs/05-qa/2026-09-27-mechanism-sweep.md`), sourced against captured abstracts with U7's pass. Until then `mechanismSummary` is withheld and `description` renders under the background label.
-- **A logging sink** for N-11, FU-43 and FU-44 (D-7 (d): Phase 4 ships redaction with no sink).
+- ~~**A logging sink** for N-11, FU-43 and FU-44 (D-7 (d): Phase 4 ships redaction with no sink).~~ **[2026-10-01, Phase 4 docs-sync; Q-7]** **Logging sink** (later item, D-7 (d)): a retained destination for the allowlisted error record `src/lib/api/redact.ts` emits. External integration: threat review, account, possible spend. Carries N-11, FU-43 (middleware throws are unrecorded), FU-44.
 
 ---
 

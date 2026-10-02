@@ -14,8 +14,8 @@
 // literal. It is NOT "every 404 in the API must be uniform" — rule 13
 // (CLAUDE.md §2.3) governs internal error text, not resource names, and a
 // single-resource route has no oracle because a foreign id and a nonexistent
-// id already answer identically there. That wider question is finding N-50,
-// open and unassigned; this guard deliberately does not decide it.
+// id already answer identically there. That wider question was N-50, decided
+// by D-4 (a): per-resource wording is the voice (Phase 4 U11).
 //
 // So the rule here is quantified over ROUTE FILES:
 //
@@ -26,12 +26,12 @@
 // messages. A route that does is a red build with a written reason to add —
 // not a silent entry.
 //
-// WHAT IS OUTSIDE THE SCAN, AND WHY. `src/services/**` hand-writes three 404s
-// that reach one route (`/api/advisor/actions`) — one ownership message and two
-// that echo a caller-supplied supplement id. The rule is per route, and a
-// service is not a route; whether that route's three literals are a per-route
-// oracle or an input-validation echo of public reference data is part of N-50,
-// stated there rather than silently decided by narrowing a regex here.
+// WHAT IS OUTSIDE THE SCAN, AND WHY. `src/services/advisor-actions.ts` answers
+// `/api/advisor/actions` with four 404 sites and three messages:
+// `notFound("Conversation")`, and three hand-written `fail("NOT_FOUND", …)`
+// literals, one ownership message (`Stack not found.`) and two reference-data
+// messages (`Supplement not found.`, which no longer echo the id; D-4 (c)(ii)).
+// The rule is per route, and a service is not a route.
 //
 // THIS IS A TEXTUAL SCAN, and its soundness rests on two rules it also
 // enforces: the message must be a string literal AT the call site (a variable
