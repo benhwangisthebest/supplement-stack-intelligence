@@ -3,47 +3,47 @@
   "measuredWith": {
     "zlib": "1.3.1-e00f703"
   },
-  "sharedByAll": 105330,
+  "sharedByAll": 102651,
   "routes": {
     "/": {
-      "firstLoadJs": 109156,
-      "size": 171
+      "firstLoadJs": 106198,
+      "size": 162
     },
     "/_not-found": {
-      "firstLoadJs": 106310,
-      "size": 980
+      "firstLoadJs": 103646,
+      "size": 995
     },
     "/advisor": {
-      "firstLoadJs": 115159,
-      "size": 6174
+      "firstLoadJs": 112152,
+      "size": 6116
     },
     "/auth/login": {
-      "firstLoadJs": 109711,
-      "size": 726
+      "firstLoadJs": 106752,
+      "size": 716
     },
     "/auth/signup": {
-      "firstLoadJs": 109711,
-      "size": 726
+      "firstLoadJs": 106752,
+      "size": 716
     },
     "/library": {
-      "firstLoadJs": 110214,
-      "size": 1229
+      "firstLoadJs": 107254,
+      "size": 1218
     },
     "/library/[slug]": {
-      "firstLoadJs": 110610,
-      "size": 1625
+      "firstLoadJs": 107635,
+      "size": 1599
     },
     "/profile": {
-      "firstLoadJs": 118051,
-      "size": 9066
+      "firstLoadJs": 115017,
+      "size": 8981
     },
     "/stack-lab": {
-      "firstLoadJs": 112233,
-      "size": 3248
+      "firstLoadJs": 109285,
+      "size": 3249
     },
     "/stack-lab/[stackId]": {
-      "firstLoadJs": 115516,
-      "size": 6531
+      "firstLoadJs": 112537,
+      "size": 6501
     }
   }
 }
