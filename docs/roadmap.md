@@ -640,9 +640,9 @@ paid-API endpoint inherits the Phase 2 rate-limit and budget requirements.
 
 **Exit criteria (measurable)**
 - [ ] **[P4-X1]** Each shipped item meets its own plan's success criteria, with no "partial" left unexplained.
-- [ ] **[P4-X2]** No subsystem classified prototype-only in an updated `docs/project-status.md`. — **[2026-09-29, U17]
-  the one X (`db/seed.ts`) reclassified B with a written reason (D-9 (b)); FU-25 carried open.** Ticked at closeout re-measurement.
-- [ ] **[P4-X3]** Coverage thresholds hold across all engines; CI green on `main` continuously.
+- [x] **[P4-X2]** No subsystem classified prototype-only in an updated `docs/project-status.md`. — **[2026-09-29, U17]
+  the one X (`db/seed.ts`) reclassified B with a written reason (D-9 (b)); FU-25 carried open.** Ticked at closeout re-measurement. **[2026-10-06]** Ticked at closeout landing (a) on the owner's ruling.
+- [x] **[P4-X3]** Coverage thresholds hold across all engines; CI green on `main` continuously. **[2026-10-06]** Ticked at closeout landing (a) on the owner's ruling: every `main` push in the phase has a green run (plan §5).
 
 **Backlog: deferred from Phase 4 by ruling (2026-09-25), not scheduled.** Each needs its own approval decision to enter a phase.
 - **Real product catalog** (item 2; D-3).

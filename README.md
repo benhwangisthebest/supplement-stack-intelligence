@@ -46,6 +46,18 @@ npm run db:seed              # optional: demo user + sample data
 npm run dev                  # http://localhost:3000
 ```
 
+### Environment
+
+- **Supabase keys.** The variable names are unchanged, but the project now uses Supabase's newer API keys.
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` holds the **publishable** key (`sb_publishable_…`), and
+  `SUPABASE_SERVICE_ROLE_KEY` holds the **secret** key (`sb_secret_…`). The project's legacy JWT keys
+  (`anon` and `service_role`) are disabled, so a legacy key in `.env.local` no longer works. The secret key
+  is server-only and is read by `npm run db:seed` alone.
+- **Build from a fresh Terminal window (FU-95).** Variables already set in your shell override
+  `.env.local`. If a Terminal earlier sourced an older `.env.local`, `next build` bakes those stale
+  `NEXT_PUBLIC_` values into the build, and the app talks to Supabase with the old keys. After changing
+  `.env.local`, open a new Terminal window before you run `npm run build`, `npm run dev` or `npm run test:e2e`.
+
 ### Scripts
 | Command | Purpose |
 |---------|---------|

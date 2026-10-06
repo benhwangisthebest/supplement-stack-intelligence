@@ -514,6 +514,14 @@ published in this public repository. Owner checked the deployed project's Authen
 demo@example.com: present, and deleted by the owner on 2026-09-29. U17 removed both defaults: the script now
 exits with a clear message unless `SEED_DEMO_EMAIL` and `SEED_DEMO_PASSWORD` are set.
 
+**[2026-10-06, Phase 4 closeout landing (a)] Re-measured for `[P4-X2]`:** no row in the classification table
+reads **X**. Every former X is struck with its dated reason above, so no classification changed at this landing.
+**Security, recorded beside it:** Phase 4 U24–U26 moved `next` 15.1.3 → 15.5.27, and the app has no advisory
+left on `next` itself. N-121 closed on the owner's record of 2026-10-06: the app has never been deployed and
+runs only locally. Supabase moved to its publishable and secret API keys, with the legacy JWT keys
+disabled, and the OpenAI key was rotated. Open: FU-91 (`postcss`, until `next` 16), FU-92 (no CI audit step), FU-94 (the
+local server binds all interfaces) and FU-95 (shell variables override `.env.local`).
+
 **Why the reasons are dated and the letters are not.** A classification letter with no date is the
 counts-written-once class (**FU-32**) wearing a single character: it was true when written and says nothing
 about when. The table stays terse because it is an index; the dated reasons are what a reader checks it
