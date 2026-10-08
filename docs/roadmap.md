@@ -39,7 +39,7 @@ page returned HTTP 403); the **live E2E half stays BLOCKED(env)** by ruling 3; a
 FU-44 all wait on the same thing — a logging sink that does not exist.** Observability is classified **B**
 by ruling and was **measured X** on the sink alone; both readings are recorded in `project-status.md` §2.8.
 ~~Planning (2026-08-06): a DRAFT plan exists; it is not approved and authorises nothing.~~
-~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ ~~**[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.**~~ **[2026-09-25] Phase 3 — COMPLETE WITH FOLLOW-UP** (declared on the owner's go, 2026-09-25). All eleven units (U0–U10) are DONE. The independent closeout Check returned COMPLETE WITH FOLLOW-UP (P3-1…P3-11); its remediations have landed, and a delta check found 7 ADDRESSED, 4 CARRIED-WITH-OWNER and 0 NOT ADDRESSED. Every carried item has an owner, for Phase 4 (report §10). See the Phase 3 section for the full status. ~~**Phase 4 — not started.**~~ **[2026-09-25] Phase 4 — IN PROGRESS:** plan `docs/01-plan/phase-4-product-completion.plan.md` **APPROVED** with owner rulings D-1…D-16; ~~no unit executed~~ **[2026-10-01, Phase 4 docs-sync] Phase 4 units have run;** their state is the plan's §4 unit table, which this line does not repeat.
+~~No Phase 2 unit has been executed.~~ ~~**Phases 3–4 — not started.**~~ ~~**[2026-09-22] Phase 3 — STARTED**: its plan is **APPROVED** and all seven decisions D-1…D-7 are ruled; **no unit has been executed.**~~ **[2026-09-25] Phase 3 — COMPLETE WITH FOLLOW-UP** (declared on the owner's go, 2026-09-25). All eleven units (U0–U10) are DONE. The independent closeout Check returned COMPLETE WITH FOLLOW-UP (P3-1…P3-11); its remediations have landed, and a delta check found 7 ADDRESSED, 4 CARRIED-WITH-OWNER and 0 NOT ADDRESSED. Every carried item has an owner, for Phase 4 (report §10). See the Phase 3 section for the full status. ~~**Phase 4 — not started.**~~ **[2026-09-25] Phase 4 — IN PROGRESS:** plan `docs/01-plan/phase-4-product-completion.plan.md` **APPROVED** with owner rulings D-1…D-16; ~~no unit executed~~ **[2026-10-01, Phase 4 docs-sync] Phase 4 units have run;** their state is the plan's §4 unit table, which this line does not repeat. **[2026-10-08] Phase 4 — CLOSED** at closeout landing (b), on the owner's rulings. The Check's verdict was COMPLETE WITH FOLLOW-UP. 6 of 8 exit criteria are ticked, X1 is under a dated exception, and X5 is not met (objective item 1 unmet). 75 ids and Q-20, Q-29…Q-31 carry to Phase 5 (Phase 4 section).
 
 **Two Phase 2 items were already delivered out of order** and the plan marks them so rather than
 scheduling them: item 5's reference-ID manifest (`src/data/id-manifest.json` (**[2026-09-25, Phase 4 U3]** moved to `content/id-manifest.json`) +
@@ -328,6 +328,11 @@ summary and must not disagree with it.
       > **Reason:** Phase 4's approved scope (carried correctness plus item 1's plan revision) does not depend on
       > the live half. The live run is owner-run under ruling 3 and has not been scheduled, and a hold would stall
       > deterministic work behind a scheduling constraint.
+      > **[2026-10-08] Dated exception (owner ruling on the Phase 4 closeout Check, PC-5), verbatim:** *"Exception expired
+      > 2026-10-08 (D-12 (a), owner ruling 7). Owner-run live baseline recorded: run 2 at 69e3e3b, 97/100. The 3 failures
+      > are registered (N-126, N-127; N-125 not exercised) and carried to Phase 5's advisor-reliability item. Box stays [~]
+      > until the live suite is green."* From Phase 5 on, the owner runs the `[LIVE]` suite at each phase closeout (ruling
+      > 7). Phase 5 may open with this exception on record. Evidence: `docs/01-plan/features/p4-closeout.plan.md` §6.
 - [x] Auth-coverage and RLS-coverage tests fail on a deliberately non-compliant new file. — U5 and U6,
       both proven **both ways** per §4.2: false green unstaged, red once `git add -N`'d.
 - [x] Coverage thresholds configured for every pure engine directory; enforced in CI. — U13, 14
@@ -580,7 +585,7 @@ offline — never a runtime fetch reachable from a request path.
 
 ## Phase 4 — Product completion
 
-**Status.** **IN PROGRESS — 2026-09-25.** The plan, `docs/01-plan/phase-4-product-completion.plan.md`, is **APPROVED** with owner rulings D-1…D-16. Scope (D-3): carried correctness (Shape A) plus item 1. Items 2, 3 and 4 are OUT, to the backlog below. ~~**No unit has been executed.**~~ **[2026-10-01, Phase 4 docs-sync] Phase 4 units have run.** Each unit's state is in the plan's §4 unit table; it is not listed here, so this line cannot go stale with it. Approval authorised the units the plan's §4 marks IN, and nothing beyond them.
+**Status.** ~~**IN PROGRESS — 2026-09-25.**~~ **[2026-10-08] CLOSED** at closeout landing (b), on the owner's rulings. The independent Check's verdict was COMPLETE WITH FOLLOW-UP (`docs/05-qa/2026-10-08-p4-closeout-check.md`). Exit criteria: **6 of 8 ticked** (X2, X3, X4, X6, X7, X8). **X1 stays unticked under a dated exception.** **X5 is not met:** objective item 1 is unmet. **Carried to Phase 5 (75 ids):** N-11, N-18, N-22, N-25, N-30, N-33, N-36, N-37, N-40, N-41, N-43, N-45, N-69, N-70, N-89, N-108…N-111, N-117, N-119, N-120, N-123…N-127; FU-4, FU-8…FU-12, FU-14, FU-15, FU-18…FU-22, FU-24, FU-25, FU-29, FU-30, FU-32, FU-33, FU-38, FU-40, FU-41, FU-43, FU-44, FU-46, FU-57, FU-62, FU-65, FU-72, FU-79, FU-80, FU-82…FU-92, FU-94…FU-98; OP-5. Also carried: the queue entries Q-20 and Q-29…Q-31. N-124…N-127 form one advisor-reliability item, and FU-98 is Phase 5's first item. Detail: `docs/01-plan/features/p4-closeout.plan.md` §6. Phase 5 may open with two dated exceptions on record: the Phase 1 live-E2E box and `[P4-X1]`. It opened 2026-09-25; the plan, `docs/01-plan/phase-4-product-completion.plan.md`, is **APPROVED** with owner rulings D-1…D-16. Scope (D-3): carried correctness (Shape A) plus item 1. Items 2, 3 and 4 are OUT, to the backlog below. ~~**No unit has been executed.**~~ **[2026-10-01, Phase 4 docs-sync] Phase 4 units have run.** Each unit's state is in the plan's §4 unit table; it is not listed here, so this line cannot go stale with it. Approval authorised the units the plan's §4 marks IN, and nothing beyond them.
 
 **Objective.** Complete the intended core product on a foundation that is now correct, verified,
 operable, and grounded.
@@ -639,7 +644,7 @@ engine-derived, and a component test if it renders a safety-relevant value.
 paid-API endpoint inherits the Phase 2 rate-limit and budget requirements.
 
 **Exit criteria (measurable)**
-- [ ] **[P4-X1]** Each shipped item meets its own plan's success criteria, with no "partial" left unexplained.
+- [ ] **[P4-X1]** Each shipped item meets its own plan's success criteria, with no "partial" left unexplained. **[2026-10-08]** Not ticked, on the owner's ruling at closeout landing (b): met in substance, with a record gap in four artifacts that is not back-filled (plan §5). **Dated exception, 2026-10-08** (owner ruling on Check PC-5): Phase 5 may open with this criterion unticked and this record in place.
 - [x] **[P4-X2]** No subsystem classified prototype-only in an updated `docs/project-status.md`. — **[2026-09-29, U17]
   the one X (`db/seed.ts`) reclassified B with a written reason (D-9 (b)); FU-25 carried open.** Ticked at closeout re-measurement. **[2026-10-06]** Ticked at closeout landing (a) on the owner's ruling.
 - [x] **[P4-X3]** Coverage thresholds hold across all engines; CI green on `main` continuously. **[2026-10-06]** Ticked at closeout landing (a) on the owner's ruling: every `main` push in the phase has a green run (plan §5).

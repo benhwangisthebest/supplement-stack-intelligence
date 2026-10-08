@@ -10,6 +10,7 @@
 > appear rather than pinned to a tip SHA here — a single pinned baseline in this header went stale twice.
 > *(This header itself went stale a third time: it still described only the Phase 0 pass after the Phase 1
 > sync had edited §2.4, §2.5 and §6. Caught by the closeout Check as finding P1-2.)*
+> **[2026-10-08]** Phase 4 closed. The dated closeout paragraphs are at the end of §3's classification notes.
 > **Rule:** Existing code is evidence of current state, **not** automatically the intended final design.
 > Nothing below is labelled production-ready without stated evidence.
 
@@ -472,6 +473,7 @@ test" part does not.
 | Observability | **B** |
 | Release/integration process | **B** |
 | `db/seed.ts` shared demo fixture | ~~**X**~~ **B** *(2026-09-29, Phase 4 U17, owner ruling D-9 (b); see below)* |
+| `lib/supabase/client.ts` dormant browser client | **B** *(2026-10-08, Phase 4 closeout (b), owner ruling on Check PC-1; see below)* |
 
 **[2026-09-22, Phase 2 closeout (d2)] Six rows moved or were re-examined; each reason is dated here rather
 than left to the table's single letter.**
@@ -521,6 +523,11 @@ left on `next` itself. N-121 closed on the owner's record of 2026-10-06: the app
 runs only locally. Supabase moved to its publishable and secret API keys, with the legacy JWT keys
 disabled, and the OpenAI key was rotated. Open: FU-91 (`postcss`, until `next` 16), FU-92 (no CI audit step), FU-94 (the
 local server binds all interfaces) and FU-95 (shell variables override `.env.local`).
+
+**[2026-10-08, Phase 4 closeout landing (b)] `lib/supabase/client.ts` classified, on the owner's ruling (Check PC-1, N-35), verbatim:**
+*"B — dormant browser Supabase client: imported by no non-test module (N-35); uses only the publishable key, so it carries no secret; kept as the single sanctioned seam for any future browser-side Supabase call. CSP connect-src 'self' depends on it staying unused (U14/N-35). Deletion is a Phase 5 option (owner batch)."* N-35 is closed against this record, and the deletion option is FU-97. `[P4-X2]` stays ticked, because the row is B, not X.
+
+**[2026-10-08] Phase 4 CLOSED.** at closeout landing (b), on the owner's rulings. The independent Check's verdict was COMPLETE WITH FOLLOW-UP (`docs/05-qa/2026-10-08-p4-closeout-check.md`). Exit criteria: **6 of 8 ticked** (X2, X3, X4, X6, X7, X8). **X1 stays unticked under a dated exception.** **X5 is not met:** objective item 1 is unmet. **Carried to Phase 5 (75 ids):** N-11, N-18, N-22, N-25, N-30, N-33, N-36, N-37, N-40, N-41, N-43, N-45, N-69, N-70, N-89, N-108…N-111, N-117, N-119, N-120, N-123…N-127; FU-4, FU-8…FU-12, FU-14, FU-15, FU-18…FU-22, FU-24, FU-25, FU-29, FU-30, FU-32, FU-33, FU-38, FU-40, FU-41, FU-43, FU-44, FU-46, FU-57, FU-62, FU-65, FU-72, FU-79, FU-80, FU-82…FU-92, FU-94…FU-98; OP-5. Also carried: the queue entries Q-20 and Q-29…Q-31. N-124…N-127 form one advisor-reliability item, and FU-98 is Phase 5's first item. Detail: `docs/01-plan/features/p4-closeout.plan.md` §6. No classification letter changed at the closeout except the new B row above.
 
 **Why the reasons are dated and the letters are not.** A classification letter with no date is the
 counts-written-once class (**FU-32**) wearing a single character: it was true when written and says nothing

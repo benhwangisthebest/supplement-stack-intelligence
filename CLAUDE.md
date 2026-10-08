@@ -105,7 +105,8 @@ discussing with a clinician", "the app cannot determine this safely from the ava
 11. Every route under `src/app/api/**` authenticates and returns 401 on failure.
 12. Every new table ships with RLS enabled and a matching policy in the same migration.
 13. Internal error text never crosses the API boundary. Log with a correlation ID; return a generic message.
-14. Never commit secrets. The Supabase service-role key stays confined to the dev seed script and must never
+14. Never commit secrets. The Supabase ~~service-role key~~ **secret key** (`sb_secret_…`, held in `SUPABASE_SERVICE_ROLE_KEY`;
+    the legacy `service_role` JWT key is disabled, 2026-10-06) stays confined to the dev seed script and must never
     be reachable from `src/app` or `src/components`.
 15. Health data (medications, allergies, conditions, lab results) is sensitive. Do not log it, and do not
     expand its collection without a stated purpose.
@@ -235,11 +236,11 @@ passing, a clean typecheck, and a successful build.
     *(Phase 2 (d1b), `src/app/api/advisor/actions/route.ts`. Filed beside rule 11 because both are cases
     where the instrument that looks like it is doing the job is not doing the job.)*
 
-Measured baseline. The **test counts were re-measured 2026-09-25 at the Phase 3 closeout declaration**, against
-that tree. The spec count and lint figure were re-measured 2026-09-24 at closeout (a), and still hold at the declaration. The other figures date from **2026-09-22 at the Phase 2 closeout's (d2)
+Measured baseline. ~~The **test counts were re-measured 2026-09-25 at the Phase 3 closeout declaration**, against
+that tree. The spec count and lint figure were re-measured 2026-09-24 at closeout (a), and still hold at the declaration.~~ **[2026-10-06, Phase 4 closeout (a), Q-3] The test counts, lint figure and spec count were re-measured against `72370ee`**, and the E2E figure is the closeout gate's. The other figures date from **2026-09-22 at the Phase 2 closeout's (d2)
 landing** — ~~2026-08-06 at Phase 1 close, 859/859 across 73 files~~. Typecheck clean · ~~1446/1446 unit
-tests across 114 files~~ ~~1679/1679 across 144 files~~ **1693/1693 unit tests across 144 files**: `node`
-project 1563 across 120, `jsdom` project 130 across 24 · ~~lint 369 of 369~~ **lint 415 of 415 tracked source files, 0 errors** ·
+tests across 114 files~~ ~~1679/1679 across 144 files~~ ~~1693/1693 unit tests across 144 files~~ **2153/2153 unit tests across 152 files**: `node`
+project ~~1563 across 120~~ **1908 across 126**, `jsdom` project ~~130 across 24~~ **245 across 26** · ~~lint 369 of 369~~ ~~lint 415 of 415~~ **lint 433 of 433 tracked source files, 0 errors** ·
 ~~27~~ **30 executable architecture specs** (bound by `SPEC_COUNT`, derived from `git ls-files`) ·
 **E2E non-live 70 passed / 30 `[LIVE]`-gated skipped** · build succeeds · **CI exists and is green** (GitHub Actions `CI`: `npm ci` → typecheck → **lint** →
 `vitest run` → **coverage thresholds** → **migration coherence** → `next build` → **rendering determinism** → **bundle budget** → **playwright browsers** → **E2E (non-live)**, on **every branch push**, on PRs into `main`, and on
@@ -254,8 +255,8 @@ roadmap names *green over zero files* as the only unacceptable end state, and it
 this item carelessly, since a lint config with an over-broad `ignores` passes vacuously. Deriving the
 expectation from the config would make that mutation undetectable; deriving it from git makes narrowing
 what ESLint looks at reden the check instead. A tracked file that genuinely must not be linted goes in
-`EXEMPT_UNLINTED` with a written reason (today: **none**; ~~356 of 356~~ ~~369 of 369~~ **415 of 415** tracked source
-files are linted, re-measured 2026-09-24 — the ratio is the claim, the absolute is FU-32's class and is
+`EXEMPT_UNLINTED` with a written reason (today: **none**; ~~356 of 356~~ ~~369 of 369~~ ~~415 of 415~~ **433 of 433** tracked source
+files are linted, re-measured 2026-10-06 — the ratio is the claim, the absolute is FU-32's class and is
 re-derived rather than carried).
 `eslint-config-next` is deliberately **not** used — see the header of `eslint.config.mjs` for why, and for
 why the runner is pinned to ESLint 9.
