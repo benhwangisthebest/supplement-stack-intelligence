@@ -64,6 +64,48 @@ function demoCredentials(): { email: string; password: string } {
   return { email, password };
 }
 
+/**
+ * Creates a uniquely-named stack through the Stack Lab UI, adds each item through
+ * the Add item form, and clicks "Evaluate stack": the same steps the L3 core-loop
+ * spec drives. Each write is awaited on its own response, so a failure surfaces at
+ * the step that failed rather than as a missing flag at the end. Returns the new
+ * stack's id.
+ *
+ * The caller deletes the stack when done (`DELETE /api/stacks/:id`). The advisor
+ * treats the most recent current stack as active (`pickActiveStack`), so a stack
+ * left behind becomes the advisor's context on the next live run.
+ */
+export async function buildAndEvaluateStack(
+  page: Page,
+  name: string,
+  items: Array<{ supplementId: string; dose: number; unit: string }>,
+): Promise<string> {
+  await page.goto("/stack-lab");
+  await page.getByPlaceholder(/Sleep stack/i).fill(`${name} ${Date.now()}`);
+  await page.getByRole("button", { name: /^Create$/i }).click();
+  await expect(page).toHaveURL(/\/stack-lab\/[0-9a-f-]+/);
+  const stackId = new URL(page.url()).pathname.split("/").pop() as string;
+
+  for (const item of items) {
+    await page.getByRole("combobox").first().selectOption(item.supplementId);
+    await page.getByPlaceholder("Dose").fill(String(item.dose));
+    await page.getByPlaceholder("Unit").fill(item.unit);
+    const added = page.waitForResponse(
+      (r) => r.url().endsWith(`/api/stacks/${stackId}/items`) && r.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: /^Add$/i }).click();
+    expect((await added).ok()).toBe(true);
+  }
+  await expect(page.getByRole("heading", { name: `Items (${items.length})` })).toBeVisible();
+
+  const evaluated = page.waitForResponse(
+    (r) => r.url().endsWith(`/api/stacks/${stackId}/evaluate`) && r.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: /Evaluate stack/i }).click();
+  expect((await evaluated).ok()).toBe(true);
+  return stackId;
+}
+
 export function uniqueEmail(): string {
   return `e2e_${Date.now()}_${Math.floor(Math.random() * 1e4)}@example.com`;
 }

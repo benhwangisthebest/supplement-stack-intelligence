@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { LIVE, login } from "./helpers";
+import { buildAndEvaluateStack, LIVE, login } from "./helpers";
 
 // medication-interactions (v2) — Design §8.3 (L2/UI) + §8.4 (L3/E2E).
 // Public Library checks run anywhere; authed interaction flow requires E2E_LIVE.
@@ -50,19 +50,40 @@ test.describe("[LIVE] L3: meds → stack → interaction flag", () => {
   }) => {
     await login(page);
 
-    // 1. Add warfarin to the profile medications.
+    // 1. Add warfarin to the profile medications, and require the save.
     await page.goto("/profile");
     const meds = page.getByPlaceholder(/warfarin, metformin/i);
     await meds.fill("warfarin");
     await meds.press("Enter");
-    await page.getByRole("button", { name: /save/i }).click();
+    await expect(page.getByRole("button", { name: "Remove warfarin" })).toBeVisible();
+    await page.getByRole("button", { name: /Save profile/i }).click();
+    await expect(page.getByText(/Saved/i)).toBeVisible();
 
-    // 2. Build a stack containing fish oil, then evaluate.
-    //    (Assumes the demo helper navigates to a stack; see helpers.login.)
-    await page.goto("/stack-lab");
-    // Evaluate flow is covered by the shared workspace; assert the escalation banner.
-    await expect(
-      page.getByText(/potentially serious interaction was flagged/i),
-    ).toBeVisible();
+    let stackId: string | null = null;
+    try {
+      // 2. Build a stack containing fish oil, then evaluate. Before U27 this step
+      //    only visited /stack-lab, which shows the stack list and never an
+      //    evaluation, so the banner could not appear.
+      stackId = await buildAndEvaluateStack(page, "Interaction", [
+        { supplementId: "fish-oil", dose: 1000, unit: "mg" },
+      ]);
+      // fish-oil ↔ anticoagulant is a supplement-drug "warning", which
+      // lib/interactions/to-flags escalates to critical → the escalation banner.
+      await expect(
+        page.getByText(/potentially serious interaction was flagged/i),
+      ).toBeVisible();
+    } finally {
+      // Restore the seeded profile (no medications). The demo account is shared,
+      // so a medication left here changes what every later advisor spec sees.
+      if (stackId) await page.request.delete(`/api/stacks/${stackId}`);
+      await page.goto("/profile");
+      const remove = page.getByRole("button", { name: "Remove warfarin" });
+      if (await remove.isVisible()) {
+        await remove.click();
+        await expect(remove).toBeHidden();
+        await page.getByRole("button", { name: /Save profile/i }).click();
+        await expect(page.getByText(/Saved/i)).toBeVisible();
+      }
+    }
   });
 });

@@ -1,5 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { LIVE, login } from "./helpers";
+
+/** The stack's items, via GET /api/stacks/:id, which returns `{ stack, items, flags }`. */
+async function stackItems(page: Page, stackId: string) {
+  const res = await page.request.get(`/api/stacks/${stackId}`);
+  expect(res.ok()).toBe(true);
+  return (await res.json()).data.items as Array<{ supplementId: string | null; dose: number }>;
+}
 
 // advisor-actions (v7) — Design §8.2 (L1 API). Auth-guard + validation checks run
 // anywhere; the authed confirm/undo round-trip requires E2E_LIVE (a configured
@@ -78,17 +85,16 @@ test.describe("[LIVE] L1: advisor-actions authed validation + lifecycle", () => 
     expect(applied.applied).toBe(true);
     expect(applied.actionId).toBeTruthy();
 
-    // The edited dose was the one written.
-    const items = (await (await page.request.get(`/api/stacks/${stackId}/items`)).json()).data as Array<{
-      id: string;
-      dose: number;
-    }>;
-    expect(items.some((i) => i.dose === 350)).toBe(true);
+    // The edited dose was the one written. Items are read through GET
+    // /api/stacks/:id (`data.items`); `/api/stacks/:id/items` exports POST only.
+    const items = await stackItems(page, stackId);
+    expect(items.some((i) => i.supplementId === "magnesium" && i.dose === 350)).toBe(true);
 
-    // Undo reverses it.
+    // Undo reverses it: the response says so, and the item is gone from the stack.
     const undo = await page.request.post(`/api/advisor/actions/${applied.actionId}/undo`);
     expect(undo.status()).toBe(200);
     expect((await undo.json()).data.undone).toBe(true);
+    expect((await stackItems(page, stackId)).some((i) => i.supplementId === "magnesium")).toBe(false);
 
     // Re-undo is blocked.
     const reUndo = await page.request.post(`/api/advisor/actions/${applied.actionId}/undo`);

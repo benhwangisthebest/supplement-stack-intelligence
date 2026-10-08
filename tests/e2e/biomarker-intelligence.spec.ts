@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { LIVE, login } from "./helpers";
+import { buildAndEvaluateStack, LIVE, login } from "./helpers";
 
 // biomarker-intelligence (v3) — Design §8.3 (L2/UI) + §8.4 (L3/E2E).
 // Public Library checks run anywhere; authed lab flow requires E2E_LIVE.
@@ -45,11 +45,28 @@ test.describe("[LIVE] L3: labs → evaluate → lab-relevance flag", () => {
     await page.goto("/profile");
     await page.getByPlaceholder(/Marker/i).fill("25-OH Vitamin D");
     await page.getByPlaceholder(/^Value$/i).fill("18");
-    // unit auto-fills to ng/mL via the catalog; submit.
+    // unit auto-fills to ng/mL via the catalog; submit, and require the save.
+    const saved = page.waitForResponse(
+      (r) => r.url().endsWith("/api/lab-markers") && r.request().method() === "POST",
+    );
     await page.getByRole("button", { name: /^Add$/i }).click();
+    expect((await saved).ok()).toBe(true);
 
     // 2. Build a stack with vitamin D, evaluate, expect a lab-relevance finding.
-    await page.goto("/stack-lab");
-    await expect(page.getByText(/relevant to your labs|below the reference range/i)).toBeVisible();
+    //    Before U27 this step only visited /stack-lab, which shows the stack list
+    //    and never an evaluation, so the note could not appear.
+    const stackId = await buildAndEvaluateStack(page, "Lab relevance", [
+      { supplementId: "vitamin-d", dose: 2000, unit: "IU" },
+    ]);
+    try {
+      await expect(
+        page.getByRole("heading", { name: "Could be relevant to your labs", exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByText(/Your 25-OH Vitamin D is below the reference range/i),
+      ).toBeVisible();
+    } finally {
+      await page.request.delete(`/api/stacks/${stackId}`);
+    }
   });
 });
